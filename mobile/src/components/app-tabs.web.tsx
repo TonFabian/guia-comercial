@@ -13,10 +13,10 @@ export default function AppTabs() {
       <TabSlot style={{ height: '100%' }} />
       <TabList asChild>
         <View
-          style={[
-            styles.tabBar,
-            { paddingBottom: Math.max(insets.bottom, 10) },
-          ]}>
+          style={{
+            ...styles.tabBar,
+            paddingBottom: Math.max(insets.bottom, 10),
+          }}>
           <TabTrigger name="home" href="/" asChild>
             <TabButton label="Início" icon="home" />
           </TabTrigger>
@@ -40,13 +40,13 @@ type TabButtonProps = TabTriggerSlotProps & {
   icon: 'home' | 'search' | 'heart' | 'person';
 };
 
-export function TabButton({ children: _children, label, icon, isFocused, ref: _ref, ...props }: TabButtonProps) {
+export function TabButton({ children: _children, label, icon, isFocused, ref: _ref, style, ...props }: TabButtonProps) {
   const color = isFocused ? GuiaColors.primary : GuiaColors.textSecondary;
 
   return (
-    <Pressable {...props} style={styles.tabButton}>
+    <Pressable {...props} style={StyleSheet.flatten([styles.tabButton, style])}>
       <Ionicons name={isFocused ? icon : `${icon}-outline`} size={22} color={color} />
-      <Text style={[styles.tabLabel, { color }]}>{label}</Text>
+      <Text style={StyleSheet.flatten([styles.tabLabel, { color }])}>{label}</Text>
     </Pressable>
   );
 }

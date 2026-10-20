@@ -9,8 +9,10 @@ export type ThemedViewProps = ViewProps & {
   type?: ThemeColor;
 };
 
+import { StyleSheet } from 'react-native';
+
 export function ThemedView({ style, lightColor, darkColor, type, ...otherProps }: ThemedViewProps) {
   const theme = useTheme();
 
-  return <View style={[{ backgroundColor: theme[type ?? 'background'] }, style]} {...otherProps} />;
+  return <View style={StyleSheet.flatten([{ backgroundColor: theme[type ?? 'background'] }, style])} {...otherProps} />;
 }

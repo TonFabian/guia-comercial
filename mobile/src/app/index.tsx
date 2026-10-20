@@ -126,7 +126,7 @@ function Banners() {
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={styles.carouselContent}>
       {BANNERS.map((banner) => (
-        <TouchableOpacity key={banner.id} style={[styles.bannerCard, { backgroundColor: banner.color }]} activeOpacity={0.85}>
+        <TouchableOpacity key={banner.id} style={StyleSheet.flatten([styles.bannerCard, { backgroundColor: banner.color }])} activeOpacity={0.85}>
           <Text style={styles.bannerEmoji}>{banner.emoji}</Text>
           <Text style={styles.bannerTitle}>{banner.title}</Text>
           <Text style={styles.bannerSubtitle}>{banner.subtitle}</Text>
@@ -209,7 +209,7 @@ function Coupons() {
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.carouselContent}>
         {COUPONS.map((coupon) => (
-          <TouchableOpacity key={coupon.id} style={[styles.couponCard, { backgroundColor: coupon.color }]} activeOpacity={0.85}>
+          <TouchableOpacity key={coupon.id} style={StyleSheet.flatten([styles.couponCard, { backgroundColor: coupon.color }])} activeOpacity={0.85}>
             <View style={styles.couponTag}>
               <Text style={styles.couponTagText}>Cupom Exclusivo</Text>
             </View>
