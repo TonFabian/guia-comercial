@@ -1,5 +1,15 @@
 This is an Expo/React Native mobile application. Prioritize mobile-first patterns, performance, and cross-platform compatibility.
 
+## Monorepo layout
+
+This repo has three independent apps, each with its own `package.json`:
+
+- `mobile/` — Expo app (all Expo/Metro commands below run **from inside `mobile/`**)
+- `backend/` — Express + TypeScript API
+- `admin/` — Vite + React admin panel
+
+Never install dependencies at the repo root.
+
 ## Expo has changed — do not trust your training data
 
 Expo ships breaking changes every SDK release. APIs you remember are likely renamed, moved, or removed. Before writing any code that touches an Expo, EAS, or React Native API:

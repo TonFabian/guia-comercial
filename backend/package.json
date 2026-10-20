@@ -1,0 +1,26 @@
+{
+  "name": "guia-comercial-backend",
+  "version": "1.0.0",
+  "private": true,
+  "description": "API REST do guia comercial (Express + TypeScript + MongoDB)",
+  "main": "dist/index.js",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "build": "tsc",
+    "start": "node dist/index.js",
+    "typecheck": "tsc --noEmit"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.4",
+    "express": "^5.1.1",
+    "mongoose": "^9.0.11"
+  },
+  "devDependencies": {
+    "@types/cors": "^2.8.19",
+    "@types/express": "^5.0.6",
+    "@types/node": "^24.10.9",
+    "tsx": "^4.21.0",
+    "typescript": "~6.0.3"
+  }
+}

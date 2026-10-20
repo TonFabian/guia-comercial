@@ -51,6 +51,19 @@ export const Fonts = Platform.select({
   },
 });
 
+export const GuiaColors = {
+  background: '#121212',
+  surface: '#1E1E1E',
+  surfaceAlt: '#242424',
+  primary: '#FFC107',
+  primaryDim: '#B8860B',
+  text: '#FFFFFF',
+  textSecondary: '#9CA3AF',
+  border: '#2E2E2E',
+  success: '#22C55E',
+  whatsapp: '#25D366',
+} as const;
+
 export const Spacing = {
   half: 2,
   one: 4,

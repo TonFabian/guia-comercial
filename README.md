@@ -1,56 +1,58 @@
-# Welcome to your Expo app 👋
+# Guia Comercial
 
-This is an [Expo](https://expo.dev) project created with [`create-expo-app`](https://www.npmjs.com/package/create-expo-app).
+Repositório monorepo com três aplicações independentes:
 
-## Get started
+| Pasta     | Aplicação                       | Stack                                              |
+| --------- | ------------------------------- | -------------------------------------------------- |
+| `mobile/` | App do guia (Expo Go)           | Expo SDK 58, React Native, TypeScript, Expo Router |
+| `backend/`| API REST                        | Node.js, Express, TypeScript, MongoDB (Mongoose)   |
+| `admin/`  | Painel administrativo web       | Vite, React, TypeScript                            |
 
-1. Install dependencies
+Cada aplicação tem seu próprio `package.json` e dependências próprias.
 
-   ```bash
-   npm install
-   ```
-
-2. Start the app
-
-   ```bash
-   npx expo start
-   ```
-
-In the output, you'll find options to open the app in a
-
-- [development build](https://docs.expo.dev/develop/development-builds/introduction/)
-- [Android emulator](https://docs.expo.dev/workflow/android-studio-emulator/)
-- [iOS simulator](https://docs.expo.dev/workflow/ios-simulator/)
-- [Expo Go](https://expo.dev/go), a limited sandbox for trying out app development with Expo
-
-You can start developing by editing the files inside the **src/app** directory. This project uses [file-based routing](https://docs.expo.dev/router/introduction).
-
-## Get a fresh project
-
-When you're ready, run:
+## 1. Mobile (Expo Go)
 
 ```bash
-npm run reset-project
+cd mobile
+npm install
+npx expo start
 ```
 
-This command will move the starter code to the **example** directory and create a blank **src/app** directory where you can start developing.
+Escaneie o QR code com o app **Expo Go** (Android/iOS).
 
-### Other setup steps
+- Telas: `mobile/src/app/` (Expo Router — cada arquivo é uma rota)
+- Abas: Início, Buscar, Favoritos, Perfil (`mobile/src/components/app-tabs.tsx`)
+- Paleta de cores: `mobile/src/constants/theme.ts` (`GuiaColors`)
 
-- To set up ESLint for linting, run `npx expo lint`, or follow our guide on ["Using ESLint and Prettier"](https://docs.expo.dev/guides/using-eslint/)
-- If you'd like to set up unit testing, follow our guide on ["Unit Testing with Jest"](https://docs.expo.dev/develop/unit-testing/)
-- Learn more about the TypeScript setup in this template in our guide on ["Using TypeScript"](https://docs.expo.dev/guides/typescript/)
+## 2. Backend (API REST)
 
-## Learn more
+```bash
+cd backend
+npm install
+cp .env.example .env   # configure MONGODB_URI
+npm run dev            # http://localhost:4000/api/health
+```
 
-To learn more about developing your project with Expo, look at the following resources:
+- Rotas: `backend/src/routes/` — controllers em `backend/src/controllers/`
+- Models Mongoose: `backend/src/models/` (a criar por recurso)
+- Produção: `npm run build && npm start`
 
-- [Expo documentation](https://docs.expo.dev/): Learn fundamentals, or go into advanced topics with our [guides](https://docs.expo.dev/guides).
-- [Learn Expo tutorial](https://docs.expo.dev/tutorial/introduction/): Follow a step-by-step tutorial where you'll create a project that runs on Android, iOS, and the web.
+## 3. Admin (painel web)
 
-## Join the community
+```bash
+cd admin
+npm install
+npm run dev            # http://localhost:5173
+```
 
-Join our community of developers creating universal apps.
+Estrutura inicial — as telas de gerenciamento (empresas, categorias, anúncios,
+banners, usuários) ainda não foram implementadas.
 
-- [Expo on GitHub](https://github.com/expo/expo): View our open source platform and contribute.
-- [Discord community](https://chat.expo.dev): Chat with Expo users and ask questions.
+- API esperada: variável `VITE_API_URL` (ver `admin/.env.example`)
+
+## Regras do repositório
+
+- **Nunca** versionar arquivos `.env` (apenas `.env.example`).
+- Dependências não são compartilhadas entre as aplicações.
+- `.gitignore` da raiz cobre `node_modules`, `.env`, builds e gerados.
+- Comandos do Expo sempre executados de dentro de `mobile/`.
