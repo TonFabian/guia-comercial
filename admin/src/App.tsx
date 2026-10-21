@@ -1,28 +1,9 @@
-const SECTIONS = [
-  'Empresas',
-  'Categorias',
-  'Anúncios',
-  'Banners',
-  'Usuários',
-];
+import { Sidebar } from './components/sidebar';
 
 export default function App() {
   return (
     <div className="layout">
-      <aside className="sidebar">
-        <h1 className="brand">Guia Comercial</h1>
-        <p className="brand-sub">Painel Administrativo</p>
-        <nav>
-          <ul className="menu">
-            {SECTIONS.map((section) => (
-              <li key={section} className="menu-item">
-                <span>{section}</span>
-                <span className="badge">em breve</span>
-              </li>
-            ))}
-          </ul>
-        </nav>
-      </aside>
+      <Sidebar />
       <main className="content">
         <h2>Estrutura inicial</h2>
         <p>

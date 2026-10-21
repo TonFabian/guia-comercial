@@ -1,0 +1,8 @@
+**/node_modules
+**/.expo
+**/dist
+package-lock.json
+yarn.lock
+bun.lock
+mobile/ios
+mobile/android

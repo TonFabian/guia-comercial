@@ -1,6 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Tabs, TabList, TabTrigger, TabSlot, TabTriggerSlotProps } from 'expo-router/ui';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+import type { StyleProp, ViewStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { GuiaColors } from '@/constants/theme';
@@ -44,7 +45,12 @@ export function TabButton({ children: _children, label, icon, isFocused, ref: _r
   const color = isFocused ? GuiaColors.primary : GuiaColors.textSecondary;
 
   return (
-    <Pressable {...props} style={StyleSheet.flatten([styles.tabButton, style])}>
+    <Pressable
+      {...props}
+      style={StyleSheet.flatten([
+        styles.tabButton,
+        (style ?? undefined) as StyleProp<ViewStyle>,
+      ])}>
       <Ionicons name={isFocused ? icon : `${icon}-outline`} size={22} color={color} />
       <Text style={StyleSheet.flatten([styles.tabLabel, { color }])}>{label}</Text>
     </Pressable>
