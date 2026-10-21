@@ -8,7 +8,7 @@ export default function AppTabs() {
       backgroundColor={GuiaColors.background}
       tintColor={GuiaColors.primary}
       iconColor={{ default: GuiaColors.textSecondary, selected: GuiaColors.primary }}
-      indicatorColor={GuiaColors.primary}
+      disableIndicator
       labelStyle={{
         default: { color: GuiaColors.textSecondary },
         selected: { color: GuiaColors.primary, fontWeight: '600' },

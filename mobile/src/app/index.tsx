@@ -1,8 +1,9 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { StatusBar } from 'expo-status-bar';
-import { ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { GuiaColors } from '@/constants/theme';
 
@@ -36,13 +37,15 @@ const JOBS = [
 ];
 
 export default function HomeScreen() {
+  const insets = useSafeAreaInsets();
+
   return (
     <View style={styles.root}>
       <StatusBar style="light" />
       <SafeAreaView style={styles.safeArea} edges={['top']}>
         <ScrollView
           style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
+          contentContainerStyle={[styles.scrollContent, { paddingBottom: 110 + Math.max(insets.bottom, 10) }]}
           showsVerticalScrollIndicator={false}>
           <Header />
           <SearchBar />
@@ -80,7 +83,7 @@ function SearchBar() {
       <TextInput
         style={styles.searchInput}
         placeholder="Empresa, produto ou serviço"
-        placeholderTextColor={GuiaColors.textSecondary}
+        placeholderTextColor="#9CA3AF"
       />
       <TouchableOpacity style={styles.micButton} activeOpacity={0.7}>
         <Ionicons name="mic-outline" size={20} color={GuiaColors.textSecondary} />
@@ -126,7 +129,10 @@ function Banners() {
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={styles.carouselContent}>
       {BANNERS.map((banner) => (
-        <TouchableOpacity key={banner.id} style={StyleSheet.flatten([styles.bannerCard, { backgroundColor: banner.color }])} activeOpacity={0.85}>
+        <TouchableOpacity
+          key={banner.id}
+          style={StyleSheet.flatten([styles.bannerCard, { backgroundColor: banner.color }])}
+          activeOpacity={0.85}>
           <Text style={styles.bannerEmoji}>{banner.emoji}</Text>
           <Text style={styles.bannerTitle}>{banner.title}</Text>
           <Text style={styles.bannerSubtitle}>{banner.subtitle}</Text>
@@ -153,7 +159,7 @@ function PharmacyOnDuty() {
           <Ionicons name="map-outline" size={16} color={GuiaColors.primary} />
           <Text style={styles.pillDarkText}>Como chegar</Text>
         </TouchableOpacity>
-        <TouchableOpacity style={styles.pillYellow} activeOpacity={0.8}>
+        <TouchableOpacity style={styles.pillYellow} activeOpacity={0.7}>
           <Ionicons name="call" size={16} color={GuiaColors.background} />
           <Text style={styles.pillYellowText}>Ligar</Text>
         </TouchableOpacity>
@@ -189,7 +195,7 @@ function FeaturedCompany() {
               <Ionicons name="location-outline" size={16} color={GuiaColors.primary} />
               <Text style={styles.actionPillText}>Endereço</Text>
             </TouchableOpacity>
-            <TouchableOpacity style={styles.whatsappPill} activeOpacity={0.8}>
+            <TouchableOpacity style={styles.whatsappPill} activeOpacity={0.7}>
               <MaterialCommunityIcons name="whatsapp" size={16} color={GuiaColors.background} />
               <Text style={styles.whatsappPillText}>WhatsApp</Text>
             </TouchableOpacity>
@@ -201,6 +207,13 @@ function FeaturedCompany() {
 }
 
 function Coupons() {
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  const handleCopy = (id: string) => {
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 1500);
+  };
+
   return (
     <View style={styles.section}>
       <SectionHeader title="Cupons e Descontos" icon="pricetag" />
@@ -209,16 +222,25 @@ function Coupons() {
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.carouselContent}>
         {COUPONS.map((coupon) => (
-          <TouchableOpacity key={coupon.id} style={StyleSheet.flatten([styles.couponCard, { backgroundColor: coupon.color }])} activeOpacity={0.85}>
+          <TouchableOpacity
+            key={coupon.id}
+            style={StyleSheet.flatten([styles.couponCard, { backgroundColor: coupon.color }])}
+            activeOpacity={0.85}>
             <View style={styles.couponTag}>
               <Text style={styles.couponTagText}>Cupom Exclusivo</Text>
             </View>
             <Text style={styles.couponTitle}>{coupon.title}</Text>
             <Text style={styles.couponBusiness}>{coupon.business}</Text>
-            <View style={styles.couponFooter}>
+            <Pressable
+              style={styles.couponFooter}
+              onPress={() => handleCopy(coupon.id)}
+              hitSlop={6}
+              android_ripple={{ color: 'rgba(255,193,7,0.2)' }}>
               <Ionicons name="copy-outline" size={14} color={GuiaColors.primary} />
-              <Text style={styles.couponFooterText}>Copiar cupom</Text>
-            </View>
+              <Text style={styles.couponFooterText}>
+                {copiedId === coupon.id ? 'Copiado! ✓' : 'Copiar cupom'}
+              </Text>
+            </Pressable>
           </TouchableOpacity>
         ))}
       </ScrollView>
@@ -237,7 +259,7 @@ function Jobs() {
               <Text style={styles.jobRole}>{job.role}</Text>
               <Text style={styles.jobCompany}>{job.company}</Text>
             </View>
-            <TouchableOpacity style={styles.jobButton} activeOpacity={0.8}>
+            <TouchableOpacity style={styles.jobButton} activeOpacity={0.7}>
               <Text style={styles.jobButtonText}>Ver Vaga</Text>
             </TouchableOpacity>
           </View>
@@ -249,7 +271,7 @@ function Jobs() {
 
 function AnnounceCta() {
   return (
-    <TouchableOpacity style={styles.ctaContainer} activeOpacity={0.8}>
+    <TouchableOpacity style={styles.ctaContainer} activeOpacity={0.7}>
       <Text style={styles.ctaText}>
         Quer sua empresa aqui? <Text style={styles.ctaHighlight}>Clique aqui e anuncie no Guia!</Text>
       </Text>
@@ -291,9 +313,9 @@ const styles = StyleSheet.create({
   },
   headerTitle: {
     color: GuiaColors.text,
-    fontSize: 24,
+    fontSize: 18,
     fontWeight: '700',
-    lineHeight: 30,
+    lineHeight: 24,
   },
 
   searchBar: {
@@ -311,7 +333,7 @@ const styles = StyleSheet.create({
   },
   searchInput: {
     flex: 1,
-    color: GuiaColors.text,
+    color: '#FFFFFF',
     fontSize: 15,
     paddingVertical: 0,
   },
@@ -334,13 +356,13 @@ const styles = StyleSheet.create({
   },
   categoryItem: {
     alignItems: 'center',
-    width: 68,
+    width: 76,
     gap: 8,
   },
   categoryIconBox: {
-    width: 58,
-    height: 58,
-    borderRadius: 14,
+    width: 64,
+    height: 64,
+    borderRadius: 32,
     backgroundColor: GuiaColors.surface,
     borderWidth: 1,
     borderColor: GuiaColors.border,
@@ -362,8 +384,8 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     color: GuiaColors.text,
-    fontSize: 17,
-    fontWeight: '700',
+    fontSize: 18,
+    fontWeight: 'bold',
   },
   section: {
     marginBottom: 24,
@@ -381,6 +403,12 @@ const styles = StyleSheet.create({
     padding: 16,
     justifyContent: 'flex-end',
     gap: 4,
+    marginRight: 12,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
   },
   bannerEmoji: {
     fontSize: 28,
@@ -406,7 +434,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: GuiaColors.border,
     padding: 16,
-    gap: 6,
+    gap: 8,
   },
   pharmacyHeader: {
     flexDirection: 'row',
@@ -414,14 +442,13 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   pharmacyTitle: {
-    color: GuiaColors.primary,
-    fontSize: 15,
+    color: GuiaColors.text,
+    fontSize: 16,
     fontWeight: '700',
   },
   pharmacyName: {
     color: GuiaColors.text,
-    fontSize: 18,
-    fontWeight: '700',
+    fontSize: 15,
   },
   statusRow: {
     flexDirection: 'row',
@@ -447,13 +474,14 @@ const styles = StyleSheet.create({
   pillDark: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: 6,
     backgroundColor: GuiaColors.surfaceAlt,
     borderRadius: 20,
     borderWidth: 1,
     borderColor: GuiaColors.primary,
-    paddingVertical: 8,
-    paddingHorizontal: 14,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
   },
   pillDarkText: {
     color: GuiaColors.primary,
@@ -463,10 +491,11 @@ const styles = StyleSheet.create({
   pillYellow: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: 6,
     backgroundColor: GuiaColors.primary,
     borderRadius: 20,
-    paddingVertical: 9,
+    paddingVertical: 10,
     paddingHorizontal: 16,
   },
   pillYellowText: {
@@ -535,11 +564,12 @@ const styles = StyleSheet.create({
   actionPill: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: 6,
     backgroundColor: GuiaColors.surfaceAlt,
     borderRadius: 20,
-    paddingVertical: 8,
-    paddingHorizontal: 14,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
   },
   actionPillText: {
     color: GuiaColors.primary,
@@ -549,11 +579,12 @@ const styles = StyleSheet.create({
   whatsappPill: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: 6,
     backgroundColor: GuiaColors.whatsapp,
     borderRadius: 20,
-    paddingVertical: 8,
-    paddingHorizontal: 14,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
   },
   whatsappPillText: {
     color: GuiaColors.background,
@@ -568,6 +599,12 @@ const styles = StyleSheet.create({
     padding: 16,
     justifyContent: 'space-between',
     gap: 8,
+    marginRight: 12,
+    elevation: 3,
+    shadowColor: '#000',
+    shadowOpacity: 0.3,
+    shadowRadius: 4,
+    shadowOffset: { width: 0, height: 2 },
   },
   couponTag: {
     alignSelf: 'flex-start',
@@ -594,8 +631,11 @@ const styles = StyleSheet.create({
   couponFooter: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: 6,
     marginTop: 4,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
   },
   couponFooterText: {
     color: GuiaColors.primary,
@@ -637,8 +677,8 @@ const styles = StyleSheet.create({
   jobButton: {
     backgroundColor: GuiaColors.primary,
     borderRadius: 20,
-    paddingVertical: 8,
-    paddingHorizontal: 14,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
   },
   jobButtonText: {
     color: GuiaColors.background,
@@ -649,6 +689,7 @@ const styles = StyleSheet.create({
   ctaContainer: {
     marginHorizontal: 16,
     marginTop: 4,
+    marginBottom: 16,
     paddingVertical: 18,
     alignItems: 'center',
   },
@@ -660,6 +701,6 @@ const styles = StyleSheet.create({
   },
   ctaHighlight: {
     color: GuiaColors.primary,
-    fontWeight: '700',
+    fontWeight: '600',
   },
 });
