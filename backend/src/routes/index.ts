@@ -10,6 +10,7 @@ import {
   createAuthDeps,
   makeAuthMiddleware,
 } from '../middlewares/auth.middleware.js';
+import { guestScrub } from '../middlewares/guest.middleware.js';
 import {
   createBannerSchema,
   createCategorySchema,
@@ -34,6 +35,7 @@ if (authDeps) {
   const auth = makeAuthMiddleware(authDeps);
 
   routes.use(auth.optionalAuth);
+  routes.use(guestScrub());
   // Perfil do usuário autenticado: exige sessão válida e só existe com auth
   // ligado — em modo legado o app não a consome.
   routes.get('/me', auth.requireAuth, me);
