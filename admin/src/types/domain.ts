@@ -75,12 +75,29 @@ export interface Job {
   createdAt?: string;
 }
 
-export interface User {
+/** Conta administrativa (admin/editor), anterior à autenticação via Clerk. */
+export interface AdminUser {
   _id: string;
   name: string;
   email: string;
   role: 'admin' | 'editor';
   createdAt?: string;
+}
+
+/** Usuário do app, espelhado do Clerk no backend. */
+export interface User {
+  _id: string;
+  clerkId: string;
+  firstName?: string;
+  lastName?: string;
+  email: string;
+  phone?: string;
+  imageUrl?: string;
+  role: 'user';
+  lastSid?: string;
+  lastSignInAt?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 /** Resultado paginado padrão das listagens da API. */
