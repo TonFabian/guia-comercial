@@ -18,6 +18,7 @@ import {
   createJobSchema,
   validateBody,
 } from '../types/dto.js';
+import { me } from '../controllers/user.controller.js';
 
 const routes = Router();
 
@@ -30,7 +31,12 @@ routes.get('/health', health);
 // O health fica de fora para não depender do Clerk em monitoramento.
 const authDeps = createAuthDeps();
 if (authDeps) {
-  routes.use(makeAuthMiddleware(authDeps).optionalAuth);
+  const auth = makeAuthMiddleware(authDeps);
+
+  routes.use(auth.optionalAuth);
+  // Perfil do usuário autenticado: exige sessão válida e só existe com auth
+  // ligado — em modo legado o app não a consome.
+  routes.get('/me', auth.requireAuth, me);
 }
 
 // -----------------------------------------------------------------------------

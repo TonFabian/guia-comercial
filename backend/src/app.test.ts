@@ -23,3 +23,14 @@ describe('rota inexistente', () => {
     expect(response.body.path).toBe('/api/nao-existe');
   });
 });
+
+describe('webhook do Clerk montado antes do express.json', () => {
+  it('POST /api/webhooks/clerk rejeita assinatura ausente com 400', async () => {
+    const response = await request(app)
+      .post('/api/webhooks/clerk')
+      .type('json')
+      .send({ type: 'user.created', data: { id: 'user_123' } });
+
+    expect(response.status).toBe(400);
+  });
+});
