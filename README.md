@@ -206,7 +206,7 @@ cd admin   && npm run lint && npm run typecheck && npm run build
 - [ ] Detalhe de empresa e favoritos no app (com estado persistente)
 - [ ] Testes unitários e de componente no mobile e no admin
 - [ ] CI com lint + typecheck + testes nos três apps
-- [ ] Seed de dados de exemplo para desenvolvimento
+- [x] Seed de dados de exemplo para desenvolvimento (ver [`backend/src/scripts/seed.ts`](./backend/src/scripts/seed.ts))
 
 ---
 
@@ -222,6 +222,33 @@ cd admin   && npm run lint && npm run typecheck && npm run build
 - Commits de agente devem incluir o trailer `Generated-by: <agente> (<modelo>)`.
 - `.gitignore` da raiz cobre `node_modules`, `.env`, builds e gerados.
 - Detalhes de processo para agentes de código: [`AGENTS.md`](./AGENTS.md).
+
+## Seed de dados de desenvolvimento
+
+O banco de dados fica vazio de primeira. Para popular todas as coleções
+(`categories`, `companies`, `banners`, `coupons`, `jobs`) com documentos de
+exemplo, rode:
+
+```bash
+cd backend
+npm run seed
+```
+
+O script é **idempotente**: pode ser executado mais de uma vez sem duplicar
+dados (ele ignora documentos que já existem pela chave natural — `slug`, `code`,
+`title`). Para começar do zero em vez disso:
+
+```bash
+npm run seed -- --reset
+```
+
+**O que ele insere:** 6 categorias (Construção, Alimentação, Oficina, Farmácia,
+Beleza, Serviços), 5 empresas em destaque (inclusive a farmácia de plantão
+"Drogaria Popular"), 3 banners, 3 cupons atrelados às empresas e 4 vagas.
+
+Depois do seed, a home do app mobile exibe os mesmos dados que a master
+(mocks), porque os slugs e os títulos são os mesmos usados em
+`mobile/src/data/mock.ts`.
 
 ## Licença
 
