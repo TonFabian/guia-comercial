@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 
-import { warnIfWithoutAuthentication } from './boot-check.js';
+import { assertValidClerkConfiguration, warnIfWithoutAuthentication } from './boot-check.js';
 
 describe('warnIfWithoutAuthentication', () => {
   afterEach(() => {
@@ -32,5 +32,33 @@ describe('warnIfWithoutAuthentication', () => {
     warnIfWithoutAuthentication({ NODE_ENV: 'development' });
 
     expect(warn).not.toHaveBeenCalled();
+  });
+});
+
+describe('assertValidClerkConfiguration', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
+  it('aceita o par de chaves completo sem lançar nem avisar', () => {
+    const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+    expect(() =>
+      assertValidClerkConfiguration({
+        CLERK_SECRET_KEY: 'sk_test_placeholder',
+        CLERK_PUBLISHABLE_KEY: 'pk_test_placeholder',
+      }),
+    ).not.toThrow();
+    expect(warn).not.toHaveBeenCalled();
+  });
+
+  it('lança mensagem clara quando há secret sem publishable', () => {
+    expect(() =>
+      assertValidClerkConfiguration({ CLERK_SECRET_KEY: 'sk_test_placeholder' }),
+    ).toThrow(/CLERK_PUBLISHABLE_KEY/);
+  });
+
+  it('não interfere no modo legado sem secret', () => {
+    expect(() => assertValidClerkConfiguration({})).not.toThrow();
   });
 });

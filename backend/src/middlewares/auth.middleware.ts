@@ -2,6 +2,7 @@ import type { ClerkClient, User as ClerkUser } from '@clerk/backend';
 import { createClerkClient } from '@clerk/backend';
 import type { Request, RequestHandler, Response } from 'express';
 
+import { assertValidClerkConfiguration } from '../config/boot-check.js';
 import {
   findUserByClerkId,
   touchSession,
@@ -64,6 +65,9 @@ export function createAuthDeps(): AuthDeps | null {
     return null;
   }
 
+  // Par de chaves incompleto não é modo legado: é config quebrada.
+  assertValidClerkConfiguration(process.env);
+
   const client = createClerkClient({
     secretKey,
     publishableKey: process.env.CLERK_PUBLISHABLE_KEY,
@@ -88,6 +92,19 @@ function createHandler(deps: AuthDeps, options: HandlerOptions): RequestHandler 
   // aguardar o middleware. O Express 5 encaminha rejeições ao errorHandler.
   return async (req: Request, res: Response, next): Promise<void> => {
     const requestHeaders = buildRequestHeaders(req);
+    let authFailureReported = false;
+
+    // Uma única linha por request: evita poluir o log em retries do cliente.
+    const reportAuthFailure = (error: unknown): void => {
+      if (authFailureReported) {
+        return;
+      }
+
+      authFailureReported = true;
+      console.warn(
+        `[auth] falha ao validar sessão Clerk: ${sanitizeAuthError(error)}`,
+      );
+    };
 
     if (options.allowGuest && !requestHeaders.has('authorization')) {
       req.auth = { guest: true };
@@ -95,7 +112,7 @@ function createHandler(deps: AuthDeps, options: HandlerOptions): RequestHandler 
       return;
     }
 
-    const identity = await readIdentity(deps, requestHeaders);
+    const identity = await readIdentity(deps, requestHeaders, reportAuthFailure);
 
     if (!identity) {
       respondUnauthorized(res);
@@ -120,12 +137,23 @@ function createHandler(deps: AuthDeps, options: HandlerOptions): RequestHandler 
 async function readIdentity(
   deps: AuthDeps,
   requestHeaders: Headers,
+  reportFailure: (error: unknown) => void,
 ): Promise<SessionIdentity | null> {
   try {
     return await deps.getState({ requestHeaders });
-  } catch {
+  } catch (error) {
+    reportFailure(error);
     return null;
   }
+}
+
+/** Loga só a mensagem curta, sem cabeçalhos, token ou PII. */
+function sanitizeAuthError(error: unknown): string {
+  const message = error instanceof Error ? error.message : 'erro desconhecido';
+
+  return message
+    .replace(/Bearer\s+[^\s,;]+/gi, 'Bearer [redigido]')
+    .slice(0, 200);
 }
 
 /** Garante o espelho local antes de registrar a sessão. */
