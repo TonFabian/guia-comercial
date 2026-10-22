@@ -29,9 +29,10 @@ export interface Company {
   slug: string;
   description: string;
   category: string | Category;
-  phone?: string;
-  whatsapp?: string;
-  address?: string;
+  /** Convidado recebe `null` (o backend redige o contato comercial). */
+  phone?: string | null;
+  whatsapp?: string | null;
+  address?: string | null;
   city?: string;
   logo?: string;
   cover?: string;
@@ -58,7 +59,8 @@ export interface Coupon {
   _id: string;
   title: string;
   company: string | Company;
-  code: string;
+  /** Convidado recebe `null` (o backend oculta o código de resgate). */
+  code?: string | null;
   discount?: string;
   description?: string;
   expiresAt?: string;

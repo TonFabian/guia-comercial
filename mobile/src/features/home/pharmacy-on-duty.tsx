@@ -4,10 +4,16 @@ import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 import { GuiaColors, Radius, Spacing, Type } from '@/constants/theme';
 import type { Company } from '@/types/domain';
+import { ContactHintRow } from '@/features/home/contact-hidden-hint';
 import { callPhone, openAddress } from '@/utils/links';
 
 export function PharmacyOnDuty({ pharmacy }: { pharmacy: Company | null }) {
   if (!pharmacy) return null;
+
+  // Como os dados comerciais chegam redigidos (`null`) para o convidado, os
+  // atalhos só aparecem quando existe o dado; sem nenhum deles, só o hint.
+  const temEndereco = Boolean(pharmacy.address);
+  const temTelefone = Boolean(pharmacy.phone);
 
   return (
     <View style={styles.pharmacyCard}>
@@ -21,20 +27,25 @@ export function PharmacyOnDuty({ pharmacy }: { pharmacy: Company | null }) {
         <Text style={styles.statusText}>{pharmacy.openingHours?.[0] ?? 'Aberto agora'}</Text>
       </View>
       <View style={styles.pharmacyActions}>
-        <TouchableOpacity
-          style={styles.pillDark}
-          activeOpacity={0.7}
-          onPress={() => pharmacy.address && void openAddress(pharmacy.address)}>
-          <Ionicons name="map-outline" size={16} color={GuiaColors.primary} />
-          <Text style={styles.pillDarkText}>Como chegar</Text>
-        </TouchableOpacity>
-        <TouchableOpacity
-          style={styles.pillYellow}
-          activeOpacity={0.7}
-          onPress={() => pharmacy.phone && void callPhone(pharmacy.phone)}>
-          <Ionicons name="call" size={16} color={GuiaColors.background} />
-          <Text style={styles.pillYellowText}>Ligar</Text>
-        </TouchableOpacity>
+        {temEndereco ? (
+          <TouchableOpacity
+            style={styles.pillDark}
+            activeOpacity={0.7}
+            onPress={() => pharmacy.address && void openAddress(pharmacy.address)}>
+            <Ionicons name="map-outline" size={16} color={GuiaColors.primary} />
+            <Text style={styles.pillDarkText}>Como chegar</Text>
+          </TouchableOpacity>
+        ) : null}
+        {temTelefone ? (
+          <TouchableOpacity
+            style={styles.pillYellow}
+            activeOpacity={0.7}
+            onPress={() => pharmacy.phone && void callPhone(pharmacy.phone)}>
+            <Ionicons name="call" size={16} color={GuiaColors.background} />
+            <Text style={styles.pillYellowText}>Ligar</Text>
+          </TouchableOpacity>
+        ) : null}
+        {!temEndereco && !temTelefone ? <ContactHintRow /> : null}
       </View>
     </View>
   );

@@ -13,6 +13,7 @@ import { JobList } from '@/features/home/job-list';
 import { PharmacyOnDuty } from '@/features/home/pharmacy-on-duty';
 import { SearchBar } from '@/features/home/search-bar';
 import { useHomeData } from '@/features/home/use-home-data';
+import { GuestBanner } from '@/features/auth/guest-banner';
 
 export default function HomeScreen() {
   const { loading, banners, categories, coupons, featuredCompany, jobs, pharmacy } = useHomeData();
@@ -31,6 +32,7 @@ export default function HomeScreen() {
           showsVerticalScrollIndicator={false}
         >
           <Header />
+          <GuestBanner />
           <SearchBar />
           {loading ? (
             <View style={styles.center}>

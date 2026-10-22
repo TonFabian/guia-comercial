@@ -4,6 +4,7 @@ import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 import { GuiaColors, Overlays, Radius, Spacing, Type } from '@/constants/theme';
+import { ContactHintRow, CONTACT_HIDDEN_HINT } from '@/features/home/contact-hidden-hint';
 import { categoryLabel } from '@/types/domain';
 import type { Company } from '@/types/domain';
 import { callPhone, openAddress, openWhatsApp } from '@/utils/links';
@@ -30,30 +31,40 @@ export function FeaturedCompany({ company }: { company: Company | null }) {
           <Text style={styles.companyCategory}>{categoryLabel(company.category)}</Text>
           <View style={styles.addressRow}>
             <Ionicons name="location-outline" size={14} color={GuiaColors.textSecondary} />
-            <Text style={styles.companyAddress}>{company.address}</Text>
+            <Text style={styles.companyAddress}>{company.address ?? CONTACT_HIDDEN_HINT}</Text>
           </View>
           <View style={styles.companyActions}>
-            <TouchableOpacity
-              style={styles.actionPill}
-              activeOpacity={0.7}
-              onPress={() => company.phone && void callPhone(company.phone)}>
-              <Ionicons name="call-outline" size={16} color={GuiaColors.primary} />
-              <Text style={styles.actionPillText}>Ligar</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.actionPill}
-              activeOpacity={0.7}
-              onPress={() => company.address && void openAddress(company.address)}>
-              <Ionicons name="location-outline" size={16} color={GuiaColors.primary} />
-              <Text style={styles.actionPillText}>Endereço</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.whatsappPill}
-              activeOpacity={0.7}
-              onPress={() => company.whatsapp && void openWhatsApp(company.whatsapp)}>
-              <MaterialCommunityIcons name="whatsapp" size={16} color={GuiaColors.background} />
-              <Text style={styles.whatsappPillText}>WhatsApp</Text>
-            </TouchableOpacity>
+            {/* Atalhos presentes só com o dado; sem nenhum, o hint. */}
+            {company.phone ? (
+              <TouchableOpacity
+                style={styles.actionPill}
+                activeOpacity={0.7}
+                onPress={() => company.phone && void callPhone(company.phone)}>
+                <Ionicons name="call-outline" size={16} color={GuiaColors.primary} />
+                <Text style={styles.actionPillText}>Ligar</Text>
+              </TouchableOpacity>
+            ) : null}
+            {company.address ? (
+              <TouchableOpacity
+                style={styles.actionPill}
+                activeOpacity={0.7}
+                onPress={() => company.address && void openAddress(company.address)}>
+                <Ionicons name="location-outline" size={16} color={GuiaColors.primary} />
+                <Text style={styles.actionPillText}>Endereço</Text>
+              </TouchableOpacity>
+            ) : null}
+            {company.whatsapp ? (
+              <TouchableOpacity
+                style={styles.whatsappPill}
+                activeOpacity={0.7}
+                onPress={() => company.whatsapp && void openWhatsApp(company.whatsapp)}>
+                <MaterialCommunityIcons name="whatsapp" size={16} color={GuiaColors.background} />
+                <Text style={styles.whatsappPillText}>WhatsApp</Text>
+              </TouchableOpacity>
+            ) : null}
+            {!company.phone && !company.address && !company.whatsapp ? (
+              <ContactHintRow />
+            ) : null}
           </View>
         </View>
       </View>
