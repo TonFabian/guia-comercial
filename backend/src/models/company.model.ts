@@ -20,8 +20,21 @@ const companySchema = new Schema<Company>(
     cover: String,
     isFeatured: { type: Boolean, default: false },
     rating: { type: Number, min: 0, max: 5 },
+    ratingCount: { type: Number, min: 0 },
+    isVerified: { type: Boolean, default: false },
+    website: String,
+    instagram: String,
+    facebook: String,
     openingHours: [String],
     services: [String],
+    products: [
+      {
+        name: { type: String, required: true, trim: true },
+        description: String,
+        price: { type: Number, min: 0 },
+        image: String,
+      },
+    ],
   },
   { timestamps: true },
 );

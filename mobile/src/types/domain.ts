@@ -11,6 +11,14 @@ export interface Category {
   updatedAt?: string;
 }
 
+/** Produto ou serviço comercializado pela empresa. */
+export interface CompanyProduct {
+  name: string;
+  description?: string;
+  price?: number;
+  image?: string;
+}
+
 export interface Company {
   _id: string;
   name: string;
@@ -25,8 +33,14 @@ export interface Company {
   cover?: string;
   isFeatured?: boolean;
   rating?: number;
+  ratingCount?: number;
+  isVerified?: boolean;
+  website?: string;
+  instagram?: string;
+  facebook?: string;
   openingHours?: string[];
   services?: string[];
+  products?: CompanyProduct[];
   createdAt?: string;
   updatedAt?: string;
 }
@@ -89,6 +103,11 @@ export function isCategory(cat: CompanyCategory): cat is Category {
 
 export function companyLabel(entity: CouponCompany | JobCompany): string {
   return typeof entity === 'string' ? entity : entity.name;
+}
+
+/** Id da empresa ligada a um cupom/vaga. `null` quando a API devolve só o nome. */
+export function companyId(entity: CouponCompany | JobCompany): string | null {
+  return typeof entity === 'string' ? null : entity._id;
 }
 
 export function categoryLabel(cat: CompanyCategory): string {

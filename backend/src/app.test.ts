@@ -23,3 +23,12 @@ describe('rota inexistente', () => {
     expect(response.body.path).toBe('/api/nao-existe');
   });
 });
+
+describe('GET /api/companies/:id', () => {
+  it('responde 404 para id de empresa malformado', async () => {
+    const response = await request(app).get('/api/companies/nao-e-um-object-id');
+
+    expect(response.status).toBe(404);
+    expect(response.body.error).toBe('id inválido');
+  });
+});

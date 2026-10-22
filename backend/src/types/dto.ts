@@ -47,6 +47,13 @@ export type UpdateCategoryDto = Partial<CreateCategoryDto>;
 // Company
 // ---------------------------------------------------------------------------
 
+const companyProductSchema = z.object({
+  name: z.string().min(1),
+  description: z.string().optional(),
+  price: z.number().nonnegative().optional(),
+  image: z.string().optional(),
+});
+
 export const createCompanySchema = z.object({
   name: z.string().min(1),
   slug: slugSchema,
@@ -60,8 +67,14 @@ export const createCompanySchema = z.object({
   cover: z.string().optional(),
   isFeatured: z.boolean().optional(),
   rating: z.number().min(0).max(5).optional(),
+  ratingCount: z.number().int().nonnegative().optional(),
+  isVerified: z.boolean().optional(),
+  website: z.string().optional(),
+  instagram: z.string().optional(),
+  facebook: z.string().optional(),
   openingHours: z.array(z.string()).optional(),
   services: z.array(z.string()).optional(),
+  products: z.array(companyProductSchema).optional(),
 });
 
 export type CreateCompanyDto = z.infer<typeof createCompanySchema>;
