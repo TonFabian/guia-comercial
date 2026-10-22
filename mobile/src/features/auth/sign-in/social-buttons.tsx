@@ -6,6 +6,7 @@ interface SocialButtonsProps {
   onGoogle: () => void;
   onApple: () => void;
   /** Estado separado: os fluxos sociais podem demorar diferente. */
+  googleLoading: boolean;
   appleLoading: boolean;
 }
 
@@ -13,14 +14,14 @@ interface SocialButtonsProps {
  * Botões sociais (Google em todas as plataformas; Apple só no iOS) no
  * estilo do mock: cards escuros sobre a superfície com a marca.
  */
-export function SocialButtons({ onGoogle, onApple, appleLoading }: SocialButtonsProps) {
+export function SocialButtons({ onGoogle, onApple, googleLoading, appleLoading }: SocialButtonsProps) {
   if (Platform.OS !== 'ios') {
-    return <SocialButton label="Continuar com Google" onPress={onGoogle} />;
+    return <SocialButton label="Continuar com Google" onPress={onGoogle} loading={googleLoading} />;
   }
 
   return (
     <View style={styles.row}>
-      <SocialButton label="Continuar com Google" onPress={onGoogle} />
+      <SocialButton label="Continuar com Google" onPress={onGoogle} loading={googleLoading} />
       <SocialButton
         label="Continuar com Apple"
         onPress={onApple}

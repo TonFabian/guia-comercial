@@ -4,7 +4,7 @@ import * as AuthSession from 'expo-auth-session';
 import { maybeCompleteAuthSession } from 'expo-web-browser';
 import { useRouter } from 'expo-router';
 import { useState } from 'react';
-import { useSSO } from '@clerk/expo';
+import { useClerk, useSSO } from '@clerk/expo';
 
 import { GuiaColors, Radius, Spacing, Type } from '@/constants/theme';
 import { clerkErrorToMessage } from '@/features/auth/clerk-errors';
@@ -25,6 +25,7 @@ maybeCompleteAuthSession();
 export default function SignInScreen() {
   useWarmUpBrowser();
   const { startSSOFlow } = useSSO();
+  const clerk = useClerk();
   const router = useRouter();
 
   const [googleLoading, setGoogleLoading] = useState(false);
@@ -44,7 +45,12 @@ export default function SignInScreen() {
         // tela continue coleta o que falta, como indicam os docs do Clerk.
         if (createdSessionId && setActive) {
           await setActive({ session: createdSessionId });
-          router.replace('/(tabs)');
+
+          // A spec exige conferir a tarefa pendente da sessão antes de
+          // entrar nas abas: MFA/organização/redesenha-routes ficariam
+          // incompletos em "(tabs)" sem isso.
+          const pendencia = clerk.session?.currentTask?.key;
+          router.replace(pendencia ? '/(auth)/continue' : '/(tabs)');
           return;
         }
 
@@ -69,6 +75,7 @@ export default function SignInScreen() {
           <SocialButtons
             onGoogle={viewFor('oauth_google', setGoogleLoading)}
             onApple={viewFor('oauth_apple', setAppleLoading)}
+            googleLoading={googleLoading}
             appleLoading={appleLoading}
           />
 

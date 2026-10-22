@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { router } from 'expo-router';
-import { useSignIn, useSignUp, useUser } from '@clerk/expo';
+import { useClerk, useSignIn, useSignUp } from '@clerk/expo';
 import { ActivityIndicator, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 import { GuiaColors, Radius, Spacing, Type } from '@/constants/theme';
@@ -22,7 +22,7 @@ type Mode = 'entrar' | 'criar';
 export function EmailPasswordForm() {
   const { signIn } = useSignIn();
   const { signUp } = useSignUp();
-  const { user } = useUser();
+  const clerk = useClerk();
 
   const [mode, setMode] = useState<Mode>('entrar');
   const [email, setEmail] = useState('');
@@ -82,6 +82,12 @@ export function EmailPasswordForm() {
     }
 
     await signIn.finalize();
+
+    if (pendenciaDeSessao()) {
+      router.replace('/(auth)/continue');
+      return;
+    }
+
     router.replace('/(tabs)');
   }
 
@@ -114,8 +120,16 @@ export function EmailPasswordForm() {
     }
 
     if (signUp.status === 'complete' && signUp.createdSessionId) {
-      await applyPhoneAfterSession();
       await signUp.finalize();
+
+      if (pendenciaDeSessao()) {
+        router.replace('/(auth)/continue');
+        return;
+      }
+
+      // O recurso de usuário só existe após a sessão ativa: aplicamos o
+      // telefone DEPOIS do finalize, pela instância do Clerk.
+      await applyPhoneAfterSession();
       router.replace('/(tabs)');
       return;
     }
@@ -137,9 +151,20 @@ export function EmailPasswordForm() {
       return;
     }
 
-    await applyPhoneAfterSession();
     await signUp.finalize();
+
+    if (pendenciaDeSessao()) {
+      router.replace('/(auth)/continue');
+      return;
+    }
+
+    await applyPhoneAfterSession();
     router.replace('/(tabs)');
+  }
+
+  /** True quando a sessão ativa exige uma tarefa antes de navegar. */
+  function pendenciaDeSessao(): boolean {
+    return Boolean(clerk.session?.currentTask?.key);
   }
 
   async function resendCode() {
@@ -163,16 +188,21 @@ export function EmailPasswordForm() {
     }
   }
 
-  /** Telefone fica visível no perfil mesmo sem verificação (fase atual). */
+  /**
+   * Telefone aplicado à instância do Clerk após a sessão ativa (número fica
+   * no perfil sem verificação, conforme decisão da spec). A instância expõe
+   * o recurso de usuário ao vivo — o snapshot de `useUser()` antes do
+   * `finalize()` é `null` e silenciaria o telefone.
+   */
   async function applyPhoneAfterSession() {
     const trimmed = phone.trim();
 
-    if (!trimmed || !user) {
+    if (!trimmed || !clerk.user) {
       return;
     }
 
     try {
-      await user.createPhoneNumber({ phoneNumber: trimmed });
+      await clerk.user.createPhoneNumber({ phoneNumber: trimmed });
     } catch {
       // Telefone é opcional: falhar aqui não pode impedir o login.
     }

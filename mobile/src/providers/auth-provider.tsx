@@ -10,6 +10,7 @@ export interface AuthState {
   state: AuthStatus;
   user: User | null;
   enterAsGuest: () => void;
+  exitGuest: () => void;
   signOut: () => Promise<void>;
 }
 
@@ -32,6 +33,7 @@ const DEV_FALLBACK_STATE: AuthState = {
   state: 'signedIn',
   user: DEV_FAKE_USER,
   enterAsGuest: () => undefined,
+  exitGuest: () => undefined,
   signOut: async () => undefined,
 };
 
@@ -60,6 +62,7 @@ function ClerkAuthProvider({ children }: { children: ReactNode }) {
       state: !isLoaded ? 'loading' : isSignedIn ? 'signedIn' : guest ? 'guest' : 'signedOut',
       user: isSignedIn ? toDomainUser(user) : null,
       enterAsGuest: () => setGuest(true),
+      exitGuest: () => setGuest(false),
       signOut,
     }),
     [isLoaded, isSignedIn, guest, signOut, user],
