@@ -47,16 +47,16 @@ export function mapClerkUserToMirror(data: ClerkUserData): Partial<User> {
   return mirror;
 }
 
+// Somente o endereço principal do Clerk conta: sem fallback para o primeiro
+// da lista, porque outro e-mail/telefone pode não ser do usuário.
 function findPrimaryEmail(data: ClerkUserData): string | undefined {
-  const primario = data.email_addresses?.find(
+  return data.email_addresses?.find(
     (email) => email.id === data.primary_email_address_id,
-  );
-  return primario?.email_address ?? data.email_addresses?.[0]?.email_address;
+  )?.email_address;
 }
 
 function findPrimaryPhone(data: ClerkUserData): string | undefined {
-  const primario = data.phone_numbers?.find(
+  return data.phone_numbers?.find(
     (telefone) => telefone.id === data.primary_phone_number_id,
-  );
-  return primario?.phone_number ?? data.phone_numbers?.[0]?.phone_number;
+  )?.phone_number;
 }

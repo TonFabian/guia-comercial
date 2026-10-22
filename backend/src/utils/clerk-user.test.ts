@@ -31,4 +31,22 @@ describe('mapClerkUserToMirror', () => {
     expect(mirror.phone).toBeUndefined();
     expect(mirror.email).toBeUndefined();
   });
+
+  it('não usa outro e-mail quando o principal não corresponde', () => {
+    const mirror = mapClerkUserToMirror({
+      id: 'user_y',
+      email_addresses: [{ id: 'em_2', email_address: 'outro@example.com' }],
+      primary_email_address_id: 'em_1',
+    });
+    expect(mirror.email).toBeUndefined();
+  });
+
+  it('não usa outro telefone quando o principal não corresponde', () => {
+    const mirror = mapClerkUserToMirror({
+      id: 'user_z',
+      phone_numbers: [{ id: 'ph_2', phone_number: '+5584888888888' }],
+      primary_phone_number_id: 'ph_1',
+    });
+    expect(mirror.phone).toBeUndefined();
+  });
 });
