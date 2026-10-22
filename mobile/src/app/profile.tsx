@@ -13,24 +13,19 @@ const MENU = [
 
 export default function ProfileScreen() {
   const handleMenuPress = (item: (typeof MENU)[0]) => {
-    console.log('[PROFILE] menu item pressed:', item.label, item.id);
     if (item.id === '1') {
-      console.log('[PROFILE] Tentando abrir tela/login - Meus dados');
       Alert.alert('Login', 'Funcionalidade de login em desenvolvimento.');
       return;
     }
     if (item.id === '4') {
-      console.log('[PROFILE] Tentando sair');
       Alert.alert('Sair', 'Nenhum usuário logado.');
       return;
     }
-    console.log('[PROFILE] Item não implementado:', item.label);
     Alert.alert(item.label, 'Em breve');
   };
 
   const handleLoginPress = () => {
-    console.log('[PROFILE] Botão de login/visitante pressionado');
-    Alert.alert('Login', 'Tela de autenticação em desenvolvimento. Ver logs.');
+    Alert.alert('Login', 'Tela de autenticação em desenvolvimento.');
   };
 
   return (

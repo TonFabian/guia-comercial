@@ -3,24 +3,35 @@
   "version": "1.0.0",
   "private": true,
   "description": "API REST do guia comercial (Express + TypeScript + MongoDB)",
-  "main": "dist/index.js",
+  "main": "dist/backend/src/index.js",
   "scripts": {
     "dev": "tsx watch src/index.ts",
     "build": "tsc",
-    "start": "node dist/index.js",
-    "typecheck": "tsc --noEmit"
+    "start": "node dist/backend/src/index.js",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "lint": "eslint .",
+    "seed": "tsx src/scripts/seed.ts"
   },
   "dependencies": {
     "cors": "^2.8.5",
     "dotenv": "^17.2.4",
     "express": "^5.1.1",
-    "mongoose": "^9.0.11"
+    "helmet": "^8.3.0",
+    "mongoose": "^9.0.11",
+    "zod": "^4.6.7"
   },
   "devDependencies": {
+    "@eslint/js": "^10.0.1",
     "@types/cors": "^2.8.19",
     "@types/express": "^5.0.6",
     "@types/node": "^24.10.9",
+    "@types/supertest": "^7.2.1",
+    "eslint": "^10.13.0",
+    "supertest": "^7.3.1",
     "tsx": "^4.21.0",
-    "typescript": "~6.0.3"
+    "typescript": "~6.0.3",
+    "typescript-eslint": "^8.72.0",
+    "vitest": "^5.0.5"
   }
 }
