@@ -1,5 +1,6 @@
 import '@/global.css';
 
+import { DarkTheme } from 'expo-router';
 import { Platform } from 'react-native';
 
 export const GuiaColors = {
@@ -12,6 +13,7 @@ export const GuiaColors = {
   textSecondary: '#9CA3AF',
   border: '#2E2E2E',
   success: '#22C55E',
+  error: '#EF4444',
   whatsapp: '#25D366',
   coverPlaceholder: '#3A3A3A',
 } as const;
@@ -80,3 +82,15 @@ export const CardShadow = {
 
 export const BottomTabInset = Platform.select({ ios: 50, android: 80 }) ?? 0;
 export const MaxContentWidth = 800;
+
+/** Tema de navegação (tabs/stack) alinhado aos tokens da GUIA. */
+export const DarkGuiTheme = {
+  ...DarkTheme,
+  colors: {
+    ...DarkTheme.colors,
+    background: GuiaColors.background,
+    card: GuiaColors.background,
+    primary: GuiaColors.primary,
+    text: GuiaColors.text,
+  },
+};

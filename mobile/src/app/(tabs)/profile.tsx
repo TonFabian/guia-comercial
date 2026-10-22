@@ -1,8 +1,10 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { router } from 'expo-router';
+import { Alert, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { GuiaColors } from '@/constants/theme';
+import { GuiaColors, Radius } from '@/constants/theme';
+import { useAuthState } from '@/providers/auth-provider';
 
 const MENU = [
   { id: '1', label: 'Meus dados', icon: 'person-outline' as const },
@@ -12,32 +14,75 @@ const MENU = [
 ];
 
 export default function ProfileScreen() {
+  const { state, user, exitGuest, signOut } = useAuthState();
+
   const handleMenuPress = (item: (typeof MENU)[0]) => {
     if (item.id === '1') {
-      Alert.alert('Login', 'Funcionalidade de login em desenvolvimento.');
+      if (state === 'signedIn') {
+        Alert.alert('Meus dados', 'Em breve');
+        return;
+      }
+
+      router.push('/(auth)/sign-in');
       return;
     }
     if (item.id === '4') {
-      Alert.alert('Sair', 'Nenhum usuário logado.');
+      handleSignOut();
       return;
     }
     Alert.alert(item.label, 'Em breve');
   };
 
+  /**
+   * Sair encerra a sessão do Clerk (ou o modo convidado). O guard do layout
+   * das abas leva ao sign-in quando o estado vira `signedOut`.
+   */
+  function handleSignOut() {
+    if (state === 'guest') {
+      exitGuest();
+      router.replace('/(auth)/sign-in');
+      return;
+    }
+    if (state === 'signedIn') {
+      void signOut();
+    }
+  }
+
   const handleLoginPress = () => {
-    Alert.alert('Login', 'Tela de autenticação em desenvolvimento.');
+    if (state !== 'signedIn') {
+      router.push('/(auth)/sign-in');
+    }
   };
+
+  const nomeExibido = user 
+    ? [user.firstName, user.lastName].filter(Boolean).join(' ') || user.email
+    : 'Visitante';
 
   return (
     <View style={styles.root}>
       <SafeAreaView style={styles.safeArea} edges={['top']}>
         <Text style={styles.title}>Perfil</Text>
-        <TouchableOpacity style={styles.avatarBox} activeOpacity={0.7} onPress={handleLoginPress}>
-          <View style={styles.avatar}>
-            <Ionicons name="person" size={36} color={GuiaColors.primary} />
-          </View>
-          <Text style={styles.userName}>Visitante</Text>
-          <Text style={styles.userHint}>Faça login para salvar favoritos</Text>
+        <TouchableOpacity
+          style={styles.avatarBox}
+          activeOpacity={state === 'signedIn' ? 1 : 0.7}
+          onPress={handleLoginPress}
+          accessibilityLabel={
+            state === 'signedIn' ? `Perfil de ${nomeExibido}` : 'Entrar na conta'
+          }
+        >
+          {user?.imageUrl ? (
+            <Image source={{ uri: user.imageUrl }} style={styles.avatarImagem} />
+          ) : (
+            <View style={styles.avatar}>
+              <Ionicons name="person" size={36} color={GuiaColors.primary} />
+            </View>
+          )}
+          <Text style={styles.userName}>{nomeExibido}</Text>
+          <Text style={styles.userHint}>
+            {state === 'guest'
+              ? 'Convidado — entre para ver contatos e cupons'
+              : user?.email ?? 'Faça login para salvar favoritos'}
+          </Text>
         </TouchableOpacity>
         <View style={styles.menu}>
           {MENU.map((item) => (
@@ -88,6 +133,13 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  avatarImagem: {
+    width: 84,
+    height: 84,
+    borderRadius: 42,
+    borderWidth: 2,
+    borderColor: GuiaColors.primary,
+  },
   userName: {
     color: GuiaColors.text,
     fontSize: 18,
@@ -100,7 +152,7 @@ const styles = StyleSheet.create({
   },
   menu: {
     backgroundColor: GuiaColors.surface,
-    borderRadius: 16,
+    borderRadius: Radius.card,
     borderWidth: 1,
     borderColor: GuiaColors.border,
     overflow: 'hidden',

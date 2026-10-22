@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 
-import type { Banner, Category, Company, Coupon, Job, Paginated, User } from '../types/domain';
+import type { AdminUser, Banner, Category, Company, Coupon, Job, Paginated } from '../types/domain';
 
 const BASE_URL = import.meta.env.VITE_API_URL ?? '';
 
@@ -87,7 +87,7 @@ export async function getJobs(): Promise<Paginated<Job>> {
   throw new Error(NOT_IMPLEMENTED('getJobs'));
 }
 
-export async function getUsers(): Promise<Paginated<User>> {
+export async function getUsers(): Promise<Paginated<AdminUser>> {
   throw new Error(NOT_IMPLEMENTED('getUsers'));
 }
 

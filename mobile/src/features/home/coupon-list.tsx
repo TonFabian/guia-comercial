@@ -5,6 +5,7 @@ import { Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 
 
 import { CardShadow, CardColors, GuiaColors, Overlays, Radius, Spacing, Type } from '@/constants/theme';
 import type { DisplayCoupon } from '@/data/mock';
+import { ContactHintRow } from '@/features/home/contact-hidden-hint';
 import { companyLabel } from '@/types/domain';
 
 export function CouponList({ coupons }: { coupons: DisplayCoupon[] }) {
@@ -35,16 +36,23 @@ export function CouponList({ coupons }: { coupons: DisplayCoupon[] }) {
             </View>
             <Text style={styles.couponTitle}>{coupon.title}</Text>
             <Text style={styles.couponBusiness}>{companyLabel(coupon.company)}</Text>
-            <Pressable
-              style={styles.couponFooter}
-              onPress={() => handleCopy(coupon._id)}
-              hitSlop={6}
-              android_ripple={{ color: Overlays.amberTag }}>
-              <Ionicons name="copy-outline" size={14} color={GuiaColors.primary} />
-              <Text style={styles.couponFooterText}>
-                {copiedId === coupon._id ? 'Copiado! ✓' : 'Copiar cupom'}
-              </Text>
-            </Pressable>
+            {/* Sem código (convidado ou cupom sem resgate) mostra o hint. */}
+            {coupon.code ? (
+              <Pressable
+                style={styles.couponFooter}
+                onPress={() => handleCopy(coupon._id)}
+                hitSlop={6}
+                android_ripple={{ color: Overlays.amberTag }}>
+                <Ionicons name="copy-outline" size={14} color={GuiaColors.primary} />
+                <Text style={styles.couponFooterText}>
+                  {copiedId === coupon._id ? 'Copiado! ✓' : 'Copiar cupom'}
+                </Text>
+              </Pressable>
+            ) : (
+              <View style={styles.couponFooter}>
+                <ContactHintRow />
+              </View>
+            )}
           </TouchableOpacity>
         ))}
       </ScrollView>
