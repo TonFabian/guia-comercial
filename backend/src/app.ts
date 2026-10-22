@@ -2,9 +2,13 @@ import cors from 'cors';
 import express from 'express';
 import helmet from 'helmet';
 
+import { warnIfWithoutAuthentication } from './config/boot-check.js';
 import { errorHandler } from './middlewares/error.middleware.js';
 import { notFoundHandler } from './middlewares/not-found.middleware.js';
 import routes from './routes/index.js';
+
+// Aviso de boot: em produção, ausência de CLERK_SECRET_KEY deixa a API aberta.
+warnIfWithoutAuthentication(process.env);
 
 const app = express();
 
