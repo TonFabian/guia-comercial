@@ -3,6 +3,7 @@ import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 import { GuiaColors, Radius, Spacing, Type } from '@/constants/theme';
+import { openCompanyDetails } from '@/features/company/open-company';
 import type { Company } from '@/types/domain';
 import { callPhone, openAddress } from '@/utils/links';
 
@@ -11,15 +12,21 @@ export function PharmacyOnDuty({ pharmacy }: { pharmacy: Company | null }) {
 
   return (
     <View style={styles.pharmacyCard}>
-      <View style={styles.pharmacyHeader}>
-        <MaterialCommunityIcons name="pill" size={20} color={GuiaColors.primary} />
-        <Text style={styles.pharmacyTitle}>Farmácia de Plantão Hoje</Text>
-      </View>
-      <Text style={styles.pharmacyName}>{pharmacy.name}</Text>
-      <View style={styles.statusRow}>
-        <View style={styles.statusDot} />
-        <Text style={styles.statusText}>{pharmacy.openingHours?.[0] ?? 'Aberto agora'}</Text>
-      </View>
+      <TouchableOpacity
+        activeOpacity={0.85}
+        accessibilityRole="button"
+        accessibilityLabel={`Ver detalhes de ${pharmacy.name}`}
+        onPress={() => openCompanyDetails(pharmacy._id)}>
+        <View style={styles.pharmacyHeader}>
+          <MaterialCommunityIcons name="pill" size={20} color={GuiaColors.primary} />
+          <Text style={styles.pharmacyTitle}>Farmácia de Plantão Hoje</Text>
+        </View>
+        <Text style={styles.pharmacyName}>{pharmacy.name}</Text>
+        <View style={styles.statusRow}>
+          <View style={styles.statusDot} />
+          <Text style={styles.statusText}>{pharmacy.openingHours?.[0] ?? 'Aberto agora'}</Text>
+        </View>
+      </TouchableOpacity>
       <View style={styles.pharmacyActions}>
         <TouchableOpacity
           style={styles.pillDark}

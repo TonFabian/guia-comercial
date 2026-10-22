@@ -13,6 +13,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { GuiaColors, Radius, Spacing, Type } from '@/constants/theme';
+import { openCompanyDetails } from '@/features/company/open-company';
 import { getCategories, getCompanies, getCompaniesByCategory, searchCompanies } from '@/services/api';
 import { categoryLabel } from '@/types/domain';
 import type { Category, Company } from '@/types/domain';
@@ -133,7 +134,13 @@ export default function SearchScreen() {
               <View style={styles.group}>
                 <Text style={styles.groupTitle}>Empresas</Text>
                 {companies.map((company) => (
-                  <View key={company._id} style={styles.row}>
+                  <TouchableOpacity
+                    key={company._id}
+                    style={styles.row}
+                    activeOpacity={0.7}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Ver detalhes de ${company.name}`}
+                    onPress={() => openCompanyDetails(company._id)}>
                     <View style={styles.rowBody}>
                       <Text style={styles.rowTitle}>{company.name}</Text>
                       <Text style={styles.rowSubtitle}>
@@ -142,7 +149,7 @@ export default function SearchScreen() {
                       </Text>
                     </View>
                     <Ionicons name="chevron-forward" size={16} color={GuiaColors.textSecondary} />
-                  </View>
+                  </TouchableOpacity>
                 ))}
               </View>
             )}

@@ -3,7 +3,9 @@
  * abrir mapa). Silencia erros de Linking que podem ocorrer em ambientes sem
  * handler para a URL.
  */
-import { Alert, Linking } from 'react-native';
+import { Alert, Linking, Share } from 'react-native';
+
+import type { Company } from '@/types/domain';
 
 function toDigits(phone: string): string {
   return phone.replace(/\D/g, '');
@@ -38,4 +40,25 @@ export async function openAddress(address: string) {
 
 export function comingSoon(title: string) {
   Alert.alert(title, 'Integração em breve.');
+}
+
+/** Abre um link externo (site, Instagram, Facebook). */
+export async function openExternalUrl(url: string, title: string) {
+  try {
+    await Linking.openURL(url);
+  } catch {
+    Alert.alert(title, `Não foi possível abrir o link (${url}).`);
+  }
+}
+
+/** Compartilha os dados da empresa pelo menu nativo do sistema. */
+export async function shareCompany(company: Company) {
+  const details = [company.address, company.city].filter(Boolean).join(' — ');
+  try {
+    await Share.share({
+      message: details ? `${company.name}\n${details}` : company.name,
+    });
+  } catch {
+    Alert.alert('Compartilhar', 'Não foi possível compartilhar a empresa.');
+  }
 }

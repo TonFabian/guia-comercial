@@ -4,6 +4,7 @@ import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 import { GuiaColors, Overlays, Radius, Spacing, Type } from '@/constants/theme';
+import { openCompanyDetails } from '@/features/company/open-company';
 import { categoryLabel } from '@/types/domain';
 import type { Company } from '@/types/domain';
 import { callPhone, openAddress, openWhatsApp } from '@/utils/links';
@@ -15,24 +16,31 @@ export function FeaturedCompany({ company }: { company: Company | null }) {
     <View style={styles.section}>
       <SectionHeader title="Empresas em Destaque" icon="star" />
       <View style={styles.companyCard}>
-        <View style={styles.companyCover}>
-          <MaterialCommunityIcons
-            name="office-building"
-            size={48}
-            color={Overlays.whiteSoft}
-          />
-          <View style={styles.highlightTag}>
-            <Text style={styles.highlightTagText}>Destaque</Text>
+        <TouchableOpacity
+          activeOpacity={0.85}
+          accessibilityRole="button"
+          accessibilityLabel={`Ver detalhes de ${company.name}`}
+          onPress={() => openCompanyDetails(company._id)}>
+          <View style={styles.companyCover}>
+            <MaterialCommunityIcons
+              name="office-building"
+              size={48}
+              color={Overlays.whiteSoft}
+            />
+            <View style={styles.highlightTag}>
+              <Text style={styles.highlightTagText}>Destaque</Text>
+            </View>
           </View>
-        </View>
-        <View style={styles.companyBody}>
-          <Text style={styles.companyName}>{company.name}</Text>
-          <Text style={styles.companyCategory}>{categoryLabel(company.category)}</Text>
-          <View style={styles.addressRow}>
-            <Ionicons name="location-outline" size={14} color={GuiaColors.textSecondary} />
-            <Text style={styles.companyAddress}>{company.address}</Text>
+          <View style={styles.companyBody}>
+            <Text style={styles.companyName}>{company.name}</Text>
+            <Text style={styles.companyCategory}>{categoryLabel(company.category)}</Text>
+            <View style={styles.addressRow}>
+              <Ionicons name="location-outline" size={14} color={GuiaColors.textSecondary} />
+              <Text style={styles.companyAddress}>{company.address}</Text>
+            </View>
           </View>
-          <View style={styles.companyActions}>
+        </TouchableOpacity>
+        <View style={styles.companyActions}>
             <TouchableOpacity
               style={styles.actionPill}
               activeOpacity={0.7}
@@ -54,7 +62,6 @@ export function FeaturedCompany({ company }: { company: Company | null }) {
               <MaterialCommunityIcons name="whatsapp" size={16} color={GuiaColors.background} />
               <Text style={styles.whatsappPillText}>WhatsApp</Text>
             </TouchableOpacity>
-          </View>
         </View>
       </View>
     </View>
@@ -121,6 +128,8 @@ const styles = StyleSheet.create({
     flexWrap: 'wrap',
     gap: 8,
     marginTop: 12,
+    paddingHorizontal: 16,
+    paddingBottom: 16,
   },
   actionPill: {
     flexDirection: 'row',

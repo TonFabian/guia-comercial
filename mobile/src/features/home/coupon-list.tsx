@@ -5,7 +5,8 @@ import { Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 
 
 import { CardShadow, CardColors, GuiaColors, Overlays, Radius, Spacing, Type } from '@/constants/theme';
 import type { DisplayCoupon } from '@/data/mock';
-import { companyLabel } from '@/types/domain';
+import { openCompanyDetails } from '@/features/company/open-company';
+import { companyId, companyLabel } from '@/types/domain';
 
 export function CouponList({ coupons }: { coupons: DisplayCoupon[] }) {
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -22,31 +23,40 @@ export function CouponList({ coupons }: { coupons: DisplayCoupon[] }) {
         horizontal
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.carouselContent}>
-        {coupons.map((coupon) => (
-          <TouchableOpacity
-            key={coupon._id}
-            style={StyleSheet.flatten([
-              styles.couponCard,
-              { backgroundColor: coupon.color ?? CardColors.couponDefault },
-            ])}
-            activeOpacity={0.85}>
-            <View style={styles.couponTag}>
-              <Text style={styles.couponTagText}>Cupom Exclusivo</Text>
+        {coupons.map((coupon) => {
+          const targetId = companyId(coupon.company);
+          return (
+            <View
+              key={coupon._id}
+              style={StyleSheet.flatten([
+                styles.couponCard,
+                { backgroundColor: coupon.color ?? CardColors.couponDefault },
+              ])}>
+              <TouchableOpacity
+                activeOpacity={0.85}
+                accessibilityRole="button"
+                accessibilityLabel={`Ver empresa do cupom ${coupon.title}`}
+                disabled={!targetId}
+                onPress={() => targetId && openCompanyDetails(targetId)}>
+                <View style={styles.couponTag}>
+                  <Text style={styles.couponTagText}>Cupom Exclusivo</Text>
+                </View>
+                <Text style={styles.couponTitle}>{coupon.title}</Text>
+                <Text style={styles.couponBusiness}>{companyLabel(coupon.company)}</Text>
+              </TouchableOpacity>
+              <Pressable
+                style={styles.couponFooter}
+                onPress={() => handleCopy(coupon._id)}
+                hitSlop={6}
+                android_ripple={{ color: Overlays.amberTag }}>
+                <Ionicons name="copy-outline" size={14} color={GuiaColors.primary} />
+                <Text style={styles.couponFooterText}>
+                  {copiedId === coupon._id ? 'Copiado! ✓' : 'Copiar cupom'}
+                </Text>
+              </Pressable>
             </View>
-            <Text style={styles.couponTitle}>{coupon.title}</Text>
-            <Text style={styles.couponBusiness}>{companyLabel(coupon.company)}</Text>
-            <Pressable
-              style={styles.couponFooter}
-              onPress={() => handleCopy(coupon._id)}
-              hitSlop={6}
-              android_ripple={{ color: Overlays.amberTag }}>
-              <Ionicons name="copy-outline" size={14} color={GuiaColors.primary} />
-              <Text style={styles.couponFooterText}>
-                {copiedId === coupon._id ? 'Copiado! ✓' : 'Copiar cupom'}
-              </Text>
-            </Pressable>
-          </TouchableOpacity>
-        ))}
+          );
+        })}
       </ScrollView>
     </View>
   );

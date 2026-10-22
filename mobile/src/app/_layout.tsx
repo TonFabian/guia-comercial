@@ -1,9 +1,9 @@
-import { DarkTheme, ThemeProvider } from 'expo-router';
+import { DarkTheme, Stack, ThemeProvider } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
-import AppTabs from '@/components/app-tabs';
 import { GuiaColors } from '@/constants/theme';
+import { FavoritesProvider } from '@/features/favorites/favorites-provider';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -18,11 +18,20 @@ const DarkGuiTheme = {
   },
 };
 
-export default function TabLayout() {
+export default function RootLayout() {
   return (
     <ThemeProvider value={DarkGuiTheme}>
-      <AnimatedSplashOverlay />
-      <AppTabs />
+      <FavoritesProvider>
+        <AnimatedSplashOverlay />
+        <Stack
+          screenOptions={{
+            headerShown: false,
+            contentStyle: { backgroundColor: GuiaColors.background },
+          }}>
+          <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="company/[id]" />
+        </Stack>
+      </FavoritesProvider>
     </ThemeProvider>
   );
 }

@@ -33,6 +33,7 @@ export const Overlays = {
   whiteMild: 'rgba(255,255,255,0.75)',
   whiteFaint: 'rgba(255,255,255,0.7)',
   amberTag: 'rgba(255, 193, 7, 0.2)',
+  blackSoft: 'rgba(0,0,0,0.55)',
 } as const;
 
 export const Spacing = {

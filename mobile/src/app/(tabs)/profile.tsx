@@ -37,7 +37,7 @@ export default function ProfileScreen() {
             <Ionicons name="person" size={36} color={GuiaColors.primary} />
           </View>
           <Text style={styles.userName}>Visitante</Text>
-          <Text style={styles.userHint}>Faça login para salvar favoritos</Text>
+          <Text style={styles.userHint}>Seus favoritos ficam salvos neste aparelho</Text>
         </TouchableOpacity>
         <View style={styles.menu}>
           {MENU.map((item) => (
