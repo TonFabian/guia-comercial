@@ -13,6 +13,7 @@ export const GuiaColors = {
   textSecondary: '#9CA3AF',
   border: '#2E2E2E',
   success: '#22C55E',
+  error: '#EF4444',
   whatsapp: '#25D366',
   coverPlaceholder: '#3A3A3A',
 } as const;
