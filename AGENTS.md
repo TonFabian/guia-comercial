@@ -375,3 +375,10 @@ Regras:
   usa `global.css`).
 - O `expo export` é o jeito mais rápido de provar que o app **bundleia**
   (achata alias `@/`, imports e assets) sem precisar de device.
+- O **`react-native-web` é patcheado** via `patch-package`
+  (`mobile/patches/react-native-web+0.21.4.patch`, aplicado no `postinstall`).
+  O patch remove o `console.warn("Cannot record touch end without a touch
+  start")`, que dispara em qualquer clique que não seja botão esquerdo puro
+  (botão direito, botão do meio, Ctrl+clique), porque o responder system só
+  registra `mousedown` primário. Não apagar `mobile/patches/` sem antes
+  revisar o patch.
