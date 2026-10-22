@@ -4,18 +4,16 @@ import type { DisplayBanner } from '@/data/mock';
 import {
   getBanners,
   getCategories,
-  getCoupons,
   getFeaturedCompany,
   getJobs,
   getPharmacyOnDuty,
 } from '@/services/api';
-import type { Category, Company, Coupon, Job } from '@/types/domain';
+import type { Category, Company, Job } from '@/types/domain';
 
 export type HomeData = {
   loading: boolean;
   categories: Category[];
   banners: DisplayBanner[];
-  coupons: Coupon[];
   jobs: Job[];
   featuredCompany: Company | null;
   pharmacy: Company | null;
@@ -25,7 +23,6 @@ const INITIAL: HomeData = {
   loading: true,
   categories: [],
   banners: [],
-  coupons: [],
   jobs: [],
   featuredCompany: null,
   pharmacy: null,
@@ -42,10 +39,9 @@ export function useHomeData(): HomeData {
     let cancelled = false;
 
     async function load() {
-      const [categories, banners, coupons, jobs, featuredCompany, pharmacy] = await Promise.all([
+      const [categories, banners, jobs, featuredCompany, pharmacy] = await Promise.all([
         getCategories(),
         getBanners(),
-        getCoupons(),
         getJobs(),
         getFeaturedCompany(),
         getPharmacyOnDuty(),
@@ -55,7 +51,6 @@ export function useHomeData(): HomeData {
         loading: false,
         categories,
         banners,
-        coupons,
         jobs,
         featuredCompany,
         pharmacy,

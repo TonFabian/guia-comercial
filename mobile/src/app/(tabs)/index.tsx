@@ -6,16 +6,16 @@ import { GuiaColors } from '@/constants/theme';
 import { AnnounceCta } from '@/features/home/announce-cta';
 import { BannerCarousel } from '@/features/home/banner-carousel';
 import { CategoryList } from '@/features/home/category-list';
-import { CouponList } from '@/features/home/coupon-list';
 import { FeaturedCompany } from '@/features/home/featured-company';
 import { Header } from '@/features/home/header';
 import { JobList } from '@/features/home/job-list';
 import { PharmacyOnDuty } from '@/features/home/pharmacy-on-duty';
+import { PublicUtilitySection } from '@/features/home/public-utility-section';
 import { SearchBar } from '@/features/home/search-bar';
 import { useHomeData } from '@/features/home/use-home-data';
 
 export default function HomeScreen() {
-  const { loading, banners, categories, coupons, featuredCompany, jobs, pharmacy } = useHomeData();
+  const { loading, banners, categories, featuredCompany, jobs, pharmacy } = useHomeData();
   const insets = useSafeAreaInsets();
 
   return (
@@ -42,7 +42,7 @@ export default function HomeScreen() {
               <BannerCarousel banners={banners} />
               <PharmacyOnDuty pharmacy={pharmacy} />
               <FeaturedCompany company={featuredCompany} />
-              <CouponList coupons={coupons} />
+              <PublicUtilitySection pharmacy={pharmacy} />
               <JobList jobs={jobs} />
               <AnnounceCta />
             </>
