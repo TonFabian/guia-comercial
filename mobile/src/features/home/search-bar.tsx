@@ -62,7 +62,7 @@ const styles = StyleSheet.create({
   searchButton: {
     width: 40,
     height: 40,
-    borderRadius: Radius.pill + 4,
+    borderRadius: Radius.pill,
     backgroundColor: GuiaColors.primary,
     alignItems: 'center',
     justifyContent: 'center',

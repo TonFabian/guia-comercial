@@ -45,11 +45,13 @@ export const Spacing = {
   six: 64,
 } as const;
 
+/** Raio dos cantos. `circle` acompanha a metade de uma caixa de 64px. */
 export const Radius = {
   tag: 6,
   chip: 8,
   card: 16,
   iconBox: 14,
+  circle: 32,
   pill: 20,
   search: 28,
   avatar: 42,
@@ -65,6 +67,15 @@ export const Type = {
   section: 17,
   title: 18,
   headline: 24,
+} as const;
+
+/** Sombra/elevação padrão dos cards em carrossel (banners e cupons). */
+export const CardShadow = {
+  elevation: 3,
+  shadowColor: '#000',
+  shadowOpacity: 0.3,
+  shadowRadius: 4,
+  shadowOffset: { width: 0, height: 2 },
 } as const;
 
 export const BottomTabInset = Platform.select({ ios: 50, android: 80 }) ?? 0;

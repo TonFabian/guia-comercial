@@ -3,7 +3,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
-import { GuiaColors, Overlays, Radius, Type } from '@/constants/theme';
+import { GuiaColors, Overlays, Radius, Spacing, Type } from '@/constants/theme';
 import { categoryLabel } from '@/types/domain';
 import type { Company } from '@/types/domain';
 import { callPhone, openAddress, openWhatsApp } from '@/utils/links';
@@ -49,7 +49,7 @@ export function FeaturedCompany({ company }: { company: Company | null }) {
             </TouchableOpacity>
             <TouchableOpacity
               style={styles.whatsappPill}
-              activeOpacity={0.8}
+              activeOpacity={0.7}
               onPress={() => company.whatsapp && void openWhatsApp(company.whatsapp)}>
               <MaterialCommunityIcons name="whatsapp" size={16} color={GuiaColors.background} />
               <Text style={styles.whatsappPillText}>WhatsApp</Text>
@@ -125,11 +125,12 @@ const styles = StyleSheet.create({
   actionPill: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: 6,
     backgroundColor: GuiaColors.surfaceAlt,
     borderRadius: Radius.pill,
-    paddingVertical: 8,
-    paddingHorizontal: 14,
+    paddingVertical: 10,
+    paddingHorizontal: Spacing.three,
   },
   actionPillText: {
     color: GuiaColors.primary,
@@ -139,11 +140,12 @@ const styles = StyleSheet.create({
   whatsappPill: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: 6,
     backgroundColor: GuiaColors.whatsapp,
     borderRadius: Radius.pill,
-    paddingVertical: 8,
-    paddingHorizontal: 14,
+    paddingVertical: 10,
+    paddingHorizontal: Spacing.three,
   },
   whatsappPillText: {
     color: GuiaColors.background,

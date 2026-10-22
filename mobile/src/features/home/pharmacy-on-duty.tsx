@@ -30,7 +30,7 @@ export function PharmacyOnDuty({ pharmacy }: { pharmacy: Company | null }) {
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.pillYellow}
-          activeOpacity={0.8}
+          activeOpacity={0.7}
           onPress={() => pharmacy.phone && void callPhone(pharmacy.phone)}>
           <Ionicons name="call" size={16} color={GuiaColors.background} />
           <Text style={styles.pillYellowText}>Ligar</Text>
@@ -49,7 +49,7 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: GuiaColors.border,
     padding: Spacing.three,
-    gap: 6,
+    gap: Spacing.two,
   },
   pharmacyHeader: {
     flexDirection: 'row',
@@ -57,8 +57,8 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   pharmacyTitle: {
-    color: GuiaColors.primary,
-    fontSize: Type.subtitle,
+    color: GuiaColors.text,
+    fontSize: Type.cardTitle,
     fontWeight: '700',
   },
   pharmacyName: {
@@ -90,13 +90,14 @@ const styles = StyleSheet.create({
   pillDark: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: 6,
     backgroundColor: GuiaColors.surfaceAlt,
     borderRadius: Radius.pill,
     borderWidth: 1,
     borderColor: GuiaColors.primary,
-    paddingVertical: 8,
-    paddingHorizontal: 14,
+    paddingVertical: 10,
+    paddingHorizontal: Spacing.three,
   },
   pillDarkText: {
     color: GuiaColors.primary,
@@ -106,11 +107,12 @@ const styles = StyleSheet.create({
   pillYellow: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: 6,
     backgroundColor: GuiaColors.primary,
     borderRadius: Radius.pill,
-    paddingVertical: 9,
-    paddingHorizontal: 16,
+    paddingVertical: 10,
+    paddingHorizontal: Spacing.three,
   },
   pillYellowText: {
     color: GuiaColors.background,

@@ -1,13 +1,13 @@
 import { StyleSheet, Text, TouchableOpacity } from 'react-native';
 
-import { GuiaColors, Type } from '@/constants/theme';
+import { GuiaColors, Spacing, Type } from '@/constants/theme';
 import { comingSoon } from '@/utils/links';
 
 export function AnnounceCta() {
   return (
     <TouchableOpacity
       style={styles.ctaContainer}
-      activeOpacity={0.8}
+      activeOpacity={0.7}
       onPress={() => comingSoon('Anuncie no Guia')}>
       <Text style={styles.ctaText}>
         Quer sua empresa aqui? <Text style={styles.ctaHighlight}>Clique aqui e anuncie no Guia!</Text>
@@ -20,6 +20,7 @@ const styles = StyleSheet.create({
   ctaContainer: {
     marginHorizontal: 16,
     marginTop: 4,
+    marginBottom: Spacing.three,
     paddingVertical: 18,
     alignItems: 'center',
   },
@@ -31,6 +32,6 @@ const styles = StyleSheet.create({
   },
   ctaHighlight: {
     color: GuiaColors.primary,
-    fontWeight: '700',
+    fontWeight: '600',
   },
 });

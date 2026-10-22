@@ -45,13 +45,13 @@ const styles = StyleSheet.create({
   },
   categoryItem: {
     alignItems: 'center',
-    width: 68,
+    width: 76,
     gap: 8,
   },
   categoryIconBox: {
-    width: 58,
-    height: 58,
-    borderRadius: Radius.iconBox,
+    width: 64,
+    height: 64,
+    borderRadius: Radius.circle,
     backgroundColor: GuiaColors.surface,
     borderWidth: 1,
     borderColor: GuiaColors.border,

@@ -1,12 +1,20 @@
 import { SectionHeader } from './section-header';
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useState } from 'react';
+import { Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
-import { CardColors, GuiaColors, Overlays, Radius, Type } from '@/constants/theme';
+import { CardShadow, CardColors, GuiaColors, Overlays, Radius, Spacing, Type } from '@/constants/theme';
 import type { DisplayCoupon } from '@/data/mock';
 import { companyLabel } from '@/types/domain';
 
 export function CouponList({ coupons }: { coupons: DisplayCoupon[] }) {
+  const [copiedId, setCopiedId] = useState<string | null>(null);
+
+  function handleCopy(id: string) {
+    setCopiedId(id);
+    setTimeout(() => setCopiedId(null), 1500);
+  }
+
   return (
     <View style={styles.section}>
       <SectionHeader title="Cupons e Descontos" icon="pricetag" />
@@ -21,26 +29,27 @@ export function CouponList({ coupons }: { coupons: DisplayCoupon[] }) {
               styles.couponCard,
               { backgroundColor: coupon.color ?? CardColors.couponDefault },
             ])}
-            activeOpacity={0.85}
-            onPress={() => showCouponCode(coupon)}>
+            activeOpacity={0.85}>
             <View style={styles.couponTag}>
               <Text style={styles.couponTagText}>Cupom Exclusivo</Text>
             </View>
             <Text style={styles.couponTitle}>{coupon.title}</Text>
             <Text style={styles.couponBusiness}>{companyLabel(coupon.company)}</Text>
-            <View style={styles.couponFooter}>
+            <Pressable
+              style={styles.couponFooter}
+              onPress={() => handleCopy(coupon._id)}
+              hitSlop={6}
+              android_ripple={{ color: Overlays.amberTag }}>
               <Ionicons name="copy-outline" size={14} color={GuiaColors.primary} />
-              <Text style={styles.couponFooterText}>Copiar cupom</Text>
-            </View>
+              <Text style={styles.couponFooterText}>
+                {copiedId === coupon._id ? 'Copiado! ✓' : 'Copiar cupom'}
+              </Text>
+            </Pressable>
           </TouchableOpacity>
         ))}
       </ScrollView>
     </View>
   );
-}
-
-function showCouponCode(coupon: DisplayCoupon) {
-  Alert.alert('Cupom Exclusivo', `Use o código ${coupon.code} em ${companyLabel(coupon.company)}.`);
 }
 
 const styles = StyleSheet.create({
@@ -56,9 +65,11 @@ const styles = StyleSheet.create({
     width: 200,
     minHeight: 150,
     borderRadius: Radius.card,
-    padding: 16,
+    padding: Spacing.three,
     justifyContent: 'space-between',
-    gap: 8,
+    gap: Spacing.two,
+    marginRight: 12,
+    ...CardShadow,
   },
   couponTag: {
     alignSelf: 'flex-start',
@@ -85,8 +96,11 @@ const styles = StyleSheet.create({
   couponFooter: {
     flexDirection: 'row',
     alignItems: 'center',
+    justifyContent: 'center',
     gap: 6,
     marginTop: 4,
+    paddingVertical: 10,
+    paddingHorizontal: 16,
   },
   couponFooterText: {
     color: GuiaColors.primary,

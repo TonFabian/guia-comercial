@@ -18,7 +18,7 @@ export function JobList({ jobs }: { jobs: Job[] }) {
             </View>
             <TouchableOpacity
               style={styles.jobButton}
-              activeOpacity={0.8}
+              activeOpacity={0.7}
               onPress={() => Alert.alert(job.title, 'Detalhes da vaga em breve.')}>
               <Text style={styles.jobButtonText}>Ver Vaga</Text>
             </TouchableOpacity>
@@ -67,8 +67,8 @@ const styles = StyleSheet.create({
   jobButton: {
     backgroundColor: GuiaColors.primary,
     borderRadius: Radius.pill,
-    paddingVertical: 8,
-    paddingHorizontal: 14,
+    paddingVertical: 10,
+    paddingHorizontal: Spacing.three,
   },
   jobButtonText: {
     color: GuiaColors.background,

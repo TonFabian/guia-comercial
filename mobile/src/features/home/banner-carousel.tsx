@@ -1,6 +1,6 @@
 import { Linking, ScrollView, StyleSheet, Text, TouchableOpacity } from 'react-native';
 
-import { GuiaColors, CardColors, Overlays, Radius, Spacing, Type } from '@/constants/theme';
+import { GuiaColors, CardShadow, CardColors, Overlays, Radius, Spacing, Type } from '@/constants/theme';
 import type { DisplayBanner } from '@/data/mock';
 
 export function BannerCarousel({ banners }: { banners: DisplayBanner[] }) {
@@ -45,6 +45,8 @@ const styles = StyleSheet.create({
     padding: Spacing.three,
     justifyContent: 'flex-end',
     gap: Spacing.one,
+    marginRight: 12,
+    ...CardShadow,
   },
   bannerEmoji: {
     fontSize: 28,

@@ -1,16 +1,16 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 import { GuiaColors, Spacing, Type } from '@/constants/theme';
 
 export function Header() {
   return (
     <View style={styles.header}>
-      <View style={styles.locationButton}>
+      <TouchableOpacity style={styles.locationButton} activeOpacity={0.7}>
         <Ionicons name="location-sharp" size={18} color={GuiaColors.primary} />
         <Text style={styles.locationText}>Sua cidade</Text>
         <Ionicons name="chevron-down" size={14} color={GuiaColors.textSecondary} />
-      </View>
+      </TouchableOpacity>
       <Text style={styles.headerTitle}>
         Busque no maior guia de empresas da cidade.
       </Text>
@@ -33,13 +33,13 @@ const styles = StyleSheet.create({
   },
   locationText: {
     color: GuiaColors.text,
-    fontSize: Type.subtitle,
+    fontSize: Type.base,
     fontWeight: '600',
   },
   headerTitle: {
     color: GuiaColors.text,
-    fontSize: Type.headline,
+    fontSize: Type.title,
     fontWeight: '700',
-    lineHeight: 30,
+    lineHeight: 24,
   },
 });

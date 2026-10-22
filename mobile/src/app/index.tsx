@@ -1,7 +1,8 @@
 import { StatusBar } from 'expo-status-bar';
 import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
+import { GuiaColors } from '@/constants/theme';
 import { AnnounceCta } from '@/features/home/announce-cta';
 import { BannerCarousel } from '@/features/home/banner-carousel';
 import { CategoryList } from '@/features/home/category-list';
@@ -12,18 +13,10 @@ import { JobList } from '@/features/home/job-list';
 import { PharmacyOnDuty } from '@/features/home/pharmacy-on-duty';
 import { SearchBar } from '@/features/home/search-bar';
 import { useHomeData } from '@/features/home/use-home-data';
-import { GuiaColors } from '@/constants/theme';
 
 export default function HomeScreen() {
-  const {
-    loading,
-    banners,
-    categories,
-    coupons,
-    featuredCompany,
-    jobs,
-    pharmacy,
-  } = useHomeData();
+  const { loading, banners, categories, coupons, featuredCompany, jobs, pharmacy } = useHomeData();
+  const insets = useSafeAreaInsets();
 
   return (
     <View style={styles.root}>
@@ -31,8 +24,12 @@ export default function HomeScreen() {
       <SafeAreaView style={styles.safeArea} edges={['top']}>
         <ScrollView
           style={styles.scrollView}
-          contentContainerStyle={styles.scrollContent}
-          showsVerticalScrollIndicator={false}>
+          contentContainerStyle={[
+            styles.scrollContent,
+            { paddingBottom: 110 + Math.max(insets.bottom, 10) },
+          ]}
+          showsVerticalScrollIndicator={false}
+        >
           <Header />
           <SearchBar />
           {loading ? (

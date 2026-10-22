@@ -28,7 +28,7 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     color: GuiaColors.text,
-    fontSize: Type.section,
-    fontWeight: '700',
+    fontSize: Type.title,
+    fontWeight: 'bold',
   },
 });
