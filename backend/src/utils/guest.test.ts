@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
-import type { Company, Coupon, Paginated } from '../../../shared/domain.js';
+import type {
+  Banner,
+  Company,
+  Coupon,
+  Job,
+  Paginated,
+} from '../../../shared/domain.js';
 
 import { scrubCompany, scrubCoupon, scrubGuestResponse } from './guest.js';
 
@@ -33,6 +39,25 @@ const cupom: Coupon = {
   description: 'Válido até o fim do mês',
   expiresAt: '2026-12-31T00:00:00.000Z',
   createdAt: '2026-10-01T10:00:00.000Z',
+};
+
+const vaga: Job = {
+  _id: 'job_1',
+  title: 'Atendente de balcão',
+  company: empresa,
+  description: 'Turno da manhã, 6h por dia',
+  location: 'Natal',
+  type: 'CLT',
+  createdAt: '2026-10-01T10:00:00.000Z',
+};
+
+const banner: Banner = {
+  _id: 'ban_1',
+  title: 'Semana do pão',
+  subtitle: 'Ofertas em toda a cidade',
+  image: 'https://cdn.example.com/banner.png',
+  order: 1,
+  active: true,
 };
 
 describe('scrubCompany', () => {
@@ -77,6 +102,55 @@ describe('scrubGuestResponse', () => {
     expect(resposta.total).toBe(42);
     expect(resposta.page).toBe(2);
     expect(resposta.pageSize).toBe(20);
+  });
+
+  it('redige um recurso avulso (não paginado)', () => {
+    const resposta = scrubGuestResponse(empresa, true);
+
+    expect(resposta).not.toBe(empresa);
+    expect(resposta.phone).toBeNull();
+    expect(resposta.whatsapp).toBeNull();
+    expect(resposta.address).toBeNull();
+    expect(resposta.name).toBe(empresa.name);
+    expect(empresa.phone).toBe('+5584999999999');
+  });
+
+  it('devolve intacto um payload sem dados redigíveis', () => {
+    expect(scrubGuestResponse(banner, true)).toBe(banner);
+  });
+
+  it('redige a empresa populada dentro do cupom', () => {
+    const resposta = scrubGuestResponse(cupom, true);
+
+    expect(resposta.code).toBeNull();
+    expect(resposta.title).toBe(cupom.title);
+
+    const empresaDoCupom = resposta.company;
+    if (typeof empresaDoCupom !== 'object') {
+      throw new Error('esperava empresa populada no cupom');
+    }
+
+    expect(empresaDoCupom.phone).toBeNull();
+    expect(empresaDoCupom.whatsapp).toBeNull();
+    expect(empresaDoCupom.address).toBeNull();
+    expect(empresaDoCupom.name).toBe(empresa.name);
+    expect(empresa.phone).toBe('+5584999999999');
+  });
+
+  it('redige a empresa populada dentro da vaga', () => {
+    const resposta = scrubGuestResponse(vaga, true);
+
+    expect(resposta.title).toBe(vaga.title);
+
+    const empresaDaVaga = resposta.company;
+    if (typeof empresaDaVaga !== 'object') {
+      throw new Error('esperava empresa populada na vaga');
+    }
+
+    expect(empresaDaVaga.phone).toBeNull();
+    expect(empresaDaVaga.whatsapp).toBeNull();
+    expect(empresaDaVaga.address).toBeNull();
+    expect(empresaDaVaga.name).toBe(empresa.name);
   });
 
   it('devolve o mesmo payload quando o usuário não é convidado', () => {

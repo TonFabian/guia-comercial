@@ -1,4 +1,4 @@
-import type { Company, Coupon, Paginated } from '../../../shared/domain.js';
+import type { Company, Coupon, Job, Paginated } from '../../../shared/domain.js';
 
 /** Empresa com os campos de contato substituídos por `null`. */
 export type ScrubbedCompany<T extends Company = Company> = Omit<
@@ -15,12 +15,22 @@ export type ScrubbedCoupon<T extends Coupon = Coupon> = Omit<T, 'code'> & {
   code: string | null;
 };
 
+/** Referência de empresa: populada é redigida, string (id) permanece. */
+type ScrubbedCompanyReference<C> = C extends Company ? ScrubbedCompany<C> : C;
+
 /** Redação conforme o tipo do item; tipos sem dado sensível passam intactos. */
 type Scrubbed<T> = T extends Company
   ? ScrubbedCompany<T>
   : T extends Coupon
-    ? ScrubbedCoupon<T>
-    : T;
+    ? Omit<T, 'code' | 'company'> & {
+        code: string | null;
+        company: ScrubbedCompanyReference<T['company']>;
+      }
+    : T extends Job
+      ? Omit<T, 'company'> & {
+          company: ScrubbedCompanyReference<T['company']>;
+        }
+      : T;
 
 /**
  * Remove os contatos da empresa para quem não está autenticado.
@@ -49,12 +59,28 @@ export function scrubCoupon<T extends Coupon>(coupon: T): ScrubbedCoupon<T> {
  * Aplica a redação de convidado em um recurso ou em uma página de recursos.
  *
  * Sem convidado, devolve a mesma referência (nenhum trabalho nem alocação).
+ * Com convidado, `true` garante o tipo redigido; `false` mantém o tipo
+ * original — por isso os overloads por literal, em vez de um `boolean` que
+ * prometeria redação no ramo que devolve o payload intacto.
  */
 export function scrubGuestResponse<T>(
   payload: Paginated<T>,
-  guest: boolean,
+  guest: true,
 ): Paginated<Scrubbed<T>>;
-export function scrubGuestResponse<T>(payload: T, guest: boolean): Scrubbed<T>;
+export function scrubGuestResponse<T>(payload: T, guest: true): Scrubbed<T>;
+export function scrubGuestResponse<T>(
+  payload: Paginated<T>,
+  guest: false,
+): Paginated<T>;
+export function scrubGuestResponse<T>(payload: T, guest: false): T;
+export function scrubGuestResponse<T>(
+  payload: Paginated<T>,
+  guest: boolean,
+): Paginated<Scrubbed<T>> | Paginated<T>;
+export function scrubGuestResponse<T>(
+  payload: T,
+  guest: boolean,
+): Scrubbed<T> | T;
 export function scrubGuestResponse(payload: unknown, guest: boolean): unknown {
   if (!guest) {
     return payload;
@@ -68,22 +94,39 @@ export function scrubGuestResponse(payload: unknown, guest: boolean): unknown {
 }
 
 function scrubValue(value: unknown): unknown {
+  if (!isRecord(value)) {
+    return value;
+  }
+
   if (isCompany(value)) {
     return scrubCompany(value);
   }
 
-  if (isCoupon(value)) {
-    return scrubCoupon(value);
+  const scrubbed: object = isCoupon(value) ? scrubCoupon(value) : value;
+  const nested = readPopulatedCompany(value);
+
+  if (!nested) {
+    return scrubbed;
   }
 
-  return value;
+  // Vazar contato via recurso aninhado (cupom/vaga) burlaria a redação:
+  // a empresa populada recebe o mesmo tratamento do topo.
+  return { ...scrubbed, company: scrubCompany(nested) };
+}
+
+function readPopulatedCompany(
+  value: Record<string, unknown>,
+): Company | undefined {
+  return isCompany(value.company) ? value.company : undefined;
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null && !Array.isArray(value);
 }
 
 function isPaginated<T>(value: unknown): value is Paginated<T> {
   return (
-    typeof value === 'object' &&
-    value !== null &&
-    'items' in value &&
+    isRecord(value) &&
     Array.isArray(value.items) &&
     'total' in value &&
     'page' in value &&
@@ -93,8 +136,7 @@ function isPaginated<T>(value: unknown): value is Paginated<T> {
 
 function isCompany(value: unknown): value is Company {
   return (
-    typeof value === 'object' &&
-    value !== null &&
+    isRecord(value) &&
     'slug' in value &&
     'category' in value &&
     'name' in value
@@ -103,8 +145,7 @@ function isCompany(value: unknown): value is Company {
 
 function isCoupon(value: unknown): value is Coupon {
   return (
-    typeof value === 'object' &&
-    value !== null &&
+    isRecord(value) &&
     'code' in value &&
     'company' in value &&
     'title' in value
