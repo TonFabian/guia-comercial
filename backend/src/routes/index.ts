@@ -7,6 +7,10 @@ import * as couponController from '../controllers/coupon.controller.js';
 import { health } from '../controllers/health.controller.js';
 import * as jobController from '../controllers/job.controller.js';
 import {
+  createAuthDeps,
+  makeAuthMiddleware,
+} from '../middlewares/auth.middleware.js';
+import {
   createBannerSchema,
   createCategorySchema,
   createCompanySchema,
@@ -21,6 +25,13 @@ const routes = Router();
 // Health
 // -----------------------------------------------------------------------------
 routes.get('/health', health);
+
+// Auth opcional: sem CLERK_SECRET_KEY o modo legado segue sem `req.auth`.
+// O health fica de fora para não depender do Clerk em monitoramento.
+const authDeps = createAuthDeps();
+if (authDeps) {
+  routes.use(makeAuthMiddleware(authDeps).optionalAuth);
+}
 
 // -----------------------------------------------------------------------------
 // Categories
