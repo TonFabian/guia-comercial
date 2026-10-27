@@ -21,7 +21,9 @@
     },
     "web": {
       "output": "server",
-      "favicon": "./assets/images/favicon.png"
+      "favicon": "./assets/images/favicon.png",
+      "dev:client": "http://localhost:19000",
+      "dev:server": "http://localhost:19001"
     },
     "plugins": [
       "expo-router",

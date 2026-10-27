@@ -59,6 +59,14 @@ export const Radius = {
   avatar: 42,
 } as const;
 
+/** Cores de marca dos provedores de login (guideline de cada marca). */
+export const BrandColors = {
+  googleBg: '#FFFFFF',
+  googleText: '#1F1F1F',
+  appleBg: '#000000',
+  appleText: '#FFFFFF',
+} as const;
+
 export const Type = {
   caption: 11,
   small: 12,

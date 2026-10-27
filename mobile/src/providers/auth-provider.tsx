@@ -1,6 +1,6 @@
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
-import { useAuth, useUser } from '@clerk/expo';
 import type { User } from '@/types/domain';
+import { useAuth, useUser } from '@clerk/expo';
+import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 
 import { registerTokenGetter } from '@/services/http';
 
@@ -50,8 +50,10 @@ function ClerkAuthProvider({ children }: { children: ReactNode }) {
   const { user } = useUser();
   const [guest, setGuest] = useState(false);
 
-  // Fecha o gap entre o token de sessão do Clerk e a fachada http.ts
-  // (limpeza no unmount evita getter órfão de um provider desmontado).
+  // Fecha o gap entre o token de sessão do Clerk e a fachada http.ts.
+  // O getToken do Clerk é estável e sempre lê o token atual na chamada, então
+  // o getter nunca fica desatualizado. Limpeza no unmount evita getter órfão
+  // de um provider desmontado.
   useEffect(() => {
     registerTokenGetter(async () => (await getToken()) ?? null);
     return () => registerTokenGetter(null);

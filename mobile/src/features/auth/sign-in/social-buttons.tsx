@@ -1,6 +1,8 @@
 import { ActivityIndicator, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import FontAwesome from '@expo/vector-icons/FontAwesome';
+import type { ReactNode } from 'react';
 
-import { GuiaColors, Radius, Spacing, Type } from '@/constants/theme';
+import { BrandColors, Radius, Spacing, Type } from '@/constants/theme';
 
 interface SocialButtonsProps {
   onGoogle: () => void;
@@ -11,46 +13,69 @@ interface SocialButtonsProps {
 }
 
 /**
- * Botões sociais (Google em todas as plataformas; Apple só no iOS) no
- * estilo do mock: cards escuros sobre a superfície com a marca.
+ * Botões sociais (Google em todas as plataformas; Apple só no iOS) no padrão
+ * de marca de cada provedor: ícone oficial à esquerda, texto e fundo conforme
+ * a guideline (Google: fundo branco, ícone colorido; Apple: fundo preto).
  */
 export function SocialButtons({ onGoogle, onApple, googleLoading, appleLoading }: SocialButtonsProps) {
   if (Platform.OS !== 'ios') {
-    return <SocialButton label="Continuar com Google" onPress={onGoogle} loading={googleLoading} />;
+    return (
+      <SocialLoginButton
+        title="Continuar com Google"
+        icon={loading => (loading ? <ActivityIndicator size="small" color={BrandColors.googleText} /> : <FontAwesome name="google" size={20} color={BrandColors.googleText} />)}
+        backgroundColor={BrandColors.googleBg}
+        textColor={BrandColors.googleText}
+        loading={googleLoading}
+        onPress={onGoogle}
+      />
+    );
   }
 
   return (
     <View style={styles.row}>
-      <SocialButton label="Continuar com Google" onPress={onGoogle} loading={googleLoading} />
-      <SocialButton
-        label="Continuar com Apple"
-        onPress={onApple}
+      <SocialLoginButton
+        title="Continuar com Google"
+        icon={loading => (loading ? <ActivityIndicator size="small" color={BrandColors.googleText} /> : <FontAwesome name="google" size={20} color={BrandColors.googleText} />)}
+        backgroundColor={BrandColors.googleBg}
+        textColor={BrandColors.googleText}
+        loading={googleLoading}
+        onPress={onGoogle}
+      />
+      <SocialLoginButton
+        title="Continuar com Apple"
+        icon={loading => (loading ? <ActivityIndicator size="small" color={BrandColors.appleText} /> : <FontAwesome name="apple" size={20} color={BrandColors.appleText} />)}
+        backgroundColor={BrandColors.appleBg}
+        textColor={BrandColors.appleText}
         loading={appleLoading}
-        loadingLabel="Conectando…"
+        onPress={onApple}
       />
     </View>
   );
 }
 
-interface SocialButtonProps {
-  label: string;
+interface SocialLoginButtonProps {
+  title: string;
+  /** Ícone (ou spinner, durante o loading) renderizado à esquerda. */
+  icon: (loading: boolean) => ReactNode;
+  backgroundColor: string;
+  textColor: string;
+  loading: boolean;
   onPress: () => void;
-  loading?: boolean;
-  loadingLabel?: string;
 }
 
-function SocialButton({ label, onPress, loading, loadingLabel }: SocialButtonProps) {
+function SocialLoginButton({ title, icon, backgroundColor, textColor, loading, onPress }: SocialLoginButtonProps) {
   return (
     <TouchableOpacity
-      style={[styles.button, loading && styles.buttonDisabled]}
+      style={[styles.button, { backgroundColor }, loading && styles.buttonDisabled]}
       onPress={onPress}
-      accessibilityLabel={loading ? loadingLabel ?? label : label}
-      accessibilityState={{ busy: loading ?? false }}
-      role="button"
-      disabled={loading ?? false}
+      activeOpacity={0.8}
+      accessibilityLabel={title}
+      accessibilityRole="button"
+      accessibilityState={{ busy: loading }}
+      disabled={loading}
     >
-      {loading ? <ActivityIndicator size="small" color={GuiaColors.text} /> : null}
-      <Text style={styles.label}>{loading ? loadingLabel ?? label : label}</Text>
+      {icon(loading)}
+      <Text style={[styles.text, { color: textColor }]}>{loading ? 'Conectando…' : title}</Text>
     </TouchableOpacity>
   );
 }
@@ -63,17 +88,18 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
-    gap: Spacing.two,
-    backgroundColor: GuiaColors.surface,
+    width: '100%',
+    minHeight: 50,
     borderRadius: Radius.chip,
-    paddingVertical: Spacing.three - 2,
+    marginVertical: Spacing.one,
+    paddingHorizontal: Spacing.three,
+    gap: Spacing.three - 4,
   },
   buttonDisabled: {
     opacity: 0.7,
   },
-  label: {
-    color: GuiaColors.text,
-    fontSize: Type.base,
+  text: {
+    fontSize: Type.cardTitle,
     fontWeight: '600',
   },
 });
