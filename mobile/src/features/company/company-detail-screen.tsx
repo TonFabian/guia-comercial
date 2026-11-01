@@ -21,12 +21,12 @@ import {
   ButtonGradients,
   CardShadow,
   Glass,
-  GuiaColors,
   Overlays,
   Radius,
   Spacing,
   Type,
 } from '@/constants/theme';
+import { useThemeColors } from '@/hooks/use-theme-colors';
 import { ContactHintRow } from '@/features/home/contact-hidden-hint';
 import { SectionHeader } from '@/features/home/section-header';
 import { callPhone, openMapLink, openWhatsApp } from '@/utils/links';
@@ -54,6 +54,8 @@ const HOURS_ROWS: readonly { key: keyof WorkingHours; label: string }[] = [
 const CLOSED_HOURS = 'Fechado';
 
 function WorkingHoursCard({ hours }: { hours: WorkingHours }) {
+  const colors = useThemeColors();
+  const styles = makeStyles(colors);
   const [now, setNow] = useState(() => new Date());
 
   useEffect(() => {
@@ -87,7 +89,7 @@ function WorkingHoursCard({ hours }: { hours: WorkingHours }) {
     <View style={styles.hoursCard}>
       <View style={styles.hoursCardHeader}>
         <View style={styles.hoursCardTitleGroup}>
-          <Ionicons name="time-outline" size={16} color={GuiaColors.primary} />
+          <Ionicons name="time-outline" size={16} color={colors.primary} />
           <Text style={styles.hoursCardTitle}>Atendimento</Text>
         </View>
 
@@ -119,6 +121,8 @@ function WorkingHoursCard({ hours }: { hours: WorkingHours }) {
 }
 
 export function CompanyDetailScreen({ companyId }: { companyId: string }) {
+  const colors = useThemeColors();
+  const styles = makeStyles(colors);
   const insets = useSafeAreaInsets();
   const { company, loading, error } = useCompanyDetail(companyId);
   const details = useMemo(() => (company ? buildCompanyDetails(company) : null), [company]);
@@ -142,7 +146,7 @@ export function CompanyDetailScreen({ companyId }: { companyId: string }) {
     return (
       <View style={styles.centered}>
         <StatusBar style="light" />
-        <ActivityIndicator size="large" color={GuiaColors.primary} />
+        <ActivityIndicator size="large" color={colors.primary} />
         <Text style={styles.stateText}>Carregando empresa...</Text>
         <Pressable style={styles.stateButton} onPress={goBack} accessibilityRole="button">
           <Text style={styles.stateButtonText}>Voltar</Text>
@@ -155,7 +159,7 @@ export function CompanyDetailScreen({ companyId }: { companyId: string }) {
     return (
       <View style={styles.centered}>
         <StatusBar style="light" />
-        <MaterialCommunityIcons name="alert-circle-outline" size={42} color={GuiaColors.primary} />
+        <MaterialCommunityIcons name="alert-circle-outline" size={42} color={colors.primary} />
         <Text style={styles.stateText}>{error ?? 'Empresa não encontrada.'}</Text>
         <Pressable style={styles.stateButton} onPress={goBack} accessibilityRole="button">
           <Text style={styles.stateButtonText}>Voltar para a Home</Text>
@@ -200,14 +204,14 @@ export function CompanyDetailScreen({ companyId }: { companyId: string }) {
                 accessibilityLabel={`Foto de ${details.name}`}
               />
               <LinearGradient
-                colors={['transparent', GuiaColors.background]}
+                colors={['transparent', colors.background]}
                 locations={[0.3, 1]}
                 style={StyleSheet.absoluteFill}
               />
             </>
           ) : (
             <LinearGradient
-              colors={[GuiaColors.surfaceAlt, GuiaColors.background]}
+              colors={[colors.surfaceAlt, colors.background]}
               style={StyleSheet.absoluteFill}
             />
           )}
@@ -227,7 +231,7 @@ export function CompanyDetailScreen({ companyId }: { companyId: string }) {
               <MaterialCommunityIcons
                 name="office-building"
                 size={38}
-                color={GuiaColors.primary}
+                color={colors.primary}
               />
             )}
           </View>
@@ -254,7 +258,7 @@ export function CompanyDetailScreen({ companyId }: { companyId: string }) {
 
           {location ? (
             <View style={styles.addressRow}>
-              <Ionicons name="location-outline" size={16} color={GuiaColors.textSecondary} />
+              <Ionicons name="location-outline" size={16} color={colors.textSecondary} />
               <Text style={styles.addressText} numberOfLines={2}>
                 {location}
               </Text>
@@ -303,7 +307,7 @@ export function CompanyDetailScreen({ companyId }: { companyId: string }) {
                     <MaterialCommunityIcons
                       name={service.icon}
                       size={20}
-                      color={GuiaColors.primary}
+                      color={colors.primary}
                     />
                   </View>
 
@@ -311,7 +315,7 @@ export function CompanyDetailScreen({ companyId }: { companyId: string }) {
                   <Ionicons
                     name="chevron-forward"
                     size={18}
-                    color={GuiaColors.textSecondary}
+                    color={colors.textSecondary}
                   />
                 </Pressable>
               ))
@@ -334,7 +338,7 @@ export function CompanyDetailScreen({ companyId }: { companyId: string }) {
           hitSlop={8}
           accessibilityRole="button"
           accessibilityLabel="Voltar">
-          <Ionicons name="chevron-back" size={22} color={GuiaColors.text} />
+          <Ionicons name="chevron-back" size={22} color={colors.text} />
         </Pressable>
 
         <Pressable
@@ -351,7 +355,7 @@ export function CompanyDetailScreen({ companyId }: { companyId: string }) {
           <Ionicons
             name={favorite ? 'heart' : 'heart-outline'}
             size={21}
-            color={favorite ? GuiaColors.primary : GuiaColors.text}
+            color={favorite ? colors.primary : colors.text}
           />
         </Pressable>
       </View>
@@ -385,7 +389,7 @@ export function CompanyDetailScreen({ companyId }: { companyId: string }) {
             <MaterialCommunityIcons
               name="whatsapp"
               size={20}
-              color={details.whatsapp ? GuiaColors.background : GuiaColors.textSecondary}
+              color={details.whatsapp ? colors.background : colors.textSecondary}
             />
             <Text
               style={[
@@ -421,7 +425,7 @@ export function CompanyDetailScreen({ companyId }: { companyId: string }) {
             <Ionicons
               name="call"
               size={18}
-              color={details.phone ? GuiaColors.background : GuiaColors.textSecondary}
+              color={details.phone ? colors.background : colors.textSecondary}
             />
             <Text style={[styles.callButtonText, !details.phone && styles.buttonDisabledText]}>
               Ligar
@@ -433,17 +437,18 @@ export function CompanyDetailScreen({ companyId }: { companyId: string }) {
   );
 }
 
-const styles = StyleSheet.create({
+function makeStyles(colors: ReturnType<typeof useThemeColors>) {
+  return StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: GuiaColors.background,
+    backgroundColor: colors.background,
   },
   scrollContent: {
     paddingTop: 0,
   },
   hero: {
     height: HERO_HEIGHT,
-    backgroundColor: GuiaColors.surfaceAlt,
+    backgroundColor: colors.surfaceAlt,
   },
   basicInfo: {
     paddingHorizontal: Spacing.four,
@@ -457,9 +462,9 @@ const styles = StyleSheet.create({
     borderRadius: LOGO_SIZE / 2,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: GuiaColors.surfaceAlt,
+    backgroundColor: colors.surfaceAlt,
     borderWidth: 2,
-    borderColor: GuiaColors.primary,
+    borderColor: colors.primary,
     overflow: 'hidden',
   },
   logoImage: {
@@ -467,7 +472,7 @@ const styles = StyleSheet.create({
     height: '100%',
   },
   companyName: {
-    color: GuiaColors.text,
+    color: colors.text,
     fontSize: Type.headline,
     fontWeight: '800',
     letterSpacing: -0.3,
@@ -482,12 +487,12 @@ const styles = StyleSheet.create({
     backgroundColor: Overlays.amberTag,
     borderRadius: Radius.chip,
     borderWidth: 1,
-    borderColor: GuiaColors.primary,
+    borderColor: colors.primary,
     paddingVertical: Spacing.half,
     paddingHorizontal: 10,
   },
   categoryText: {
-    color: GuiaColors.primary,
+    color: colors.primary,
     fontSize: Type.small,
     fontWeight: '700',
   },
@@ -500,18 +505,18 @@ const styles = StyleSheet.create({
     paddingHorizontal: 10,
   },
   registryText: {
-    color: GuiaColors.textSecondary,
+    color: colors.textSecondary,
     fontSize: Type.small,
     fontWeight: '600',
   },
   featuredTag: {
-    backgroundColor: GuiaColors.primary,
+    backgroundColor: colors.primary,
     borderRadius: Radius.chip,
     paddingVertical: Spacing.half,
     paddingHorizontal: 10,
   },
   featuredTagText: {
-    color: GuiaColors.background,
+    color: colors.background,
     fontSize: Type.small,
     fontWeight: '800',
   },
@@ -522,7 +527,7 @@ const styles = StyleSheet.create({
   },
   addressText: {
     flex: 1,
-    color: GuiaColors.textSecondary,
+    color: colors.textSecondary,
     fontSize: Type.body,
     lineHeight: 18,
   },
@@ -531,7 +536,7 @@ const styles = StyleSheet.create({
     paddingVertical: 2,
   },
   mapAction: {
-    color: GuiaColors.primary,
+    color: colors.primary,
     fontSize: Type.small,
     fontWeight: '700',
   },
@@ -543,19 +548,19 @@ const styles = StyleSheet.create({
     marginHorizontal: Spacing.three,
     padding: Spacing.four,
     gap: Spacing.two,
-    backgroundColor: GuiaColors.surface,
+    backgroundColor: colors.surface,
     borderRadius: Radius.card,
     borderWidth: 0.5,
     borderColor: Overlays.goldBorder,
   },
   storyTitle: {
-    color: GuiaColors.primary,
+    color: colors.primary,
     fontSize: Type.title,
     fontWeight: '800',
     letterSpacing: 0.2,
   },
   storyText: {
-    color: GuiaColors.textSoft,
+    color: colors.textSoft,
     fontSize: Type.base,
     lineHeight: 24,
   },
@@ -570,14 +575,14 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
     paddingVertical: Spacing.two,
     paddingHorizontal: Spacing.three,
-    backgroundColor: GuiaColors.surface,
+    backgroundColor: colors.surface,
     borderRadius: Radius.detailCard,
     borderWidth: 1,
     borderColor: Overlays.goldSoftBorder,
   },
   serviceCardPressed: {
     opacity: 0.82,
-    backgroundColor: GuiaColors.surfaceAlt,
+    backgroundColor: colors.surfaceAlt,
   },
   serviceIconBox: {
     width: SERVICE_ICON_SIZE,
@@ -589,19 +594,19 @@ const styles = StyleSheet.create({
   },
   serviceName: {
     flex: 1,
-    color: GuiaColors.text,
+    color: colors.text,
     fontSize: Type.base,
     fontWeight: '700',
   },
   emptyServices: {
-    color: GuiaColors.textSecondary,
+    color: colors.textSecondary,
     fontSize: Type.base,
   },
   hoursCard: {
     ...CardShadow,
     marginHorizontal: Spacing.three,
     padding: Spacing.four,
-    backgroundColor: GuiaColors.surface,
+    backgroundColor: colors.surface,
     borderRadius: Radius.card,
     borderWidth: 0.5,
     borderColor: Overlays.goldBorder,
@@ -619,7 +624,7 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
   },
   hoursCardTitle: {
-    color: GuiaColors.text,
+    color: colors.text,
     fontSize: Type.subtitle,
     fontWeight: '700',
   },
@@ -651,26 +656,26 @@ const styles = StyleSheet.create({
     borderRadius: Spacing.one,
   },
   statusDotOpen: {
-    backgroundColor: GuiaColors.success,
+    backgroundColor: colors.success,
   },
   statusDotClosed: {
-    backgroundColor: GuiaColors.error,
+    backgroundColor: colors.error,
   },
   statusDotUnknown: {
-    backgroundColor: GuiaColors.textSecondary,
+    backgroundColor: colors.textSecondary,
   },
   statusText: {
     fontSize: Type.small,
     fontWeight: '700',
   },
   statusTextOpen: {
-    color: GuiaColors.success,
+    color: colors.success,
   },
   statusTextClosed: {
-    color: GuiaColors.error,
+    color: colors.error,
   },
   statusTextUnknown: {
-    color: GuiaColors.textSecondary,
+    color: colors.textSecondary,
   },
   hoursRow: {
     flexDirection: 'row',
@@ -684,19 +689,19 @@ const styles = StyleSheet.create({
     borderBottomColor: Overlays.hairline,
   },
   hoursLabel: {
-    color: GuiaColors.textSoft,
+    color: colors.textSoft,
     fontSize: Type.base,
     fontWeight: '500',
   },
   hoursValue: {
     flexShrink: 1,
-    color: GuiaColors.primary,
+    color: colors.primary,
     fontSize: Type.base,
     fontWeight: '700',
     textAlign: 'right',
   },
   hoursClosed: {
-    color: GuiaColors.textSecondary,
+    color: colors.textSecondary,
     fontWeight: '500',
   },
   floatingNav: {
@@ -720,7 +725,7 @@ const styles = StyleSheet.create({
   },
   favoriteActive: {
     backgroundColor: Overlays.amberTag,
-    borderColor: GuiaColors.primary,
+    borderColor: colors.primary,
   },
   pressed: {
     opacity: 0.8,
@@ -731,7 +736,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     bottom: 0,
-    backgroundColor: GuiaColors.surface,
+    backgroundColor: colors.surface,
     borderTopWidth: 1,
     borderTopColor: Glass.border,
     paddingHorizontal: Spacing.three,
@@ -756,10 +761,10 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: Spacing.two,
     overflow: 'hidden',
-    backgroundColor: GuiaColors.whatsapp,
+    backgroundColor: colors.whatsapp,
   },
   whatsappButtonText: {
-    color: GuiaColors.background,
+    color: colors.background,
     fontSize: Type.base,
     fontWeight: '800',
   },
@@ -772,21 +777,21 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: Spacing.two,
     overflow: 'hidden',
-    backgroundColor: GuiaColors.surfaceAlt,
+    backgroundColor: colors.surfaceAlt,
     borderWidth: 1,
-    borderColor: GuiaColors.primary,
+    borderColor: colors.primary,
   },
   callButtonText: {
-    color: GuiaColors.background,
+    color: colors.background,
     fontSize: Type.base,
     fontWeight: '800',
   },
   buttonDisabled: {
-    backgroundColor: GuiaColors.surfaceAlt,
+    backgroundColor: colors.surfaceAlt,
     borderColor: Glass.border,
   },
   buttonDisabledText: {
-    color: GuiaColors.textSecondary,
+    color: colors.textSecondary,
   },
   centered: {
     flex: 1,
@@ -794,22 +799,23 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     gap: Spacing.three,
     padding: Spacing.four,
-    backgroundColor: GuiaColors.background,
+    backgroundColor: colors.background,
   },
   stateText: {
-    color: GuiaColors.textSecondary,
+    color: colors.textSecondary,
     fontSize: Type.base,
     textAlign: 'center',
   },
   stateButton: {
-    backgroundColor: GuiaColors.primary,
+    backgroundColor: colors.primary,
     borderRadius: Radius.pill,
     paddingVertical: 10,
     paddingHorizontal: Spacing.four,
   },
   stateButtonText: {
-    color: GuiaColors.background,
+    color: colors.background,
     fontSize: Type.base,
     fontWeight: '800',
   },
 });
+}
