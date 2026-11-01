@@ -1,7 +1,14 @@
-import { useState } from 'react';
-import { router } from 'expo-router';
 import { useClerk, useSignIn, useSignUp } from '@clerk/expo';
-import { ActivityIndicator, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { router } from 'expo-router';
+import { useState } from 'react';
+import {
+  ActivityIndicator,
+  StyleSheet,
+  Text,
+  TextInput,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 
 import { GuiaColors, Radius, Spacing, Type } from '@/constants/theme';
 import { clerkErrorToMessage, GenericAuthErrorMessage } from '@/features/auth/clerk-errors';
@@ -319,9 +326,14 @@ export function EmailPasswordForm() {
 
 function ModeToggle({ mode, onChange }: { mode: Mode; onChange: () => void }) {
   return (
-    <TouchableOpacity style={styles.modeToggle} onPress={onChange} role="button" accessibilityLabel="Alternar entre entrar e criar conta">
+    <TouchableOpacity
+      style={styles.modeToggle}
+      onPress={onChange}
+      role="button"
+      accessibilityLabel="Alternar entre entrar e criar conta"
+    >
       <Text style={styles.modeToggleText}>
-        {mode === 'entrar' ? 'Não tem conta? Criar conta' : 'Já tem conta? Entrar'}
+        {mode === 'entrar' ? 'Não tem conta? Criar' : 'Já tem conta? Entrar'}
       </Text>
     </TouchableOpacity>
   );
@@ -335,7 +347,15 @@ function ErrorText({ error }: { error: string | null }) {
   return <Text style={styles.error}>{error}</Text>;
 }
 
-function PrimaryButton({ label, onPress, loading }: { label: string; onPress: () => void; loading: boolean }) {
+function PrimaryButton({
+  label,
+  onPress,
+  loading,
+}: {
+  label: string;
+  onPress: () => void;
+  loading: boolean;
+}) {
   return (
     <TouchableOpacity
       style={[styles.primary, loading && styles.disabled]}

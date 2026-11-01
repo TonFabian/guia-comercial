@@ -10,18 +10,24 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { GuiaColors, Radius, Spacing, Type } from '@/constants/theme';
-import { getCategories, getCompanies, getCompaniesByCategory, searchCompanies } from '@/services/api';
-import { categoryLabel } from '@/types/domain';
+import {
+  getCategories,
+  getCompanies,
+  getCompaniesByCategory,
+  searchCompanies,
+} from '@/services/api';
 import type { Category, Company } from '@/types/domain';
+import { categoryLabel } from '@/types/domain';
 
 /** Tempo de espera antes de consultar a API a cada tecla digitada. */
 const DEBOUNCE_MS = 250;
 
 export default function SearchScreen() {
   const params = useLocalSearchParams<{ q?: string; category?: string }>();
+  const insets = useSafeAreaInsets();
   const routeTerm = (params.q ?? '').trim();
   const categorySlug = (params.category ?? '').trim();
 
@@ -32,6 +38,17 @@ export default function SearchScreen() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Mock temporário para teste de scroll com lista grande.
+  const MOCK_COMPANIES: Company[] = Array.from({ length: 40 }, (_, i) => ({
+    _id: `mock-${i + 1}`,
+    name: `Empresa Mock ${i + 1}`,
+    slug: `empresa-mock-${i + 1}`,
+    description: 'Empresa de teste para scroll',
+    category: 'servicos',
+    address: 'Rua Teste, 123',
+    city: 'Cidade',
+  }));
 
   useEffect(() => {
     let cancelled = false;
@@ -57,7 +74,7 @@ export default function SearchScreen() {
 
         if (cancelled) return;
         setCategories(allCategories);
-        setCompanies(results);
+        setCompanies([...results, ...MOCK_COMPANIES]);
         setLoading(false);
       }
 
@@ -77,7 +94,9 @@ export default function SearchScreen() {
 
   const filteredCategories = useMemo(() => {
     if (!term) return categories;
-    return categories.filter((category) => category.name.toLowerCase().includes(term.toLowerCase()));
+    return categories.filter((category) =>
+      category.name.toLowerCase().includes(term.toLowerCase()),
+    );
   }, [categories, term]);
 
   const clearSearch = () => {
@@ -116,7 +135,12 @@ export default function SearchScreen() {
         {loading ? (
           <ActivityIndicator style={styles.spinner} color={GuiaColors.primary} />
         ) : (
-          <ScrollView showsVerticalScrollIndicator={false}>
+          <ScrollView
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={{
+              paddingBottom: 110 + Math.max(insets.bottom, 10),
+            }}
+          >
             {filteredCategories.length > 0 && (
               <View style={styles.group}>
                 <Text style={styles.groupTitle}>Categorias</Text>
@@ -139,7 +163,8 @@ export default function SearchScreen() {
                     activeOpacity={0.75}
                     onPress={() => router.push(`/company/${company._id}`)}
                     accessibilityRole="button"
-                    accessibilityLabel={`Abrir perfil de ${company.name}`}>
+                    accessibilityLabel={`Abrir perfil de ${company.name}`}
+                  >
                     <View style={styles.rowBody}>
                       <Text style={styles.rowTitle}>{company.name}</Text>
                       <Text style={styles.rowSubtitle}>

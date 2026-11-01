@@ -1,17 +1,18 @@
+import { useClerk, useSSO } from '@clerk/expo';
+import * as AuthSession from 'expo-auth-session';
+import { useRouter } from 'expo-router';
+import { maybeCompleteAuthSession } from 'expo-web-browser';
+import { useEffect, useState } from 'react';
 import { Image, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import * as AuthSession from 'expo-auth-session';
-import { maybeCompleteAuthSession } from 'expo-web-browser';
-import { useRouter } from 'expo-router';
-import { useState } from 'react';
-import { useClerk, useSSO } from '@clerk/expo';
 
 import { GuiaColors, Radius, Spacing, Type } from '@/constants/theme';
 import { clerkErrorToMessage } from '@/features/auth/clerk-errors';
-import { useWarmUpBrowser } from '@/features/auth/use-warm-up-browser';
-import { SocialButtons } from '@/features/auth/sign-in/social-buttons';
 import { EmailPasswordForm } from '@/features/auth/sign-in/email-password-form';
 import { ForgotOrGuest } from '@/features/auth/sign-in/forgot-or-guest';
+import { SocialButtons } from '@/features/auth/sign-in/social-buttons';
+import { useWarmUpBrowser } from '@/features/auth/use-warm-up-browser';
+import { useAuthState } from '@/providers/auth-provider';
 
 // Fecha a sessão do browser que abrir durante o fluxo SSO: precisa rodar no
 // topo do módulo, fora do componente, antes do primeiro render.
@@ -27,12 +28,24 @@ export default function SignInScreen() {
   const { startSSOFlow } = useSSO();
   const clerk = useClerk();
   const router = useRouter();
+  const { state } = useAuthState();
+
+  // Guarda de entrada: se já existe sessão ativa (ex.: app reiniciado com
+  // sessão persistida), não exibe a tela de login — redireciona para as abas.
+  useEffect(() => {
+    if (state === 'signedIn' || state === 'guest') {
+      router.replace('/(tabs)');
+    }
+  }, [state, router]);
 
   const [googleLoading, setGoogleLoading] = useState(false);
   const [appleLoading, setAppleLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  function viewFor(strategy: 'oauth_google' | 'oauth_apple', withLoading: (value: boolean) => void) {
+  function viewFor(
+    strategy: 'oauth_google' | 'oauth_apple',
+    withLoading: (value: boolean) => void,
+  ) {
     return async () => {
       withLoading(true);
       setError(null);
