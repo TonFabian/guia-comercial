@@ -1,6 +1,7 @@
 import { SectionHeader } from './section-header';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import { router } from 'expo-router';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 import { GuiaColors, Overlays, Radius, Spacing, Type } from '@/constants/theme';
@@ -14,7 +15,11 @@ export function FeaturedCompany({ company }: { company: Company | null }) {
 
   return (
     <View style={styles.section}>
-      <SectionHeader title="Empresas em Destaque" icon="star" />
+      <SectionHeader
+        title="Empresas em Destaque"
+        actionLabel="Ver todas"
+        onAction={() => router.push('/search')}
+      />
       <View style={styles.companyCard}>
         <View style={styles.companyCover}>
           <MaterialCommunityIcons

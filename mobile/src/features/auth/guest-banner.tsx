@@ -19,7 +19,9 @@ export function GuestBanner({ onSignIn }: { onSignIn?: () => void }) {
   return (
     <View style={styles.banner}>
       <Ionicons name="lock-closed" size={16} color={GuiaColors.primary} />
-      <Text style={styles.text}>Você está navegando como convidado — entre para ver contatos e cupons</Text>
+      <Text style={styles.text}>
+        Você está navegando como convidado — entre para salvar favoritos e acessar utilidades
+      </Text>
       <TouchableOpacity
         style={styles.cta}
         onPress={onSignIn ?? (() => router.push('/(auth)/sign-in'))}
@@ -38,7 +40,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     gap: Spacing.two,
     marginHorizontal: 16,
-    marginBottom: Spacing.two,
+    marginBottom: Spacing.four,
     backgroundColor: GuiaColors.surfaceAlt,
     borderColor: GuiaColors.primaryDim,
     borderWidth: 1,

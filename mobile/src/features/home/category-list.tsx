@@ -1,66 +1,83 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { router } from 'expo-router';
-import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { memo } from 'react';
+import { FlatList, Pressable, StyleSheet, Text } from 'react-native';
+import type { ListRenderItemInfo } from 'react-native';
 
-import { GuiaColors, Radius, Type } from '@/constants/theme';
+import { GuiaColors, Overlays, Radius, Spacing, Type } from '@/constants/theme';
 import type { Category } from '@/types/domain';
 
-export function CategoryList({ categories }: { categories: Category[] }) {
-  function openCategory(category: Category) {
-    router.push(`/search?category=${encodeURIComponent(category.slug)}`);
-  }
+function openCategory(category: Category) {
+  router.push(`/search?category=${encodeURIComponent(category.slug)}`);
+}
 
+const CategoryChip = memo(function CategoryChip({ category }: { category: Category }) {
   return (
-    <ScrollView
+    <Pressable
+      style={({ pressed }) => [styles.chip, pressed && styles.chipPressed]}
+      onPress={() => openCategory(category)}
+      accessibilityRole="button"
+      accessibilityLabel={`Filtrar por ${category.name}`}>
+      <MaterialCommunityIcons
+        name={(category.icon ?? 'dots-horizontal-circle') as React.ComponentProps<
+          typeof MaterialCommunityIcons
+        >['name']}
+        size={16}
+        color={GuiaColors.primary}
+      />
+      <Text style={styles.label}>{category.name}</Text>
+    </Pressable>
+  );
+});
+
+function categoryKey(category: Category) {
+  return category._id;
+}
+
+const renderCategory = ({ item }: ListRenderItemInfo<Category>) => (
+  <CategoryChip category={item} />
+);
+
+export function CategoryList({ categories }: { categories: Category[] }) {
+  return (
+    <FlatList
       horizontal
+      data={categories}
+      keyExtractor={categoryKey}
+      renderItem={renderCategory}
       showsHorizontalScrollIndicator={false}
-      contentContainerStyle={styles.categoriesContent}>
-      {categories.map((category) => (
-        <TouchableOpacity
-          key={category._id}
-          style={styles.categoryItem}
-          activeOpacity={0.7}
-          onPress={() => openCategory(category)}>
-          <View style={styles.categoryIconBox}>
-            <MaterialCommunityIcons
-              name={(category.icon ?? 'dots-horizontal-circle') as React.ComponentProps<
-                typeof MaterialCommunityIcons
-              >['name']}
-              size={26}
-              color={GuiaColors.primary}
-            />
-          </View>
-          <Text style={styles.categoryLabel}>{category.name}</Text>
-        </TouchableOpacity>
-      ))}
-    </ScrollView>
+      contentContainerStyle={styles.categoriesContent}
+      style={styles.list}
+    />
   );
 }
 
 const styles = StyleSheet.create({
+  list: {
+    marginBottom: Spacing.four,
+  },
   categoriesContent: {
-    paddingHorizontal: 16,
-    gap: 14,
-    marginBottom: 24,
+    paddingHorizontal: Spacing.three,
+    gap: Spacing.two,
   },
-  categoryItem: {
+  chip: {
+    flexDirection: 'row',
     alignItems: 'center',
-    width: 76,
-    gap: 8,
-  },
-  categoryIconBox: {
-    width: 64,
-    height: 64,
-    borderRadius: Radius.circle,
+    gap: Spacing.two,
     backgroundColor: GuiaColors.surface,
+    borderRadius: Radius.pill,
     borderWidth: 1,
     borderColor: GuiaColors.border,
-    alignItems: 'center',
-    justifyContent: 'center',
+    paddingHorizontal: 14,
+    paddingVertical: 10,
   },
-  categoryLabel: {
-    color: GuiaColors.textSecondary,
-    fontSize: Type.small,
-    textAlign: 'center',
+  chipPressed: {
+    backgroundColor: Overlays.amberTag,
+    borderColor: GuiaColors.primary,
+  },
+  label: {
+    color: GuiaColors.text,
+    fontSize: Type.body,
+    fontWeight: '600',
   },
 });

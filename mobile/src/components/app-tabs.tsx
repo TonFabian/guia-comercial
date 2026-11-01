@@ -1,13 +1,19 @@
 import { NativeTabs } from 'expo-router/native-tabs';
+import { Platform } from 'react-native';
 
-import { GuiaColors } from '@/constants/theme';
+import { Glass, GuiaColors } from '@/constants/theme';
 
 export default function AppTabs() {
   return (
     <NativeTabs
-      backgroundColor={GuiaColors.background}
+      backgroundColor={Platform.select({
+        ios: Glass.tabBar,
+        default: GuiaColors.background,
+      })}
       tintColor={GuiaColors.primary}
       iconColor={{ default: GuiaColors.textSecondary, selected: GuiaColors.primary }}
+      blurEffect="systemChromeMaterialDark"
+      disableTransparentOnScrollEdge
       disableIndicator
       labelStyle={{
         default: { color: GuiaColors.textSecondary },

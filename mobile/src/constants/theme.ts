@@ -12,6 +12,7 @@ export const GuiaColors = {
   text: '#FFFFFF',
   textSecondary: '#9CA3AF',
   border: '#2E2E2E',
+  borderSoft: '#222222',
   success: '#22C55E',
   error: '#EF4444',
   whatsapp: '#25D366',
@@ -35,6 +36,23 @@ export const Overlays = {
   whiteMild: 'rgba(255,255,255,0.75)',
   whiteFaint: 'rgba(255,255,255,0.7)',
   amberTag: 'rgba(255, 193, 7, 0.2)',
+  amberGlow: 'rgba(255, 193, 7, 0.14)',
+  scrim: 'rgba(0,0,0,0.72)',
+} as const;
+
+/** Superfícies translúcidas com borda sutil (efeito de vidro sobre o fundo). */
+export const Glass = {
+  surface: 'rgba(255,255,255,0.04)',
+  border: 'rgba(255,255,255,0.08)',
+  tabBar: 'rgba(18,18,18,0.72)',
+} as const;
+
+/** Cores temáticas dos serviços de utilidade pública. */
+export const UtilityColors = {
+  emergency: '#EF4444',
+  civil: '#3B82F6',
+  health: '#10B981',
+  sanitation: '#F59E0B',
 } as const;
 
 export const Spacing = {
@@ -52,6 +70,7 @@ export const Radius = {
   tag: 6,
   chip: 8,
   card: 16,
+  cardLarge: 20,
   iconBox: 14,
   circle: 32,
   pill: 20,

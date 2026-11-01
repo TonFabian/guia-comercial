@@ -18,7 +18,7 @@ export function CouponList({ coupons }: { coupons: DisplayCoupon[] }) {
 
   return (
     <View style={styles.section}>
-      <SectionHeader title="Cupons e Descontos" icon="pricetag" />
+      <SectionHeader title="Cupons e Descontos" />
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}

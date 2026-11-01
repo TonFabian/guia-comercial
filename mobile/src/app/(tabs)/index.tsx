@@ -18,12 +18,15 @@ import { CouponList } from '@/features/home/coupon-list';
 import { FeaturedCompany } from '@/features/home/featured-company';
 import { Header } from '@/features/home/header';
 import { JobList } from '@/features/home/job-list';
-import { PharmacyOnDuty } from '@/features/home/pharmacy-on-duty';
+import { PublicUtilities } from '@/features/home/public-utilities';
 import { SearchBar } from '@/features/home/search-bar';
 import { useHomeData } from '@/features/home/use-home-data';
 
+/** Cupons desativados a pedido do produto; flag mantém a seção reativável. */
+const SHOW_COUPONS = false;
+
 export default function HomeScreen() {
-  const { loading, banners, categories, coupons, featuredCompany, jobs, pharmacy, error } =
+  const { loading, banners, categories, coupons, featuredCompany, jobs, error } =
     useHomeData();
   const insets = useSafeAreaInsets();
 
@@ -51,8 +54,8 @@ export default function HomeScreen() {
           showsVerticalScrollIndicator={false}
         >
           <Header />
-          <GuestBanner />
           <SearchBar />
+          <GuestBanner />
           {loading ? (
             <View style={styles.center}>
               <ActivityIndicator color={GuiaColors.primary} />
@@ -61,9 +64,9 @@ export default function HomeScreen() {
             <>
               <CategoryList categories={categories} />
               <BannerCarousel banners={banners} />
-              <PharmacyOnDuty pharmacy={pharmacy} />
+              <PublicUtilities />
               <FeaturedCompany company={featuredCompany} />
-              <CouponList coupons={coupons} />
+              {SHOW_COUPONS ? <CouponList coupons={coupons} /> : null}
               <JobList jobs={jobs} />
               <AnnounceCta />
             </>

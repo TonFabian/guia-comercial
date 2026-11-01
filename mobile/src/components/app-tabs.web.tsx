@@ -1,23 +1,23 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { BlurView } from 'expo-blur';
 import { Tabs, TabList, TabTrigger, TabSlot, TabTriggerSlotProps } from 'expo-router/ui';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, StyleSheet, Text } from 'react-native';
 import type { StyleProp, ViewStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { GuiaColors } from '@/constants/theme';
+import { Glass, GuiaColors } from '@/constants/theme';
 
 export default function AppTabs() {
   const insets = useSafeAreaInsets();
 
   return (
     <Tabs>
-      <TabSlot style={{ height: '100%' }} />
+      <TabSlot style={styles.tabSlot} />
       <TabList asChild>
-        <View
-          style={{
-            ...styles.tabBar,
-            paddingBottom: Math.max(insets.bottom, 10),
-          }}>
+        <BlurView
+          intensity={60}
+          tint="dark"
+          style={[styles.tabBar, { paddingBottom: Math.max(insets.bottom, 10) }]}>
           <TabTrigger name="home" href="/" asChild>
             <TabButton label="Início" icon="home" />
           </TabTrigger>
@@ -30,7 +30,7 @@ export default function AppTabs() {
           <TabTrigger name="profile" href="/profile" asChild>
             <TabButton label="Perfil" icon="person" />
           </TabTrigger>
-        </View>
+        </BlurView>
       </TabList>
     </Tabs>
   );
@@ -58,16 +58,20 @@ export function TabButton({ children: _children, label, icon, isFocused, ref: _r
 }
 
 const styles = StyleSheet.create({
+  tabSlot: {
+    height: '100%',
+  },
   tabBar: {
     position: 'absolute',
     bottom: 0,
     left: 0,
     right: 0,
     flexDirection: 'row',
-    backgroundColor: GuiaColors.background,
+    backgroundColor: Glass.tabBar,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: GuiaColors.border,
+    borderTopColor: GuiaColors.borderSoft,
     paddingTop: 8,
+    overflow: 'hidden',
   },
   tabButton: {
     flex: 1,
