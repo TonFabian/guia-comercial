@@ -1,9 +1,12 @@
 import { StyleSheet, Text, TouchableOpacity } from 'react-native';
 
-import { GuiaColors, Spacing, Type } from '@/constants/theme';
+import { Spacing, Type } from '@/constants/theme';
+import { useThemeColors } from '@/hooks/use-theme-colors';
 import { comingSoon } from '@/utils/links';
 
 export function AnnounceCta() {
+  const colors = useThemeColors();
+  const styles = makeStyles(colors);
   return (
     <TouchableOpacity
       style={styles.ctaContainer}
@@ -16,22 +19,24 @@ export function AnnounceCta() {
   );
 }
 
-const styles = StyleSheet.create({
-  ctaContainer: {
-    marginHorizontal: 16,
-    marginTop: 4,
-    marginBottom: Spacing.three,
-    paddingVertical: 18,
-    alignItems: 'center',
-  },
-  ctaText: {
-    color: GuiaColors.textSecondary,
-    fontSize: Type.base,
-    textAlign: 'center',
-    lineHeight: 20,
-  },
-  ctaHighlight: {
-    color: GuiaColors.primary,
-    fontWeight: '600',
-  },
-});
+function makeStyles(colors: ReturnType<typeof useThemeColors>) {
+  return StyleSheet.create({
+    ctaContainer: {
+      marginHorizontal: 16,
+      marginTop: 4,
+      marginBottom: Spacing.three,
+      paddingVertical: 18,
+      alignItems: 'center',
+    },
+    ctaText: {
+      color: colors.textSecondary,
+      fontSize: Type.base,
+      textAlign: 'center',
+      lineHeight: 20,
+    },
+    ctaHighlight: {
+      color: colors.primary,
+      fontWeight: '600',
+    },
+  });
+}

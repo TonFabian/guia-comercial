@@ -3,8 +3,10 @@ import { router } from 'expo-router';
 import { Alert, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { GuiaColors, Radius } from '@/constants/theme';
+import { Radius } from '@/constants/theme';
+import { useThemeColors } from '@/hooks/use-theme-colors';
 import { useAuthState } from '@/providers/auth-provider';
+import { useThemeMode } from '@/providers/theme-provider';
 
 const MENU = [
   { id: '1', label: 'Meus dados', icon: 'person-outline' as const },
@@ -15,6 +17,9 @@ const MENU = [
 
 export default function ProfileScreen() {
   const { state, user, exitGuest, signOut } = useAuthState();
+  const { mode, toggle } = useThemeMode();
+  const colors = useThemeColors();
+  const styles = makeStyles(colors);
 
   const handleMenuPress = (item: (typeof MENU)[0]) => {
     if (item.id === '1') {
@@ -59,9 +64,9 @@ export default function ProfileScreen() {
     : 'Visitante';
 
   return (
-    <View style={styles.root}>
+    <View style={[styles.root, { backgroundColor: colors.background }]}>
       <SafeAreaView style={styles.safeArea} edges={['top']}>
-        <Text style={styles.title}>Perfil</Text>
+        <Text style={[styles.title, { color: colors.text }]}>Perfil</Text>
         <TouchableOpacity
           style={styles.avatarBox}
           activeOpacity={state === 'signedIn' ? 1 : 0.7}
@@ -74,7 +79,7 @@ export default function ProfileScreen() {
             <Image source={{ uri: user.imageUrl }} style={styles.avatarImagem} />
           ) : (
             <View style={styles.avatar}>
-              <Ionicons name="person" size={36} color={GuiaColors.primary} />
+              <Ionicons name="person" size={36} color={colors.primary} />
             </View>
           )}
           <Text style={styles.userName}>{nomeExibido}</Text>
@@ -91,21 +96,28 @@ export default function ProfileScreen() {
               style={styles.menuItem}
               activeOpacity={0.7}
               onPress={() => handleMenuPress(item)}>
-              <Ionicons name={item.icon} size={20} color={GuiaColors.textSecondary} />
+              <Ionicons name={item.icon} size={20} color={colors.textSecondary} />
               <Text style={styles.menuLabel}>{item.label}</Text>
-              <Ionicons name="chevron-forward" size={16} color={GuiaColors.textSecondary} />
+              <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
             </TouchableOpacity>
           ))}
         </View>
+        <TouchableOpacity style={styles.themeToggle} onPress={toggle}>
+          <Ionicons name={mode === 'dark' ? 'sunny-outline' : 'moon-outline'} size={20} color={colors.text} />
+          <Text style={styles.themeToggleText}>
+            Tema: {mode === 'dark' ? 'Escuro' : 'Claro'}
+          </Text>
+        </TouchableOpacity>
       </SafeAreaView>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
+function makeStyles(colors: ReturnType<typeof useThemeColors>) {
+  return StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: GuiaColors.background,
+    backgroundColor: colors.background,
   },
   safeArea: {
     flex: 1,
@@ -113,7 +125,7 @@ const styles = StyleSheet.create({
     paddingTop: 12,
   },
   title: {
-    color: GuiaColors.text,
+    color: colors.text,
     fontSize: 24,
     fontWeight: '700',
     marginBottom: 20,
@@ -127,9 +139,9 @@ const styles = StyleSheet.create({
     width: 84,
     height: 84,
     borderRadius: 42,
-    backgroundColor: GuiaColors.surface,
+    backgroundColor: colors.surface,
     borderWidth: 2,
-    borderColor: GuiaColors.primary,
+    borderColor: colors.primary,
     alignItems: 'center',
     justifyContent: 'center',
   },
@@ -138,23 +150,23 @@ const styles = StyleSheet.create({
     height: 84,
     borderRadius: 42,
     borderWidth: 2,
-    borderColor: GuiaColors.primary,
+    borderColor: colors.primary,
   },
   userName: {
-    color: GuiaColors.text,
+    color: colors.text,
     fontSize: 18,
     fontWeight: '700',
     marginTop: 6,
   },
   userHint: {
-    color: GuiaColors.textSecondary,
+    color: colors.textSecondary,
     fontSize: 13,
   },
   menu: {
-    backgroundColor: GuiaColors.surface,
+    backgroundColor: colors.surface,
     borderRadius: Radius.card,
     borderWidth: 1,
-    borderColor: GuiaColors.border,
+    borderColor: colors.border,
     overflow: 'hidden',
   },
   menuItem: {
@@ -164,11 +176,28 @@ const styles = StyleSheet.create({
     paddingHorizontal: 16,
     paddingVertical: 15,
     borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: GuiaColors.border,
+    borderBottomColor: colors.border,
   },
   menuLabel: {
     flex: 1,
-    color: GuiaColors.text,
+    color: colors.text,
     fontSize: 15,
   },
-});
+  themeToggle: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+    marginTop: 20,
+    padding: 14,
+    borderRadius: Radius.card,
+    backgroundColor: colors.surface,
+    borderWidth: 1,
+    borderColor: colors.border,
+  },
+  themeToggleText: {
+    color: colors.text,
+    fontSize: 15,
+    fontWeight: '600',
+  },
+  });
+}

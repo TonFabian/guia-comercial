@@ -1,23 +1,25 @@
 import { NativeTabs } from 'expo-router/native-tabs';
 import { Platform } from 'react-native';
 
-import { Glass, GuiaColors } from '@/constants/theme';
+import { Glass } from '@/constants/theme';
+import { useThemeColors } from '@/hooks/use-theme-colors';
 
 export default function AppTabs() {
+  const colors = useThemeColors();
   return (
     <NativeTabs
       backgroundColor={Platform.select({
         ios: Glass.tabBar,
-        default: GuiaColors.background,
+        default: colors.background,
       })}
-      tintColor={GuiaColors.primary}
-      iconColor={{ default: GuiaColors.textSecondary, selected: GuiaColors.primary }}
+      tintColor={colors.primary}
+      iconColor={{ default: colors.textSecondary, selected: colors.primary }}
       blurEffect="systemChromeMaterialDark"
       disableTransparentOnScrollEdge
       disableIndicator
       labelStyle={{
-        default: { color: GuiaColors.textSecondary },
-        selected: { color: GuiaColors.primary, fontWeight: '600' },
+        default: { color: colors.textSecondary },
+        selected: { color: colors.primary, fontWeight: '600' },
       }}>
       <NativeTabs.Trigger name="index">
         <NativeTabs.Trigger.Label>Início</NativeTabs.Trigger.Label>

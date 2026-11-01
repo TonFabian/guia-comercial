@@ -4,7 +4,8 @@ import { memo } from 'react';
 import { FlatList, Pressable, StyleSheet, Text } from 'react-native';
 import type { ListRenderItemInfo } from 'react-native';
 
-import { GuiaColors, Overlays, Radius, Spacing, Type } from '@/constants/theme';
+import { Overlays, Radius, Spacing, Type } from '@/constants/theme';
+import { useThemeColors } from '@/hooks/use-theme-colors';
 import type { Category } from '@/types/domain';
 
 function openCategory(category: Category) {
@@ -12,6 +13,8 @@ function openCategory(category: Category) {
 }
 
 const CategoryChip = memo(function CategoryChip({ category }: { category: Category }) {
+  const colors = useThemeColors();
+  const styles = makeStyles(colors);
   return (
     <Pressable
       style={({ pressed }) => [styles.chip, pressed && styles.chipPressed]}
@@ -23,7 +26,7 @@ const CategoryChip = memo(function CategoryChip({ category }: { category: Catego
           typeof MaterialCommunityIcons
         >['name']}
         size={16}
-        color={GuiaColors.primary}
+        color={colors.primary}
       />
       <Text style={styles.label}>{category.name}</Text>
     </Pressable>
@@ -39,6 +42,8 @@ const renderCategory = ({ item }: ListRenderItemInfo<Category>) => (
 );
 
 export function CategoryList({ categories }: { categories: Category[] }) {
+  const colors = useThemeColors();
+  const styles = makeStyles(colors);
   return (
     <FlatList
       horizontal
@@ -52,32 +57,34 @@ export function CategoryList({ categories }: { categories: Category[] }) {
   );
 }
 
-const styles = StyleSheet.create({
-  list: {
-    marginBottom: Spacing.four,
-  },
-  categoriesContent: {
-    paddingHorizontal: Spacing.three,
-    gap: Spacing.two,
-  },
-  chip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.two,
-    backgroundColor: GuiaColors.surface,
-    borderRadius: Radius.pill,
-    borderWidth: 1,
-    borderColor: GuiaColors.border,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
-  },
-  chipPressed: {
-    backgroundColor: Overlays.amberTag,
-    borderColor: GuiaColors.primary,
-  },
-  label: {
-    color: GuiaColors.text,
-    fontSize: Type.body,
-    fontWeight: '600',
-  },
-});
+function makeStyles(colors: ReturnType<typeof useThemeColors>) {
+  return StyleSheet.create({
+    list: {
+      marginBottom: Spacing.four,
+    },
+    categoriesContent: {
+      paddingHorizontal: Spacing.three,
+      gap: Spacing.two,
+    },
+    chip: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: Spacing.two,
+      backgroundColor: colors.surface,
+      borderRadius: Radius.pill,
+      borderWidth: 1,
+      borderColor: colors.border,
+      paddingHorizontal: 14,
+      paddingVertical: 10,
+    },
+    chipPressed: {
+      backgroundColor: Overlays.amberTag,
+      borderColor: colors.primary,
+    },
+    label: {
+      color: colors.text,
+      fontSize: Type.body,
+      fontWeight: '600',
+    },
+  });
+}

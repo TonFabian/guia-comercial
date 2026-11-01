@@ -3,12 +3,15 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
-import { CardShadow, CardColors, GuiaColors, Overlays, Radius, Spacing, Type } from '@/constants/theme';
+import { CardColors, CardShadow, Overlays, Radius, Spacing, Type } from '@/constants/theme';
+import { useThemeColors } from '@/hooks/use-theme-colors';
 import type { DisplayCoupon } from '@/data/mock';
 import { ContactHintRow } from '@/features/home/contact-hidden-hint';
 import { companyLabel } from '@/types/domain';
 
 export function CouponList({ coupons }: { coupons: DisplayCoupon[] }) {
+  const colors = useThemeColors();
+  const styles = makeStyles(colors);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
   function handleCopy(id: string) {
@@ -36,14 +39,13 @@ export function CouponList({ coupons }: { coupons: DisplayCoupon[] }) {
             </View>
             <Text style={styles.couponTitle}>{coupon.title}</Text>
             <Text style={styles.couponBusiness}>{companyLabel(coupon.company)}</Text>
-            {/* Sem código (convidado ou cupom sem resgate) mostra o hint. */}
             {coupon.code ? (
               <Pressable
                 style={styles.couponFooter}
                 onPress={() => handleCopy(coupon._id)}
                 hitSlop={6}
                 android_ripple={{ color: Overlays.amberTag }}>
-                <Ionicons name="copy-outline" size={14} color={GuiaColors.primary} />
+                <Ionicons name="copy-outline" size={14} color={colors.primary} />
                 <Text style={styles.couponFooterText}>
                   {copiedId === coupon._id ? 'Copiado! ✓' : 'Copiar cupom'}
                 </Text>
@@ -60,59 +62,61 @@ export function CouponList({ coupons }: { coupons: DisplayCoupon[] }) {
   );
 }
 
-const styles = StyleSheet.create({
-  section: {
-    marginBottom: 24,
-  },
-  carouselContent: {
-    paddingHorizontal: 16,
-    gap: 12,
-    marginBottom: 24,
-  },
-  couponCard: {
-    width: 200,
-    minHeight: 150,
-    borderRadius: Radius.card,
-    padding: Spacing.three,
-    justifyContent: 'space-between',
-    gap: Spacing.two,
-    marginRight: 12,
-    ...CardShadow,
-  },
-  couponTag: {
-    alignSelf: 'flex-start',
-    backgroundColor: Overlays.amberTag,
-    borderRadius: Radius.tag,
-    paddingVertical: 3,
-    paddingHorizontal: 8,
-  },
-  couponTagText: {
-    color: GuiaColors.primary,
-    fontSize: Type.caption,
-    fontWeight: '700',
-  },
-  couponTitle: {
-    color: GuiaColors.text,
-    fontSize: Type.cardTitle,
-    fontWeight: '800',
-    marginTop: 4,
-  },
-  couponBusiness: {
-    color: Overlays.whiteFaint,
-    fontSize: Type.body,
-  },
-  couponFooter: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    marginTop: 4,
-    paddingVertical: 10,
-    paddingHorizontal: 16,
-  },
-  couponFooterText: {
-    color: GuiaColors.primary,
-    fontSize: Type.body,
-    fontWeight: '600',
-  },
-});
+function makeStyles(colors: ReturnType<typeof useThemeColors>) {
+  return StyleSheet.create({
+    section: {
+      marginBottom: 24,
+    },
+    carouselContent: {
+      paddingHorizontal: 16,
+      gap: 12,
+      marginBottom: 24,
+    },
+    couponCard: {
+      width: 200,
+      minHeight: 150,
+      borderRadius: Radius.card,
+      padding: Spacing.three,
+      justifyContent: 'space-between',
+      gap: Spacing.two,
+      marginRight: 12,
+      ...CardShadow,
+    },
+    couponTag: {
+      alignSelf: 'flex-start',
+      backgroundColor: Overlays.amberTag,
+      borderRadius: Radius.tag,
+      paddingVertical: 3,
+      paddingHorizontal: 8,
+    },
+    couponTagText: {
+      color: colors.primary,
+      fontSize: Type.caption,
+      fontWeight: '700',
+    },
+    couponTitle: {
+      color: colors.text,
+      fontSize: Type.cardTitle,
+      fontWeight: '800',
+      marginTop: 4,
+    },
+    couponBusiness: {
+      color: Overlays.whiteFaint,
+      fontSize: Type.body,
+    },
+    couponFooter: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 6,
+      marginTop: 4,
+      paddingVertical: 10,
+      paddingHorizontal: 16,
+    },
+    couponFooterText: {
+      color: colors.primary,
+      fontSize: Type.body,
+      fontWeight: '600',
+    },
+  });
+}

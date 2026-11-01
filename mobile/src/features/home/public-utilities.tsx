@@ -5,13 +5,13 @@ import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
 
 import {
   Glass,
-  GuiaColors,
   Overlays,
   Radius,
   Spacing,
   Type,
   UtilityColors,
 } from '@/constants/theme';
+import { useThemeColors } from '@/hooks/use-theme-colors';
 import { MOCK_PUBLIC_UTILITIES, type PublicUtility } from '@/data/public-utilities';
 import { callPhone } from '@/utils/links';
 import { SectionHeader } from './section-header';
@@ -21,6 +21,8 @@ export function PublicUtilities({
 }: {
   utilities?: PublicUtility[];
 }) {
+  const colors = useThemeColors();
+  const styles = makeStyles(colors);
   const [selectedUtility, setSelectedUtility] = useState<PublicUtility | null>(null);
   const selectedPhone = selectedUtility?.phone ?? null;
 
@@ -47,8 +49,8 @@ export function PublicUtilities({
           const isCallAction = utility.action === 'call' && Boolean(utility.phone);
           const badgeTextColor =
             utility.accent === UtilityColors.sanitation
-              ? GuiaColors.background
-              : GuiaColors.text;
+              ? colors.background
+              : colors.text;
 
           return (
             <Pressable
@@ -81,7 +83,7 @@ export function PublicUtilities({
                     <MaterialCommunityIcons
                       name="information-outline"
                       size={14}
-                      color={GuiaColors.textSecondary}
+                      color={colors.textSecondary}
                     />
                   </View>
                 )}
@@ -103,7 +105,7 @@ export function PublicUtilities({
                 <MaterialCommunityIcons
                   name={isCallAction ? 'phone' : 'chevron-right'}
                   size={14}
-                  color={GuiaColors.primary}
+                  color={colors.primary}
                 />
               </View>
             </Pressable>
@@ -147,7 +149,7 @@ export function PublicUtilities({
                   <MaterialCommunityIcons
                     name="close"
                     size={20}
-                    color={GuiaColors.textSecondary}
+                    color={colors.textSecondary}
                   />
                 </Pressable>
               </View>
@@ -182,7 +184,7 @@ export function PublicUtilities({
                   <MaterialCommunityIcons
                     name="phone"
                     size={18}
-                    color={GuiaColors.background}
+                    color={colors.background}
                   />
                   <Text style={styles.modalCallText}>Ligar agora</Text>
                 </Pressable>
@@ -202,179 +204,181 @@ export function PublicUtilities({
   );
 }
 
-const styles = StyleSheet.create({
-  section: {
-    marginBottom: Spacing.four,
-  },
-  grid: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    justifyContent: 'space-between',
-    rowGap: Spacing.two + Spacing.one,
-    paddingHorizontal: Spacing.three,
-  },
-  card: {
-    width: '48%',
-    minHeight: 158,
-    justifyContent: 'space-between',
-    gap: Spacing.two,
-    backgroundColor: Glass.surface,
-    borderRadius: Radius.card,
-    borderWidth: 1,
-    borderColor: Glass.border,
-    padding: 14,
-  },
-  cardPressed: {
-    opacity: 0.86,
-    borderColor: Overlays.amberGlow,
-  },
-  cardTop: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  iconTag: {
-    width: 40,
-    height: 40,
-    borderRadius: Radius.iconBox,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  phoneBadge: {
-    borderRadius: Radius.pill,
-    paddingHorizontal: 10,
-    paddingVertical: 4,
-  },
-  phoneBadgeText: {
-    fontSize: Type.small,
-    fontWeight: '800',
-  },
-  detailsBadge: {
-    width: 28,
-    height: 28,
-    borderRadius: Radius.iconBox,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: GuiaColors.surfaceAlt,
-  },
-  cardBody: {
-    gap: Spacing.one,
-  },
-  cardTitle: {
-    color: GuiaColors.text,
-    fontSize: Type.base,
-    fontWeight: '700',
-    lineHeight: 18,
-  },
-  cardDescription: {
-    color: GuiaColors.textSecondary,
-    fontSize: Type.small,
-    lineHeight: 16,
-  },
-  cardAction: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.one,
-  },
-  cardActionText: {
-    color: GuiaColors.primary,
-    fontSize: Type.small,
-    fontWeight: '700',
-  },
-  modalOverlay: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: Overlays.scrim,
-    padding: Spacing.four,
-  },
-  modalCard: {
-    width: '100%',
-    maxWidth: 420,
-    gap: Spacing.three,
-    backgroundColor: GuiaColors.surface,
-    borderRadius: Radius.cardLarge,
-    borderWidth: 1,
-    borderColor: Glass.border,
-    padding: Spacing.four,
-  },
-  modalHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  modalIcon: {
-    width: 52,
-    height: 52,
-    borderRadius: Radius.card,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  modalCloseIcon: {
-    width: 32,
-    height: 32,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: GuiaColors.surfaceAlt,
-    borderRadius: Radius.pill,
-  },
-  modalBody: {
-    gap: Spacing.one,
-  },
-  modalTitle: {
-    color: GuiaColors.text,
-    fontSize: Type.title,
-    fontWeight: '700',
-  },
-  modalDescription: {
-    color: GuiaColors.textSecondary,
-    fontSize: Type.base,
-  },
-  modalDetails: {
-    gap: Spacing.two,
-  },
-  modalDetailRow: {
-    flexDirection: 'row',
-    alignItems: 'flex-start',
-    gap: Spacing.two,
-  },
-  modalDetailDot: {
-    width: 6,
-    height: 6,
-    borderRadius: 3,
-    marginTop: 6,
-  },
-  modalDetailText: {
-    flex: 1,
-    color: GuiaColors.textSecondary,
-    fontSize: Type.body,
-    lineHeight: 19,
-  },
-  modalCallButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: Spacing.two,
-    backgroundColor: GuiaColors.primary,
-    borderRadius: Radius.pill,
-    paddingVertical: 14,
-  },
-  modalCallText: {
-    color: GuiaColors.background,
-    fontSize: Type.base,
-    fontWeight: '700',
-  },
-  modalDismissButton: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    borderRadius: Radius.pill,
-    borderWidth: 1,
-    borderColor: GuiaColors.border,
-    paddingVertical: 14,
-  },
-  modalDismissText: {
-    color: GuiaColors.text,
-    fontSize: Type.base,
-    fontWeight: '700',
-  },
-});
+function makeStyles(colors: ReturnType<typeof useThemeColors>) {
+  return StyleSheet.create({
+    section: {
+      marginBottom: Spacing.four,
+    },
+    grid: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      justifyContent: 'space-between',
+      rowGap: Spacing.two + Spacing.one,
+      paddingHorizontal: Spacing.three,
+    },
+    card: {
+      width: '48%',
+      minHeight: 158,
+      justifyContent: 'space-between',
+      gap: Spacing.two,
+      backgroundColor: Glass.surface,
+      borderRadius: Radius.card,
+      borderWidth: 1,
+      borderColor: Glass.border,
+      padding: 14,
+    },
+    cardPressed: {
+      opacity: 0.86,
+      borderColor: Overlays.amberGlow,
+    },
+    cardTop: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    iconTag: {
+      width: 40,
+      height: 40,
+      borderRadius: Radius.iconBox,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    phoneBadge: {
+      borderRadius: Radius.pill,
+      paddingHorizontal: 10,
+      paddingVertical: 4,
+    },
+    phoneBadgeText: {
+      fontSize: Type.small,
+      fontWeight: '800',
+    },
+    detailsBadge: {
+      width: 28,
+      height: 28,
+      borderRadius: Radius.iconBox,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: colors.surfaceAlt,
+    },
+    cardBody: {
+      gap: Spacing.one,
+    },
+    cardTitle: {
+      color: colors.text,
+      fontSize: Type.base,
+      fontWeight: '700',
+      lineHeight: 18,
+    },
+    cardDescription: {
+      color: colors.textSecondary,
+      fontSize: Type.small,
+      lineHeight: 16,
+    },
+    cardAction: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: Spacing.one,
+    },
+    cardActionText: {
+      color: colors.primary,
+      fontSize: Type.small,
+      fontWeight: '700',
+    },
+    modalOverlay: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: Overlays.scrim,
+      padding: Spacing.four,
+    },
+    modalCard: {
+      width: '100%',
+      maxWidth: 420,
+      gap: Spacing.three,
+      backgroundColor: colors.surface,
+      borderRadius: Radius.cardLarge,
+      borderWidth: 1,
+      borderColor: Glass.border,
+      padding: Spacing.four,
+    },
+    modalHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
+    modalIcon: {
+      width: 52,
+      height: 52,
+      borderRadius: Radius.card,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    modalCloseIcon: {
+      width: 32,
+      height: 32,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: colors.surfaceAlt,
+      borderRadius: Radius.pill,
+    },
+    modalBody: {
+      gap: Spacing.one,
+    },
+    modalTitle: {
+      color: colors.text,
+      fontSize: Type.title,
+      fontWeight: '700',
+    },
+    modalDescription: {
+      color: colors.textSecondary,
+      fontSize: Type.base,
+    },
+    modalDetails: {
+      gap: Spacing.two,
+    },
+    modalDetailRow: {
+      flexDirection: 'row',
+      alignItems: 'flex-start',
+      gap: Spacing.two,
+    },
+    modalDetailDot: {
+      width: 6,
+      height: 6,
+      borderRadius: 3,
+      marginTop: 6,
+    },
+    modalDetailText: {
+      flex: 1,
+      color: colors.textSecondary,
+      fontSize: Type.body,
+      lineHeight: 19,
+    },
+    modalCallButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: Spacing.two,
+      backgroundColor: colors.primary,
+      borderRadius: Radius.pill,
+      paddingVertical: 14,
+    },
+    modalCallText: {
+      color: colors.background,
+      fontSize: Type.base,
+      fontWeight: '700',
+    },
+    modalDismissButton: {
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderRadius: Radius.pill,
+      borderWidth: 1,
+      borderColor: colors.border,
+      paddingVertical: 14,
+    },
+    modalDismissText: {
+      color: colors.text,
+      fontSize: Type.base,
+      fontWeight: '700',
+    },
+  });
+}

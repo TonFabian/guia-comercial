@@ -5,8 +5,9 @@ import { tokenCache } from '@clerk/expo/token-cache';
 import * as SplashScreen from 'expo-splash-screen';
 
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
-import { DarkGuiTheme, GuiaColors } from '@/constants/theme';
+import { DarkGuiTheme, GuiaColors, LightGuiTheme } from '@/constants/theme';
 import { AuthProvider } from '@/providers/auth-provider';
+import { ThemeProvider, useThemeMode } from '@/providers/theme-provider';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -29,9 +30,11 @@ function AuthProviders({ children }: { children: ReactNode }) {
   );
 }
 
-export default function RootLayout() {
+function ThemedStack() {
+  const { mode } = useThemeMode();
+  const routerTheme = mode === 'dark' ? DarkGuiTheme : LightGuiTheme;
   return (
-    <RouterThemeProvider value={DarkGuiTheme}>
+    <RouterThemeProvider value={routerTheme}>
       <AuthProviders>
         <AnimatedSplashOverlay />
         <Stack
@@ -42,5 +45,13 @@ export default function RootLayout() {
         />
       </AuthProviders>
     </RouterThemeProvider>
+  );
+}
+
+export default function RootLayout() {
+  return (
+    <ThemeProvider>
+      <ThemedStack />
+    </ThemeProvider>
   );
 }

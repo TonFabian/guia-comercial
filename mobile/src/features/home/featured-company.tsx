@@ -4,13 +4,16 @@ import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { router } from 'expo-router';
 import { Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
-import { GuiaColors, Overlays, Radius, Spacing, Type } from '@/constants/theme';
+import { Overlays, Radius, Spacing, Type } from '@/constants/theme';
+import { useThemeColors } from '@/hooks/use-theme-colors';
 import { ContactHintRow, CONTACT_HIDDEN_HINT } from '@/features/home/contact-hidden-hint';
 import { categoryLabel } from '@/types/domain';
 import type { Company } from '@/types/domain';
 import { callPhone, openAddress, openWhatsApp } from '@/utils/links';
 
 export function FeaturedCompany({ company }: { company: Company | null }) {
+  const colors = useThemeColors();
+  const styles = makeStyles(colors);
   if (!company) return null;
 
   return (
@@ -39,11 +42,10 @@ export function FeaturedCompany({ company }: { company: Company | null }) {
           <Text style={styles.companyName}>{company.name}</Text>
           <Text style={styles.companyCategory}>{categoryLabel(company.category)}</Text>
           <View style={styles.addressRow}>
-            <Ionicons name="location-outline" size={14} color={GuiaColors.textSecondary} />
+            <Ionicons name="location-outline" size={14} color={colors.textSecondary} />
             <Text style={styles.companyAddress}>{company.address ?? CONTACT_HIDDEN_HINT}</Text>
           </View>
           <View style={styles.companyActions}>
-            {/* Atalhos presentes só com o dado; sem nenhum, o hint. */}
             {company.phone ? (
               <TouchableOpacity
                 style={styles.actionPill}
@@ -52,7 +54,7 @@ export function FeaturedCompany({ company }: { company: Company | null }) {
                   event.stopPropagation();
                   if (company.phone) void callPhone(company.phone);
                 }}>
-                <Ionicons name="call-outline" size={16} color={GuiaColors.primary} />
+                <Ionicons name="call-outline" size={16} color={colors.primary} />
                 <Text style={styles.actionPillText}>Ligar</Text>
               </TouchableOpacity>
             ) : null}
@@ -64,7 +66,7 @@ export function FeaturedCompany({ company }: { company: Company | null }) {
                   event.stopPropagation();
                   if (company.address) void openAddress(company.address);
                 }}>
-                <Ionicons name="location-outline" size={16} color={GuiaColors.primary} />
+                <Ionicons name="location-outline" size={16} color={colors.primary} />
                 <Text style={styles.actionPillText}>Endereço</Text>
               </TouchableOpacity>
             ) : null}
@@ -76,7 +78,7 @@ export function FeaturedCompany({ company }: { company: Company | null }) {
                   event.stopPropagation();
                   if (company.whatsapp) void openWhatsApp(company.whatsapp);
                 }}>
-                <MaterialCommunityIcons name="whatsapp" size={16} color={GuiaColors.background} />
+                <MaterialCommunityIcons name="whatsapp" size={16} color={colors.background} />
                 <Text style={styles.whatsappPillText}>WhatsApp</Text>
               </TouchableOpacity>
             ) : null}
@@ -90,98 +92,100 @@ export function FeaturedCompany({ company }: { company: Company | null }) {
   );
 }
 
-const styles = StyleSheet.create({
-  section: {
-    marginBottom: 24,
-  },
-  companyCard: {
-    marginHorizontal: 16,
-    backgroundColor: GuiaColors.surface,
-    borderRadius: Radius.card,
-    borderWidth: 1,
-    borderColor: GuiaColors.border,
-    overflow: 'hidden',
-  },
-  cardPressed: {
-    opacity: 0.88,
-  },
-  companyCover: {
-    height: 120,
-    backgroundColor: GuiaColors.coverPlaceholder,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  highlightTag: {
-    position: 'absolute',
-    top: 12,
-    left: 12,
-    backgroundColor: GuiaColors.primary,
-    borderRadius: Radius.chip,
-    paddingVertical: 4,
-    paddingHorizontal: 10,
-  },
-  highlightTagText: {
-    color: GuiaColors.background,
-    fontSize: Type.small,
-    fontWeight: '800',
-  },
-  companyBody: {
-    padding: 16,
-    gap: 6,
-  },
-  companyName: {
-    color: GuiaColors.text,
-    fontSize: Type.section,
-    fontWeight: '700',
-  },
-  companyCategory: {
-    color: GuiaColors.textSecondary,
-    fontSize: Type.body,
-  },
-  addressRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginTop: 2,
-  },
-  companyAddress: {
-    color: GuiaColors.textSecondary,
-    fontSize: Type.body,
-  },
-  companyActions: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginTop: 12,
-  },
-  actionPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    backgroundColor: GuiaColors.surfaceAlt,
-    borderRadius: Radius.pill,
-    paddingVertical: 10,
-    paddingHorizontal: Spacing.three,
-  },
-  actionPillText: {
-    color: GuiaColors.primary,
-    fontSize: Type.body,
-    fontWeight: '600',
-  },
-  whatsappPill: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: 6,
-    backgroundColor: GuiaColors.whatsapp,
-    borderRadius: Radius.pill,
-    paddingVertical: 10,
-    paddingHorizontal: Spacing.three,
-  },
-  whatsappPillText: {
-    color: GuiaColors.background,
-    fontSize: Type.body,
-    fontWeight: '700',
-  },
-});
+function makeStyles(colors: ReturnType<typeof useThemeColors>) {
+  return StyleSheet.create({
+    section: {
+      marginBottom: 24,
+    },
+    companyCard: {
+      marginHorizontal: 16,
+      backgroundColor: colors.surface,
+      borderRadius: Radius.card,
+      borderWidth: 1,
+      borderColor: colors.border,
+      overflow: 'hidden',
+    },
+    cardPressed: {
+      opacity: 0.88,
+    },
+    companyCover: {
+      height: 120,
+      backgroundColor: colors.coverPlaceholder,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    highlightTag: {
+      position: 'absolute',
+      top: 12,
+      left: 12,
+      backgroundColor: colors.primary,
+      borderRadius: Radius.chip,
+      paddingVertical: 4,
+      paddingHorizontal: 10,
+    },
+    highlightTagText: {
+      color: colors.background,
+      fontSize: Type.small,
+      fontWeight: '800',
+    },
+    companyBody: {
+      padding: 16,
+      gap: 6,
+    },
+    companyName: {
+      color: colors.text,
+      fontSize: Type.section,
+      fontWeight: '700',
+    },
+    companyCategory: {
+      color: colors.textSecondary,
+      fontSize: Type.body,
+    },
+    addressRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      marginTop: 2,
+    },
+    companyAddress: {
+      color: colors.textSecondary,
+      fontSize: Type.body,
+    },
+    companyActions: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: 8,
+      marginTop: 12,
+    },
+    actionPill: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 6,
+      backgroundColor: colors.surfaceAlt,
+      borderRadius: Radius.pill,
+      paddingVertical: 10,
+      paddingHorizontal: Spacing.three,
+    },
+    actionPillText: {
+      color: colors.primary,
+      fontSize: Type.body,
+      fontWeight: '600',
+    },
+    whatsappPill: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: 6,
+      backgroundColor: colors.whatsapp,
+      borderRadius: Radius.pill,
+      paddingVertical: 10,
+      paddingHorizontal: Spacing.three,
+    },
+    whatsappPillText: {
+      color: colors.background,
+      fontSize: Type.body,
+      fontWeight: '700',
+    },
+  });
+}

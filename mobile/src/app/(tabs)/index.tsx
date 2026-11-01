@@ -10,6 +10,7 @@ import {
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { GuiaColors } from '@/constants/theme';
+import { useThemeColors } from '@/hooks/use-theme-colors';
 import { GuestBanner } from '@/features/auth/guest-banner';
 import { AnnounceCta } from '@/features/home/announce-cta';
 import { BannerCarousel } from '@/features/home/banner-carousel';
@@ -29,20 +30,21 @@ export default function HomeScreen() {
   const { loading, banners, categories, coupons, featuredCompany, jobs, error } =
     useHomeData();
   const insets = useSafeAreaInsets();
+  const colors = useThemeColors();
 
   // Se houve erro de auth (401), já o useHomeData redirecionou.
   // Se ainda estiver com erro (ex.: fallback), mostramos mensagem.
   if (error) {
     return (
-      <View style={styles.errorContainer}>
-        <Text style={styles.errorText}>{error}</Text>
+      <View style={[styles.errorContainer, { backgroundColor: colors.surface }]}>
+        <Text style={[styles.errorText, { color: colors.error }]}>{error}</Text>
         <Button title="Tentar novamente" onPress={() => window.location.reload()} />
       </View>
     );
   }
 
   return (
-    <View style={styles.root}>
+    <View style={[styles.root, { backgroundColor: colors.background }]}>
       <StatusBar barStyle="light-content" />
       <SafeAreaView style={styles.safeArea} edges={['top']}>
         <ScrollView
@@ -58,7 +60,7 @@ export default function HomeScreen() {
           <GuestBanner />
           {loading ? (
             <View style={styles.center}>
-              <ActivityIndicator color={GuiaColors.primary} />
+              <ActivityIndicator color={colors.primary} />
             </View>
           ) : (
             <>
