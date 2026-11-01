@@ -112,7 +112,7 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
       backgroundColor: colors.surface,
       borderRadius: Radius.card,
       borderWidth: 1,
-      borderColor: Glass.border,
+      borderColor: colors.border,
       padding: Spacing.three,
     },
     jobCardPressed: {
