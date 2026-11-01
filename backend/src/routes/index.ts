@@ -1,5 +1,6 @@
 import { Router } from 'express';
 
+import { guestLogin } from '../controllers/auth.controller.js';
 import * as bannerController from '../controllers/banner.controller.js';
 import * as categoryController from '../controllers/category.controller.js';
 import * as companyController from '../controllers/company.controller.js';
@@ -36,6 +37,9 @@ if (authDeps) {
 
   routes.use(auth.optionalAuth);
   routes.use(guestScrub());
+  // Handshake explícito de convidado: não cria sessão nem token; as chamadas
+  // seguintes continuam sem Authorization e são redigidas pelo scrub.
+  routes.post('/auth/guest', guestLogin);
   // Perfil do usuário autenticado: exige sessão válida e só existe com auth
   // ligado — em modo legado o app não a consome.
   routes.get('/me', auth.requireAuth, me);
