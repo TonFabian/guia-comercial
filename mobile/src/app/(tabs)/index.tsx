@@ -63,9 +63,9 @@ export default function HomeScreen() {
           ) : (
             <>
               <CategoryList categories={categories} />
+              <FeaturedCompany company={featuredCompany} />
               <BannerCarousel banners={banners} />
               <PublicUtilities />
-              <FeaturedCompany company={featuredCompany} />
               {SHOW_COUPONS ? <CouponList coupons={coupons} /> : null}
               <JobList jobs={jobs} />
               <AnnounceCta />
