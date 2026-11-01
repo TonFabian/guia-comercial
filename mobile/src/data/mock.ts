@@ -53,15 +53,18 @@ export const MOCK_COMPANIES: Company[] = [
     _id: '1',
     name: 'Construtora Alicerce',
     slug: 'construtora-alicerce',
-    description: 'Construção e reformas residenciais e comerciais.',
+    description:
+      'Fundada em 2008, a Construtora Alicerce nasceu com o propósito de transformar a forma de construir em Castelo do Piauí. Ao longo de mais de uma década, ajudamos famílias e empresas a tirar projetos do papel, unindo planejamento, qualidade e respeito aos prazos. Nossa missão é construir espaços seguros, funcionais e duradouros, sempre com transparência e atenção às pessoas.',
     category: '1',
     address: 'Av. Brasil, 1520 — Centro',
     city: 'Sua Cidade',
+    registry: 'CREA-PI',
     isFeatured: true,
     rating: 4.7,
     phone: '+5511999990001',
     whatsapp: '5511999990001',
-    openingHours: ['Seg–Sex 08h–18h', 'Sáb 08h–12h'],
+    openingHours: ['08h–18h', '08h–12h', 'Fechado'],
+    services: ['Construção residencial', 'Reformas comerciais', 'Projetos e regularização'],
   },
   {
     _id: '2',
@@ -71,6 +74,7 @@ export const MOCK_COMPANIES: Company[] = [
     category: '2',
     phone: '+5511999990002',
     address: 'Rua das Flores, 30 — Centro',
+    services: ['Almoço executivo', 'Pizzas artesanais', 'Delivery'],
   },
   {
     _id: '3',
@@ -80,6 +84,7 @@ export const MOCK_COMPANIES: Company[] = [
     category: '3',
     phone: '+5511999990003',
     address: 'Av. das Oficinas, 210',
+    services: ['Mecânica geral', 'Troca de óleo', 'Revisão preventiva'],
   },
   {
     _id: '4',
@@ -89,6 +94,7 @@ export const MOCK_COMPANIES: Company[] = [
     category: '5',
     phone: '+5511999990004',
     address: 'Rua XV de Novembro, 88',
+    services: ['Corte masculino', 'Barba e bigode', 'Tratamentos capilares'],
   },
   {
     _id: '5',
@@ -98,7 +104,8 @@ export const MOCK_COMPANIES: Company[] = [
     category: '4',
     phone: '+5511999990005',
     address: 'Av. Brasil, 300 — Centro',
-    openingHours: ['Aberto até 23h'],
+    openingHours: ['Aberto até 23h', 'Aberto até 23h', 'Aberto até 23h'],
+    services: ['Medicamentos', 'Higiene e beleza', 'Plantão 24h'],
   },
 ];
 

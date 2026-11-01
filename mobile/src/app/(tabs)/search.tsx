@@ -1,5 +1,5 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
@@ -133,7 +133,13 @@ export default function SearchScreen() {
               <View style={styles.group}>
                 <Text style={styles.groupTitle}>Empresas</Text>
                 {companies.map((company) => (
-                  <View key={company._id} style={styles.row}>
+                  <TouchableOpacity
+                    key={company._id}
+                    style={styles.row}
+                    activeOpacity={0.75}
+                    onPress={() => router.push(`/company/${company._id}`)}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Abrir perfil de ${company.name}`}>
                     <View style={styles.rowBody}>
                       <Text style={styles.rowTitle}>{company.name}</Text>
                       <Text style={styles.rowSubtitle}>
@@ -142,7 +148,7 @@ export default function SearchScreen() {
                       </Text>
                     </View>
                     <Ionicons name="chevron-forward" size={16} color={GuiaColors.textSecondary} />
-                  </View>
+                  </TouchableOpacity>
                 ))}
               </View>
             )}

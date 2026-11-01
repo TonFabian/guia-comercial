@@ -11,6 +11,7 @@ export const GuiaColors = {
   primaryDim: '#B8860B',
   text: '#FFFFFF',
   textSecondary: '#9CA3AF',
+  textSoft: '#D1D5DB',
   border: '#2E2E2E',
   borderSoft: '#222222',
   success: '#22C55E',
@@ -37,6 +38,12 @@ export const Overlays = {
   whiteFaint: 'rgba(255,255,255,0.7)',
   amberTag: 'rgba(255, 193, 7, 0.2)',
   amberGlow: 'rgba(255, 193, 7, 0.14)',
+  goldBorder: 'rgba(212, 175, 55, 0.45)',
+  goldSoftBorder: 'rgba(255, 193, 7, 0.15)',
+  successTag: 'rgba(34, 197, 94, 0.14)',
+  dangerTag: 'rgba(239, 68, 68, 0.14)',
+  neutralTag: 'rgba(156, 163, 175, 0.14)',
+  hairline: 'rgba(255, 255, 255, 0.05)',
   scrim: 'rgba(0,0,0,0.72)',
 } as const;
 
@@ -71,11 +78,18 @@ export const Radius = {
   chip: 8,
   card: 16,
   cardLarge: 20,
+  detailCard: 12,
   iconBox: 14,
   circle: 32,
   pill: 20,
   search: 28,
   avatar: 42,
+} as const;
+
+/** Gradientes dos botões de contato da tela de detalhes. */
+export const ButtonGradients = {
+  whatsapp: ['#25D366', '#128C7E'],
+  call: ['#FFD54F', '#D4AF37'],
 } as const;
 
 /** Cores de marca dos provedores de login (guideline de cada marca). */

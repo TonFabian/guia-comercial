@@ -36,6 +36,8 @@ export interface Company {
   city?: string;
   logo?: string;
   cover?: string;
+  gallery?: string[];
+  registry?: string;
   isFeatured?: boolean;
   rating?: number;
   openingHours?: string[];

@@ -2,7 +2,7 @@ import { SectionHeader } from './section-header';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { router } from 'expo-router';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 import { GuiaColors, Overlays, Radius, Spacing, Type } from '@/constants/theme';
 import { ContactHintRow, CONTACT_HIDDEN_HINT } from '@/features/home/contact-hidden-hint';
@@ -20,7 +20,11 @@ export function FeaturedCompany({ company }: { company: Company | null }) {
         actionLabel="Ver todas"
         onAction={() => router.push('/search')}
       />
-      <View style={styles.companyCard}>
+      <Pressable
+        style={({ pressed }) => [styles.companyCard, pressed && styles.cardPressed]}
+        onPress={() => router.push(`/company/${company._id}`)}
+        accessibilityRole="button"
+        accessibilityLabel={`Abrir perfil de ${company.name}`}>
         <View style={styles.companyCover}>
           <MaterialCommunityIcons
             name="office-building"
@@ -44,7 +48,10 @@ export function FeaturedCompany({ company }: { company: Company | null }) {
               <TouchableOpacity
                 style={styles.actionPill}
                 activeOpacity={0.7}
-                onPress={() => company.phone && void callPhone(company.phone)}>
+                onPress={(event) => {
+                  event.stopPropagation();
+                  if (company.phone) void callPhone(company.phone);
+                }}>
                 <Ionicons name="call-outline" size={16} color={GuiaColors.primary} />
                 <Text style={styles.actionPillText}>Ligar</Text>
               </TouchableOpacity>
@@ -53,7 +60,10 @@ export function FeaturedCompany({ company }: { company: Company | null }) {
               <TouchableOpacity
                 style={styles.actionPill}
                 activeOpacity={0.7}
-                onPress={() => company.address && void openAddress(company.address)}>
+                onPress={(event) => {
+                  event.stopPropagation();
+                  if (company.address) void openAddress(company.address);
+                }}>
                 <Ionicons name="location-outline" size={16} color={GuiaColors.primary} />
                 <Text style={styles.actionPillText}>Endereço</Text>
               </TouchableOpacity>
@@ -62,7 +72,10 @@ export function FeaturedCompany({ company }: { company: Company | null }) {
               <TouchableOpacity
                 style={styles.whatsappPill}
                 activeOpacity={0.7}
-                onPress={() => company.whatsapp && void openWhatsApp(company.whatsapp)}>
+                onPress={(event) => {
+                  event.stopPropagation();
+                  if (company.whatsapp) void openWhatsApp(company.whatsapp);
+                }}>
                 <MaterialCommunityIcons name="whatsapp" size={16} color={GuiaColors.background} />
                 <Text style={styles.whatsappPillText}>WhatsApp</Text>
               </TouchableOpacity>
@@ -72,7 +85,7 @@ export function FeaturedCompany({ company }: { company: Company | null }) {
             ) : null}
           </View>
         </View>
-      </View>
+      </Pressable>
     </View>
   );
 }
@@ -88,6 +101,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: GuiaColors.border,
     overflow: 'hidden',
+  },
+  cardPressed: {
+    opacity: 0.88,
   },
   companyCover: {
     height: 120,

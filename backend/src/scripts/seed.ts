@@ -69,15 +69,17 @@ async function seed(): Promise<void> {
     {
       name: 'Construtora Alicerce',
       slug: 'construtora-alicerce',
-      description: 'Construção civil, reformas e projetos residenciais e comerciais.',
+      description:
+        'Fundada em 2008, a Construtora Alicerce nasceu com o propósito de transformar a forma de construir em Castelo do Piauí. Ao longo de mais de uma década, ajudamos famílias e empresas a tirar projetos do papel, unindo planejamento, qualidade e respeito aos prazos. Nossa missão é construir espaços seguros, funcionais e duradouros, sempre com transparência e atenção às pessoas.',
       category: categoriaPorSlug.get('construcao'),
       phone: '+55 85 99999-0001',
       whatsapp: '+55 85 99999-0001',
       address: 'Av. Brasil, 1520 — Centro',
       city: 'Fortaleza',
+      registry: 'CREA-CE 12345',
       isFeatured: true,
       rating: 4.7,
-      openingHours: ['Seg a Sex: 08h às 18h', 'Sáb: 08h às 12h'],
+      openingHours: ['08h às 18h', '08h às 12h', 'Fechado'],
       services: ['Reformas', 'Projetos', 'Brita e areia'],
     },
     {
@@ -91,7 +93,7 @@ async function seed(): Promise<void> {
       city: 'Fortaleza',
       isFeatured: true,
       rating: 4.5,
-      openingHours: ['Todos os dias: 11h às 23h'],
+      openingHours: ['11h às 23h', '11h às 23h', '11h às 23h'],
       services: ['Delivery', 'Salão', 'Marmitex'],
     },
     {
@@ -103,7 +105,7 @@ async function seed(): Promise<void> {
       address: 'Rua do Campo, 45 — Montese',
       city: 'Fortaleza',
       rating: 4.2,
-      openingHours: ['Seg a Sáb: 08h às 18h'],
+      openingHours: ['08h às 18h', '08h às 18h', 'Fechado'],
       services: ['Troca de óleo', 'Suspensão', 'Freios'],
     },
     {
@@ -116,7 +118,7 @@ async function seed(): Promise<void> {
       address: 'Av. Antônio Sales, 910 — Dionísio Torres',
       city: 'Fortaleza',
       rating: 4.8,
-      openingHours: ['Aberto até 23h'],
+      openingHours: ['Aberto até 23h', 'Aberto até 23h', 'Aberto até 23h'],
       services: ['Plantão', 'Entrega', 'Medidas de pressão'],
     },
     {
@@ -129,7 +131,7 @@ async function seed(): Promise<void> {
       address: 'Rua Padre Morais, 77 — Meireles',
       city: 'Fortaleza',
       rating: 4.9,
-      openingHours: ['Ter a Dom: 09h às 20h'],
+      openingHours: ['09h às 20h', '09h às 20h', '09h às 20h'],
       services: ['Corte', 'Barba', 'Pigmentação'],
     },
   ];

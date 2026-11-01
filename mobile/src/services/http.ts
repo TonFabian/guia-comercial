@@ -9,6 +9,9 @@
  */
 import type { Paginated } from '@/types/domain';
 
+/** Formatos aceitos nas respostas da API: lista crua, paginada ou recurso único. */
+export type RequestPayload<T> = T | T[] | Paginated<T>;
+
 export class ApiError extends Error {
   readonly status: number;
   readonly body: unknown;
@@ -72,7 +75,7 @@ async function readErrorBody(response: Response): Promise<unknown> {
 export async function request<T>(
   path: string,
   init?: RequestInitLite,
-): Promise<Paginated<T> | T[] | null> {
+): Promise<RequestPayload<T> | null> {
   if (!BASE_URL) {
     return null;
   }
@@ -116,7 +119,7 @@ export async function request<T>(
       return null;
     }
 
-    return (await response.json()) as Paginated<T> | T[];
+    return (await response.json()) as RequestPayload<T>;
   } catch (error) {
     if (error instanceof ApiError) {
       throw error;

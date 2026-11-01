@@ -9,6 +9,7 @@
 import type { Banner, Category, Company, Coupon, Job, Paginated } from '@/types/domain';
 
 import { isApiConfigured, request } from './http';
+import type { RequestPayload } from './http';
 
 import {
   MOCK_BANNERS,
@@ -20,11 +21,16 @@ import {
   MOCK_PHARMACY,
 } from '@/data/mock';
 
-/** Extrai `items` de um `Paginated<T>` ou aceita uma lista crua, com fallback. */
-function fromPaginated<T>(payload: Paginated<T> | T[] | null, fallback: T[]): T[] {
+function isPaginated<T>(payload: RequestPayload<T>): payload is Paginated<T> {
+  return typeof payload === 'object' && payload !== null && 'items' in payload;
+}
+
+/** Extrai `items` de um `Paginated<T>` e aceita lista crua ou recurso único. */
+function fromPaginated<T>(payload: RequestPayload<T> | null, fallback: T[]): T[] {
   if (!payload) return fallback;
   if (Array.isArray(payload)) return payload;
-  return payload.items ?? fallback;
+  if (isPaginated(payload)) return payload.items ?? fallback;
+  return [payload];
 }
 
 export async function getCategories(): Promise<Category[]> {
@@ -40,6 +46,19 @@ export async function getBanners(): Promise<Banner[]> {
 export async function getCompanies(): Promise<Company[]> {
   const payload = await request<Company>('/companies');
   return fromPaginated(payload, MOCK_COMPANIES);
+}
+
+export async function getCompanyById(id: string): Promise<Company | null> {
+  const mock =
+    MOCK_COMPANIES.find((company) => company._id === id || company.slug === id) ?? null;
+
+  if (!isApiConfigured()) return mock;
+
+  const payload = await request<Company>(`/companies/${encodeURIComponent(id)}`);
+  if (!payload) return mock;
+
+  const [company] = fromPaginated(payload, mock ? [mock] : []);
+  return company ?? null;
 }
 
 export async function getCoupons(): Promise<Coupon[]> {

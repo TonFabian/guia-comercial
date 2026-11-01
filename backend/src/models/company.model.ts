@@ -18,6 +18,8 @@ const companySchema = new Schema<Company>(
     city: String,
     logo: String,
     cover: String,
+    gallery: [String],
+    registry: String,
     isFeatured: { type: Boolean, default: false },
     rating: { type: Number, min: 0, max: 5 },
     openingHours: [String],

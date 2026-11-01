@@ -1,11 +1,11 @@
 import type { ReactNode } from 'react';
-import { Slot, ThemeProvider as RouterThemeProvider } from 'expo-router';
+import { Stack, ThemeProvider as RouterThemeProvider } from 'expo-router';
 import { ClerkProvider } from '@clerk/expo';
 import { tokenCache } from '@clerk/expo/token-cache';
 import * as SplashScreen from 'expo-splash-screen';
 
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
-import { DarkGuiTheme } from '@/constants/theme';
+import { DarkGuiTheme, GuiaColors } from '@/constants/theme';
 import { AuthProvider } from '@/providers/auth-provider';
 
 SplashScreen.preventAutoHideAsync();
@@ -34,7 +34,12 @@ export default function RootLayout() {
     <RouterThemeProvider value={DarkGuiTheme}>
       <AuthProviders>
         <AnimatedSplashOverlay />
-        <Slot />
+        <Stack
+          screenOptions={{
+            headerShown: false,
+            contentStyle: { backgroundColor: GuiaColors.background },
+          }}
+        />
       </AuthProviders>
     </RouterThemeProvider>
   );

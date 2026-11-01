@@ -58,6 +58,8 @@ export const createCompanySchema = z.object({
   city: z.string().optional(),
   logo: z.string().optional(),
   cover: z.string().optional(),
+  gallery: z.array(z.string()).optional(),
+  registry: z.string().optional(),
   isFeatured: z.boolean().optional(),
   rating: z.number().min(0).max(5).optional(),
   openingHours: z.array(z.string()).optional(),
