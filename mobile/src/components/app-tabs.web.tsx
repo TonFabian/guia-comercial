@@ -18,9 +18,10 @@ export default function AppTabs() {
         <BlurView
           intensity={60}
           tint="dark"
-          style={[styles.tabBar, { paddingBottom: Math.max(insets.bottom, 10), borderTopColor: colors.borderSoft }]}>          <TabTrigger name="home" href="/" asChild>
+          style={StyleSheet.flatten([styles.tabBar, { paddingBottom: Math.max(insets.bottom, 10), borderTopColor: colors.borderSoft }])} >
+        <TabTrigger name="home" href="/" asChild>
             <TabButton label="Início" icon="home" />
-          </TabTrigger>
+        </TabTrigger>
           <TabTrigger name="search" href="/search" asChild>
             <TabButton label="Buscar" icon="search" />
           </TabTrigger>
