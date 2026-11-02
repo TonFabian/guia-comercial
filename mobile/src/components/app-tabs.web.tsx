@@ -5,10 +5,11 @@ import { Pressable, StyleSheet, Text } from 'react-native';
 import type { StyleProp, ViewStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Glass, GuiaColors } from '@/constants/theme';
-
+import { Glass } from '@/constants/theme';
+import { useThemeColors } from '@/hooks/use-theme-colors';
 export default function AppTabs() {
   const insets = useSafeAreaInsets();
+  const colors = useThemeColors();
 
   return (
     <Tabs>
@@ -17,10 +18,10 @@ export default function AppTabs() {
         <BlurView
           intensity={60}
           tint="dark"
-          style={[styles.tabBar, { paddingBottom: Math.max(insets.bottom, 10) }]}>
-          <TabTrigger name="home" href="/" asChild>
+          style={StyleSheet.flatten([styles.tabBar, { paddingBottom: Math.max(insets.bottom, 10), borderTopColor: colors.borderSoft }])} >
+        <TabTrigger name="home" href="/" asChild>
             <TabButton label="Início" icon="home" />
-          </TabTrigger>
+        </TabTrigger>
           <TabTrigger name="search" href="/search" asChild>
             <TabButton label="Buscar" icon="search" />
           </TabTrigger>
@@ -42,8 +43,8 @@ type TabButtonProps = TabTriggerSlotProps & {
 };
 
 export function TabButton({ children: _children, label, icon, isFocused, ref: _ref, style, ...props }: TabButtonProps) {
-  const color = isFocused ? GuiaColors.primary : GuiaColors.textSecondary;
-
+  const colors = useThemeColors();
+  const color = isFocused ? colors.primary : colors.textSecondary;
   return (
     <Pressable
       {...props}
@@ -69,7 +70,6 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     backgroundColor: Glass.tabBar,
     borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: GuiaColors.borderSoft,
     paddingTop: 8,
     overflow: 'hidden',
   },
