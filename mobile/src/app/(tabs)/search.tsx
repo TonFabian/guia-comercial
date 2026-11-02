@@ -10,6 +10,7 @@ import {
   TouchableOpacity,
   View,
 } from 'react-native';
+import * as Location from 'expo-location';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Radius, Spacing, Type } from '@/constants/theme';
@@ -45,6 +46,41 @@ export default function SearchScreen() {
     () => manualCategories ?? (routeCategory ? [routeCategory] : []),
     [manualCategories, routeCategory],
   );
+
+  const [nearMeCity, setNearMeCity] = useState<string | null>(null);
+  const [nearMeLoading, setNearMeLoading] = useState(false);
+
+  function normalizeCity(value: string | null | undefined): string {
+    if (!value) return '';
+    return value
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .trim();
+  }
+
+  async function toggleNearMe() {
+    if (nearMeCity) {
+      setNearMeCity(null);
+      return;
+    }
+    setNearMeLoading(true);
+    try {
+      const { status } = await Location.requestForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        setNearMeCity(null);
+        return;
+      }
+      const pos = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+      const [place] = await Location.reverseGeocodeAsync(pos.coords);
+      const city = place?.city ?? place?.subregion ?? null;
+      setNearMeCity(city);
+    } catch {
+      setNearMeCity(null);
+    } finally {
+      setNearMeLoading(false);
+    }
+  }
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [companies, setCompanies] = useState<Company[]>([]);
@@ -88,8 +124,13 @@ export default function SearchScreen() {
 
         if (cancelled) return;
         setCategories(allCategories);
-        setCompanies(pageResult.items);
-        setTotal(pageResult.total);
+        let finalItems = pageResult.items;
+        if (nearMeCity) {
+          const target = normalizeCity(nearMeCity);
+          finalItems = finalItems.filter((c) => normalizeCity(c.city) === target);
+        }
+        setCompanies(finalItems);
+        setTotal(finalItems.length);
         setLoading(false);
       }
 
@@ -100,7 +141,7 @@ export default function SearchScreen() {
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [term, selectedSlugs]);
+  }, [term, selectedSlugs, nearMeCity]);
 
   const selectedCategories = useMemo(
     () => categories.filter((category) => selectedSlugs.includes(category.slug)),
@@ -191,6 +232,27 @@ export default function SearchScreen() {
               paddingBottom: 110 + Math.max(insets.bottom, 10),
             }}
           >
+            {nearMeCity && (
+              <View style={styles.chip}>
+                <Ionicons name="location" size={14} color={colors.primary} />
+                <Text style={styles.chipText}>Perto de mim: {nearMeCity}</Text>
+                <TouchableOpacity onPress={() => setNearMeCity(null)} hitSlop={8}>
+                  <Ionicons name="close-circle" size={16} color={colors.primary} />
+                </TouchableOpacity>
+              </View>
+            )}
+
+            <TouchableOpacity
+              style={[styles.nearMeButton, nearMeCity && styles.nearMeButtonActive]}
+              onPress={toggleNearMe}
+              disabled={nearMeLoading}
+            >
+              <Ionicons name="navigate" size={16} color={nearMeCity ? colors.background : colors.primary} />
+              <Text style={[styles.nearMeText, nearMeCity && styles.nearMeTextActive]}>
+                {nearMeLoading ? 'Localizando…' : nearMeCity ? 'Perto de mim ✓' : 'Perto de mim'}
+              </Text>
+            </TouchableOpacity>
+
             {filteredCategories.length > 0 && (
               <View style={styles.group}>
                 <Text style={styles.groupTitle}>Categorias</Text>
@@ -297,6 +359,30 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
       color: colors.text,
       fontSize: Type.subtitle,
       paddingVertical: 0,
+    },
+    nearMeButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      alignSelf: 'flex-start',
+      gap: 6,
+      backgroundColor: colors.surface,
+      borderRadius: Radius.tag,
+      borderWidth: 1,
+      borderColor: colors.primary,
+      paddingVertical: 6,
+      paddingHorizontal: 12,
+      marginBottom: Spacing.two,
+    },
+    nearMeButtonActive: {
+      backgroundColor: colors.primary,
+    },
+    nearMeText: {
+      color: colors.primary,
+      fontSize: Type.small,
+      fontWeight: '700',
+    },
+    nearMeTextActive: {
+      color: colors.background,
     },
     chipsRow: {
       flexDirection: 'row',
