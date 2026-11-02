@@ -3,7 +3,8 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
-import { GuiaColors, Overlays, Radius, Spacing, Type } from '@/constants/theme';
+import { Overlays, Radius, Spacing, Type } from '@/constants/theme';
+import { useThemeColors } from '@/hooks/use-theme-colors';
 import { SectionHeader } from '@/features/home/section-header';
 import { EmergencyPhonesModal } from '@/features/home/emergency-phones-modal';
 import { PUBLIC_UTILITIES, resolveUtilityDestination } from '@/features/home/public-utility';
@@ -12,6 +13,8 @@ import { openCompanyDetails } from '@/features/company/open-company';
 import type { Company } from '@/types/domain';
 
 export function PublicUtilitySection({ pharmacy }: { pharmacy: Company | null }) {
+  const colors = useThemeColors();
+  const styles = makeStyles(colors);
   const [phonesVisible, setPhonesVisible] = useState(false);
 
   function handlePress(utility: PublicUtility) {
@@ -44,7 +47,7 @@ export function PublicUtilitySection({ pharmacy }: { pharmacy: Company | null })
             accessibilityLabel={`${utility.title}. ${utility.description}`}
             onPress={() => handlePress(utility)}>
             <View style={styles.iconBox}>
-              <MaterialCommunityIcons name={utility.icon} size={24} color={GuiaColors.primary} />
+              <MaterialCommunityIcons name={utility.icon} size={24} color={colors.primary} />
             </View>
             <Text style={styles.cardTitle}>{utility.title}</Text>
             <Text style={styles.cardDescription}>{utility.description}</Text>
@@ -57,7 +60,8 @@ export function PublicUtilitySection({ pharmacy }: { pharmacy: Company | null })
   );
 }
 
-const styles = StyleSheet.create({
+function makeStyles(colors: ReturnType<typeof useThemeColors>) {
+  return StyleSheet.create({
   section: {
     marginBottom: 20,
   },
@@ -68,10 +72,10 @@ const styles = StyleSheet.create({
   card: {
     width: 152,
     minHeight: 128,
-    backgroundColor: GuiaColors.surface,
+    backgroundColor: colors.surface,
     borderRadius: Radius.card,
     borderWidth: 1,
-    borderColor: GuiaColors.border,
+    borderColor: colors.border,
     padding: Spacing.three,
     gap: Spacing.two,
     marginRight: 12,
@@ -85,13 +89,14 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
   },
   cardTitle: {
-    color: GuiaColors.text,
+    color: colors.text,
     fontSize: Type.body,
     fontWeight: '700',
   },
   cardDescription: {
-    color: GuiaColors.textSecondary,
+    color: colors.textSecondary,
     fontSize: Type.small,
     lineHeight: 16,
   },
-});
+  });
+}
