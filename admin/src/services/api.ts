@@ -64,31 +64,40 @@ export function apiDelete<T>(path: string): Promise<T> {
 // fingir que funciona.
 // ---------------------------------------------------------------------------
 
-const NOT_IMPLEMENTED = (fn: string) => `${fn}: não implementado — consulte src/services/api.ts`;
-
 export async function getCompanies(page = 1): Promise<Paginated<Company>> {
-  void page;
-  throw new Error(NOT_IMPLEMENTED('getCompanies'));
+  return request<Paginated<Company>>(`/companies?page=${page}`);
 }
 
 export async function getCategories(): Promise<Paginated<Category>> {
-  throw new Error(NOT_IMPLEMENTED('getCategories'));
+  return request<Paginated<Category>>('/categories');
 }
 
 export async function getBanners(): Promise<Paginated<Banner>> {
-  throw new Error(NOT_IMPLEMENTED('getBanners'));
+  return request<Paginated<Banner>>('/banners');
 }
 
 export async function getCoupons(): Promise<Paginated<Coupon>> {
-  throw new Error(NOT_IMPLEMENTED('getCoupons'));
+  return request<Paginated<Coupon>>('/coupons');
 }
 
 export async function getJobs(): Promise<Paginated<Job>> {
-  throw new Error(NOT_IMPLEMENTED('getJobs'));
+  return request<Paginated<Job>>('/jobs');
 }
 
 export async function getUsers(): Promise<Paginated<AdminUser>> {
-  throw new Error(NOT_IMPLEMENTED('getUsers'));
+  return request<Paginated<AdminUser>>('/users');
+}
+
+export async function createCompany(body: Partial<Company>): Promise<Company> {
+  return apiPost<Company>('/companies', body);
+}
+
+export async function updateCompany(id: string, body: Partial<Company>): Promise<Company> {
+  return apiPut<Company>(`/companies/${id}`, body);
+}
+
+export async function deleteCompany(id: string): Promise<void> {
+  await apiDelete<void>(`/companies/${id}`);
 }
 
 export interface UseApiResult<T> {
