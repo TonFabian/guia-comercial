@@ -73,20 +73,33 @@ function ClerkAuthProvider({ children }: { children: ReactNode }) {
     (async () => {
       try {
         const { status } = await Notifications.requestPermissionsAsync();
-        if (status !== 'granted' || cancelled) return;
+        if (status !== 'granted' || cancelled) {
+          if (__DEV__) console.warn('[push] permissao nao concedida:', status);
+          return;
+        }
         const token = (await Notifications.getExpoPushTokenAsync()).data;
-        if (cancelled || !token) return;
-        const { updatePushToken: registerToken } = await import('@/services/api');
-        // Reutiliza o endpoint /push-tokens (sem auth) em vez de /me/push-token.
+        if (cancelled || !token) {
+          if (__DEV__) console.warn('[push] token vazio');
+          return;
+        }
         const BASE = process.env.EXPO_PUBLIC_API_URL;
-        if (!BASE) return;
-        await fetch(`${BASE}/push-tokens`, {
+        if (!BASE) {
+          if (__DEV__) console.warn('[push] EXPO_PUBLIC_API_URL nao definida');
+          return;
+        }
+        if (__DEV__) console.log('[push] registrando', token, 'em', BASE);
+        const res = await fetch(`${BASE}/push-tokens`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ token, clerkId: user?.id }),
         });
-      } catch {
-        // ignora
+        if (!res.ok) {
+          if (__DEV__) console.warn('[push] falha:', res.status, await res.text());
+        } else if (__DEV__) {
+          console.log('[push] registrado com sucesso');
+        }
+      } catch (e) {
+        if (__DEV__) console.warn('[push] erro:', e);
       }
     })();
     return () => {
