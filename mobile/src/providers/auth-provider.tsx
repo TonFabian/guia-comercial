@@ -1,8 +1,11 @@
 import type { User } from '@/types/domain';
 import { useAuth, useUser } from '@clerk/expo';
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { registerTokenGetter } from '@/services/http';
+
+const GUEST_KEY = 'guia:guest';
 
 export type AuthStatus = 'loading' | 'signedIn' | 'guest' | 'signedOut';
 
@@ -50,22 +53,45 @@ function ClerkAuthProvider({ children }: { children: ReactNode }) {
   const { user } = useUser();
   const [guest, setGuest] = useState(false);
 
+  // Restaura modo convidado persistido (sobrevive a reload).
+  useEffect(() => {
+    AsyncStorage.getItem(GUEST_KEY).then((value) => {
+      if (value === '1') setGuest(true);
+    });
+  }, []);
+
   // Fecha o gap entre o token de sessão do Clerk e a fachada http.ts.
-  // O getToken do Clerk é estável e sempre lê o token atual na chamada, então
-  // o getter nunca fica desatualizado. Limpeza no unmount evita getter órfão
-  // de um provider desmontado.
   useEffect(() => {
     registerTokenGetter(async () => (await getToken()) ?? null);
     return () => registerTokenGetter(null);
   }, [getToken]);
 
+  // Se o usuário fizer login, sai do modo convidado.
+  useEffect(() => {
+    if (isSignedIn) {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setGuest(false);
+      AsyncStorage.removeItem(GUEST_KEY);
+    }
+  }, [isSignedIn]);
+
   const value = useMemo<AuthState>(
     () => ({
       state: !isLoaded ? 'loading' : isSignedIn ? 'signedIn' : guest ? 'guest' : 'signedOut',
       user: isSignedIn ? toDomainUser(user) : null,
-      enterAsGuest: () => setGuest(true),
-      exitGuest: () => setGuest(false),
-      signOut,
+      enterAsGuest: () => {
+        setGuest(true);
+        AsyncStorage.setItem(GUEST_KEY, '1');
+      },
+      exitGuest: () => {
+        setGuest(false);
+        AsyncStorage.removeItem(GUEST_KEY);
+      },
+      signOut: async () => {
+        setGuest(false);
+        AsyncStorage.removeItem(GUEST_KEY);
+        await signOut();
+      },
     }),
     [isLoaded, isSignedIn, guest, signOut, user],
   );
