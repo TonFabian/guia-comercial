@@ -12,6 +12,7 @@ const companySchema = new Schema<Company>(
     slug: { type: String, required: true, unique: true, lowercase: true, trim: true },
     description: { type: String, required: true },
     category: { type: Schema.Types.ObjectId, ref: 'Category', required: true },
+    ownerClerkId: { type: String, trim: true, index: true },
     phone: String,
     whatsapp: String,
     address: String,

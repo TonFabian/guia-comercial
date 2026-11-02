@@ -37,6 +37,8 @@ export interface Company {
   slug: string;
   description: string;
   category: string | Category;
+  /** Clerk ID do dono/gerente da empresa (autorização de edição). */
+  ownerClerkId?: string;
   /** Convidado recebe `null` (o backend redige o contato comercial). */
   phone?: string | null;
   whatsapp?: string | null;
@@ -114,7 +116,7 @@ export interface User {
   email: string;
   phone?: string;
   imageUrl?: string;
-  role: 'user';
+  role: 'user' | 'admin';
   lastSid?: string;
   lastSignInAt?: string;
   pushToken?: string;
