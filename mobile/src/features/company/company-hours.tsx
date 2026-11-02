@@ -1,6 +1,7 @@
 import { StyleSheet, Text, View } from 'react-native';
 
-import { GuiaColors, Spacing, Type } from '@/constants/theme';
+import { Spacing, Type } from '@/constants/theme';
+import { useThemeColors } from '@/hooks/use-theme-colors';
 
 import { formatOpeningRange, openingStatusLabel, parseOpeningHours } from './opening-hours';
 
@@ -11,6 +12,8 @@ interface CompanyHoursProps {
 
 /** Horário de funcionamento com o status atual (aberto/fechado). */
 export function CompanyHours({ openingHours, now = new Date() }: CompanyHoursProps) {
+  const colors = useThemeColors();
+  const styles = makeStyles(colors);
   const parsed = parseOpeningHours(openingHours ?? []);
   const status = openingStatusLabel(parsed, now);
   const isOpen = status === 'Aberto agora';
@@ -34,49 +37,51 @@ export function CompanyHours({ openingHours, now = new Date() }: CompanyHoursPro
   );
 }
 
-const styles = StyleSheet.create({
-  statusRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 6,
-    marginBottom: Spacing.two,
-  },
-  statusDot: {
-    width: 8,
-    height: 8,
-    borderRadius: 4,
-  },
-  dotOpen: {
-    backgroundColor: GuiaColors.success,
-  },
-  dotClosed: {
-    backgroundColor: GuiaColors.textSecondary,
-  },
-  statusText: {
-    fontSize: Type.body,
-    fontWeight: '700',
-  },
-  statusOpen: {
-    color: GuiaColors.success,
-  },
-  statusClosed: {
-    color: GuiaColors.textSecondary,
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: Spacing.two,
-    paddingVertical: 6,
-    borderTopWidth: StyleSheet.hairlineWidth,
-    borderTopColor: GuiaColors.border,
-  },
-  label: {
-    color: GuiaColors.text,
-    fontSize: Type.body,
-  },
-  range: {
-    color: GuiaColors.textSecondary,
-    fontSize: Type.body,
-  },
-});
+function makeStyles(colors: ReturnType<typeof useThemeColors>) {
+  return StyleSheet.create({
+    statusRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 6,
+      marginBottom: Spacing.two,
+    },
+    statusDot: {
+      width: 8,
+      height: 8,
+      borderRadius: 4,
+    },
+    dotOpen: {
+      backgroundColor: colors.success,
+    },
+    dotClosed: {
+      backgroundColor: colors.textSecondary,
+    },
+    statusText: {
+      fontSize: Type.body,
+      fontWeight: '700',
+    },
+    statusOpen: {
+      color: colors.success,
+    },
+    statusClosed: {
+      color: colors.textSecondary,
+    },
+    row: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: Spacing.two,
+      paddingVertical: 6,
+      borderTopWidth: StyleSheet.hairlineWidth,
+      borderTopColor: colors.border,
+    },
+    label: {
+      color: colors.text,
+      fontSize: Type.body,
+    },
+    range: {
+      color: colors.textSecondary,
+      fontSize: Type.body,
+    },
+  });
+}

@@ -1,7 +1,8 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { GuiaColors, Type } from '@/constants/theme';
+import { Type } from '@/constants/theme';
+import { useThemeColors } from '@/hooks/use-theme-colors';
 
 interface CompanyRatingProps {
   rating?: number;
@@ -11,6 +12,9 @@ interface CompanyRatingProps {
 
 /** Nota da empresa com a contagem de avaliações (quando existe). */
 export function CompanyRating({ rating, ratingCount, size = 'body' }: CompanyRatingProps) {
+  const colors = useThemeColors();
+  const styles = makeStyles(colors);
+
   if (rating === undefined) return null;
 
   const isTitle = size === 'title';
@@ -20,7 +24,7 @@ export function CompanyRating({ rating, ratingCount, size = 'body' }: CompanyRat
       <MaterialCommunityIcons
         name="star"
         size={isTitle ? 18 : 14}
-        color={GuiaColors.primary}
+        color={colors.primary}
       />
       <Text style={[styles.value, isTitle && styles.valueTitle]}>{rating.toFixed(1)}</Text>
       {ratingCount !== undefined && (
@@ -33,25 +37,27 @@ export function CompanyRating({ rating, ratingCount, size = 'body' }: CompanyRat
   );
 }
 
-const styles = StyleSheet.create({
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 4,
-  },
-  value: {
-    color: GuiaColors.text,
-    fontSize: Type.body,
-    fontWeight: '700',
-  },
-  valueTitle: {
-    fontSize: Type.section,
-  },
-  count: {
-    color: GuiaColors.textSecondary,
-    fontSize: Type.small,
-  },
-  countTitle: {
-    fontSize: Type.body,
-  },
-});
+function makeStyles(colors: ReturnType<typeof useThemeColors>) {
+  return StyleSheet.create({
+    row: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+    },
+    value: {
+      color: colors.text,
+      fontSize: Type.body,
+      fontWeight: '700',
+    },
+    valueTitle: {
+      fontSize: Type.section,
+    },
+    count: {
+      color: colors.textSecondary,
+      fontSize: Type.small,
+    },
+    countTitle: {
+      fontSize: Type.body,
+    },
+  });
+}

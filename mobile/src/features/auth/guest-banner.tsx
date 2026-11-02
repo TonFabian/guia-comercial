@@ -2,7 +2,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { router } from 'expo-router';
 
-import { GuiaColors, Radius, Spacing, Type } from '@/constants/theme';
+import { Radius, Spacing, Type } from '@/constants/theme';
+import { useThemeColors } from '@/hooks/use-theme-colors';
 import { useAuthState } from '@/providers/auth-provider';
 
 /**
@@ -10,6 +11,8 @@ import { useAuthState } from '@/providers/auth-provider';
  * redigidos do backend e o CTA leva ao login.
  */
 export function GuestBanner({ onSignIn }: { onSignIn?: () => void }) {
+  const colors = useThemeColors();
+  const styles = makeStyles(colors);
   const { state } = useAuthState();
 
   if (state !== 'guest') {
@@ -18,7 +21,7 @@ export function GuestBanner({ onSignIn }: { onSignIn?: () => void }) {
 
   return (
     <View style={styles.banner}>
-      <Ionicons name="lock-closed" size={16} color={GuiaColors.primary} />
+      <Ionicons name="lock-closed" size={16} color={colors.primary} />
       <Text style={styles.text}>
         Você está navegando como convidado — entre para salvar favoritos e acessar utilidades
       </Text>
@@ -34,33 +37,35 @@ export function GuestBanner({ onSignIn }: { onSignIn?: () => void }) {
   );
 }
 
-const styles = StyleSheet.create({
-  banner: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.two,
-    marginHorizontal: 16,
-    marginBottom: Spacing.four,
-    backgroundColor: GuiaColors.surfaceAlt,
-    borderColor: GuiaColors.primaryDim,
-    borderWidth: 1,
-    borderRadius: Radius.chip,
-    padding: Spacing.two + 2,
-  },
-  text: {
-    flex: 1,
-    color: GuiaColors.textSecondary,
-    fontSize: Type.small,
-  },
-  cta: {
-    backgroundColor: GuiaColors.primary,
-    borderRadius: Radius.tag,
-    paddingVertical: Spacing.one + 2,
-    paddingHorizontal: Spacing.three,
-  },
-  ctaText: {
-    color: GuiaColors.background,
-    fontSize: Type.small,
-    fontWeight: '700',
-  },
-});
+function makeStyles(colors: ReturnType<typeof useThemeColors>) {
+  return StyleSheet.create({
+    banner: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: Spacing.two,
+      marginHorizontal: 16,
+      marginBottom: Spacing.four,
+      backgroundColor: colors.surfaceAlt,
+      borderColor: colors.primaryDim,
+      borderWidth: 1,
+      borderRadius: Radius.chip,
+      padding: Spacing.two + 2,
+    },
+    text: {
+      flex: 1,
+      color: colors.textSecondary,
+      fontSize: Type.small,
+    },
+    cta: {
+      backgroundColor: colors.primary,
+      borderRadius: Radius.tag,
+      paddingVertical: Spacing.one + 2,
+      paddingHorizontal: Spacing.three,
+    },
+    ctaText: {
+      color: colors.background,
+      fontSize: Type.small,
+      fontWeight: '700',
+    },
+  });
+}

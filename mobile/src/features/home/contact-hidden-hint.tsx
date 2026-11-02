@@ -1,7 +1,8 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { GuiaColors, Spacing, Type } from '@/constants/theme';
+import { Spacing, Type } from '@/constants/theme';
+import { useThemeColors } from '@/hooks/use-theme-colors';
 
 /**
  * Texto exibido quando o dado comercial foi redigido para convidado ou
@@ -11,23 +12,28 @@ export const CONTACT_HIDDEN_HINT = 'Entre para ver o contato';
 
 /** Linha padronizada usada no lugar de ações de contato indisponíveis. */
 export function ContactHintRow() {
+  const colors = useThemeColors();
+  const styles = makeStyles(colors);
+
   return (
     <View style={styles.row}>
-      <Ionicons name="lock-closed" size={14} color={GuiaColors.primary} />
+      <Ionicons name="lock-closed" size={14} color={colors.primary} />
       <Text style={styles.text}>{CONTACT_HIDDEN_HINT}</Text>
     </View>
   );
 }
 
-const styles = StyleSheet.create({
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.two,
-    paddingVertical: Spacing.two,
-  },
-  text: {
-    color: GuiaColors.textSecondary,
-    fontSize: Type.body,
-  },
-});
+function makeStyles(colors: ReturnType<typeof useThemeColors>) {
+  return StyleSheet.create({
+    row: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: Spacing.two,
+      paddingVertical: Spacing.two,
+    },
+    text: {
+      color: colors.textSecondary,
+      fontSize: Type.body,
+    },
+  });
+}

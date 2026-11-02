@@ -6,12 +6,13 @@ import { useEffect, useState } from 'react';
 import { Image, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { GuiaColors, Radius, Spacing, Type } from '@/constants/theme';
+import { Radius, Spacing, Type } from '@/constants/theme';
 import { clerkErrorToMessage } from '@/features/auth/clerk-errors';
 import { EmailPasswordForm } from '@/features/auth/sign-in/email-password-form';
 import { ForgotOrGuest } from '@/features/auth/sign-in/forgot-or-guest';
 import { SocialButtons } from '@/features/auth/sign-in/social-buttons';
 import { useWarmUpBrowser } from '@/features/auth/use-warm-up-browser';
+import { useThemeColors } from '@/hooks/use-theme-colors';
 import { useAuthState } from '@/providers/auth-provider';
 
 // Fecha a sessão do browser que abrir durante o fluxo SSO: precisa rodar no
@@ -24,6 +25,8 @@ maybeCompleteAuthSession();
  * (expo-web-browser): funciona no Expo Go e no dev build.
  */
 export default function SignInScreen() {
+  const colors = useThemeColors();
+  const styles = makeStyles(colors);
   useWarmUpBrowser();
   const { startSSOFlow } = useSSO();
   const clerk = useClerk();
@@ -107,51 +110,53 @@ export default function SignInScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: GuiaColors.background,
-  },
-  safeArea: {
-    flex: 1,
-    justifyContent: 'center',
-    padding: Spacing.four,
-  },
-  card: {
-    backgroundColor: GuiaColors.surface,
-    borderRadius: Radius.card,
-    padding: Spacing.four,
-    gap: Spacing.three,
-  },
-  logo: {
-    width: 64,
-    height: 64,
-    alignSelf: 'center',
-    borderRadius: Radius.iconBox,
-  },
-  title: {
-    alignSelf: 'center',
-    color: GuiaColors.text,
-    fontSize: Type.headline,
-    fontWeight: '700',
-  },
-  error: {
-    color: GuiaColors.error,
-    fontSize: Type.small,
-    textAlign: 'center',
-  },
-  divider: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.three,
-  },
-  dividerLine: {
-    flex: 1,
-    height: 1,
-    backgroundColor: GuiaColors.border,
-  },
-  dividerText: {
-    color: GuiaColors.textSecondary,
-    fontSize: Type.small,
-  },
-});
+function makeStyles(colors: ReturnType<typeof useThemeColors>) {
+  return StyleSheet.create({
+    root: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    safeArea: {
+      flex: 1,
+      justifyContent: 'center',
+      padding: Spacing.four,
+    },
+    card: {
+      backgroundColor: colors.surface,
+      borderRadius: Radius.card,
+      padding: Spacing.four,
+      gap: Spacing.three,
+    },
+    logo: {
+      width: 64,
+      height: 64,
+      alignSelf: 'center',
+      borderRadius: Radius.iconBox,
+    },
+    title: {
+      alignSelf: 'center',
+      color: colors.text,
+      fontSize: Type.headline,
+      fontWeight: '700',
+    },
+    error: {
+      color: colors.error,
+      fontSize: Type.small,
+      textAlign: 'center',
+    },
+    divider: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: Spacing.three,
+    },
+    dividerLine: {
+      flex: 1,
+      height: 1,
+      backgroundColor: colors.border,
+    },
+    dividerText: {
+      color: colors.textSecondary,
+      fontSize: Type.small,
+    },
+  });
+}

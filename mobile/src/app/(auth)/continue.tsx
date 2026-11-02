@@ -2,7 +2,8 @@ import { useAuth, useSession } from '@clerk/expo';
 import { router } from 'expo-router';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
-import { GuiaColors, Radius, Spacing, Type } from '@/constants/theme';
+import { Radius, Spacing, Type } from '@/constants/theme';
+import { useThemeColors } from '@/hooks/use-theme-colors';
 
 const TASK_MESSAGES: Record<string, string> = {
   'choose-organization': 'Escolha sua organização para continuar.',
@@ -16,6 +17,8 @@ const TASK_MESSAGES: Record<string, string> = {
  * (`session.currentTask`) e deixa o usuário voltar ao login para completar.
  */
 export default function ContinueScreen() {
+  const colors = useThemeColors();
+  const styles = makeStyles(colors);
   const { isSignedIn } = useAuth();
   const { session } = useSession();
 
@@ -43,34 +46,36 @@ export default function ContinueScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    padding: Spacing.four,
-    backgroundColor: GuiaColors.background,
-    gap: Spacing.three,
-  },
-  title: {
-    color: GuiaColors.text,
-    fontSize: Type.headline,
-    fontWeight: '700',
-  },
-  text: {
-    color: GuiaColors.textSecondary,
-    fontSize: Type.base,
-    textAlign: 'center',
-  },
-  button: {
-    backgroundColor: GuiaColors.primary,
-    borderRadius: Radius.chip,
-    paddingVertical: Spacing.three - 2,
-    paddingHorizontal: Spacing.four,
-  },
-  buttonText: {
-    color: GuiaColors.background,
-    fontSize: Type.subtitle,
-    fontWeight: '700',
-  },
-});
+function makeStyles(colors: ReturnType<typeof useThemeColors>) {
+  return StyleSheet.create({
+    container: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      padding: Spacing.four,
+      backgroundColor: colors.background,
+      gap: Spacing.three,
+    },
+    title: {
+      color: colors.text,
+      fontSize: Type.headline,
+      fontWeight: '700',
+    },
+    text: {
+      color: colors.textSecondary,
+      fontSize: Type.base,
+      textAlign: 'center',
+    },
+    button: {
+      backgroundColor: colors.primary,
+      borderRadius: Radius.chip,
+      paddingVertical: Spacing.three - 2,
+      paddingHorizontal: Spacing.four,
+    },
+    buttonText: {
+      color: colors.background,
+      fontSize: Type.subtitle,
+      fontWeight: '700',
+    },
+  });
+}

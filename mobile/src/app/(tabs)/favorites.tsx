@@ -2,7 +2,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { GuiaColors, Radius, Spacing, Type } from '@/constants/theme';
+import { Radius, Spacing, Type } from '@/constants/theme';
 import { CompanyRating } from '@/features/company/company-rating';
 import { openCompanyDetails } from '@/features/company/open-company';
 import { useFavorites } from '@/features/favorites/favorites-provider';
@@ -21,7 +21,7 @@ export default function FavoritesScreen() {
 
         {favorites.length === 0 ? (
           <View style={styles.emptyBox}>
-            <Ionicons name="heart-outline" size={48} color={GuiaColors.textSecondary} />
+            <Ionicons name="heart-outline" size={48} color={colors.textSecondary} />
             <Text style={styles.emptyText}>
               Nenhum favorito ainda. Toque no ícone de coração na tela da empresa para adicioná-la.
             </Text>
@@ -50,7 +50,7 @@ export default function FavoritesScreen() {
                   accessibilityLabel={`Remover ${company.name} dos favoritos`}
                   onPress={() => toggleFavorite(company)}
                 >
-                  <Ionicons name="heart" size={20} color={GuiaColors.primary} />
+                  <Ionicons name="heart" size={20} color={colors.primary} />
                 </TouchableOpacity>
               </View>
             ))}
