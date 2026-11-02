@@ -29,6 +29,11 @@
       "dev:client": "http://localhost:19000",
       "dev:server": "http://localhost:19001"
     },
+    "extra": {
+      "eas": {
+        "projectId": "6041ff1d-5868-48b5-ac48-66e399f18ca3"
+      }
+    },
     "plugins": [
       "expo-router",
       [
