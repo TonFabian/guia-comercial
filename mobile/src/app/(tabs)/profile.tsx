@@ -8,7 +8,7 @@ import { Radius } from '@/constants/theme';
 import { useThemeColors } from '@/hooks/use-theme-colors';
 import { useThemeMode } from '@/providers/theme-provider';
 import { useAuthState } from '@/providers/auth-provider';
-import { useAuth, useUser } from '@clerk/expo';
+import { useUser } from '@clerk/expo';
 
 const MENU = [
   { id: '1', label: 'Meus dados', icon: 'person-outline' as const },

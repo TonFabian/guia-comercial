@@ -6,7 +6,7 @@
  * sessão do Clerk e o comportamento de fallback (mock quando a env não está
  * definida ou a API está fora do ar; 401/403 reais estouram `ApiError`).
  */
-import type { Banner, Category, Company, Coupon, Job, Paginated } from '@/types/domain';
+import type { Banner, Category, Company, Coupon, Job, Paginated, User } from '@/types/domain';
 
 import { isApiConfigured, request } from './http';
 import type { RequestPayload } from './http';
@@ -178,8 +178,32 @@ export async function searchCategories(query: string): Promise<Category[]> {
   return fromPaginated(payload, filterMockCategories(term));
 }
 
+export async function getMe(): Promise<User | null> {
+  if (!isApiConfigured()) return null;
+  try {
+    const payload = await request<User>('/me');
+    if (!payload) return null;
+    return Array.isArray(payload) ? (payload[0] ?? null) : (payload as User);
+  } catch {
+    return null;
+  }
+}
+
+export async function updateMe(mirror: Partial<User>): Promise<User | null> {
+  if (!isApiConfigured()) return null;
+  try {
+    const payload = await request<User>('/me', { method: 'PUT', body: mirror });
+    if (!payload) return null;
+    return Array.isArray(payload) ? (payload[0] ?? null) : (payload as User);
+  } catch {
+    return null;
+  }
+}
+
 export function filterMockCompanies(term: string): Company[] {
-  if (!term) return MOCK_COMPANIES;
+  if (!term) {
+    return MOCK_COMPANIES;
+  }
   return MOCK_COMPANIES.filter((company) => company.name.toLowerCase().includes(term));
 }
 

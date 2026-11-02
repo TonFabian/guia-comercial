@@ -73,58 +73,7 @@ export function FeaturedCompany({ company }: { company: Company | null }) {
             <Text style={styles.whatsappPillText}>WhatsApp</Text>
           </TouchableOpacity>
         </View>
-        <View style={styles.companyBody}>
-          <Text style={styles.companyName}>{company.name}</Text>
-          <Text style={styles.companyCategory}>{categoryLabel(company.category)}</Text>
-{company.address ? (
-          <View style={styles.addressRow}>
-            <Ionicons name="location-outline" size={14} color={colors.textSecondary} />
-            <Text style={styles.companyAddress}>{company.address}</Text>
-          </View>
-        ) : null}
-          <View style={styles.companyActions}>
-            {company.phone ? (
-              <TouchableOpacity
-                style={styles.actionPill}
-                activeOpacity={0.7}
-                onPress={(event) => {
-                  event.stopPropagation();
-                  if (company.phone) void callPhone(company.phone);
-                }}
-              >
-                <Ionicons name="call-outline" size={16} color={colors.primary} />
-                <Text style={styles.actionPillText}>Ligar</Text>
-              </TouchableOpacity>
-            ) : null}
-            {company.address ? (
-              <TouchableOpacity
-                style={styles.actionPill}
-                activeOpacity={0.7}
-                onPress={(event) => {
-                  event.stopPropagation();
-                  if (company.address) void openAddress(company.address);
-                }}
-              >
-                <Ionicons name="location-outline" size={16} color={colors.primary} />
-                <Text style={styles.actionPillText}>Endereço</Text>
-              </TouchableOpacity>
-            ) : null}
-            {company.whatsapp ? (
-              <TouchableOpacity
-                style={styles.whatsappPill}
-                activeOpacity={0.7}
-                onPress={(event) => {
-                  event.stopPropagation();
-                  if (company.whatsapp) void openWhatsApp(company.whatsapp);
-                }}
-              >
-                <MaterialCommunityIcons name="whatsapp" size={16} color={colors.background} />
-                <Text style={styles.whatsappPillText}>WhatsApp</Text>
-              </TouchableOpacity>
-            ) : null}
-            {!company.phone && !company.address && !company.whatsapp ? <ContactHintRow /> : null}
-          </View>
-        </View>
+        {!company.phone && !company.address && !company.whatsapp ? <ContactHintRow /> : null}
       </View>
     </View>
   );
