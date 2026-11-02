@@ -21,6 +21,7 @@ import {
   getCompaniesByCategory,
   searchCompanies,
 } from '@/services/api';
+import { isApiConfigured } from '@/services/http';
 import type { Category, Company } from '@/types/domain';
 import { categoryLabel } from '@/types/domain';
 
@@ -43,20 +44,10 @@ export default function SearchScreen() {
   const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(true);
 
-  // Mock temporário para teste de scroll com lista grande.
-  const MOCK_COMPANIES: Company[] = Array.from({ length: 40 }, (_, i) => ({
-    _id: `mock-${i + 1}`,
-    name: `Empresa Mock ${i + 1}`,
-    slug: `empresa-mock-${i + 1}`,
-    description: 'Empresa de teste para scroll',
-    category: 'servicos',
-    address: 'Rua Teste, 123',
-    city: 'Cidade',
-  }));
-
   useEffect(() => {
     let cancelled = false;
     const timer = setTimeout(() => {
+      setLoading(true);
       async function load() {
         const allCategories = await getCategories();
 
@@ -78,7 +69,7 @@ export default function SearchScreen() {
 
         if (cancelled) return;
         setCategories(allCategories);
-        setCompanies([...results, ...MOCK_COMPANIES]);
+        setCompanies(results);
         setLoading(false);
       }
 
