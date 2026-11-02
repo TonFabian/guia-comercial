@@ -1,11 +1,15 @@
 /**
- * Cliente fetch tipado para a API do guia.
+ * Cliente tipado para a API do guia (somente chamadas de domínio — use estas
+ * funções, nunca `fetch` direto nos componentes).
  *
- * Usa `process.env.EXPO_PUBLIC_API_URL` como base. Quando a env não está
- * definida ou qualquer chamada falha (backend desligado no Expo Go), cai
- * automaticamente nos dados mockados de src/data/mock.ts.
+ * O transporte mora em src/services/http.ts: lá ficam a base URL, o header de
+ * sessão do Clerk e o comportamento de fallback (mock quando a env não está
+ * definida ou a API está fora do ar; 401/403 reais estouram `ApiError`).
  */
 import type { Banner, Category, Company, Coupon, Job, Paginated } from '@/types/domain';
+
+import { isApiConfigured, request } from './http';
+import type { RequestPayload } from './http';
 
 import {
   MOCK_BANNERS,
@@ -17,49 +21,16 @@ import {
   MOCK_PHARMACY,
 } from '@/data/mock';
 
-const BASE_URL = process.env.EXPO_PUBLIC_API_URL;
+function isPaginated<T>(payload: RequestPayload<T>): payload is Paginated<T> {
+  return typeof payload === 'object' && payload !== null && 'items' in payload;
+}
 
-/** Extrai `items` de um `Paginated<T>` ou aceita uma lista crua, com fallback. */
-function fromPaginated<T>(payload: Paginated<T> | T[] | null, fallback: T[]): T[] {
+/** Extrai `items` de um `Paginated<T>` e aceita lista crua ou recurso único. */
+function fromPaginated<T>(payload: RequestPayload<T> | null, fallback: T[]): T[] {
   if (!payload) return fallback;
   if (Array.isArray(payload)) return payload;
-  return payload.items ?? fallback;
-}
-
-type RequestInitLite = { signal?: AbortSignal };
-
-async function request<T>(path: string, init?: RequestInitLite): Promise<Paginated<T> | T[] | null> {
-  if (!BASE_URL) return null;
-  try {
-    const response = await fetch(`${BASE_URL}${path}`, {
-      headers: { Accept: 'application/json' },
-      ...init,
-    });
-    if (!response.ok) return null;
-    return (await response.json()) as Paginated<T> | T[];
-  } catch {
-    return null;
-  }
-}
-
-/** Resultado de uma requisição de recurso único. */
-type SingleResult<T> = {
-  data: T | null;
-  /** `true` quando a API não respondeu (sem env ou falha de rede). */
-  offline: boolean;
-};
-
-async function requestOne<T>(path: string): Promise<SingleResult<T>> {
-  if (!BASE_URL) return { data: null, offline: true };
-  try {
-    const response = await fetch(`${BASE_URL}${path}`, {
-      headers: { Accept: 'application/json' },
-    });
-    if (!response.ok) return { data: null, offline: false };
-    return { data: (await response.json()) as T, offline: false };
-  } catch {
-    return { data: null, offline: true };
-  }
+  if (isPaginated(payload)) return payload.items ?? fallback;
+  return [payload];
 }
 
 export async function getCategories(): Promise<Category[]> {
@@ -84,9 +55,15 @@ export async function getCoupons(): Promise<Coupon[]> {
 
 /** Empresa pelo id. `null` quando a API responde que não existe. */
 export async function getCompanyById(id: string): Promise<Company | null> {
-  const { data, offline } = await requestOne<Company>(`/companies/${encodeURIComponent(id)}`);
-  if (data) return data;
-  return offline ? findMockCompany(id) : null;
+  if (!isApiConfigured()) return findMockCompany(id);
+  try {
+    const payload = await request<Company>(`/companies/${encodeURIComponent(id)}`);
+    if (!payload) return findMockCompany(id);
+    const [company] = fromPaginated(payload, []);
+    return company ?? findMockCompany(id);
+  } catch {
+    return findMockCompany(id);
+  }
 }
 
 /** Cupons de uma empresa específica. */
@@ -102,7 +79,7 @@ export async function getJobs(): Promise<Job[]> {
 }
 
 export async function getFeaturedCompany(): Promise<Company | null> {
-  if (!BASE_URL) return MOCK_FEATURED_COMPANY;
+  if (!isApiConfigured()) return MOCK_FEATURED_COMPANY;
   try {
     const payload = await request<Company>('/companies?featured=true');
     const items = fromPaginated(payload, MOCK_COMPANIES);
@@ -114,7 +91,7 @@ export async function getFeaturedCompany(): Promise<Company | null> {
 }
 
 export async function getPharmacyOnDuty(): Promise<Company | null> {
-  if (!BASE_URL) return MOCK_PHARMACY;
+  if (!isApiConfigured()) return MOCK_PHARMACY;
   try {
     // O backend filtra empresas por slug de categoria (`category=farmacia`).
     const payload = await request<Company>('/companies?category=farmacia');
@@ -127,21 +104,21 @@ export async function getPharmacyOnDuty(): Promise<Company | null> {
 
 export async function searchCompanies(query: string): Promise<Company[]> {
   const term = query.trim().toLowerCase();
-  if (!BASE_URL) return filterMockCompanies(term);
+  if (!isApiConfigured()) return filterMockCompanies(term);
   const payload = await request<Company>(`/companies?q=${encodeURIComponent(term)}`);
   return fromPaginated(payload, filterMockCompanies(term));
 }
 
 /** Empresas de uma categoria, identificada pelo slug (ex.: `farmacia`). */
 export async function getCompaniesByCategory(slug: string): Promise<Company[]> {
-  if (!BASE_URL) return filterMockCompaniesByCategory(slug);
+  if (!isApiConfigured()) return filterMockCompaniesByCategory(slug);
   const payload = await request<Company>(`/companies?category=${encodeURIComponent(slug)}`);
   return fromPaginated(payload, filterMockCompaniesByCategory(slug));
 }
 
 export async function searchCategories(query: string): Promise<Category[]> {
   const term = query.trim().toLowerCase();
-  if (!BASE_URL) return filterMockCategories(term);
+  if (!isApiConfigured()) return filterMockCategories(term);
   const payload = await request<Category>(`/categories?q=${encodeURIComponent(term)}`);
   return fromPaginated(payload, filterMockCategories(term));
 }

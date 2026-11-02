@@ -37,12 +37,15 @@ export interface Company {
   slug: string;
   description: string;
   category: string | Category;
-  phone?: string;
-  whatsapp?: string;
-  address?: string;
+  /** Convidado recebe `null` (o backend redige o contato comercial). */
+  phone?: string | null;
+  whatsapp?: string | null;
+  address?: string | null;
   city?: string;
   logo?: string;
   cover?: string;
+  gallery?: string[];
+  registry?: string;
   isFeatured?: boolean;
   rating?: number;
   ratingCount?: number;
@@ -72,7 +75,8 @@ export interface Coupon {
   _id: string;
   title: string;
   company: string | Company;
-  code: string;
+  /** Convidado recebe `null` (o backend oculta o código de resgate). */
+  code?: string | null;
   discount?: string;
   description?: string;
   expiresAt?: string;
@@ -89,12 +93,29 @@ export interface Job {
   createdAt?: string;
 }
 
-export interface User {
+/** Conta administrativa (admin/editor), anterior à autenticação via Clerk. */
+export interface AdminUser {
   _id: string;
   name: string;
   email: string;
   role: 'admin' | 'editor';
   createdAt?: string;
+}
+
+/** Usuário do app, espelhado do Clerk no backend. */
+export interface User {
+  _id: string;
+  clerkId: string;
+  firstName?: string;
+  lastName?: string;
+  email: string;
+  phone?: string;
+  imageUrl?: string;
+  role: 'user';
+  lastSid?: string;
+  lastSignInAt?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 /** Resultado paginado padrão das listagens da API. */

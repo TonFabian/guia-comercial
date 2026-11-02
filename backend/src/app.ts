@@ -2,9 +2,15 @@ import cors from 'cors';
 import express from 'express';
 import helmet from 'helmet';
 
+import { assertValidClerkConfiguration, warnIfWithoutAuthentication } from './config/boot-check.js';
 import { errorHandler } from './middlewares/error.middleware.js';
 import { notFoundHandler } from './middlewares/not-found.middleware.js';
 import routes from './routes/index.js';
+import { clerkWebhook } from './routes/webhooks/clerk.js';
+
+// Aviso de boot: em produção, ausência de CLERK_SECRET_KEY deixa a API aberta.
+assertValidClerkConfiguration(process.env);
+warnIfWithoutAuthentication(process.env);
 
 const app = express();
 
@@ -23,6 +29,11 @@ app.use(
 );
 
 app.use(helmet());
+
+// O webhook do Clerk exige o corpo bruto byte-a-byte: express.json reparsaria
+// o payload e a assinatura svix falharia. Por isso a rota fica antes do json.
+app.post('/api/webhooks/clerk', express.raw({ type: 'application/json' }), clerkWebhook);
+
 app.use(express.json({ limit: '1mb' }));
 
 app.use('/api', routes);

@@ -1,26 +1,46 @@
-import { StatusBar } from 'expo-status-bar';
-import { ActivityIndicator, ScrollView, StyleSheet, View } from 'react-native';
+import {
+  ActivityIndicator,
+  Button,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { GuiaColors } from '@/constants/theme';
+import { GuestBanner } from '@/features/auth/guest-banner';
 import { AnnounceCta } from '@/features/home/announce-cta';
-import { BannerCarousel } from '@/features/home/banner-carousel';
 import { CategoryList } from '@/features/home/category-list';
 import { FeaturedCompany } from '@/features/home/featured-company';
 import { Header } from '@/features/home/header';
 import { JobList } from '@/features/home/job-list';
-import { PharmacyOnDuty } from '@/features/home/pharmacy-on-duty';
 import { PublicUtilitySection } from '@/features/home/public-utility-section';
 import { SearchBar } from '@/features/home/search-bar';
 import { useHomeData } from '@/features/home/use-home-data';
 
+/** Cupons desativados a pedido do produto; flag mantém a seção reativável. */
+const SHOW_COUPONS = false;
+
 export default function HomeScreen() {
-  const { loading, banners, categories, featuredCompany, jobs, pharmacy } = useHomeData();
+  const { loading, categories, featuredCompany, jobs, pharmacy, error } = useHomeData();
   const insets = useSafeAreaInsets();
+
+  // Se houve erro de auth (401), já o useHomeData redirecionou.
+  // Se ainda estiver com erro (ex.: fallback), mostramos mensagem.
+  if (error) {
+    return (
+      <View style={styles.errorContainer}>
+        <Text style={styles.errorText}>{error}</Text>
+        <Button title="Tentar novamente" onPress={() => window.location.reload()} />
+      </View>
+    );
+  }
 
   return (
     <View style={styles.root}>
-      <StatusBar style="light" />
+      <StatusBar barStyle="light-content" />
       <SafeAreaView style={styles.safeArea} edges={['top']}>
         <ScrollView
           style={styles.scrollView}
@@ -32,6 +52,7 @@ export default function HomeScreen() {
         >
           <Header />
           <SearchBar />
+          <GuestBanner />
           {loading ? (
             <View style={styles.center}>
               <ActivityIndicator color={GuiaColors.primary} />
@@ -39,8 +60,6 @@ export default function HomeScreen() {
           ) : (
             <>
               <CategoryList categories={categories} />
-              <BannerCarousel banners={banners} />
-              <PharmacyOnDuty pharmacy={pharmacy} />
               <FeaturedCompany company={featuredCompany} />
               <PublicUtilitySection pharmacy={pharmacy} />
               <JobList jobs={jobs} />
@@ -70,5 +89,17 @@ const styles = StyleSheet.create({
   center: {
     paddingVertical: 40,
     alignItems: 'center',
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+    backgroundColor: GuiaColors.surface,
+  },
+  errorText: {
+    fontSize: 18,
+    color: GuiaColors.error,
+    textAlign: 'center',
   },
 });

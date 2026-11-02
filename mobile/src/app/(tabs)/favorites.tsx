@@ -20,7 +20,7 @@ export default function FavoritesScreen() {
           <View style={styles.emptyBox}>
             <Ionicons name="heart-outline" size={48} color={GuiaColors.textSecondary} />
             <Text style={styles.emptyText}>
-              Toque no coração na tela da empresa para salvar aqui.
+              Nenhum favorito ainda. Toque no ícone de coração na tela da empresa para adicioná-la.
             </Text>
           </View>
         ) : (
@@ -32,7 +32,8 @@ export default function FavoritesScreen() {
                   activeOpacity={0.7}
                   accessibilityRole="button"
                   accessibilityLabel={`Ver detalhes de ${company.name}`}
-                  onPress={() => openCompanyDetails(company._id)}>
+                  onPress={() => openCompanyDetails(company._id)}
+                >
                   <Text style={styles.name}>{company.name}</Text>
                   <Text style={styles.category}>{categoryLabel(company.category)}</Text>
                   {company.address && <Text style={styles.address}>{company.address}</Text>}
@@ -44,7 +45,8 @@ export default function FavoritesScreen() {
                   activeOpacity={0.7}
                   accessibilityRole="button"
                   accessibilityLabel={`Remover ${company.name} dos favoritos`}
-                  onPress={() => toggleFavorite(company)}>
+                  onPress={() => toggleFavorite(company)}
+                >
                   <Ionicons name="heart" size={20} color={GuiaColors.primary} />
                 </TouchableOpacity>
               </View>

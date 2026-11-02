@@ -1,7 +1,19 @@
+import { LinearGradient } from 'expo-linear-gradient';
 import { Linking, ScrollView, StyleSheet, Text, TouchableOpacity } from 'react-native';
 
-import { GuiaColors, CardShadow, CardColors, Overlays, Radius, Spacing, Type } from '@/constants/theme';
+import {
+  GuiaColors,
+  CardShadow,
+  CardColors,
+  Overlays,
+  Radius,
+  Spacing,
+  Type,
+} from '@/constants/theme';
 import type { DisplayBanner } from '@/data/mock';
+
+const GRADIENT_START = { x: 0, y: 0 } as const;
+const GRADIENT_END = { x: 1, y: 1 } as const;
 
 export function BannerCarousel({ banners }: { banners: DisplayBanner[] }) {
   function openBanner(banner: DisplayBanner) {
@@ -17,15 +29,18 @@ export function BannerCarousel({ banners }: { banners: DisplayBanner[] }) {
       {banners.map((banner) => (
         <TouchableOpacity
           key={banner._id}
-          style={StyleSheet.flatten([
-            styles.bannerCard,
-            { backgroundColor: banner.color ?? CardColors.bannerPromo },
-          ])}
+          style={styles.bannerCard}
           activeOpacity={0.85}
           onPress={() => openBanner(banner)}>
-          <Text style={styles.bannerEmoji}>{banner.emoji}</Text>
-          <Text style={styles.bannerTitle}>{banner.title}</Text>
-          <Text style={styles.bannerSubtitle}>{banner.subtitle}</Text>
+          <LinearGradient
+            colors={[GuiaColors.background, banner.color ?? CardColors.bannerPromo]}
+            start={GRADIENT_START}
+            end={GRADIENT_END}
+            style={styles.bannerGradient}>
+            <Text style={styles.bannerEmoji}>{banner.emoji}</Text>
+            <Text style={styles.bannerTitle}>{banner.title}</Text>
+            <Text style={styles.bannerSubtitle}>{banner.subtitle}</Text>
+          </LinearGradient>
         </TouchableOpacity>
       ))}
     </ScrollView>
@@ -41,12 +56,16 @@ const styles = StyleSheet.create({
   bannerCard: {
     width: 260,
     height: 130,
-    borderRadius: Radius.card,
+    borderRadius: Radius.cardLarge,
+    marginRight: 12,
+    ...CardShadow,
+  },
+  bannerGradient: {
+    flex: 1,
+    borderRadius: Radius.cardLarge,
     padding: Spacing.three,
     justifyContent: 'flex-end',
     gap: Spacing.one,
-    marginRight: 12,
-    ...CardShadow,
   },
   bannerEmoji: {
     fontSize: 28,

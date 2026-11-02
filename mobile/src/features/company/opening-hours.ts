@@ -134,7 +134,9 @@ function isWithinRange(hour: OpeningHour, minutes: number): boolean {
  * `null` significa que o horário não pôde ser interpretado.
  */
 export function isOpenNow(hours: OpeningHour[], now: Date): boolean | null {
-  const known = hours.filter((hour) => hour.days.length > 0 && hour.opens !== null && hour.closes !== null);
+  const known = hours.filter(
+    (hour) => hour.days.length > 0 && hour.opens !== null && hour.closes !== null,
+  );
   if (known.length === 0) return null;
 
   const today = known.filter((hour) => hour.days.includes(now.getDay()));
@@ -163,4 +165,100 @@ export function formatMinutes(minutes: number): string {
 export function formatOpeningRange(hour: OpeningHour): string {
   if (hour.opens === null || hour.closes === null) return hour.raw;
   return `${formatMinutes(hour.opens)} às ${formatMinutes(hour.closes)}`;
+}
+
+/** Tipo de status de funcionamento para UI. */
+export type OpeningStatus = 'open' | 'closed' | 'unknown';
+
+/**
+ * Extrai horários (em minutos) de uma string bruta como "08h–18h" ou "18h às 02h".
+ */
+function parseRawTime(text: string): {
+  opens: number | null;
+  closes: number | null;
+  isClosed: boolean;
+} {
+  const normalized = text
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .toLowerCase()
+    .replace(/\s/g, '');
+
+  // Casos especiais
+  if (normalized === 'fechado' || normalized === 'fechadoagora') {
+    return { opens: null, closes: null, isClosed: true };
+  }
+  if (normalized === '24h') {
+    return { opens: 0, closes: 24 * 60, isClosed: false };
+  }
+
+  // "Aberto até 23h" → abre às 00:00, fecha às 23:00
+  const ateMatch = normalized.match(/ate\s*(\d{1,2})h/);
+  if (ateMatch) {
+    const closes = Number(ateMatch[1]) * 60;
+    return { opens: 0, closes, isClosed: false };
+  }
+
+  // Padrão geral: "08h–18h" ou "08:00–18:00" ou "08h às 18h"
+  const timePattern = /(\d{1,2})[:h](\d{0,2})?\s*(?:[-–]|as|às)\s*(\d{1,2})[:h](\d{0,2})?/;
+  const match = normalized.match(timePattern);
+
+  if (match) {
+    const openHour = Number(match[1]);
+    const openMin = match[2] ? Number(match[2]) : 0;
+    const closeHour = Number(match[3]);
+    const closeMin = match[4] ? Number(match[4]) : 0;
+
+    return {
+      opens: openHour * 60 + openMin,
+      closes: closeHour * 60 + closeMin,
+      isClosed: false,
+    };
+  }
+
+  return { opens: null, closes: null, isClosed: false };
+}
+
+/**
+ * Verifica se um horário bruto (string) está aberto no momento.
+ */
+function isRawTimeOpen(raw: string, now: Date): boolean | null {
+  const { opens, closes, isClosed } = parseRawTime(raw);
+
+  if (isClosed) return false;
+  if (opens === null || closes === null) return null;
+
+  const minutes = now.getHours() * 60 + now.getMinutes();
+
+  if (closes > opens) {
+    // Intervalo normal (ex.: 08h às 18h) → fechado no horário de fechamento
+    return minutes >= opens && minutes < closes;
+  }
+  // Atravessa meia-noite (ex.: 18h às 02h) ou fechamento à meia-noite
+  return minutes >= opens || minutes < closes;
+}
+
+/**
+ * Determina o status de funcionamento a partir dos horários brutos (strings).
+ * Verifica o horário do dia atual (weekdays, saturday ou sunday).
+ */
+export function getOpeningStatus(
+  hours: { weekdays: string; saturday: string; sunday: string },
+  now: Date,
+): OpeningStatus {
+  const day = now.getDay(); // 0 = domingo, 6 = sábado
+
+  let rawHours: string;
+  if (day === 0) {
+    rawHours = hours.sunday;
+  } else if (day === 6) {
+    rawHours = hours.saturday;
+  } else {
+    rawHours = hours.weekdays;
+  }
+
+  const isOpen = isRawTimeOpen(rawHours, now);
+
+  if (isOpen === null) return 'unknown';
+  return isOpen ? 'open' : 'closed';
 }

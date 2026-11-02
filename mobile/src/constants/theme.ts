@@ -1,5 +1,6 @@
 import '@/global.css';
 
+import { DarkTheme } from 'expo-router';
 import { Platform } from 'react-native';
 
 export const GuiaColors = {
@@ -10,8 +11,11 @@ export const GuiaColors = {
   primaryDim: '#B8860B',
   text: '#FFFFFF',
   textSecondary: '#9CA3AF',
+  textSoft: '#D1D5DB',
   border: '#2E2E2E',
+  borderSoft: '#222222',
   success: '#22C55E',
+  error: '#EF4444',
   whatsapp: '#25D366',
   coverPlaceholder: '#3A3A3A',
 } as const;
@@ -32,8 +36,31 @@ export const Overlays = {
   whiteSoft: 'rgba(255,255,255,0.25)',
   whiteMild: 'rgba(255,255,255,0.75)',
   whiteFaint: 'rgba(255,255,255,0.7)',
+  blackSoft: 'rgba(0,0,0,0.25)',
   amberTag: 'rgba(255, 193, 7, 0.2)',
-  blackSoft: 'rgba(0,0,0,0.55)',
+  amberGlow: 'rgba(255, 193, 7, 0.14)',
+  goldBorder: 'rgba(212, 175, 55, 0.45)',
+  goldSoftBorder: 'rgba(255, 193, 7, 0.15)',
+  successTag: 'rgba(34, 197, 94, 0.14)',
+  dangerTag: 'rgba(239, 68, 68, 0.14)',
+  neutralTag: 'rgba(156, 163, 175, 0.14)',
+  hairline: 'rgba(255, 255, 255, 0.05)',
+  scrim: 'rgba(0,0,0,0.72)',
+} as const;
+
+/** Superfícies translúcidas com borda sutil (efeito de vidro sobre o fundo). */
+export const Glass = {
+  surface: 'rgba(255,255,255,0.04)',
+  border: 'rgba(255,255,255,0.08)',
+  tabBar: 'rgba(18,18,18,0.72)',
+} as const;
+
+/** Cores temáticas dos serviços de utilidade pública. */
+export const UtilityColors = {
+  emergency: '#EF4444',
+  civil: '#3B82F6',
+  health: '#10B981',
+  sanitation: '#F59E0B',
 } as const;
 
 export const Spacing = {
@@ -51,11 +78,27 @@ export const Radius = {
   tag: 6,
   chip: 8,
   card: 16,
+  cardLarge: 20,
+  detailCard: 12,
   iconBox: 14,
   circle: 32,
   pill: 20,
   search: 28,
   avatar: 42,
+} as const;
+
+/** Gradientes dos botões de contato da tela de detalhes. */
+export const ButtonGradients = {
+  whatsapp: ['#25D366', '#128C7E'],
+  call: ['#FFD54F', '#D4AF37'],
+} as const;
+
+/** Cores de marca dos provedores de login (guideline de cada marca). */
+export const BrandColors = {
+  googleBg: '#FFFFFF',
+  googleText: '#1F1F1F',
+  appleBg: '#000000',
+  appleText: '#FFFFFF',
 } as const;
 
 export const Type = {
@@ -81,3 +124,15 @@ export const CardShadow = {
 
 export const BottomTabInset = Platform.select({ ios: 50, android: 80 }) ?? 0;
 export const MaxContentWidth = 800;
+
+/** Tema de navegação (tabs/stack) alinhado aos tokens da GUIA. */
+export const DarkGuiTheme = {
+  ...DarkTheme,
+  colors: {
+    ...DarkTheme.colors,
+    background: GuiaColors.background,
+    card: GuiaColors.background,
+    primary: GuiaColors.primary,
+    text: GuiaColors.text,
+  },
+};

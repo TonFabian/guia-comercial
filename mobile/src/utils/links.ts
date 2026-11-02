@@ -20,8 +20,9 @@ export async function callPhone(phone: string) {
   }
 }
 
-export async function openWhatsApp(phone: string) {
-  const url = `https://wa.me/${toDigits(phone)}`;
+export async function openWhatsApp(phone: string, message?: string) {
+  const suffix = message ? `?text=${encodeURIComponent(message)}` : '';
+  const url = `https://wa.me/${toDigits(phone)}${suffix}`;
   try {
     await Linking.openURL(url);
   } catch {
@@ -29,12 +30,23 @@ export async function openWhatsApp(phone: string) {
   }
 }
 
-export async function openAddress(address: string) {
-  const url = `https://maps.google.com/?q=${encodeURIComponent(address)}`;
+export async function openMapLink(url: string) {
   try {
     await Linking.openURL(url);
   } catch {
     Alert.alert('Como chegar', `Não foi possível abrir o mapa (${url}).`);
+  }
+}
+
+export async function openAddress(address: string) {
+  await openMapLink(`https://maps.google.com/?q=${encodeURIComponent(address)}`);
+}
+
+export async function openVideo(url: string) {
+  try {
+    await Linking.openURL(url);
+  } catch {
+    Alert.alert('Vídeo', 'Não foi possível abrir o vídeo.');
   }
 }
 

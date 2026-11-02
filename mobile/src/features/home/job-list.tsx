@@ -1,15 +1,17 @@
-import { SectionHeader } from './section-header';
 import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 import { GuiaColors, Radius, Spacing, Type } from '@/constants/theme';
 import { openCompanyDetails } from '@/features/company/open-company';
-import { companyId, companyLabel } from '@/types/domain';
 import type { Job } from '@/types/domain';
+import { companyId, companyLabel } from '@/types/domain';
+import { SectionHeader } from './section-header';
 
 export function JobList({ jobs }: { jobs: Job[] }) {
+  if (jobs.length === 0) return null;
+
   return (
     <View style={styles.section}>
-      <SectionHeader title="Oportunidades na Cidade" icon="briefcase" />
+      <SectionHeader title="Oportunidades na Cidade" />
       <View style={styles.jobsList}>
         {jobs.map((job) => {
           const targetId = companyId(job.company);
@@ -22,14 +24,16 @@ export function JobList({ jobs }: { jobs: Job[] }) {
                   activeOpacity={0.7}
                   accessibilityRole="button"
                   accessibilityLabel={`Ver empresa ${companyLabel(job.company)}`}
-                  onPress={() => targetId && openCompanyDetails(targetId)}>
+                  onPress={() => targetId && openCompanyDetails(targetId)}
+                >
                   <Text style={styles.jobCompany}>{companyLabel(job.company)}</Text>
                 </TouchableOpacity>
               </View>
               <TouchableOpacity
                 style={styles.jobButton}
                 activeOpacity={0.7}
-                onPress={() => Alert.alert(job.title, 'Detalhes da vaga em breve.')}>
+                onPress={() => Alert.alert(job.title, 'Detalhes da vaga em breve.')}
+              >
                 <Text style={styles.jobButtonText}>Ver Vaga</Text>
               </TouchableOpacity>
             </View>

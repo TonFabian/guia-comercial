@@ -1,12 +1,12 @@
-import { SectionHeader } from './section-header';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { SectionHeader } from './section-header';
 
 import { GuiaColors, Overlays, Radius, Spacing, Type } from '@/constants/theme';
 import { openCompanyDetails } from '@/features/company/open-company';
-import { categoryLabel } from '@/types/domain';
 import type { Company } from '@/types/domain';
+import { categoryLabel } from '@/types/domain';
 import { callPhone, openAddress, openWhatsApp } from '@/utils/links';
 
 export function FeaturedCompany({ company }: { company: Company | null }) {
@@ -14,19 +14,16 @@ export function FeaturedCompany({ company }: { company: Company | null }) {
 
   return (
     <View style={styles.section}>
-      <SectionHeader title="Empresas em Destaque" icon="star" />
+      <SectionHeader title="Empresas em Destaque" />
       <View style={styles.companyCard}>
         <TouchableOpacity
           activeOpacity={0.85}
           accessibilityRole="button"
           accessibilityLabel={`Ver detalhes de ${company.name}`}
-          onPress={() => openCompanyDetails(company._id)}>
+          onPress={() => openCompanyDetails(company._id)}
+        >
           <View style={styles.companyCover}>
-            <MaterialCommunityIcons
-              name="office-building"
-              size={48}
-              color={Overlays.whiteSoft}
-            />
+            <MaterialCommunityIcons name="office-building" size={48} color={Overlays.whiteSoft} />
             <View style={styles.highlightTag}>
               <Text style={styles.highlightTagText}>Destaque</Text>
             </View>
@@ -41,27 +38,36 @@ export function FeaturedCompany({ company }: { company: Company | null }) {
           </View>
         </TouchableOpacity>
         <View style={styles.companyActions}>
-            <TouchableOpacity
-              style={styles.actionPill}
-              activeOpacity={0.7}
-              onPress={() => company.phone && void callPhone(company.phone)}>
-              <Ionicons name="call-outline" size={16} color={GuiaColors.primary} />
-              <Text style={styles.actionPillText}>Ligar</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.actionPill}
-              activeOpacity={0.7}
-              onPress={() => company.address && void openAddress(company.address)}>
-              <Ionicons name="location-outline" size={16} color={GuiaColors.primary} />
-              <Text style={styles.actionPillText}>Endereço</Text>
-            </TouchableOpacity>
-            <TouchableOpacity
-              style={styles.whatsappPill}
-              activeOpacity={0.7}
-              onPress={() => company.whatsapp && void openWhatsApp(company.whatsapp)}>
-              <MaterialCommunityIcons name="whatsapp" size={16} color={GuiaColors.background} />
-              <Text style={styles.whatsappPillText}>WhatsApp</Text>
-            </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.actionPill}
+            activeOpacity={0.7}
+            onPress={() => company.phone && void callPhone(company.phone)}
+            disabled={!company.phone}
+            accessibilityLabel={!company.phone ? 'Telefone não disponível' : 'Ligar'}
+          >
+            <Ionicons name="call-outline" size={16} color={GuiaColors.primary} />
+            <Text style={styles.actionPillText}>Ligar</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.actionPill}
+            activeOpacity={0.7}
+            onPress={() => company.address && void openAddress(company.address)}
+            disabled={!company.address}
+            accessibilityLabel={!company.address ? 'Endereço não disponível' : 'Abrir endereço'}
+          >
+            <Ionicons name="location-outline" size={16} color={GuiaColors.primary} />
+            <Text style={styles.actionPillText}>Endereço</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            style={styles.whatsappPill}
+            activeOpacity={0.7}
+            onPress={() => company.whatsapp && void openWhatsApp(company.whatsapp)}
+            disabled={!company.whatsapp}
+            accessibilityLabel={!company.whatsapp ? 'WhatsApp não disponível' : 'Abrir WhatsApp'}
+          >
+            <MaterialCommunityIcons name="whatsapp" size={16} color={GuiaColors.background} />
+            <Text style={styles.whatsappPillText}>WhatsApp</Text>
+          </TouchableOpacity>
         </View>
       </View>
     </View>
@@ -79,6 +85,9 @@ const styles = StyleSheet.create({
     borderWidth: 1,
     borderColor: GuiaColors.border,
     overflow: 'hidden',
+  },
+  cardPressed: {
+    opacity: 0.88,
   },
   companyCover: {
     height: 120,

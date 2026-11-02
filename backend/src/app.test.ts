@@ -14,7 +14,7 @@ describe('GET /api/health', () => {
   });
 });
 
-describe('rota inexistente', () => {
+describe('Rota inexistente', () => {
   it('responde 404 com JSON padronizado', async () => {
     const response = await request(app).get('/api/nao-existe');
 
@@ -30,5 +30,16 @@ describe('GET /api/companies/:id', () => {
 
     expect(response.status).toBe(404);
     expect(response.body.error).toBe('id inválido');
+  });
+});
+
+describe('Webhook do Clerk montado antes do express.json', () => {
+  it('POST /api/webhooks/clerk rejeita assinatura ausente com 400', async () => {
+    const response = await request(app)
+      .post('/api/webhooks/clerk')
+      .type('json')
+      .send({ type: 'user.created', data: { id: 'user_123' } });
+
+    expect(response.status).toBe(400);
   });
 });

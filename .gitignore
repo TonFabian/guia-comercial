@@ -67,3 +67,6 @@ coverage/
 # local
 *.local
 .husky/
+
+# agents
+.superpowers/

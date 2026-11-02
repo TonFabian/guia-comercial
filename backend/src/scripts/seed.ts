@@ -69,12 +69,14 @@ async function seed(): Promise<void> {
     {
       name: 'Construtora Alicerce',
       slug: 'construtora-alicerce',
-      description: 'Construção civil, reformas e projetos residenciais e comerciais.',
+      description:
+        'Fundada em 2008, a Construtora Alicerce nasceu com o propósito de transformar a forma de construir em Castelo do Piauí. Ao longo de mais de uma década, ajudamos famílias e empresas a tirar projetos do papel, unindo planejamento, qualidade e respeito aos prazos. Nossa missão é construir espaços seguros, funcionais e duradouros, sempre com transparência e atenção às pessoas.',
       category: categoriaPorSlug.get('construcao'),
       phone: '+55 85 99999-0001',
       whatsapp: '+55 85 99999-0001',
       address: 'Av. Brasil, 1520 — Centro',
       city: 'Fortaleza',
+      registry: 'CREA-CE 12345',
       isFeatured: true,
       rating: 4.7,
       ratingCount: 128,
@@ -85,8 +87,16 @@ async function seed(): Promise<void> {
       openingHours: ['Seg a Sex: 08h às 18h', 'Sáb: 08h às 12h'],
       services: ['Reformas', 'Projetos', 'Brita e areia'],
       products: [
-        { name: 'Projeto residencial', description: 'Projeto completo com planta e memorial', price: 4500 },
-        { name: 'Reforma de banheiro', description: 'Demolição, hidráulica e elétrica', price: 12800 },
+        {
+          name: 'Projeto residencial',
+          description: 'Projeto completo com planta e memorial',
+          price: 4500,
+        },
+        {
+          name: 'Reforma de banheiro',
+          description: 'Demolição, hidráulica e elétrica',
+          price: 12800,
+        },
       ],
     },
     {
@@ -106,7 +116,11 @@ async function seed(): Promise<void> {
       openingHours: ['Todos os dias: 11h às 23h'],
       services: ['Delivery', 'Salão', 'Marmitex'],
       products: [
-        { name: 'Pizza artesanal', description: 'Massa de fermentação lenta, 4 sabores', price: 59.9 },
+        {
+          name: 'Pizza artesanal',
+          description: 'Massa de fermentação lenta, 4 sabores',
+          price: 59.9,
+        },
         { name: 'Marmitex do dia', description: 'Prato feito com accompanyamentos', price: 24.9 },
       ],
     },
@@ -145,7 +159,11 @@ async function seed(): Promise<void> {
       openingHours: ['Todos os dias: 00h às 23h59'],
       services: ['Plantão', 'Entrega', 'Medidas de pressão'],
       products: [
-        { name: 'Consulta com o farmacêutico', description: 'R$ 0,00 em cópia do convênio', price: 0 },
+        {
+          name: 'Consulta com o farmacêutico',
+          description: 'R$ 0,00 em cópia do convênio',
+          price: 0,
+        },
       ],
     },
     {

@@ -1,11 +1,20 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router, useLocalSearchParams } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import {
+  ActivityIndicator,
+  ScrollView,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { GuiaColors, Overlays, Radius, Spacing, Type } from '@/constants/theme';
 import { CompanyAbout } from '@/features/company/company-about';
+import type { CompanyAction } from '@/features/company/company-actions';
+import { buildCompanyActions } from '@/features/company/company-actions';
 import { CompanyActionsBar } from '@/features/company/company-actions-bar';
 import { CompanyCoupons } from '@/features/company/company-coupons';
 import { CompanyHero } from '@/features/company/company-hero';
@@ -13,8 +22,6 @@ import { CompanyHours } from '@/features/company/company-hours';
 import { CompanyProducts } from '@/features/company/company-products';
 import { CompanyReviews } from '@/features/company/company-reviews';
 import { CompanySection } from '@/features/company/company-section';
-import { buildCompanyActions } from '@/features/company/company-actions';
-import type { CompanyAction } from '@/features/company/company-actions';
 import { useCompanyDetail } from '@/features/company/use-company-detail';
 import { useFavorites } from '@/features/favorites/favorites-provider';
 import { callPhone, openAddress, openExternalUrl, openWhatsApp, shareCompany } from '@/utils/links';
@@ -23,7 +30,7 @@ export default function CompanyDetailScreen() {
   const params = useLocalSearchParams<{ id?: string | string[] }>();
   const companyId = Array.isArray(params.id) ? params.id[0] : params.id;
 
-  const { company, coupons, loading } = useCompanyDetail(companyId);
+  const { company, coupons, loading } = useCompanyDetail(companyId || '');
   const { isFavorite, toggleFavorite } = useFavorites();
   const insets = useSafeAreaInsets();
 
@@ -69,7 +76,11 @@ export default function CompanyDetailScreen() {
         <Text style={styles.notFoundText}>
           O link pode estar errado ou a empresa foi removida do guia.
         </Text>
-        <TouchableOpacity style={styles.backButton} activeOpacity={0.8} onPress={() => router.back()}>
+        <TouchableOpacity
+          style={styles.backButton}
+          activeOpacity={0.8}
+          onPress={() => router.back()}
+        >
           <Text style={styles.backButtonText}>Voltar</Text>
         </TouchableOpacity>
       </View>
@@ -91,7 +102,8 @@ export default function CompanyDetailScreen() {
             activeOpacity={0.7}
             accessibilityRole="button"
             accessibilityLabel="Voltar"
-            onPress={() => router.back()}>
+            onPress={() => router.back()}
+          >
             <Ionicons name="chevron-back" size={22} color={GuiaColors.text} />
           </TouchableOpacity>
 
@@ -101,7 +113,8 @@ export default function CompanyDetailScreen() {
               activeOpacity={0.7}
               accessibilityRole="button"
               accessibilityLabel={favorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
-              onPress={() => toggleFavorite(company)}>
+              onPress={() => toggleFavorite(company)}
+            >
               <Ionicons
                 name={favorite ? 'heart' : 'heart-outline'}
                 size={20}
@@ -113,7 +126,8 @@ export default function CompanyDetailScreen() {
               activeOpacity={0.7}
               accessibilityRole="button"
               accessibilityLabel="Compartilhar"
-              onPress={() => void shareCompany(company)}>
+              onPress={() => void shareCompany(company)}
+            >
               <Ionicons name="share-social-outline" size={20} color={GuiaColors.text} />
             </TouchableOpacity>
           </View>
@@ -125,7 +139,7 @@ export default function CompanyDetailScreen() {
           <CompanyAbout
             description={company.description}
             services={company.services}
-            address={company.address}
+            address={company.address ?? undefined}
             city={company.city}
           />
         </CompanySection>
