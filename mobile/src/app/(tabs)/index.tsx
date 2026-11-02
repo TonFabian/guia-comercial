@@ -44,10 +44,10 @@ export default function HomeScreen() {
       <SafeAreaView style={styles.safeArea} edges={['top']}>
         <ScrollView
           style={styles.scrollView}
-          contentContainerStyle={[
+          contentContainerStyle={StyleSheet.flatten([
             styles.scrollContent,
             { paddingBottom: 110 + Math.max(insets.bottom, 10) },
-          ]}
+          ])}
           showsVerticalScrollIndicator={false}
         >
           <Header />
