@@ -186,7 +186,7 @@ export function CompanyDetailScreen({ companyId }: { companyId: string }) {
 
   return (
     <View style={styles.root}>
-      <StatusBar style="light" />
+      <StatusBar style={mode === 'dark' ? 'light' : 'dark'} />
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[
@@ -731,7 +731,7 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
       bottom: 0,
       backgroundColor: colors.surface,
       borderTopWidth: 1,
-      borderTopColor: Glass.border,
+      borderTopColor: colors.border,
       paddingHorizontal: Spacing.three,
       paddingTop: Spacing.three,
       gap: Spacing.two,
