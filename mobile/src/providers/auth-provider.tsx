@@ -67,9 +67,8 @@ function ClerkAuthProvider({ children }: { children: ReactNode }) {
     return () => registerTokenGetter(null);
   }, [getToken]);
 
-  // Registra push token no backend quando logado.
+  // Registra push token no backend (funciona para convidados e logados).
   useEffect(() => {
-    if (!isSignedIn) return;
     let cancelled = false;
     (async () => {
       try {
@@ -77,8 +76,15 @@ function ClerkAuthProvider({ children }: { children: ReactNode }) {
         if (status !== 'granted' || cancelled) return;
         const token = (await Notifications.getExpoPushTokenAsync()).data;
         if (cancelled || !token) return;
-        const { updatePushToken } = await import('@/services/api');
-        await updatePushToken(token);
+        const { updatePushToken: registerToken } = await import('@/services/api');
+        // Reutiliza o endpoint /push-tokens (sem auth) em vez de /me/push-token.
+        const BASE = process.env.EXPO_PUBLIC_API_URL;
+        if (!BASE) return;
+        await fetch(`${BASE}/push-tokens`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token, clerkId: user?.id }),
+        });
       } catch {
         // ignora
       }
@@ -86,7 +92,7 @@ function ClerkAuthProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, [isSignedIn]);
+  }, [user?.id]);
 
   const value = useMemo<AuthState>(
     () => ({
