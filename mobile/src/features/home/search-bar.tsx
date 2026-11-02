@@ -1,3 +1,4 @@
+import { Platform } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
@@ -10,6 +11,7 @@ export function SearchBar() {
   const colors = useThemeColors();
   const styles = makeStyles(colors);
   const [query, setQuery] = useState('');
+  const [listening, setListening] = useState(false);
 
   useFocusEffect(
     useCallback(() => {
@@ -17,10 +19,42 @@ export function SearchBar() {
     }, []),
   );
 
-  function submit() {
-    const term = query.trim();
-    if (!term) return;
-    router.push(`/search?q=${encodeURIComponent(term)}`);
+  function submit(term?: string) {
+    const value = (term ?? query).trim();
+    if (!value) return;
+    router.push(`/search?q=${encodeURIComponent(value)}`);
+  }
+
+  function handleMic() {
+    if (Platform.OS !== 'web') {
+      // Busca por voz disponível apenas na web por enquanto.
+      return;
+    }
+    const SR =
+      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+    if (!SR) {
+      return;
+    }
+    if (listening) return;
+    const recognition = new SR();
+    recognition.lang = 'pt-BR';
+    recognition.interimResults = false;
+    recognition.maxAlternatives = 1;
+    setListening(true);
+    recognition.onresult = (event: any) => {
+      const transcript = event.results?.[0]?.[0]?.transcript ?? '';
+      if (transcript) {
+        setQuery(transcript);
+        submit(transcript);
+      }
+    };
+    recognition.onerror = () => setListening(false);
+    recognition.onend = () => setListening(false);
+    try {
+      recognition.start();
+    } catch {
+      setListening(false);
+    }
   }
 
   return (
@@ -31,14 +65,14 @@ export function SearchBar() {
         placeholderTextColor={colors.textSecondary}
         value={query}
         onChangeText={setQuery}
-        onSubmitEditing={submit}
+        onSubmitEditing={() => submit()}
         returnKeyType="search"
         blurOnSubmit
       />
-      <TouchableOpacity style={styles.micButton} activeOpacity={0.7}>
-        <Ionicons name="mic-outline" size={20} color={colors.textSecondary} />
+      <TouchableOpacity style={styles.micButton} activeOpacity={0.7} onPress={handleMic}>
+        <Ionicons name={listening ? 'mic' : 'mic-outline'} size={20} color={listening ? colors.primary : colors.textSecondary} />
       </TouchableOpacity>
-      <TouchableOpacity style={styles.searchButton} activeOpacity={0.8} onPress={submit}>
+      <TouchableOpacity style={styles.searchButton} activeOpacity={0.8} onPress={() => submit()}>
         <Ionicons name="search" size={18} color={colors.background} />
       </TouchableOpacity>
     </View>
