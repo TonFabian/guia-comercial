@@ -4,7 +4,7 @@ import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SectionHeader } from './section-header';
 
 import { Overlays, Radius, Spacing, Type } from '@/constants/theme';
-import { CONTACT_HIDDEN_HINT, ContactHintRow } from '@/features/home/contact-hidden-hint';
+import { ContactHintRow } from '@/features/home/contact-hidden-hint';
 import { useThemeColors } from '@/hooks/use-theme-colors';
 import type { Company } from '@/types/domain';
 import { categoryLabel } from '@/types/domain';
@@ -76,10 +76,12 @@ export function FeaturedCompany({ company }: { company: Company | null }) {
         <View style={styles.companyBody}>
           <Text style={styles.companyName}>{company.name}</Text>
           <Text style={styles.companyCategory}>{categoryLabel(company.category)}</Text>
+{company.address ? (
           <View style={styles.addressRow}>
             <Ionicons name="location-outline" size={14} color={colors.textSecondary} />
-            <Text style={styles.companyAddress}>{company.address ?? CONTACT_HIDDEN_HINT}</Text>
+            <Text style={styles.companyAddress}>{company.address}</Text>
           </View>
+        ) : null}
           <View style={styles.companyActions}>
             {company.phone ? (
               <TouchableOpacity
