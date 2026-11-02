@@ -132,3 +132,22 @@ export const createJobSchema = z.object({
 export type CreateJobDto = z.infer<typeof createJobSchema>;
 
 export type UpdateJobDto = Partial<CreateJobDto>;
+
+// ---------------------------------------------------------------------------
+// User (perfil)
+// ---------------------------------------------------------------------------
+
+export const updateUserSchema = z.object({
+  firstName: z.string().trim().min(1).optional(),
+  lastName: z.string().trim().min(1).optional(),
+  phone: z.string().trim().optional(),
+  imageUrl: z.string().url().optional(),
+  favorites: z.array(z.string()).optional(),
+  preferences: z
+    .object({
+      notifications: z.boolean().optional(),
+    })
+    .optional(),
+});
+
+export type UpdateUserDto = z.infer<typeof updateUserSchema>;

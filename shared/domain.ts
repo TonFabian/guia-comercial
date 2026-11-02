@@ -113,7 +113,7 @@ export interface User {
   lastSignInAt?: string;
   favorites?: string[];
   ownedCompanyIds?: string[];
-  preferences?: { notifications: boolean };
+  preferences?: { notifications?: boolean };
   createdAt?: string;
   updatedAt?: string;
 }

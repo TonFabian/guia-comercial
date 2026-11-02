@@ -18,9 +18,10 @@ import {
   createCompanySchema,
   createCouponSchema,
   createJobSchema,
+  updateUserSchema,
   validateBody,
 } from '../types/dto.js';
-import { me } from '../controllers/user.controller.js';
+import { me, updateMe } from '../controllers/user.controller.js';
 
 const routes = Router();
 
@@ -43,6 +44,7 @@ if (authDeps) {
   // Perfil do usuário autenticado: exige sessão válida e só existe com auth
   // ligado — em modo legado o app não a consome.
   routes.get('/me', auth.requireAuth, me);
+  routes.put('/me', auth.requireAuth, validateBody(updateUserSchema.partial()), updateMe);
 }
 
 // -----------------------------------------------------------------------------

@@ -1,7 +1,36 @@
 import type { RequestHandler } from 'express';
+import type { UpdateUserDto } from '../types/dto.js';
 
 import type { User } from '../../../shared/domain.js';
-import { findUserByClerkId } from '../services/user.service.js';
+import { findUserByClerkId, updateUserByClerkId } from '../services/user.service.js';
+
+export interface UpdateMeDeps {
+  update: typeof updateUserByClerkId;
+}
+
+export function makeUpdateMeController(
+  deps: UpdateMeDeps = { update: updateUserByClerkId },
+): RequestHandler {
+  return async (req, res): Promise<void> => {
+    const clerkId = req.auth?.clerkId;
+
+    if (!clerkId) {
+      res.status(401).json({ error: 'Não autenticado' });
+      return;
+    }
+
+    const updated = await deps.update(clerkId, req.body as UpdateUserDto);
+
+    if (!updated) {
+      res.status(404).json({ error: 'perfil não sincronizado ainda' });
+      return;
+    }
+
+    res.json({ ...updated, _id: String(updated._id) });
+  };
+}
+
+export const updateMe: RequestHandler = makeUpdateMeController();
 
 export interface MeDeps {
   find: typeof findUserByClerkId;

@@ -36,6 +36,19 @@ export async function touchSession(clerkId: string, sid: string): Promise<void> 
   ).exec();
 }
 
+export async function updateUserByClerkId(
+  clerkId: string,
+  mirror: Partial<User>,
+): Promise<User | null> {
+  const user = await UserModel.findOneAndUpdate(
+    { clerkId },
+    { $set: mirror },
+    { new: true },
+  ).lean<User>();
+
+  return user;
+}
+
 export async function removeUserByClerkId(clerkId: string): Promise<void> {
   await UserModel.deleteOne({ clerkId }).exec();
 }
