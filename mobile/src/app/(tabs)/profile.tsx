@@ -64,7 +64,7 @@ export default function ProfileScreen() {
     : 'Visitante';
 
   return (
-    <View style={[styles.root, { backgroundColor: colors.background }]}>
+    <View style={StyleSheet.flatten([styles.root, { backgroundColor: colors.background }])}>
       <SafeAreaView style={styles.safeArea} edges={['top']}>
         <Text style={[styles.title, { color: colors.text }]}>Perfil</Text>
         <TouchableOpacity
