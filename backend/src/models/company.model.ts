@@ -16,6 +16,8 @@ const companySchema = new Schema<Company>(
     whatsapp: String,
     address: String,
     city: String,
+    latitude: Number,
+    longitude: Number,
     logo: String,
     cover: String,
     gallery: [String],

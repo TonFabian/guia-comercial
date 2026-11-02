@@ -42,6 +42,8 @@ export interface Company {
   whatsapp?: string | null;
   address?: string | null;
   city?: string;
+  latitude?: number;
+  longitude?: number;
   logo?: string;
   cover?: string;
   gallery?: string[];
