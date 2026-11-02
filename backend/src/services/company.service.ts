@@ -109,6 +109,16 @@ async function assertOwner(companyId: string, clerkId?: string): Promise<void> {
     if (user?.role !== 'admin') {
       throw Object.assign(new Error('sem permissão para editar esta empresa'), { statusCode: 403 });
     }
+    return;
+  }
+
+  // Empresa sem dono definido: em modo com auth, apenas admins podem mutar
+  // (evita tomada de posse por usuários comuns).
+  if (process.env.CLERK_SECRET_KEY && clerkId) {
+    const user = await findUserByClerkId(clerkId);
+    if (user?.role !== 'admin') {
+      throw Object.assign(new Error('sem permissão para editar esta empresa'), { statusCode: 403 });
+    }
   }
 }
 
