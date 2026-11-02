@@ -1,12 +1,13 @@
 import { useEffect, useState } from 'react';
 
 import { getCompanyById } from '@/services/api';
-import type { Company } from '@/types/domain';
+import type { Company, Coupon } from '@/types/domain';
 
 type CompanyDetailState = {
   company: Company | null;
   loading: boolean;
   error: string | null;
+  coupons: Coupon[];
 };
 
 const NOT_FOUND_ERROR = 'Empresa não encontrada.';
@@ -17,6 +18,7 @@ export function useCompanyDetail(companyId: string): CompanyDetailState {
     company: null,
     loading: Boolean(companyId),
     error: companyId ? null : NOT_FOUND_ERROR,
+    coupons: [],
   }));
 
   useEffect(() => {
@@ -31,11 +33,12 @@ export function useCompanyDetail(companyId: string): CompanyDetailState {
           company,
           loading: false,
           error: company ? null : NOT_FOUND_ERROR,
+          coupons: [],
         });
       })
       .catch(() => {
         if (cancelled) return;
-        setState({ company: null, loading: false, error: LOAD_ERROR });
+        setState({ company: null, loading: false, error: LOAD_ERROR, coupons: [] });
       });
 
     return () => {

@@ -1,5 +1,5 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { router, useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
@@ -13,6 +13,7 @@ import {
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Radius, Spacing, Type } from '@/constants/theme';
+import { openCompanyDetails } from '@/features/company/open-company';
 import { useThemeColors } from '@/hooks/use-theme-colors';
 import {
   getCategories,
@@ -163,10 +164,10 @@ export default function SearchScreen() {
                   <TouchableOpacity
                     key={company._id}
                     style={styles.row}
-                    activeOpacity={0.75}
-                    onPress={() => router.push(`/company/${company._id}`)}
+                    activeOpacity={0.7}
                     accessibilityRole="button"
-                    accessibilityLabel={`Abrir perfil de ${company.name}`}
+                    accessibilityLabel={`Ver detalhes de ${company.name}`}
+                    onPress={() => openCompanyDetails(company._id)}
                   >
                     <View style={styles.rowBody}>
                       <Text style={styles.rowTitle}>{company.name}</Text>
@@ -197,97 +198,97 @@ export default function SearchScreen() {
 
 function makeStyles(colors: ReturnType<typeof useThemeColors>) {
   return StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  safeArea: {
-    flex: 1,
-    paddingHorizontal: 16,
-    paddingTop: 12,
-    gap: Spacing.three,
-  },
-  title: {
-    color: colors.text,
-    fontSize: Type.headline,
-    fontWeight: '700',
-  },
-  searchBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    backgroundColor: colors.surface,
-    borderRadius: Radius.search,
-    borderWidth: 1,
-    borderColor: colors.border,
-    paddingHorizontal: 16,
-    height: 50,
-  },
-  searchInput: {
-    flex: 1,
-    color: colors.text,
-    fontSize: Type.subtitle,
-    paddingVertical: 0,
-  },
-  chip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    alignSelf: 'flex-start',
-    gap: 6,
-    backgroundColor: colors.surfaceAlt,
-    borderRadius: Radius.tag,
-    borderWidth: 1,
-    borderColor: colors.primary,
-    paddingVertical: 4,
-    paddingHorizontal: 10,
-  },
-  chipText: {
-    color: colors.primary,
-    fontSize: Type.small,
-    fontWeight: '700',
-  },
-  spinner: {
-    marginTop: Spacing.four,
-  },
-  group: {
-    marginBottom: Spacing.four,
-  },
-  groupTitle: {
-    color: colors.textSecondary,
-    fontSize: Type.small,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    marginBottom: Spacing.two,
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    backgroundColor: colors.surface,
-    borderRadius: Radius.iconBox,
-    borderWidth: 1,
-    borderColor: colors.border,
-    padding: 14,
-    marginBottom: Spacing.two,
-  },
-  rowBody: {
-    flex: 1,
-    gap: 2,
-  },
-  rowTitle: {
-    color: colors.text,
-    fontSize: Type.subtitle,
-    fontWeight: '600',
-  },
-  rowSubtitle: {
-    color: colors.textSecondary,
-    fontSize: Type.body,
-  },
-  emptyText: {
-    color: colors.textSecondary,
-    fontSize: Type.base,
-    textAlign: 'center',
-    marginTop: Spacing.four,
-  },
-});
+    root: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    safeArea: {
+      flex: 1,
+      paddingHorizontal: 16,
+      paddingTop: 12,
+      gap: Spacing.three,
+    },
+    title: {
+      color: colors.text,
+      fontSize: Type.headline,
+      fontWeight: '700',
+    },
+    searchBar: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+      backgroundColor: colors.surface,
+      borderRadius: Radius.search,
+      borderWidth: 1,
+      borderColor: colors.border,
+      paddingHorizontal: 16,
+      height: 50,
+    },
+    searchInput: {
+      flex: 1,
+      color: colors.text,
+      fontSize: Type.subtitle,
+      paddingVertical: 0,
+    },
+    chip: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      alignSelf: 'flex-start',
+      gap: 6,
+      backgroundColor: colors.surfaceAlt,
+      borderRadius: Radius.tag,
+      borderWidth: 1,
+      borderColor: colors.primary,
+      paddingVertical: 4,
+      paddingHorizontal: 10,
+    },
+    chipText: {
+      color: colors.primary,
+      fontSize: Type.small,
+      fontWeight: '700',
+    },
+    spinner: {
+      marginTop: Spacing.four,
+    },
+    group: {
+      marginBottom: Spacing.four,
+    },
+    groupTitle: {
+      color: colors.textSecondary,
+      fontSize: Type.small,
+      fontWeight: '700',
+      textTransform: 'uppercase',
+      marginBottom: Spacing.two,
+    },
+    row: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+      backgroundColor: colors.surface,
+      borderRadius: Radius.iconBox,
+      borderWidth: 1,
+      borderColor: colors.border,
+      padding: 14,
+      marginBottom: Spacing.two,
+    },
+    rowBody: {
+      flex: 1,
+      gap: 2,
+    },
+    rowTitle: {
+      color: colors.text,
+      fontSize: Type.subtitle,
+      fontWeight: '600',
+    },
+    rowSubtitle: {
+      color: colors.textSecondary,
+      fontSize: Type.body,
+    },
+    emptyText: {
+      color: colors.textSecondary,
+      fontSize: Type.base,
+      textAlign: 'center',
+      marginTop: Spacing.four,
+    },
+  });
 }

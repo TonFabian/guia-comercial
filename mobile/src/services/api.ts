@@ -48,22 +48,29 @@ export async function getCompanies(): Promise<Company[]> {
   return fromPaginated(payload, MOCK_COMPANIES);
 }
 
-export async function getCompanyById(id: string): Promise<Company | null> {
-  const mock =
-    MOCK_COMPANIES.find((company) => company._id === id || company.slug === id) ?? null;
-
-  if (!isApiConfigured()) return mock;
-
-  const payload = await request<Company>(`/companies/${encodeURIComponent(id)}`);
-  if (!payload) return mock;
-
-  const [company] = fromPaginated(payload, mock ? [mock] : []);
-  return company ?? null;
-}
-
 export async function getCoupons(): Promise<Coupon[]> {
   const payload = await request<Coupon>('/coupons');
   return fromPaginated(payload, MOCK_COUPONS);
+}
+
+/** Empresa pelo id. `null` quando a API responde que não existe. */
+export async function getCompanyById(id: string): Promise<Company | null> {
+  if (!isApiConfigured()) return findMockCompany(id);
+  try {
+    const payload = await request<Company>(`/companies/${encodeURIComponent(id)}`);
+    if (!payload) return findMockCompany(id);
+    const [company] = fromPaginated(payload, []);
+    return company ?? findMockCompany(id);
+  } catch {
+    return findMockCompany(id);
+  }
+}
+
+/** Cupons de uma empresa específica. */
+export async function getCouponsByCompany(companyId: string): Promise<Coupon[]> {
+  const payload = await request<Coupon>(`/coupons?company=${encodeURIComponent(companyId)}`);
+  if (payload) return fromPaginated(payload, []);
+  return filterMockCouponsByCompany(companyId);
 }
 
 export async function getJobs(): Promise<Job[]> {
@@ -133,4 +140,17 @@ export function filterMockCompaniesByCategory(slug: string): Company[] {
 export function filterMockCategories(term: string): Category[] {
   if (!term) return MOCK_CATEGORIES;
   return MOCK_CATEGORIES.filter((category) => category.name.toLowerCase().includes(term));
+}
+
+/** Empresa mockada pelo id (fallback quando a API está fora do ar). */
+export function findMockCompany(id: string): Company | null {
+  return MOCK_COMPANIES.find((company) => company._id === id) ?? null;
+}
+
+/** Cupons mockados que pertencem a uma empresa. */
+export function filterMockCouponsByCompany(companyId: string): Coupon[] {
+  return MOCK_COUPONS.filter((coupon) => {
+    const company = coupon.company;
+    return typeof company !== 'string' && company._id === companyId;
+  });
 }

@@ -1,7 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import { Image } from 'expo-image';
 import * as Haptics from 'expo-haptics';
+import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -26,15 +26,15 @@ import {
   Spacing,
   Type,
 } from '@/constants/theme';
-import { useThemeColors } from '@/hooks/use-theme-colors';
 import { ContactHintRow } from '@/features/home/contact-hidden-hint';
 import { SectionHeader } from '@/features/home/section-header';
+import { useThemeColors } from '@/hooks/use-theme-colors';
 import { callPhone, openMapLink, openWhatsApp } from '@/utils/links';
 
-import { buildCompanyDetails } from './company-details';
 import type { WorkingHours } from './company-details';
+import { buildCompanyDetails } from './company-details';
 import { CompanyGallery } from './company-gallery';
-import { getOpeningStatus } from './opening-hours';
+import { getOpeningStatus, type OpeningStatus } from './opening-hours';
 import { useCompanyDetail } from './use-company-detail';
 
 const WHATSAPP_MESSAGE =
@@ -64,7 +64,7 @@ function WorkingHoursCard({ hours }: { hours: WorkingHours }) {
   }, []);
 
   const status = getOpeningStatus(hours, now);
-  const statusConfig = {
+  const statusConfig: Record<OpeningStatus, { label: string; badge: any; dot: any; text: any }> = {
     open: {
       label: 'Aberto Agora',
       badge: styles.statusOpen,
@@ -83,7 +83,8 @@ function WorkingHoursCard({ hours }: { hours: WorkingHours }) {
       dot: styles.statusDotUnknown,
       text: styles.statusTextUnknown,
     },
-  }[status];
+  };
+  const config = statusConfig[status];
 
   return (
     <View style={styles.hoursCard}>
@@ -93,9 +94,9 @@ function WorkingHoursCard({ hours }: { hours: WorkingHours }) {
           <Text style={styles.hoursCardTitle}>Atendimento</Text>
         </View>
 
-        <View style={[styles.statusBadge, statusConfig.badge]}>
-          <View style={[styles.statusDot, statusConfig.dot]} />
-          <Text style={[styles.statusText, statusConfig.text]}>{statusConfig.label}</Text>
+        <View style={[styles.statusBadge, config.badge]}>
+          <View style={[styles.statusDot, config.dot]} />
+          <Text style={[styles.statusText, config.text]}>{config.label}</Text>
         </View>
       </View>
 
@@ -104,15 +105,12 @@ function WorkingHoursCard({ hours }: { hours: WorkingHours }) {
       {HOURS_ROWS.map((row, index) => {
         const value = hours[row.key];
         const isLast = index === HOURS_ROWS.length - 1;
-        const isUnavailable =
-          value === CLOSED_HOURS || value.toLowerCase().includes('consulte');
+        const isUnavailable = value === CLOSED_HOURS || value.toLowerCase().includes('consulte');
 
         return (
           <View key={row.key} style={[styles.hoursRow, !isLast && styles.hoursDivider]}>
             <Text style={styles.hoursLabel}>{row.label}</Text>
-            <Text style={[styles.hoursValue, isUnavailable && styles.hoursClosed]}>
-              {value}
-            </Text>
+            <Text style={[styles.hoursValue, isUnavailable && styles.hoursClosed]}>{value}</Text>
           </View>
         );
       })}
@@ -192,7 +190,8 @@ export function CompanyDetailScreen({ companyId }: { companyId: string }) {
         contentContainerStyle={[
           styles.scrollContent,
           { paddingBottom: insets.bottom + Spacing.six * 2 },
-        ]}>
+        ]}
+      >
         <View style={styles.hero}>
           {details.coverUrl ? (
             <>
@@ -228,11 +227,7 @@ export function CompanyDetailScreen({ companyId }: { companyId: string }) {
                 accessibilityLabel={`Logo de ${details.name}`}
               />
             ) : (
-              <MaterialCommunityIcons
-                name="office-building"
-                size={38}
-                color={colors.primary}
-              />
+              <MaterialCommunityIcons name="office-building" size={38} color={colors.primary} />
             )}
           </View>
 
@@ -271,7 +266,8 @@ export function CompanyDetailScreen({ companyId }: { companyId: string }) {
                   }}
                   hitSlop={8}
                   accessibilityRole="button"
-                  accessibilityLabel="Abrir endereço no mapa">
+                  accessibilityLabel="Abrir endereço no mapa"
+                >
                   <Text style={styles.mapAction}>Ver mapa</Text>
                 </Pressable>
               ) : null}
@@ -302,21 +298,14 @@ export function CompanyDetailScreen({ companyId }: { companyId: string }) {
                   ]}
                   onPress={() => handleServicePress(service.name)}
                   accessibilityRole="button"
-                  accessibilityLabel={`Falar sobre ${service.name} no WhatsApp`}>
+                  accessibilityLabel={`Falar sobre ${service.name} no WhatsApp`}
+                >
                   <View style={styles.serviceIconBox}>
-                    <MaterialCommunityIcons
-                      name={service.icon}
-                      size={20}
-                      color={colors.primary}
-                    />
+                    <MaterialCommunityIcons name={service.icon} size={20} color={colors.primary} />
                   </View>
 
                   <Text style={styles.serviceName}>{service.name}</Text>
-                  <Ionicons
-                    name="chevron-forward"
-                    size={18}
-                    color={colors.textSecondary}
-                  />
+                  <Ionicons name="chevron-forward" size={18} color={colors.textSecondary} />
                 </Pressable>
               ))
             ) : (
@@ -337,7 +326,8 @@ export function CompanyDetailScreen({ companyId }: { companyId: string }) {
           onPress={goBack}
           hitSlop={8}
           accessibilityRole="button"
-          accessibilityLabel="Voltar">
+          accessibilityLabel="Voltar"
+        >
           <Ionicons name="chevron-back" size={22} color={colors.text} />
         </Pressable>
 
@@ -351,7 +341,8 @@ export function CompanyDetailScreen({ companyId }: { companyId: string }) {
           hitSlop={8}
           accessibilityRole="button"
           accessibilityLabel={favorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
-          accessibilityState={{ selected: favorite }}>
+          accessibilityState={{ selected: favorite }}
+        >
           <Ionicons
             name={favorite ? 'heart' : 'heart-outline'}
             size={21}
@@ -376,7 +367,8 @@ export function CompanyDetailScreen({ companyId }: { companyId: string }) {
             disabled={!details.whatsapp}
             accessibilityRole="button"
             accessibilityLabel="Falar no WhatsApp"
-            accessibilityState={{ disabled: !details.whatsapp }}>
+            accessibilityState={{ disabled: !details.whatsapp }}
+          >
             {details.whatsapp ? (
               <LinearGradient
                 colors={ButtonGradients.whatsapp}
@@ -392,10 +384,8 @@ export function CompanyDetailScreen({ companyId }: { companyId: string }) {
               color={details.whatsapp ? colors.background : colors.textSecondary}
             />
             <Text
-              style={[
-                styles.whatsappButtonText,
-                !details.whatsapp && styles.buttonDisabledText,
-              ]}>
+              style={[styles.whatsappButtonText, !details.whatsapp && styles.buttonDisabledText]}
+            >
               WhatsApp
             </Text>
           </Pressable>
@@ -412,7 +402,8 @@ export function CompanyDetailScreen({ companyId }: { companyId: string }) {
             disabled={!details.phone}
             accessibilityRole="button"
             accessibilityLabel="Ligar para a empresa"
-            accessibilityState={{ disabled: !details.phone }}>
+            accessibilityState={{ disabled: !details.phone }}
+          >
             {details.phone ? (
               <LinearGradient
                 colors={ButtonGradients.call}
@@ -439,383 +430,383 @@ export function CompanyDetailScreen({ companyId }: { companyId: string }) {
 
 function makeStyles(colors: ReturnType<typeof useThemeColors>) {
   return StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  scrollContent: {
-    paddingTop: 0,
-  },
-  hero: {
-    height: HERO_HEIGHT,
-    backgroundColor: colors.surfaceAlt,
-  },
-  basicInfo: {
-    paddingHorizontal: Spacing.four,
-    paddingBottom: Spacing.three,
-    gap: 10,
-  },
-  logoCircle: {
-    width: LOGO_SIZE,
-    height: LOGO_SIZE,
-    marginTop: -(LOGO_SIZE / 2),
-    borderRadius: LOGO_SIZE / 2,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: colors.surfaceAlt,
-    borderWidth: 2,
-    borderColor: colors.primary,
-    overflow: 'hidden',
-  },
-  logoImage: {
-    width: '100%',
-    height: '100%',
-  },
-  companyName: {
-    color: colors.text,
-    fontSize: Type.headline,
-    fontWeight: '800',
-    letterSpacing: -0.3,
-  },
-  metaRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    flexWrap: 'wrap',
-    gap: Spacing.two,
-  },
-  categoryTag: {
-    backgroundColor: Overlays.amberTag,
-    borderRadius: Radius.chip,
-    borderWidth: 1,
-    borderColor: colors.primary,
-    paddingVertical: Spacing.half,
-    paddingHorizontal: 10,
-  },
-  categoryText: {
-    color: colors.primary,
-    fontSize: Type.small,
-    fontWeight: '700',
-  },
-  registryTag: {
-    backgroundColor: Glass.surface,
-    borderRadius: Radius.chip,
-    borderWidth: 1,
-    borderColor: Glass.border,
-    paddingVertical: Spacing.half,
-    paddingHorizontal: 10,
-  },
-  registryText: {
-    color: colors.textSecondary,
-    fontSize: Type.small,
-    fontWeight: '600',
-  },
-  featuredTag: {
-    backgroundColor: colors.primary,
-    borderRadius: Radius.chip,
-    paddingVertical: Spacing.half,
-    paddingHorizontal: 10,
-  },
-  featuredTagText: {
-    color: colors.background,
-    fontSize: Type.small,
-    fontWeight: '800',
-  },
-  addressRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 8,
-  },
-  addressText: {
-    flex: 1,
-    color: colors.textSecondary,
-    fontSize: Type.body,
-    lineHeight: 18,
-  },
-  mapButton: {
-    paddingHorizontal: Spacing.one,
-    paddingVertical: 2,
-  },
-  mapAction: {
-    color: colors.primary,
-    fontSize: Type.small,
-    fontWeight: '700',
-  },
-  section: {
-    marginBottom: Spacing.four,
-  },
-  storyCard: {
-    ...CardShadow,
-    marginHorizontal: Spacing.three,
-    padding: Spacing.four,
-    gap: Spacing.two,
-    backgroundColor: colors.surface,
-    borderRadius: Radius.card,
-    borderWidth: 0.5,
-    borderColor: Overlays.goldBorder,
-  },
-  storyTitle: {
-    color: colors.primary,
-    fontSize: Type.title,
-    fontWeight: '800',
-    letterSpacing: 0.2,
-  },
-  storyText: {
-    color: colors.textSoft,
-    fontSize: Type.base,
-    lineHeight: 24,
-  },
-  servicesList: {
-    paddingHorizontal: Spacing.three,
-    gap: Spacing.two,
-  },
-  serviceCard: {
-    ...CardShadow,
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.two,
-    paddingVertical: Spacing.two,
-    paddingHorizontal: Spacing.three,
-    backgroundColor: colors.surface,
-    borderRadius: Radius.detailCard,
-    borderWidth: 1,
-    borderColor: Overlays.goldSoftBorder,
-  },
-  serviceCardPressed: {
-    opacity: 0.82,
-    backgroundColor: colors.surfaceAlt,
-  },
-  serviceIconBox: {
-    width: SERVICE_ICON_SIZE,
-    height: SERVICE_ICON_SIZE,
-    borderRadius: Radius.chip,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: Overlays.amberTag,
-  },
-  serviceName: {
-    flex: 1,
-    color: colors.text,
-    fontSize: Type.base,
-    fontWeight: '700',
-  },
-  emptyServices: {
-    color: colors.textSecondary,
-    fontSize: Type.base,
-  },
-  hoursCard: {
-    ...CardShadow,
-    marginHorizontal: Spacing.three,
-    padding: Spacing.four,
-    backgroundColor: colors.surface,
-    borderRadius: Radius.card,
-    borderWidth: 0.5,
-    borderColor: Overlays.goldBorder,
-  },
-  hoursCardHeader: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    flexWrap: 'wrap',
-    gap: Spacing.two,
-  },
-  hoursCardTitleGroup: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.two,
-  },
-  hoursCardTitle: {
-    color: colors.text,
-    fontSize: Type.subtitle,
-    fontWeight: '700',
-  },
-  hoursHeaderDivider: {
-    marginTop: Spacing.two,
-    borderBottomWidth: 0.5,
-    borderBottomColor: Overlays.hairline,
-  },
-  statusBadge: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.one,
-    paddingVertical: Spacing.one,
-    paddingHorizontal: Spacing.two,
-    borderRadius: Radius.pill,
-  },
-  statusOpen: {
-    backgroundColor: Overlays.successTag,
-  },
-  statusClosed: {
-    backgroundColor: Overlays.dangerTag,
-  },
-  statusUnknown: {
-    backgroundColor: Overlays.neutralTag,
-  },
-  statusDot: {
-    width: Spacing.two,
-    height: Spacing.two,
-    borderRadius: Spacing.one,
-  },
-  statusDotOpen: {
-    backgroundColor: colors.success,
-  },
-  statusDotClosed: {
-    backgroundColor: colors.error,
-  },
-  statusDotUnknown: {
-    backgroundColor: colors.textSecondary,
-  },
-  statusText: {
-    fontSize: Type.small,
-    fontWeight: '700',
-  },
-  statusTextOpen: {
-    color: colors.success,
-  },
-  statusTextClosed: {
-    color: colors.error,
-  },
-  statusTextUnknown: {
-    color: colors.textSecondary,
-  },
-  hoursRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    gap: Spacing.three,
-    paddingVertical: Spacing.three,
-  },
-  hoursDivider: {
-    borderBottomWidth: 0.5,
-    borderBottomColor: Overlays.hairline,
-  },
-  hoursLabel: {
-    color: colors.textSoft,
-    fontSize: Type.base,
-    fontWeight: '500',
-  },
-  hoursValue: {
-    flexShrink: 1,
-    color: colors.primary,
-    fontSize: Type.base,
-    fontWeight: '700',
-    textAlign: 'right',
-  },
-  hoursClosed: {
-    color: colors.textSecondary,
-    fontWeight: '500',
-  },
-  floatingNav: {
-    position: 'absolute',
-    left: Spacing.three,
-    right: Spacing.three,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    zIndex: 20,
-  },
-  iconButton: {
-    width: 44,
-    height: 44,
-    borderRadius: 22,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: Overlays.scrim,
-    borderWidth: 1,
-    borderColor: Glass.border,
-  },
-  favoriteActive: {
-    backgroundColor: Overlays.amberTag,
-    borderColor: colors.primary,
-  },
-  pressed: {
-    opacity: 0.8,
-  },
-  footer: {
-    ...CardShadow,
-    position: 'absolute',
-    left: 0,
-    right: 0,
-    bottom: 0,
-    backgroundColor: colors.surface,
-    borderTopWidth: 1,
-    borderTopColor: Glass.border,
-    paddingHorizontal: Spacing.three,
-    paddingTop: 12,
-    gap: Spacing.two,
-    elevation: 16,
-    shadowOpacity: 0.4,
-    shadowRadius: 14,
-    shadowOffset: { width: 0, height: -4 },
-  },
-  footerActions: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-  },
-  whatsappButton: {
-    flex: 1.6,
-    height: 54,
-    borderRadius: Radius.detailCard,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: Spacing.two,
-    overflow: 'hidden',
-    backgroundColor: colors.whatsapp,
-  },
-  whatsappButtonText: {
-    color: colors.background,
-    fontSize: Type.base,
-    fontWeight: '800',
-  },
-  callButton: {
-    flex: 1,
-    height: 54,
-    borderRadius: Radius.detailCard,
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: Spacing.two,
-    overflow: 'hidden',
-    backgroundColor: colors.surfaceAlt,
-    borderWidth: 1,
-    borderColor: colors.primary,
-  },
-  callButtonText: {
-    color: colors.background,
-    fontSize: Type.base,
-    fontWeight: '800',
-  },
-  buttonDisabled: {
-    backgroundColor: colors.surfaceAlt,
-    borderColor: Glass.border,
-  },
-  buttonDisabledText: {
-    color: colors.textSecondary,
-  },
-  centered: {
-    flex: 1,
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: Spacing.three,
-    padding: Spacing.four,
-    backgroundColor: colors.background,
-  },
-  stateText: {
-    color: colors.textSecondary,
-    fontSize: Type.base,
-    textAlign: 'center',
-  },
-  stateButton: {
-    backgroundColor: colors.primary,
-    borderRadius: Radius.pill,
-    paddingVertical: 10,
-    paddingHorizontal: Spacing.four,
-  },
-  stateButtonText: {
-    color: colors.background,
-    fontSize: Type.base,
-    fontWeight: '800',
-  },
-});
+    root: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    scrollContent: {
+      paddingTop: 0,
+    },
+    hero: {
+      height: HERO_HEIGHT,
+      backgroundColor: colors.surfaceAlt,
+    },
+    basicInfo: {
+      paddingHorizontal: Spacing.four,
+      paddingBottom: Spacing.three,
+      gap: 10,
+    },
+    logoCircle: {
+      width: LOGO_SIZE,
+      height: LOGO_SIZE,
+      marginTop: -(LOGO_SIZE / 2),
+      borderRadius: LOGO_SIZE / 2,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: colors.surfaceAlt,
+      borderWidth: 2,
+      borderColor: colors.primary,
+      overflow: 'hidden',
+    },
+    logoImage: {
+      width: '100%',
+      height: '100%',
+    },
+    companyName: {
+      color: colors.text,
+      fontSize: Type.headline,
+      fontWeight: '800',
+      letterSpacing: -0.3,
+    },
+    metaRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      flexWrap: 'wrap',
+      gap: Spacing.two,
+    },
+    categoryTag: {
+      backgroundColor: Overlays.amberTag,
+      borderRadius: Radius.chip,
+      borderWidth: 1,
+      borderColor: colors.primary,
+      paddingVertical: Spacing.half,
+      paddingHorizontal: 10,
+    },
+    categoryText: {
+      color: colors.primary,
+      fontSize: Type.small,
+      fontWeight: '700',
+    },
+    registryTag: {
+      backgroundColor: Glass.surface,
+      borderRadius: Radius.chip,
+      borderWidth: 1,
+      borderColor: Glass.border,
+      paddingVertical: Spacing.half,
+      paddingHorizontal: 10,
+    },
+    registryText: {
+      color: colors.textSecondary,
+      fontSize: Type.small,
+      fontWeight: '600',
+    },
+    featuredTag: {
+      backgroundColor: colors.primary,
+      borderRadius: Radius.chip,
+      paddingVertical: Spacing.half,
+      paddingHorizontal: 10,
+    },
+    featuredTagText: {
+      color: colors.background,
+      fontSize: Type.small,
+      fontWeight: '800',
+    },
+    addressRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+    },
+    addressText: {
+      flex: 1,
+      color: colors.textSecondary,
+      fontSize: Type.body,
+      lineHeight: 18,
+    },
+    mapButton: {
+      paddingHorizontal: Spacing.one,
+      paddingVertical: 2,
+    },
+    mapAction: {
+      color: colors.primary,
+      fontSize: Type.small,
+      fontWeight: '700',
+    },
+    section: {
+      marginBottom: Spacing.four,
+    },
+    storyCard: {
+      ...CardShadow,
+      marginHorizontal: Spacing.three,
+      padding: Spacing.four,
+      gap: Spacing.two,
+      backgroundColor: colors.surface,
+      borderRadius: Radius.card,
+      borderWidth: 0.5,
+      borderColor: Overlays.goldBorder,
+    },
+    storyTitle: {
+      color: colors.primary,
+      fontSize: Type.title,
+      fontWeight: '800',
+      letterSpacing: 0.2,
+    },
+    storyText: {
+      color: colors.textSoft,
+      fontSize: Type.base,
+      lineHeight: 24,
+    },
+    servicesList: {
+      paddingHorizontal: Spacing.three,
+      gap: Spacing.two,
+    },
+    serviceCard: {
+      ...CardShadow,
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: Spacing.two,
+      paddingVertical: Spacing.two,
+      paddingHorizontal: Spacing.three,
+      backgroundColor: colors.surface,
+      borderRadius: Radius.detailCard,
+      borderWidth: 1,
+      borderColor: Overlays.goldSoftBorder,
+    },
+    serviceCardPressed: {
+      opacity: 0.82,
+      backgroundColor: colors.surfaceAlt,
+    },
+    serviceIconBox: {
+      width: SERVICE_ICON_SIZE,
+      height: SERVICE_ICON_SIZE,
+      borderRadius: Radius.chip,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: Overlays.amberTag,
+    },
+    serviceName: {
+      flex: 1,
+      color: colors.text,
+      fontSize: Type.base,
+      fontWeight: '700',
+    },
+    emptyServices: {
+      color: colors.textSecondary,
+      fontSize: Type.base,
+    },
+    hoursCard: {
+      ...CardShadow,
+      marginHorizontal: Spacing.three,
+      padding: Spacing.four,
+      backgroundColor: colors.surface,
+      borderRadius: Radius.card,
+      borderWidth: 0.5,
+      borderColor: Overlays.goldBorder,
+    },
+    hoursCardHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      flexWrap: 'wrap',
+      gap: Spacing.two,
+    },
+    hoursCardTitleGroup: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: Spacing.two,
+    },
+    hoursCardTitle: {
+      color: colors.text,
+      fontSize: Type.subtitle,
+      fontWeight: '700',
+    },
+    hoursHeaderDivider: {
+      marginTop: Spacing.two,
+      borderBottomWidth: 0.5,
+      borderBottomColor: Overlays.hairline,
+    },
+    statusBadge: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: Spacing.one,
+      paddingVertical: Spacing.one,
+      paddingHorizontal: Spacing.two,
+      borderRadius: Radius.pill,
+    },
+    statusOpen: {
+      backgroundColor: Overlays.successTag,
+    },
+    statusClosed: {
+      backgroundColor: Overlays.dangerTag,
+    },
+    statusUnknown: {
+      backgroundColor: Overlays.neutralTag,
+    },
+    statusDot: {
+      width: Spacing.two,
+      height: Spacing.two,
+      borderRadius: Spacing.one,
+    },
+    statusDotOpen: {
+      backgroundColor: colors.success,
+    },
+    statusDotClosed: {
+      backgroundColor: colors.error,
+    },
+    statusDotUnknown: {
+      backgroundColor: colors.textSecondary,
+    },
+    statusText: {
+      fontSize: Type.small,
+      fontWeight: '700',
+    },
+    statusTextOpen: {
+      color: colors.success,
+    },
+    statusTextClosed: {
+      color: colors.error,
+    },
+    statusTextUnknown: {
+      color: colors.textSecondary,
+    },
+    hoursRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: Spacing.three,
+      paddingVertical: Spacing.three,
+    },
+    hoursDivider: {
+      borderBottomWidth: 0.5,
+      borderBottomColor: Overlays.hairline,
+    },
+    hoursLabel: {
+      color: colors.textSoft,
+      fontSize: Type.base,
+      fontWeight: '500',
+    },
+    hoursValue: {
+      flexShrink: 1,
+      color: colors.primary,
+      fontSize: Type.base,
+      fontWeight: '700',
+      textAlign: 'right',
+    },
+    hoursClosed: {
+      color: colors.textSecondary,
+      fontWeight: '500',
+    },
+    floatingNav: {
+      position: 'absolute',
+      left: Spacing.three,
+      right: Spacing.three,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      zIndex: 20,
+    },
+    iconButton: {
+      width: 44,
+      height: 44,
+      borderRadius: 22,
+      alignItems: 'center',
+      justifyContent: 'center',
+      backgroundColor: Overlays.scrim,
+      borderWidth: 1,
+      borderColor: Glass.border,
+    },
+    favoriteActive: {
+      backgroundColor: Overlays.amberTag,
+      borderColor: colors.primary,
+    },
+    pressed: {
+      opacity: 0.8,
+    },
+    footer: {
+      ...CardShadow,
+      position: 'absolute',
+      left: 0,
+      right: 0,
+      bottom: 0,
+      backgroundColor: colors.surface,
+      borderTopWidth: 1,
+      borderTopColor: Glass.border,
+      paddingHorizontal: Spacing.three,
+      paddingTop: Spacing.three,
+      gap: Spacing.two,
+      elevation: 16,
+      shadowOpacity: 0.4,
+      shadowRadius: 14,
+      shadowOffset: { width: 0, height: -4 },
+    },
+    footerActions: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+    },
+    whatsappButton: {
+      flex: 1.6,
+      height: 54,
+      borderRadius: Radius.detailCard,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: Spacing.two,
+      overflow: 'hidden',
+      backgroundColor: colors.whatsapp,
+    },
+    whatsappButtonText: {
+      color: colors.background,
+      fontSize: Type.base,
+      fontWeight: '800',
+    },
+    callButton: {
+      flex: 1,
+      height: 54,
+      borderRadius: Radius.detailCard,
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: Spacing.two,
+      overflow: 'hidden',
+      backgroundColor: colors.surfaceAlt,
+      borderWidth: 1,
+      borderColor: colors.primary,
+    },
+    callButtonText: {
+      color: colors.background,
+      fontSize: Type.base,
+      fontWeight: '800',
+    },
+    buttonDisabled: {
+      backgroundColor: colors.surfaceAlt,
+      borderColor: Glass.border,
+    },
+    buttonDisabledText: {
+      color: colors.textSecondary,
+    },
+    centered: {
+      flex: 1,
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: Spacing.three,
+      padding: Spacing.four,
+      backgroundColor: colors.background,
+    },
+    stateText: {
+      color: colors.textSecondary,
+      fontSize: Type.base,
+      textAlign: 'center',
+    },
+    stateButton: {
+      backgroundColor: colors.primary,
+      borderRadius: Radius.pill,
+      paddingVertical: 10,
+      paddingHorizontal: Spacing.four,
+    },
+    stateButtonText: {
+      color: colors.background,
+      fontSize: Type.base,
+      fontWeight: '800',
+    },
+  });
 }

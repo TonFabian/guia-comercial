@@ -1,0 +1,179 @@
+diff --git a/node_modules/react-native-web/dist/cjs/modules/useResponderEvents/ResponderTouchHistoryStore.js b/node_modules/react-native-web/dist/cjs/modules/useResponderEvents/ResponderTouchHistoryStore.js
+index b596e16..31b3c9a 100644
+--- a/node_modules/react-native-web/dist/cjs/modules/useResponderEvents/ResponderTouchHistoryStore.js
++++ b/node_modules/react-native-web/dist/cjs/modules/useResponderEvents/ResponderTouchHistoryStore.js
+@@ -80,6 +80,9 @@ function recordTouchStart(touch, touchHistory) {
+ }
+ function recordTouchMove(touch, touchHistory) {
+   var touchRecord = touchHistory.touchBank[getTouchIdentifier(touch)];
++  // A pointer with no recorded start is expected for non-primary mouse
++  // interactions (right/middle button, modifier-held click): the responder
++  // system ignores those `mousedown`s. There is no touch state to update.
+   if (touchRecord) {
+     touchRecord.touchActive = true;
+     touchRecord.previousPageX = touchRecord.currentPageX;
+@@ -89,12 +92,13 @@ function recordTouchMove(touch, touchHistory) {
+     touchRecord.currentPageY = touch.pageY;
+     touchRecord.currentTimeStamp = timestampForTouch(touch);
+     touchHistory.mostRecentTimeStamp = timestampForTouch(touch);
+-  } else {
+-    console.warn('Cannot record touch move without a touch start.\n', "Touch Move: " + printTouch(touch) + "\n", "Touch Bank: " + printTouchBank(touchHistory));
+   }
+ }
+ function recordTouchEnd(touch, touchHistory) {
+   var touchRecord = touchHistory.touchBank[getTouchIdentifier(touch)];
++  // A pointer with no recorded start is expected for non-primary mouse
++  // interactions (right/middle button, modifier-held click): the responder
++  // system ignores those `mousedown`s. There is no touch state to update.
+   if (touchRecord) {
+     touchRecord.touchActive = false;
+     touchRecord.previousPageX = touchRecord.currentPageX;
+@@ -104,25 +108,7 @@ function recordTouchEnd(touch, touchHistory) {
+     touchRecord.currentPageY = touch.pageY;
+     touchRecord.currentTimeStamp = timestampForTouch(touch);
+     touchHistory.mostRecentTimeStamp = timestampForTouch(touch);
+-  } else {
+-    console.warn('Cannot record touch end without a touch start.\n', "Touch End: " + printTouch(touch) + "\n", "Touch Bank: " + printTouchBank(touchHistory));
+-  }
+-}
+-function printTouch(touch) {
+-  return JSON.stringify({
+-    identifier: touch.identifier,
+-    pageX: touch.pageX,
+-    pageY: touch.pageY,
+-    timestamp: timestampForTouch(touch)
+-  });
+-}
+-function printTouchBank(touchHistory) {
+-  var touchBank = touchHistory.touchBank;
+-  var printed = JSON.stringify(touchBank.slice(0, MAX_TOUCH_BANK));
+-  if (touchBank.length > MAX_TOUCH_BANK) {
+-    printed += ' (original size: ' + touchBank.length + ')';
+   }
+-  return printed;
+ }
+ class ResponderTouchHistoryStore {
+   constructor() {
+diff --git a/node_modules/react-native-web/dist/modules/useResponderEvents/ResponderTouchHistoryStore.js b/node_modules/react-native-web/dist/modules/useResponderEvents/ResponderTouchHistoryStore.js
+index 6f47ae6..32b0916 100644
+--- a/node_modules/react-native-web/dist/modules/useResponderEvents/ResponderTouchHistoryStore.js
++++ b/node_modules/react-native-web/dist/modules/useResponderEvents/ResponderTouchHistoryStore.js
+@@ -76,6 +76,9 @@ function recordTouchStart(touch, touchHistory) {
+ }
+ function recordTouchMove(touch, touchHistory) {
+   var touchRecord = touchHistory.touchBank[getTouchIdentifier(touch)];
++  // A pointer with no recorded start is expected for non-primary mouse
++  // interactions (right/middle button, modifier-held click): the responder
++  // system ignores those `mousedown`s. There is no touch state to update.
+   if (touchRecord) {
+     touchRecord.touchActive = true;
+     touchRecord.previousPageX = touchRecord.currentPageX;
+@@ -85,12 +88,13 @@ function recordTouchMove(touch, touchHistory) {
+     touchRecord.currentPageY = touch.pageY;
+     touchRecord.currentTimeStamp = timestampForTouch(touch);
+     touchHistory.mostRecentTimeStamp = timestampForTouch(touch);
+-  } else {
+-    console.warn('Cannot record touch move without a touch start.\n', "Touch Move: " + printTouch(touch) + "\n", "Touch Bank: " + printTouchBank(touchHistory));
+   }
+ }
+ function recordTouchEnd(touch, touchHistory) {
+   var touchRecord = touchHistory.touchBank[getTouchIdentifier(touch)];
++  // A pointer with no recorded start is expected for non-primary mouse
++  // interactions (right/middle button, modifier-held click): the responder
++  // system ignores those `mousedown`s. There is no touch state to update.
+   if (touchRecord) {
+     touchRecord.touchActive = false;
+     touchRecord.previousPageX = touchRecord.currentPageX;
+@@ -100,25 +104,7 @@ function recordTouchEnd(touch, touchHistory) {
+     touchRecord.currentPageY = touch.pageY;
+     touchRecord.currentTimeStamp = timestampForTouch(touch);
+     touchHistory.mostRecentTimeStamp = timestampForTouch(touch);
+-  } else {
+-    console.warn('Cannot record touch end without a touch start.\n', "Touch End: " + printTouch(touch) + "\n", "Touch Bank: " + printTouchBank(touchHistory));
+-  }
+-}
+-function printTouch(touch) {
+-  return JSON.stringify({
+-    identifier: touch.identifier,
+-    pageX: touch.pageX,
+-    pageY: touch.pageY,
+-    timestamp: timestampForTouch(touch)
+-  });
+-}
+-function printTouchBank(touchHistory) {
+-  var touchBank = touchHistory.touchBank;
+-  var printed = JSON.stringify(touchBank.slice(0, MAX_TOUCH_BANK));
+-  if (touchBank.length > MAX_TOUCH_BANK) {
+-    printed += ' (original size: ' + touchBank.length + ')';
+   }
+-  return printed;
+ }
+ export class ResponderTouchHistoryStore {
+   constructor() {
+diff --git a/node_modules/react-native-web/src/modules/useResponderEvents/ResponderTouchHistoryStore.js b/node_modules/react-native-web/src/modules/useResponderEvents/ResponderTouchHistoryStore.js
+index 12f3a02..63878bc 100644
+--- a/node_modules/react-native-web/src/modules/useResponderEvents/ResponderTouchHistoryStore.js
++++ b/node_modules/react-native-web/src/modules/useResponderEvents/ResponderTouchHistoryStore.js
+@@ -107,6 +107,9 @@ function recordTouchStart(touch: Touch, touchHistory): void {
+ 
+ function recordTouchMove(touch: Touch, touchHistory): void {
+   const touchRecord = touchHistory.touchBank[getTouchIdentifier(touch)];
++  // A pointer with no recorded start is expected for non-primary mouse
++  // interactions (right/middle button, modifier-held click): the responder
++  // system ignores those `mousedown`s. There is no touch state to update.
+   if (touchRecord) {
+     touchRecord.touchActive = true;
+     touchRecord.previousPageX = touchRecord.currentPageX;
+@@ -116,17 +119,14 @@ function recordTouchMove(touch: Touch, touchHistory): void {
+     touchRecord.currentPageY = touch.pageY;
+     touchRecord.currentTimeStamp = timestampForTouch(touch);
+     touchHistory.mostRecentTimeStamp = timestampForTouch(touch);
+-  } else {
+-    console.warn(
+-      'Cannot record touch move without a touch start.\n',
+-      `Touch Move: ${printTouch(touch)}\n`,
+-      `Touch Bank: ${printTouchBank(touchHistory)}`
+-    );
+   }
+ }
+ 
+ function recordTouchEnd(touch: Touch, touchHistory): void {
+   const touchRecord = touchHistory.touchBank[getTouchIdentifier(touch)];
++  // A pointer with no recorded start is expected for non-primary mouse
++  // interactions (right/middle button, modifier-held click): the responder
++  // system ignores those `mousedown`s. There is no touch state to update.
+   if (touchRecord) {
+     touchRecord.touchActive = false;
+     touchRecord.previousPageX = touchRecord.currentPageX;
+@@ -136,31 +136,7 @@ function recordTouchEnd(touch: Touch, touchHistory): void {
+     touchRecord.currentPageY = touch.pageY;
+     touchRecord.currentTimeStamp = timestampForTouch(touch);
+     touchHistory.mostRecentTimeStamp = timestampForTouch(touch);
+-  } else {
+-    console.warn(
+-      'Cannot record touch end without a touch start.\n',
+-      `Touch End: ${printTouch(touch)}\n`,
+-      `Touch Bank: ${printTouchBank(touchHistory)}`
+-    );
+-  }
+-}
+-
+-function printTouch(touch: Touch): string {
+-  return JSON.stringify({
+-    identifier: touch.identifier,
+-    pageX: touch.pageX,
+-    pageY: touch.pageY,
+-    timestamp: timestampForTouch(touch)
+-  });
+-}
+-
+-function printTouchBank(touchHistory): string {
+-  const { touchBank } = touchHistory;
+-  let printed = JSON.stringify(touchBank.slice(0, MAX_TOUCH_BANK));
+-  if (touchBank.length > MAX_TOUCH_BANK) {
+-    printed += ' (original size: ' + touchBank.length + ')';
+   }
+-  return printed;
+ }
+ 
+ export class ResponderTouchHistoryStore {

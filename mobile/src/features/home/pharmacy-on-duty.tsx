@@ -3,9 +3,10 @@ import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 import { Radius, Spacing, Type } from '@/constants/theme';
+import { openCompanyDetails } from '@/features/company/open-company';
+import { ContactHintRow } from '@/features/home/contact-hidden-hint';
 import { useThemeColors } from '@/hooks/use-theme-colors';
 import type { Company } from '@/types/domain';
-import { ContactHintRow } from '@/features/home/contact-hidden-hint';
 import { callPhone, openAddress } from '@/utils/links';
 
 export function PharmacyOnDuty({ pharmacy }: { pharmacy: Company | null }) {
@@ -18,21 +19,30 @@ export function PharmacyOnDuty({ pharmacy }: { pharmacy: Company | null }) {
 
   return (
     <View style={styles.pharmacyCard}>
-      <View style={styles.pharmacyHeader}>
-        <MaterialCommunityIcons name="pill" size={20} color={colors.primary} />
-        <Text style={styles.pharmacyTitle}>Farmácia de Plantão Hoje</Text>
-      </View>
-      <Text style={styles.pharmacyName}>{pharmacy.name}</Text>
-      <View style={styles.statusRow}>
-        <View style={styles.statusDot} />
-        <Text style={styles.statusText}>{pharmacy.openingHours?.[0] ?? 'Aberto agora'}</Text>
-      </View>
+      <TouchableOpacity
+        activeOpacity={0.85}
+        accessibilityRole="button"
+        accessibilityLabel={`Ver detalhes de ${pharmacy.name}`}
+        onPress={() => openCompanyDetails(pharmacy._id)}
+      >
+        <View style={styles.pharmacyHeader}>
+          <MaterialCommunityIcons name="pill" size={20} color={colors.primary} />
+          <Text style={styles.pharmacyTitle}>Farmácia de Plantão Hoje</Text>
+        </View>
+        <Text style={styles.pharmacyName}>{pharmacy.name}</Text>
+        <View style={styles.statusRow}>
+          <View style={styles.statusDot} />
+          <Text style={styles.statusText}>{pharmacy.openingHours?.[0] ?? 'Aberto agora'}</Text>
+        </View>
+      </TouchableOpacity>
+
       <View style={styles.pharmacyActions}>
         {temEndereco ? (
           <TouchableOpacity
             style={styles.pillDark}
             activeOpacity={0.7}
-            onPress={() => pharmacy.address && void openAddress(pharmacy.address)}>
+            onPress={() => pharmacy.address && void openAddress(pharmacy.address)}
+          >
             <Ionicons name="map-outline" size={16} color={colors.primary} />
             <Text style={styles.pillDarkText}>Como chegar</Text>
           </TouchableOpacity>
@@ -41,7 +51,8 @@ export function PharmacyOnDuty({ pharmacy }: { pharmacy: Company | null }) {
           <TouchableOpacity
             style={styles.pillYellow}
             activeOpacity={0.7}
-            onPress={() => pharmacy.phone && void callPhone(pharmacy.phone)}>
+            onPress={() => pharmacy.phone && void callPhone(pharmacy.phone)}
+          >
             <Ionicons name="call" size={16} color={colors.background} />
             <Text style={styles.pillYellowText}>Ligar</Text>
           </TouchableOpacity>

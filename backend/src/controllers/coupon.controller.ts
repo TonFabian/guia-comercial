@@ -6,7 +6,10 @@ import { asyncHandler, parsePagination } from '../utils/http.js';
 
 export const list = asyncHandler(async (req: Request, res: Response): Promise<void> => {
   const pagination = parsePagination(req.query.page, req.query.pageSize);
-  const { items, total } = await couponService.listCoupons(pagination);
+  const { items, total } = await couponService.listCoupons(
+    { company: req.query.company },
+    pagination,
+  );
   res.json({ items, total, page: pagination.page, pageSize: pagination.pageSize });
 });
 

@@ -1,12 +1,12 @@
-import { SectionHeader } from './section-header';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { SectionHeader } from './section-header';
 
 import { CardColors, CardShadow, Overlays, Radius, Spacing, Type } from '@/constants/theme';
-import { useThemeColors } from '@/hooks/use-theme-colors';
 import type { DisplayCoupon } from '@/data/mock';
 import { ContactHintRow } from '@/features/home/contact-hidden-hint';
+import { useThemeColors } from '@/hooks/use-theme-colors';
 import { companyLabel } from '@/types/domain';
 
 export function CouponList({ coupons }: { coupons: DisplayCoupon[] }) {
@@ -25,7 +25,8 @@ export function CouponList({ coupons }: { coupons: DisplayCoupon[] }) {
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.carouselContent}>
+        contentContainerStyle={styles.carouselContent}
+      >
         {coupons.map((coupon) => (
           <TouchableOpacity
             key={coupon._id}
@@ -33,7 +34,8 @@ export function CouponList({ coupons }: { coupons: DisplayCoupon[] }) {
               styles.couponCard,
               { backgroundColor: coupon.color ?? CardColors.couponDefault },
             ])}
-            activeOpacity={0.85}>
+            activeOpacity={0.85}
+          >
             <View style={styles.couponTag}>
               <Text style={styles.couponTagText}>Cupom Exclusivo</Text>
             </View>
@@ -44,7 +46,8 @@ export function CouponList({ coupons }: { coupons: DisplayCoupon[] }) {
                 style={styles.couponFooter}
                 onPress={() => handleCopy(coupon._id)}
                 hitSlop={6}
-                android_ripple={{ color: Overlays.amberTag }}>
+                android_ripple={{ color: Overlays.amberTag }}
+              >
                 <Ionicons name="copy-outline" size={14} color={colors.primary} />
                 <Text style={styles.couponFooterText}>
                   {copiedId === coupon._id ? 'Copiado! ✓' : 'Copiar cupom'}

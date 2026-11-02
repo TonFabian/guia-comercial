@@ -59,7 +59,7 @@ export default function ProfileScreen() {
     }
   };
 
-  const nomeExibido = user 
+  const nomeExibido = user
     ? [user.firstName, user.lastName].filter(Boolean).join(' ') || user.email
     : 'Visitante';
 
@@ -71,9 +71,7 @@ export default function ProfileScreen() {
           style={styles.avatarBox}
           activeOpacity={state === 'signedIn' ? 1 : 0.7}
           onPress={handleLoginPress}
-          accessibilityLabel={
-            state === 'signedIn' ? `Perfil de ${nomeExibido}` : 'Entrar na conta'
-          }
+          accessibilityLabel={state === 'signedIn' ? `Perfil de ${nomeExibido}` : 'Entrar na conta'}
         >
           {user?.imageUrl ? (
             <Image source={{ uri: user.imageUrl }} style={styles.avatarImagem} />
@@ -86,7 +84,7 @@ export default function ProfileScreen() {
           <Text style={styles.userHint}>
             {state === 'guest'
               ? 'Convidado — entre para ver contatos e cupons'
-              : user?.email ?? 'Faça login para salvar favoritos'}
+              : (user?.email ?? 'Faça login para salvar favoritos')}
           </Text>
         </TouchableOpacity>
         <View style={styles.menu}>
@@ -95,7 +93,8 @@ export default function ProfileScreen() {
               key={item.id}
               style={styles.menuItem}
               activeOpacity={0.7}
-              onPress={() => handleMenuPress(item)}>
+              onPress={() => handleMenuPress(item)}
+            >
               <Ionicons name={item.icon} size={20} color={colors.textSecondary} />
               <Text style={styles.menuLabel}>{item.label}</Text>
               <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
@@ -103,10 +102,12 @@ export default function ProfileScreen() {
           ))}
         </View>
         <TouchableOpacity style={styles.themeToggle} onPress={toggle}>
-          <Ionicons name={mode === 'dark' ? 'sunny-outline' : 'moon-outline'} size={20} color={colors.text} />
-          <Text style={styles.themeToggleText}>
-            Tema: {mode === 'dark' ? 'Escuro' : 'Claro'}
-          </Text>
+          <Ionicons
+            name={mode === 'dark' ? 'sunny-outline' : 'moon-outline'}
+            size={20}
+            color={colors.text}
+          />
+          <Text style={styles.themeToggleText}>Tema: {mode === 'dark' ? 'Escuro' : 'Claro'}</Text>
         </TouchableOpacity>
       </SafeAreaView>
     </View>
@@ -115,89 +116,89 @@ export default function ProfileScreen() {
 
 function makeStyles(colors: ReturnType<typeof useThemeColors>) {
   return StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: colors.background,
-  },
-  safeArea: {
-    flex: 1,
-    paddingHorizontal: 16,
-    paddingTop: 12,
-  },
-  title: {
-    color: colors.text,
-    fontSize: 24,
-    fontWeight: '700',
-    marginBottom: 20,
-  },
-  avatarBox: {
-    alignItems: 'center',
-    gap: 8,
-    marginBottom: 28,
-  },
-  avatar: {
-    width: 84,
-    height: 84,
-    borderRadius: 42,
-    backgroundColor: colors.surface,
-    borderWidth: 2,
-    borderColor: colors.primary,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  avatarImagem: {
-    width: 84,
-    height: 84,
-    borderRadius: 42,
-    borderWidth: 2,
-    borderColor: colors.primary,
-  },
-  userName: {
-    color: colors.text,
-    fontSize: 18,
-    fontWeight: '700',
-    marginTop: 6,
-  },
-  userHint: {
-    color: colors.textSecondary,
-    fontSize: 13,
-  },
-  menu: {
-    backgroundColor: colors.surface,
-    borderRadius: Radius.card,
-    borderWidth: 1,
-    borderColor: colors.border,
-    overflow: 'hidden',
-  },
-  menuItem: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 15,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: colors.border,
-  },
-  menuLabel: {
-    flex: 1,
-    color: colors.text,
-    fontSize: 15,
-  },
-  themeToggle: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    marginTop: 20,
-    padding: 14,
-    borderRadius: Radius.card,
-    backgroundColor: colors.surface,
-    borderWidth: 1,
-    borderColor: colors.border,
-  },
-  themeToggleText: {
-    color: colors.text,
-    fontSize: 15,
-    fontWeight: '600',
-  },
+    root: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    safeArea: {
+      flex: 1,
+      paddingHorizontal: 16,
+      paddingTop: 12,
+    },
+    title: {
+      color: colors.text,
+      fontSize: 24,
+      fontWeight: '700',
+      marginBottom: 20,
+    },
+    avatarBox: {
+      alignItems: 'center',
+      gap: 8,
+      marginBottom: 28,
+    },
+    avatar: {
+      width: 84,
+      height: 84,
+      borderRadius: 42,
+      backgroundColor: colors.surface,
+      borderWidth: 2,
+      borderColor: colors.primary,
+      alignItems: 'center',
+      justifyContent: 'center',
+    },
+    avatarImagem: {
+      width: 84,
+      height: 84,
+      borderRadius: 42,
+      borderWidth: 2,
+      borderColor: colors.primary,
+    },
+    userName: {
+      color: colors.text,
+      fontSize: 18,
+      fontWeight: '700',
+      marginTop: 6,
+    },
+    userHint: {
+      color: colors.textSecondary,
+      fontSize: 13,
+    },
+    menu: {
+      backgroundColor: colors.surface,
+      borderRadius: Radius.card,
+      borderWidth: 1,
+      borderColor: colors.border,
+      overflow: 'hidden',
+    },
+    menuItem: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+      paddingHorizontal: 16,
+      paddingVertical: 15,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: colors.border,
+    },
+    menuLabel: {
+      flex: 1,
+      color: colors.text,
+      fontSize: 15,
+    },
+    themeToggle: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+      marginTop: 20,
+      padding: 14,
+      borderRadius: Radius.card,
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    themeToggleText: {
+      color: colors.text,
+      fontSize: 15,
+      fontWeight: '600',
+    },
   });
 }

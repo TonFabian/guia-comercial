@@ -20,6 +20,14 @@ export interface Category {
   updatedAt?: string;
 }
 
+/** Produto ou serviço comercializado pela empresa. */
+export interface CompanyProduct {
+  name: string;
+  description?: string;
+  price?: number;
+  image?: string;
+}
+
 export interface Company {
   _id: string;
   name: string;
@@ -37,8 +45,14 @@ export interface Company {
   registry?: string;
   isFeatured?: boolean;
   rating?: number;
+  ratingCount?: number;
+  isVerified?: boolean;
+  website?: string;
+  instagram?: string;
+  facebook?: string;
   openingHours?: string[];
   services?: string[];
+  products?: CompanyProduct[];
   createdAt?: string;
   updatedAt?: string;
 }

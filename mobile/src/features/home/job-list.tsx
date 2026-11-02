@@ -1,12 +1,20 @@
-import Ionicons from '@expo/vector-icons/Ionicons';
-import { memo } from 'react';
-import { Alert, FlatList, Pressable, StyleSheet, Text, View } from 'react-native';
-import type { ListRenderItemInfo } from 'react-native';
+import {
+  Alert,
+  ListRenderItemInfo,
+  Pressable,
+  StyleSheet,
+  Text,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 
-import { Glass, Overlays, Radius, Spacing, Type } from '@/constants/theme';
+import { Overlays, Radius, Spacing, Type } from '@/constants/theme';
 import { useThemeColors } from '@/hooks/use-theme-colors';
-import { companyLabel } from '@/types/domain';
 import type { Job } from '@/types/domain';
+import { companyId, companyLabel } from '@/types/domain';
+import { Ionicons } from '@expo/vector-icons';
+import { memo } from 'react';
+import { openCompanyDetails } from '../company/open-company';
 import { SectionHeader } from './section-header';
 
 const JOB_TYPE_LABELS: Record<string, string> = {
@@ -31,7 +39,8 @@ const JobCard = memo(function JobCard({ job }: { job: Job }) {
       style={({ pressed }) => [styles.jobCard, pressed && styles.jobCardPressed]}
       onPress={() => openJob(job)}
       accessibilityRole="button"
-      accessibilityLabel={`Ver detalhes da vaga de ${job.title}`}>
+      accessibilityLabel={`Ver detalhes da vaga de ${job.title}`}
+    >
       <View style={styles.jobCardTop}>
         <View style={styles.jobTypeBadge}>
           <Text style={styles.jobTypeText}>{jobTypeLabel(job.type)}</Text>
@@ -83,14 +92,34 @@ export function JobList({ jobs }: { jobs: Job[] }) {
   return (
     <View style={styles.section}>
       <SectionHeader title="Oportunidades na Cidade" />
-      <FlatList
-        horizontal
-        data={jobs}
-        keyExtractor={jobKey}
-        renderItem={renderJob}
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.jobsContent}
-      />
+      <View style={styles.jobsList}>
+        {jobs.map((job) => {
+          const targetId = companyId(job.company);
+          return (
+            <View key={job._id} style={styles.jobItem}>
+              <View style={styles.jobInfo}>
+                <Text style={styles.jobRole}>{job.title}</Text>
+                <TouchableOpacity
+                  disabled={!targetId}
+                  activeOpacity={0.7}
+                  accessibilityRole="button"
+                  accessibilityLabel={`Ver empresa ${companyLabel(job.company)}`}
+                  onPress={() => targetId && openCompanyDetails(targetId)}
+                >
+                  <Text style={styles.jobCompany}>{companyLabel(job.company)}</Text>
+                </TouchableOpacity>
+              </View>
+              <TouchableOpacity
+                style={styles.jobButton}
+                activeOpacity={0.7}
+                onPress={() => Alert.alert(job.title, 'Detalhes da vaga em breve.')}
+              >
+                <Text style={styles.jobButtonText}>Ver Vaga</Text>
+              </TouchableOpacity>
+            </View>
+          );
+        })}
+      </View>
     </View>
   );
 }
@@ -141,11 +170,48 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
       flex: 1,
       gap: Spacing.two,
     },
+    jobsList: {
+      marginHorizontal: 16,
+      backgroundColor: colors.surface,
+      borderRadius: Radius.card,
+      borderWidth: 1,
+      borderColor: colors.border,
+      overflow: 'hidden',
+    },
+    jobItem: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: 16,
+      paddingVertical: 14,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: colors.border,
+      gap: 12,
+    },
+    jobInfo: {
+      flex: 1,
+      gap: 2,
+    },
     jobRole: {
       color: colors.text,
       fontSize: Type.cardTitle,
       fontWeight: '700',
       lineHeight: 20,
+    },
+    jobCompany: {
+      color: colors.textSecondary,
+      fontSize: Type.body,
+    },
+    jobButton: {
+      backgroundColor: colors.primary,
+      borderRadius: Radius.pill,
+      paddingVertical: 10,
+      paddingHorizontal: Spacing.three,
+    },
+    jobButtonText: {
+      color: colors.background,
+      fontSize: Type.body,
+      fontWeight: '700',
     },
     jobMetaRow: {
       flexDirection: 'row',
