@@ -26,35 +26,55 @@ export function SearchBar() {
   }
 
   function handleMic() {
-    if (Platform.OS !== 'web') {
-      // Busca por voz disponível apenas na web por enquanto.
-      return;
-    }
-    const SR =
-      (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
-    if (!SR) {
-      return;
-    }
     if (listening) return;
-    const recognition = new SR();
-    recognition.lang = 'pt-BR';
-    recognition.interimResults = false;
-    recognition.maxAlternatives = 1;
+
+    // Web: Web Speech API.
+    if (Platform.OS === 'web') {
+      const SR =
+        (window as any).SpeechRecognition || (window as any).webkitSpeechRecognition;
+      if (!SR) return;
+      const recognition = new SR();
+      recognition.lang = 'pt-BR';
+      recognition.interimResults = false;
+      recognition.maxAlternatives = 1;
+      setListening(true);
+      recognition.onresult = (event: any) => {
+        const transcript = event.results?.[0]?.[0]?.transcript ?? '';
+        if (transcript) {
+          setQuery(transcript);
+          submit(transcript);
+        }
+      };
+      recognition.onerror = () => setListening(false);
+      recognition.onend = () => setListening(false);
+      try {
+        recognition.start();
+      } catch {
+        setListening(false);
+      }
+      return;
+    }
+
+    // Native: @react-native-voice/voice (requer dev build).
+    let Voice: any = null;
+    try {
+      Voice = require('@react-native-voice/voice').default;
+    } catch {
+      Voice = null;
+    }
+    if (!Voice) return;
     setListening(true);
-    recognition.onresult = (event: any) => {
-      const transcript = event.results?.[0]?.[0]?.transcript ?? '';
+    Voice.onSpeechResults = (e: any) => {
+      const transcript = e?.value?.[0];
       if (transcript) {
         setQuery(transcript);
         submit(transcript);
       }
-    };
-    recognition.onerror = () => setListening(false);
-    recognition.onend = () => setListening(false);
-    try {
-      recognition.start();
-    } catch {
       setListening(false);
-    }
+    };
+    Voice.onSpeechError = () => setListening(false);
+    Voice.onSpeechEnd = () => setListening(false);
+    Voice.start('pt-BR').catch(() => setListening(false));
   }
 
   return (
