@@ -272,26 +272,33 @@ export default function SearchScreen() {
             </TouchableOpacity>
 
             {filteredCategories.length > 0 && (
-              <View style={styles.group}>
-                <Text style={styles.groupTitle}>Categorias</Text>
-                {filteredCategories.map((category) => (
-                  <TouchableOpacity
-                    key={category._id}
-                    style={styles.row}
-                    activeOpacity={0.7}
-                    onPress={() => {
-                      if (selectedSlugs.includes(category.slug)) {
-                        setManualCategories(selectedSlugs.filter((s) => s !== category.slug));
-                      } else {
-                        setManualCategories([...selectedSlugs, category.slug]);
-                      }
-                    }}
-                  >
-                    <Ionicons name="grid-outline" size={18} color={colors.primary} />
-                    <Text style={styles.rowTitle}>{category.name}</Text>
-                  </TouchableOpacity>
-                ))}
-              </View>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={styles.chipsScroll}
+              >
+                {filteredCategories.map((category) => {
+                  const selected = selectedSlugs.includes(category.slug);
+                  return (
+                    <TouchableOpacity
+                      key={category._id}
+                      style={[styles.categoryChip, selected && styles.categoryChipSelected]}
+                      activeOpacity={0.7}
+                      onPress={() => {
+                        if (selected) {
+                          setManualCategories(selectedSlugs.filter((s) => s !== category.slug));
+                        } else {
+                          setManualCategories([...selectedSlugs, category.slug]);
+                        }
+                      }}
+                    >
+                      <Text style={[styles.categoryChipText, selected && styles.categoryChipTextSelected]}>
+                        {category.name}
+                      </Text>
+                    </TouchableOpacity>
+                  );
+                })}
+              </ScrollView>
             )}
 
             {companies.length > 0 && (
@@ -404,6 +411,31 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
       fontWeight: '700',
     },
     nearMeTextActive: {
+      color: colors.background,
+    },
+    chipsScroll: {
+      gap: Spacing.two,
+      paddingVertical: Spacing.one,
+    },
+    categoryChip: {
+      backgroundColor: colors.surface,
+      borderRadius: Radius.pill,
+      borderWidth: 1,
+      borderColor: colors.border,
+      paddingVertical: 6,
+      paddingHorizontal: 14,
+      marginRight: Spacing.two,
+    },
+    categoryChipSelected: {
+      backgroundColor: colors.primary,
+      borderColor: colors.primary,
+    },
+    categoryChipText: {
+      color: colors.textSecondary,
+      fontSize: Type.small,
+      fontWeight: '600',
+    },
+    categoryChipTextSelected: {
       color: colors.background,
     },
     chipsRow: {
