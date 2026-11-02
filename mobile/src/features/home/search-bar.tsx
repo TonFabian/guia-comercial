@@ -1,6 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { router } from 'expo-router';
-import { useState } from 'react';
+import { router, useFocusEffect } from 'expo-router';
+import { useCallback, useState } from 'react';
 import { StyleSheet, TextInput, TouchableOpacity, View } from 'react-native';
 
 import { Radius, Type } from '@/constants/theme';
@@ -10,6 +10,12 @@ export function SearchBar() {
   const colors = useThemeColors();
   const styles = makeStyles(colors);
   const [query, setQuery] = useState('');
+
+  useFocusEffect(
+    useCallback(() => {
+      return () => setQuery('');
+    }, []),
+  );
 
   function submit() {
     const term = query.trim();
