@@ -3,6 +3,7 @@ import { router } from 'expo-router';
 import { useState } from 'react';
 import {
   ActivityIndicator,
+  Platform,
   StyleSheet,
   Text,
   TextInput,
@@ -27,6 +28,8 @@ type Mode = 'entrar' | 'criar';
  * `user.createPhoneNumber`: na própria criação o Clerk exigiria verificação
  * por SMS também, duplicando o fluxo (número fica sem verificação).
  */
+const FormWrapper = Platform.OS === 'web' ? ('form' as any) : View;
+
 export function EmailPasswordForm() {
   const colors = useThemeColors();
   const styles = makeStyles(colors);
@@ -254,7 +257,7 @@ export function EmailPasswordForm() {
   }
 
   return (
-    <View style={styles.container}>
+    <FormWrapper style={styles.container} onSubmit={(e: any) => { e?.preventDefault?.(); void submit(); }}>
       <ModeToggle mode={mode} onChange={switchMode} />
 
       {mode === 'criar' ? (
@@ -323,7 +326,7 @@ export function EmailPasswordForm() {
         onPress={submit}
         loading={loading}
       />
-    </View>
+    </FormWrapper>
   );
 }
 
