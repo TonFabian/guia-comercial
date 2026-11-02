@@ -2,7 +2,7 @@ import type { RequestHandler } from 'express';
 import type { UpdateUserDto } from '../types/dto.js';
 
 import type { User } from '../../../shared/domain.js';
-import { findUserByClerkId, updateUserByClerkId } from '../services/user.service.js';
+import { findUserByClerkId, updateUserByClerkId, updatePushToken } from '../services/user.service.js';
 
 export interface UpdateMeDeps {
   update: typeof updateUserByClerkId;
@@ -30,7 +30,25 @@ export function makeUpdateMeController(
   };
 }
 
+export function makeUpdatePushTokenController(): RequestHandler {
+  return async (req, res): Promise<void> => {
+    const clerkId = req.auth?.clerkId;
+    if (!clerkId) {
+      res.status(401).json({ error: 'Não autenticado' });
+      return;
+    }
+    const { pushToken } = req.body as { pushToken?: string };
+    if (!pushToken) {
+      res.status(400).json({ error: 'pushToken é obrigatório' });
+      return;
+    }
+    await updatePushToken(clerkId, pushToken);
+    res.json({ ok: true });
+  };
+}
+
 export const updateMe: RequestHandler = makeUpdateMeController();
+export const updatePushTokenController: RequestHandler = makeUpdatePushTokenController();
 
 export interface MeDeps {
   find: typeof findUserByClerkId;

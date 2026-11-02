@@ -105,6 +105,7 @@ export interface User {
   role: 'user';
   lastSid?: string;
   lastSignInAt?: string;
+  pushToken?: string;
   favorites?: string[];
   ownedCompanyIds?: string[];
   preferences?: { notifications?: boolean };

@@ -1,6 +1,7 @@
 import type { User } from '@/types/domain';
 import { useAuth, useUser } from '@clerk/expo';
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import * as Notifications from 'expo-notifications';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { registerTokenGetter } from '@/services/http';
@@ -66,13 +67,25 @@ function ClerkAuthProvider({ children }: { children: ReactNode }) {
     return () => registerTokenGetter(null);
   }, [getToken]);
 
-  // Se o usuário fizer login, sai do modo convidado.
+  // Registra push token no backend quando logado.
   useEffect(() => {
-    if (isSignedIn) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
-      setGuest(false);
-      AsyncStorage.removeItem(GUEST_KEY);
-    }
+    if (!isSignedIn) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const { status } = await Notifications.requestPermissionsAsync();
+        if (status !== 'granted' || cancelled) return;
+        const token = (await Notifications.getExpoPushTokenAsync()).data;
+        if (cancelled || !token) return;
+        const { updatePushToken } = await import('@/services/api');
+        await updatePushToken(token);
+      } catch {
+        // ignora
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, [isSignedIn]);
 
   const value = useMemo<AuthState>(
