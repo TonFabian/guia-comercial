@@ -3,18 +3,21 @@ import { StyleSheet, Text, View } from 'react-native';
 import { Spacing, Type } from '@/constants/theme';
 import { useThemeColors } from '@/hooks/use-theme-colors';
 
-import { formatOpeningRange, openingStatusLabel, parseOpeningHours } from './opening-hours';
+import { formatOpeningRange, openingStatusLabel, parseOpeningHours, scheduleToOpeningHours } from './opening-hours';
 
 interface CompanyHoursProps {
   openingHours?: string[];
+  schedule?: { day: number; opens: number; closes: number }[];
   now?: Date;
 }
 
 /** Horário de funcionamento com o status atual (aberto/fechado). */
-export function CompanyHours({ openingHours, now = new Date() }: CompanyHoursProps) {
+export function CompanyHours({ openingHours, schedule, now = new Date() }: CompanyHoursProps) {
   const colors = useThemeColors();
   const styles = makeStyles(colors);
-  const parsed = parseOpeningHours(openingHours ?? []);
+  const parsed = schedule && schedule.length > 0
+    ? scheduleToOpeningHours(schedule)
+    : parseOpeningHours(openingHours ?? []);
   const status = openingStatusLabel(parsed, now);
   const isOpen = status === 'Aberto agora';
 

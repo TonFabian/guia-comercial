@@ -157,7 +157,7 @@ export default function CompanyDetailScreen() {
 
         {company.openingHours && company.openingHours.length > 0 && (
           <CompanySection title="Horário de funcionamento" icon="time-outline">
-            <CompanyHours openingHours={company.openingHours} />
+            <CompanyHours openingHours={company.openingHours} schedule={company.schedule} />
           </CompanySection>
         )}
 

@@ -51,6 +51,8 @@ export interface Company {
   instagram?: string;
   facebook?: string;
   openingHours?: string[];
+  /** Horário estruturado (minutos desde a meia-noite). Preferido para consultas. */
+  schedule?: { day: number; opens: number; closes: number }[];
   services?: string[];
   products?: CompanyProduct[];
   createdAt?: string;

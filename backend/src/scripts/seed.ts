@@ -86,6 +86,14 @@ async function seed(): Promise<void> {
       instagram: '@construtoraalicerce',
       facebook: 'https://facebook.com/construtoraalicerce',
       openingHours: ['Seg a Sex: 08h às 18h', 'Sáb: 08h às 12h'],
+      schedule: [
+        { day: 1, opens: 480, closes: 1080 },
+        { day: 2, opens: 480, closes: 1080 },
+        { day: 3, opens: 480, closes: 1080 },
+        { day: 4, opens: 480, closes: 1080 },
+        { day: 5, opens: 480, closes: 1080 },
+        { day: 6, opens: 480, closes: 720 },
+      ],
       services: ['Reformas', 'Projetos', 'Brita e areia'],
       products: [
         {
@@ -201,9 +209,19 @@ async function seed(): Promise<void> {
       city: 'Castelo do Piauí',
       isVerified: true,
       openingHours: ['Todos os dias: 00h às 23h59'],
+      schedule: [
+        { day: 0, opens: 0, closes: 1439 },
+        { day: 1, opens: 0, closes: 1439 },
+        { day: 2, opens: 0, closes: 1439 },
+        { day: 3, opens: 0, closes: 1439 },
+        { day: 4, opens: 0, closes: 1439 },
+        { day: 5, opens: 0, closes: 1439 },
+        { day: 6, opens: 0, closes: 1439 },
+      ],
       services: ['Pronto atendimento', 'Emergência', 'Ambulatório'],
     },
   ];
+  const inseridasEmpresas = await insertIfMissing(CompanyModel, empresas, 'slug');
   console.log(`Empresas inseridas: ${inseridasEmpresas}`);
 
   const empresaPorSlug = new Map(
