@@ -1,6 +1,7 @@
 import { TouchableOpacity, StyleSheet, Text } from 'react-native';
 
-import { GuiaColors, Spacing, Type } from '@/constants/theme';
+import { Spacing, Type } from '@/constants/theme';
+import { useThemeColors } from '@/hooks/use-theme-colors';
 import { useAuthState } from '@/providers/auth-provider';
 import { router } from 'expo-router';
 
@@ -9,6 +10,8 @@ import { router } from 'expo-router';
  * no backend via scrub de contato) e vai para as abas.
  */
 export function ForgotOrGuest() {
+  const colors = useThemeColors();
+  const styles = makeStyles(colors);
   const { enterAsGuest } = useAuthState();
 
   function enter() {
@@ -28,14 +31,16 @@ export function ForgotOrGuest() {
   );
 }
 
-const styles = StyleSheet.create({
-  link: {
-    alignSelf: 'center',
-    paddingBottom: Spacing.four,
-  },
-  text: {
-    color: GuiaColors.textSecondary,
-    fontSize: Type.small,
-    textDecorationLine: 'underline',
-  },
-});
+function makeStyles(colors: ReturnType<typeof useThemeColors>) {
+  return StyleSheet.create({
+    link: {
+      alignSelf: 'center',
+      paddingBottom: Spacing.four,
+    },
+    text: {
+      color: colors.textSecondary,
+      fontSize: Type.small,
+      textDecorationLine: 'underline',
+    },
+  });
+}

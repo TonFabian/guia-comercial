@@ -10,8 +10,9 @@ import {
   View,
 } from 'react-native';
 
-import { GuiaColors, Radius, Spacing, Type } from '@/constants/theme';
+import { Radius, Spacing, Type } from '@/constants/theme';
 import { clerkErrorToMessage, GenericAuthErrorMessage } from '@/features/auth/clerk-errors';
+import { useThemeColors } from '@/hooks/use-theme-colors';
 
 /** Mínimo coerente com a configuração do Clerk Dashboard (senha). */
 export const PASSWORD_MIN = 8;
@@ -27,6 +28,8 @@ type Mode = 'entrar' | 'criar';
  * por SMS também, duplicando o fluxo (número fica sem verificação).
  */
 export function EmailPasswordForm() {
+  const colors = useThemeColors();
+  const styles = makeStyles(colors);
   const { signIn } = useSignIn();
   const { signUp } = useSignUp();
   const clerk = useClerk();
@@ -231,7 +234,7 @@ export function EmailPasswordForm() {
           value={code}
           onChangeText={(value) => setCode(value.replace(/\D/g, ''))}
           placeholder="000000"
-          placeholderTextColor={GuiaColors.textSecondary}
+          placeholderTextColor={colors.textSecondary}
           keyboardType="number-pad"
           maxLength={6}
           textContentType="oneTimeCode"
@@ -261,7 +264,7 @@ export function EmailPasswordForm() {
             value={firstName}
             onChangeText={setFirstName}
             placeholder="Nome"
-            placeholderTextColor={GuiaColors.textSecondary}
+            placeholderTextColor={colors.textSecondary}
             textContentType="givenName"
             autoCapitalize="words"
           />
@@ -270,7 +273,7 @@ export function EmailPasswordForm() {
             value={lastName}
             onChangeText={setLastName}
             placeholder="Sobrenome"
-            placeholderTextColor={GuiaColors.textSecondary}
+            placeholderTextColor={colors.textSecondary}
             textContentType="familyName"
             autoCapitalize="words"
           />
@@ -282,7 +285,7 @@ export function EmailPasswordForm() {
         value={email}
         onChangeText={setEmail}
         placeholder="E-mail"
-        placeholderTextColor={GuiaColors.textSecondary}
+        placeholderTextColor={colors.textSecondary}
         keyboardType="email-address"
         autoCapitalize="none"
         autoComplete="email"
@@ -295,7 +298,7 @@ export function EmailPasswordForm() {
           value={phone}
           onChangeText={setPhone}
           placeholder="Telefone (opcional)"
-          placeholderTextColor={GuiaColors.textSecondary}
+          placeholderTextColor={colors.textSecondary}
           keyboardType="phone-pad"
           autoComplete="tel"
           textContentType="telephoneNumber"
@@ -307,7 +310,7 @@ export function EmailPasswordForm() {
         value={password}
         onChangeText={setPassword}
         placeholder={`Senha (mínimo ${PASSWORD_MIN} caracteres)`}
-        placeholderTextColor={GuiaColors.textSecondary}
+        placeholderTextColor={colors.textSecondary}
         secureTextEntry
         autoComplete={mode === 'entrar' ? 'password' : 'new-password'}
         textContentType={mode === 'entrar' ? 'password' : 'newPassword'}
@@ -325,6 +328,9 @@ export function EmailPasswordForm() {
 }
 
 function ModeToggle({ mode, onChange }: { mode: Mode; onChange: () => void }) {
+  const colors = useThemeColors();
+  const styles = makeStyles(colors);
+
   return (
     <TouchableOpacity
       style={styles.modeToggle}
@@ -340,6 +346,9 @@ function ModeToggle({ mode, onChange }: { mode: Mode; onChange: () => void }) {
 }
 
 function ErrorText({ error }: { error: string | null }) {
+  const colors = useThemeColors();
+  const styles = makeStyles(colors);
+
   if (!error) {
     return null;
   }
@@ -356,6 +365,9 @@ function PrimaryButton({
   onPress: () => void;
   loading: boolean;
 }) {
+  const colors = useThemeColors();
+  const styles = makeStyles(colors);
+
   return (
     <TouchableOpacity
       style={[styles.primary, loading && styles.disabled]}
@@ -365,71 +377,73 @@ function PrimaryButton({
       accessibilityLabel={loading ? 'Aguarde' : label}
       accessibilityState={{ busy: loading }}
     >
-      {loading ? <ActivityIndicator size="small" color={GuiaColors.background} /> : null}
+      {loading ? <ActivityIndicator size="small" color={colors.background} /> : null}
       <Text style={styles.primaryText}>{label}</Text>
     </TouchableOpacity>
   );
 }
 
-const styles = StyleSheet.create({
-  container: {
-    gap: Spacing.three,
-  },
-  modeToggle: {
-    alignSelf: 'flex-end',
-  },
-  modeToggleText: {
-    color: GuiaColors.primary,
-    fontSize: Type.small,
-  },
-  helper: {
-    color: GuiaColors.textSecondary,
-    fontSize: Type.body,
-    textAlign: 'center',
-  },
-  nameRow: {
-    flexDirection: 'row',
-    gap: Spacing.two,
-  },
-  nameField: {
-    flex: 1,
-  },
-  input: {
-    backgroundColor: GuiaColors.surface,
-    borderColor: GuiaColors.border,
-    borderWidth: 1,
-    borderRadius: Radius.chip,
-    color: GuiaColors.text,
-    fontSize: Type.base,
-    paddingVertical: Spacing.three - 2,
-    paddingHorizontal: Spacing.three,
-  },
-  error: {
-    color: GuiaColors.error,
-    fontSize: Type.small,
-  },
-  primary: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: Spacing.two,
-    backgroundColor: GuiaColors.primary,
-    borderRadius: Radius.chip,
-    paddingVertical: Spacing.three + 2,
-  },
-  disabled: {
-    opacity: 0.7,
-  },
-  primaryText: {
-    color: GuiaColors.background,
-    fontSize: Type.subtitle,
-    fontWeight: '700',
-  },
-  link: {
-    alignSelf: 'center',
-  },
-  linkText: {
-    color: GuiaColors.textSecondary,
-    fontSize: Type.small,
-  },
-});
+function makeStyles(colors: ReturnType<typeof useThemeColors>) {
+  return StyleSheet.create({
+    container: {
+      gap: Spacing.three,
+    },
+    modeToggle: {
+      alignSelf: 'flex-end',
+    },
+    modeToggleText: {
+      color: colors.primary,
+      fontSize: Type.small,
+    },
+    helper: {
+      color: colors.textSecondary,
+      fontSize: Type.body,
+      textAlign: 'center',
+    },
+    nameRow: {
+      flexDirection: 'row',
+      gap: Spacing.two,
+    },
+    nameField: {
+      flex: 1,
+    },
+    input: {
+      backgroundColor: colors.surface,
+      borderColor: colors.border,
+      borderWidth: 1,
+      borderRadius: Radius.chip,
+      color: colors.text,
+      fontSize: Type.base,
+      paddingVertical: Spacing.three - 2,
+      paddingHorizontal: Spacing.three,
+    },
+    error: {
+      color: colors.error,
+      fontSize: Type.small,
+    },
+    primary: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'center',
+      gap: Spacing.two,
+      backgroundColor: colors.primary,
+      borderRadius: Radius.chip,
+      paddingVertical: Spacing.three + 2,
+    },
+    disabled: {
+      opacity: 0.7,
+    },
+    primaryText: {
+      color: colors.background,
+      fontSize: Type.subtitle,
+      fontWeight: '700',
+    },
+    link: {
+      alignSelf: 'center',
+    },
+    linkText: {
+      color: colors.textSecondary,
+      fontSize: Type.small,
+    },
+  });
+}

@@ -22,7 +22,7 @@ export interface CompanyAction {
   value?: string;
 }
 
-function hasValue(value: string | undefined): value is string {
+function hasValue(value: string | null | undefined): value is string {
   return typeof value === 'string' && value.trim().length > 0;
 }
 
@@ -43,13 +43,13 @@ export function buildCompanyActions(company: Company): CompanyAction[] {
   const actions: CompanyAction[] = [];
 
   if (hasValue(company.whatsapp)) {
-    actions.push({ kind: 'whatsapp', label: 'WhatsApp', value: company.whatsapp });
+    actions.push({ kind: 'whatsapp', label: 'WhatsApp', value: company.whatsapp as string });
   }
   if (hasValue(company.phone)) {
-    actions.push({ kind: 'call', label: 'Ligar', value: company.phone });
+    actions.push({ kind: 'call', label: 'Ligar', value: company.phone as string });
   }
   if (hasValue(company.address)) {
-    actions.push({ kind: 'map', label: 'Como chegar', value: company.address });
+    actions.push({ kind: 'map', label: 'Como chegar', value: company.address as string });
   }
   if (hasValue(company.website)) {
     actions.push({ kind: 'website', label: 'Site', value: company.website });

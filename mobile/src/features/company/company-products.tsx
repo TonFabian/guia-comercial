@@ -1,12 +1,15 @@
 import { StyleSheet, Text, View } from 'react-native';
 
-import { GuiaColors, Spacing, Type } from '@/constants/theme';
+import { Spacing, Type } from '@/constants/theme';
+import { useThemeColors } from '@/hooks/use-theme-colors';
 import type { CompanyProduct } from '@/types/domain';
 
 import { formatPrice } from './format';
 
 /** Lista de produtos e serviços com preço. */
 export function CompanyProducts({ products }: { products: CompanyProduct[] }) {
+  const colors = useThemeColors();
+  const styles = makeStyles(colors);
   return (
     <>
       {products.map((product) => (
@@ -26,31 +29,33 @@ export function CompanyProducts({ products }: { products: CompanyProduct[] }) {
   );
 }
 
-const styles = StyleSheet.create({
-  product: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: Spacing.two,
-    paddingVertical: Spacing.two,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: GuiaColors.border,
-  },
-  productBody: {
-    flex: 1,
-    gap: 2,
-  },
-  productName: {
-    color: GuiaColors.text,
-    fontSize: Type.subtitle,
-    fontWeight: '600',
-  },
-  productDescription: {
-    color: GuiaColors.textSecondary,
-    fontSize: Type.body,
-  },
-  price: {
-    color: GuiaColors.primary,
-    fontSize: Type.subtitle,
-    fontWeight: '700',
-  },
-});
+function makeStyles(colors: ReturnType<typeof useThemeColors>) {
+  return StyleSheet.create({
+    product: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: Spacing.two,
+      paddingVertical: Spacing.two,
+      borderBottomWidth: StyleSheet.hairlineWidth,
+      borderBottomColor: colors.border,
+    },
+    productBody: {
+      flex: 1,
+      gap: 2,
+    },
+    productName: {
+      color: colors.text,
+      fontSize: Type.subtitle,
+      fontWeight: '600',
+    },
+    productDescription: {
+      color: colors.textSecondary,
+      fontSize: Type.body,
+    },
+    price: {
+      color: colors.primary,
+      fontSize: Type.subtitle,
+      fontWeight: '700',
+    },
+  });
+}

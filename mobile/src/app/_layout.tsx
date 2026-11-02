@@ -5,9 +5,10 @@ import * as SplashScreen from 'expo-splash-screen';
 import type { ReactNode } from 'react';
 
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
-import { DarkGuiTheme, GuiaColors } from '@/constants/theme';
+import { DarkGuiTheme, GuiaColors, GuiaColorsLight, LightGuiTheme } from '@/constants/theme';
 import { FavoritesProvider } from '@/features/favorites/favorites-provider';
 import { AuthProvider } from '@/providers/auth-provider';
+import { ThemeProvider, useThemeMode } from '@/providers/theme-provider';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -30,20 +31,31 @@ function AuthProviders({ children }: { children: ReactNode }) {
   );
 }
 
-export default function RootLayout() {
+function ThemedStack() {
+  const { mode } = useThemeMode();
+  const colors = mode === 'dark' ? GuiaColors : GuiaColorsLight;
+  const routerTheme = mode === 'dark' ? DarkGuiTheme : LightGuiTheme;
   return (
-    <RouterThemeProvider value={DarkGuiTheme}>
+    <RouterThemeProvider value={routerTheme}>
       <AuthProviders>
         <FavoritesProvider>
           <AnimatedSplashOverlay />
           <Stack
             screenOptions={{
               headerShown: false,
-              contentStyle: { backgroundColor: GuiaColors.background },
+              contentStyle: { backgroundColor: colors.background },
             }}
           />
         </FavoritesProvider>
       </AuthProviders>
     </RouterThemeProvider>
+  );
+}
+
+export default function RootLayout() {
+  return (
+    <ThemeProvider>
+      <ThemedStack />
+    </ThemeProvider>
   );
 }

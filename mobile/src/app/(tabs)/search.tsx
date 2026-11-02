@@ -12,8 +12,9 @@ import {
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { GuiaColors, Radius, Spacing, Type } from '@/constants/theme';
+import { Radius, Spacing, Type } from '@/constants/theme';
 import { openCompanyDetails } from '@/features/company/open-company';
+import { useThemeColors } from '@/hooks/use-theme-colors';
 import {
   getCategories,
   getCompanies,
@@ -29,6 +30,8 @@ const DEBOUNCE_MS = 250;
 export default function SearchScreen() {
   const params = useLocalSearchParams<{ q?: string; category?: string }>();
   const insets = useSafeAreaInsets();
+  const colors = useThemeColors();
+  const styles = makeStyles(colors);
   const routeTerm = (params.q ?? '').trim();
   const categorySlug = (params.category ?? '').trim();
 
@@ -109,11 +112,11 @@ export default function SearchScreen() {
       <SafeAreaView style={styles.safeArea} edges={['top']}>
         <Text style={styles.title}>Buscar</Text>
         <View style={styles.searchBar}>
-          <Ionicons name="search" size={18} color={GuiaColors.textSecondary} />
+          <Ionicons name="search" size={18} color={colors.textSecondary} />
           <TextInput
             style={styles.searchInput}
             placeholder="Empresa, produto ou serviço"
-            placeholderTextColor={GuiaColors.textSecondary}
+            placeholderTextColor={colors.textSecondary}
             value={term}
             onChangeText={setManualTerm}
             autoCorrect={false}
@@ -121,20 +124,20 @@ export default function SearchScreen() {
           />
           {term.length > 0 && (
             <TouchableOpacity onPress={clearSearch} hitSlop={8}>
-              <Ionicons name="close-circle" size={18} color={GuiaColors.textSecondary} />
+              <Ionicons name="close-circle" size={18} color={colors.textSecondary} />
             </TouchableOpacity>
           )}
         </View>
 
         {selectedCategory && (
           <View style={styles.chip}>
-            <Ionicons name="pricetag-outline" size={14} color={GuiaColors.primary} />
+            <Ionicons name="pricetag-outline" size={14} color={colors.primary} />
             <Text style={styles.chipText}>{selectedCategory.name}</Text>
           </View>
         )}
 
         {loading ? (
-          <ActivityIndicator style={styles.spinner} color={GuiaColors.primary} />
+          <ActivityIndicator style={styles.spinner} color={colors.primary} />
         ) : (
           <ScrollView
             showsVerticalScrollIndicator={false}
@@ -147,7 +150,7 @@ export default function SearchScreen() {
                 <Text style={styles.groupTitle}>Categorias</Text>
                 {filteredCategories.map((category) => (
                   <View key={category._id} style={styles.row}>
-                    <Ionicons name="grid-outline" size={18} color={GuiaColors.primary} />
+                    <Ionicons name="grid-outline" size={18} color={colors.primary} />
                     <Text style={styles.rowTitle}>{category.name}</Text>
                   </View>
                 ))}
@@ -173,7 +176,7 @@ export default function SearchScreen() {
                         {company.address ? ` — ${company.address}` : ''}
                       </Text>
                     </View>
-                    <Ionicons name="chevron-forward" size={16} color={GuiaColors.textSecondary} />
+                    <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
                   </TouchableOpacity>
                 ))}
               </View>
@@ -193,97 +196,99 @@ export default function SearchScreen() {
   );
 }
 
-const styles = StyleSheet.create({
-  root: {
-    flex: 1,
-    backgroundColor: GuiaColors.background,
-  },
-  safeArea: {
-    flex: 1,
-    paddingHorizontal: 16,
-    paddingTop: 12,
-    gap: Spacing.three,
-  },
-  title: {
-    color: GuiaColors.text,
-    fontSize: Type.headline,
-    fontWeight: '700',
-  },
-  searchBar: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 10,
-    backgroundColor: GuiaColors.surface,
-    borderRadius: Radius.search,
-    borderWidth: 1,
-    borderColor: GuiaColors.border,
-    paddingHorizontal: 16,
-    height: 50,
-  },
-  searchInput: {
-    flex: 1,
-    color: GuiaColors.text,
-    fontSize: Type.subtitle,
-    paddingVertical: 0,
-  },
-  chip: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    alignSelf: 'flex-start',
-    gap: 6,
-    backgroundColor: GuiaColors.surfaceAlt,
-    borderRadius: Radius.tag,
-    borderWidth: 1,
-    borderColor: GuiaColors.primary,
-    paddingVertical: 4,
-    paddingHorizontal: 10,
-  },
-  chipText: {
-    color: GuiaColors.primary,
-    fontSize: Type.small,
-    fontWeight: '700',
-  },
-  spinner: {
-    marginTop: Spacing.four,
-  },
-  group: {
-    marginBottom: Spacing.four,
-  },
-  groupTitle: {
-    color: GuiaColors.textSecondary,
-    fontSize: Type.small,
-    fontWeight: '700',
-    textTransform: 'uppercase',
-    marginBottom: Spacing.two,
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    gap: 12,
-    backgroundColor: GuiaColors.surface,
-    borderRadius: Radius.iconBox,
-    borderWidth: 1,
-    borderColor: GuiaColors.border,
-    padding: 14,
-    marginBottom: Spacing.two,
-  },
-  rowBody: {
-    flex: 1,
-    gap: 2,
-  },
-  rowTitle: {
-    color: GuiaColors.text,
-    fontSize: Type.subtitle,
-    fontWeight: '600',
-  },
-  rowSubtitle: {
-    color: GuiaColors.textSecondary,
-    fontSize: Type.body,
-  },
-  emptyText: {
-    color: GuiaColors.textSecondary,
-    fontSize: Type.base,
-    textAlign: 'center',
-    marginTop: Spacing.four,
-  },
-});
+function makeStyles(colors: ReturnType<typeof useThemeColors>) {
+  return StyleSheet.create({
+    root: {
+      flex: 1,
+      backgroundColor: colors.background,
+    },
+    safeArea: {
+      flex: 1,
+      paddingHorizontal: 16,
+      paddingTop: 12,
+      gap: Spacing.three,
+    },
+    title: {
+      color: colors.text,
+      fontSize: Type.headline,
+      fontWeight: '700',
+    },
+    searchBar: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 10,
+      backgroundColor: colors.surface,
+      borderRadius: Radius.search,
+      borderWidth: 1,
+      borderColor: colors.border,
+      paddingHorizontal: 16,
+      height: 50,
+    },
+    searchInput: {
+      flex: 1,
+      color: colors.text,
+      fontSize: Type.subtitle,
+      paddingVertical: 0,
+    },
+    chip: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      alignSelf: 'flex-start',
+      gap: 6,
+      backgroundColor: colors.surfaceAlt,
+      borderRadius: Radius.tag,
+      borderWidth: 1,
+      borderColor: colors.primary,
+      paddingVertical: 4,
+      paddingHorizontal: 10,
+    },
+    chipText: {
+      color: colors.primary,
+      fontSize: Type.small,
+      fontWeight: '700',
+    },
+    spinner: {
+      marginTop: Spacing.four,
+    },
+    group: {
+      marginBottom: Spacing.four,
+    },
+    groupTitle: {
+      color: colors.textSecondary,
+      fontSize: Type.small,
+      fontWeight: '700',
+      textTransform: 'uppercase',
+      marginBottom: Spacing.two,
+    },
+    row: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 12,
+      backgroundColor: colors.surface,
+      borderRadius: Radius.iconBox,
+      borderWidth: 1,
+      borderColor: colors.border,
+      padding: 14,
+      marginBottom: Spacing.two,
+    },
+    rowBody: {
+      flex: 1,
+      gap: 2,
+    },
+    rowTitle: {
+      color: colors.text,
+      fontSize: Type.subtitle,
+      fontWeight: '600',
+    },
+    rowSubtitle: {
+      color: colors.textSecondary,
+      fontSize: Type.body,
+    },
+    emptyText: {
+      color: colors.textSecondary,
+      fontSize: Type.base,
+      textAlign: 'center',
+      marginTop: Spacing.four,
+    },
+  });
+}

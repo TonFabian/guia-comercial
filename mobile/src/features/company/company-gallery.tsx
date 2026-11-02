@@ -17,7 +17,8 @@ import {
 import type { ListRenderItemInfo } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { CardShadow, Glass, GuiaColors, Radius, Spacing, Type } from '@/constants/theme';
+import { CardShadow, Radius, Spacing, Type } from '@/constants/theme';
+import { useThemeColors } from '@/hooks/use-theme-colors';
 import { SectionHeader } from '@/features/home/section-header';
 import { openVideo } from '@/utils/links';
 
@@ -130,11 +131,14 @@ const PreviewCard = memo(function PreviewCard({
   item,
   index,
   onPress,
+  colors,
 }: {
   item: GalleryMedia;
   index: number;
   onPress: (index: number) => void;
+  colors: ReturnType<typeof useThemeColors>;
 }) {
+  const styles = makeStyles(colors);
   const source = sourceFor(item);
 
   return (
@@ -153,12 +157,12 @@ const PreviewCard = memo(function PreviewCard({
         />
       ) : (
         <LinearGradient
-          colors={[GuiaColors.surfaceAlt, GuiaColors.surface]}
+          colors={[colors.surfaceAlt, colors.surface]}
           style={styles.placeholder}>
           <MaterialCommunityIcons
             name={placeholderIconFor(item)}
             size={30}
-            color={GuiaColors.primary}
+            color={colors.primary}
           />
           <Text style={styles.placeholderText}>{labelFor(item)}</Text>
         </LinearGradient>
@@ -166,7 +170,7 @@ const PreviewCard = memo(function PreviewCard({
 
       {item.type === 'video' ? (
         <View style={styles.playBadge}>
-          <Ionicons name="play" size={20} color={GuiaColors.background} />
+          <Ionicons name="play" size={20} color={colors.background} />
         </View>
       ) : null}
     </Pressable>
@@ -178,12 +182,15 @@ const GridCard = memo(function GridCard({
   index,
   size,
   onPress,
+  colors,
 }: {
   item: GalleryMedia;
   index: number;
   size: number;
   onPress: (index: number) => void;
+  colors: ReturnType<typeof useThemeColors>;
 }) {
+  const styles = makeStyles(colors);
   const source = sourceFor(item);
 
   return (
@@ -206,12 +213,12 @@ const GridCard = memo(function GridCard({
         />
       ) : (
         <LinearGradient
-          colors={[GuiaColors.surfaceAlt, GuiaColors.surface]}
+          colors={[colors.surfaceAlt, colors.surface]}
           style={styles.placeholder}>
           <MaterialCommunityIcons
             name={placeholderIconFor(item)}
             size={26}
-            color={GuiaColors.primary}
+            color={colors.primary}
           />
           <Text style={styles.gridPlaceholderText} numberOfLines={1}>
             {labelFor(item)}
@@ -221,7 +228,7 @@ const GridCard = memo(function GridCard({
 
       {item.type === 'video' ? (
         <View style={styles.gridPlayBadge}>
-          <Ionicons name="play" size={14} color={GuiaColors.background} />
+          <Ionicons name="play" size={14} color={colors.background} />
         </View>
       ) : null}
     </Pressable>
@@ -231,6 +238,8 @@ const GridCard = memo(function GridCard({
 export function CompanyGallery({ media }: { media: CompanyMedia[] }) {
   const insets = useSafeAreaInsets();
   const { width } = useWindowDimensions();
+  const colors = useThemeColors();
+  const styles = makeStyles(colors);
   const [galleryVisible, setGalleryVisible] = useState(false);
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
@@ -291,14 +300,14 @@ export function CompanyGallery({ media }: { media: CompanyMedia[] }) {
 
   const renderPreviewItem = useCallback(
     ({ item, index }: ListRenderItemInfo<GalleryMedia>) => (
-      <PreviewCard item={item} index={index} onPress={openLightbox} />
+      <PreviewCard item={item} index={index} onPress={openLightbox} colors={colors} />
     ),
     [openLightbox],
   );
 
   const renderGridItem = useCallback(
     ({ item, index }: ListRenderItemInfo<GalleryMedia>) => (
-      <GridCard item={item} index={index} size={gridItemSize} onPress={openLightbox} />
+      <GridCard item={item} index={index} size={gridItemSize} onPress={openLightbox} colors={colors} />
     ),
     [gridItemSize, openLightbox],
   );
@@ -346,7 +355,7 @@ export function CompanyGallery({ media }: { media: CompanyMedia[] }) {
                   hitSlop={8}
                   accessibilityRole="button"
                   accessibilityLabel="Fechar mídia">
-                  <Ionicons name="close" size={22} color={GuiaColors.text} />
+                  <Ionicons name="close" size={22} color={colors.text} />
                 </Pressable>
 
                 <Text style={styles.lightboxCounter}>
@@ -367,12 +376,12 @@ export function CompanyGallery({ media }: { media: CompanyMedia[] }) {
                   />
                 ) : (
                   <LinearGradient
-                    colors={[GuiaColors.surfaceAlt, GuiaColors.background]}
+                    colors={[colors.surfaceAlt, colors.background]}
                     style={styles.lightboxPlaceholder}>
                     <MaterialCommunityIcons
                       name={placeholderIconFor(activeMedia)}
                       size={52}
-                      color={GuiaColors.primary}
+                      color={colors.primary}
                     />
                     <Text style={styles.lightboxPlaceholderTitle}>
                       {labelFor(activeMedia)}
@@ -391,7 +400,7 @@ export function CompanyGallery({ media }: { media: CompanyMedia[] }) {
                     accessibilityRole="button"
                     accessibilityLabel="Reproduzir vídeo"
                     accessibilityState={{ disabled: !activeMedia.url }}>
-                    <Ionicons name="play" size={30} color={GuiaColors.background} />
+                    <Ionicons name="play" size={30} color={colors.background} />
                   </Pressable>
                 ) : null}
               </View>
@@ -411,7 +420,7 @@ export function CompanyGallery({ media }: { media: CompanyMedia[] }) {
                   <Ionicons
                     name="chevron-back"
                     size={22}
-                    color={isFirstMedia ? GuiaColors.textSecondary : GuiaColors.text}
+                    color={isFirstMedia ? colors.textSecondary : colors.text}
                   />
                 </Pressable>
 
@@ -433,7 +442,7 @@ export function CompanyGallery({ media }: { media: CompanyMedia[] }) {
                   <Ionicons
                     name="chevron-forward"
                     size={22}
-                    color={isLastMedia ? GuiaColors.textSecondary : GuiaColors.text}
+                    color={isLastMedia ? colors.textSecondary : colors.text}
                   />
                 </Pressable>
               </View>
@@ -455,7 +464,7 @@ export function CompanyGallery({ media }: { media: CompanyMedia[] }) {
                   hitSlop={8}
                   accessibilityRole="button"
                   accessibilityLabel="Fechar galeria">
-                  <Ionicons name="close" size={22} color={GuiaColors.text} />
+                  <Ionicons name="close" size={22} color={colors.text} />
                 </Pressable>
               </View>
 
@@ -477,7 +486,8 @@ export function CompanyGallery({ media }: { media: CompanyMedia[] }) {
   );
 }
 
-const styles = StyleSheet.create({
+function makeStyles(colors: ReturnType<typeof useThemeColors>) {
+  return StyleSheet.create({
   section: {
     marginBottom: Spacing.four,
   },
@@ -491,8 +501,8 @@ const styles = StyleSheet.create({
     height: PREVIEW_CARD_HEIGHT,
     borderRadius: Radius.detailCard,
     borderWidth: 1,
-    borderColor: Glass.border,
-    backgroundColor: GuiaColors.surface,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
     overflow: 'hidden',
   },
   previewImage: {
@@ -505,7 +515,7 @@ const styles = StyleSheet.create({
     gap: Spacing.two,
   },
   placeholderText: {
-    color: GuiaColors.textSecondary,
+    color: colors.textSecondary,
     fontSize: Type.small,
     fontWeight: '600',
   },
@@ -520,20 +530,20 @@ const styles = StyleSheet.create({
     borderRadius: 21,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: GuiaColors.primary,
+    backgroundColor: colors.primary,
   },
   gridCard: {
     borderRadius: Radius.detailCard,
     borderWidth: 1,
-    borderColor: Glass.border,
-    backgroundColor: GuiaColors.surface,
+    borderColor: colors.border,
+    backgroundColor: colors.surface,
     overflow: 'hidden',
   },
   gridImage: {
     flex: 1,
   },
   gridPlaceholderText: {
-    color: GuiaColors.textSecondary,
+    color: colors.textSecondary,
     fontSize: Type.small,
     fontWeight: '600',
     paddingHorizontal: Spacing.one,
@@ -547,11 +557,11 @@ const styles = StyleSheet.create({
     borderRadius: 13,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: GuiaColors.primary,
+    backgroundColor: colors.primary,
   },
   modalRoot: {
     flex: 1,
-    backgroundColor: GuiaColors.background,
+    backgroundColor: colors.background,
   },
   modalContent: {
     flex: 1,
@@ -569,12 +579,12 @@ const styles = StyleSheet.create({
     gap: 2,
   },
   modalTitle: {
-    color: GuiaColors.text,
+    color: colors.text,
     fontSize: Type.headline,
     fontWeight: '800',
   },
   modalSubtitle: {
-    color: GuiaColors.textSecondary,
+    color: colors.textSecondary,
     fontSize: Type.small,
   },
   modalClose: {
@@ -583,9 +593,9 @@ const styles = StyleSheet.create({
     borderRadius: 20,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: GuiaColors.surfaceAlt,
+    backgroundColor: colors.surfaceAlt,
     borderWidth: 1,
-    borderColor: Glass.border,
+    borderColor: colors.border,
   },
   gridList: {
     alignSelf: 'center',
@@ -601,7 +611,7 @@ const styles = StyleSheet.create({
   },
   lightbox: {
     flex: 1,
-    backgroundColor: GuiaColors.background,
+    backgroundColor: colors.background,
   },
   lightboxHeader: {
     flexDirection: 'row',
@@ -612,7 +622,7 @@ const styles = StyleSheet.create({
     paddingBottom: Spacing.three,
   },
   lightboxCounter: {
-    color: GuiaColors.textSecondary,
+    color: colors.textSecondary,
     fontSize: Type.small,
     fontWeight: '700',
   },
@@ -639,12 +649,12 @@ const styles = StyleSheet.create({
     borderRadius: Radius.card,
   },
   lightboxPlaceholderTitle: {
-    color: GuiaColors.text,
+    color: colors.text,
     fontSize: Type.subtitle,
     fontWeight: '700',
   },
   lightboxPlaceholderText: {
-    color: GuiaColors.textSecondary,
+    color: colors.textSecondary,
     fontSize: Type.small,
   },
   lightboxPlay: {
@@ -654,7 +664,7 @@ const styles = StyleSheet.create({
     borderRadius: 32,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: GuiaColors.primary,
+    backgroundColor: colors.primary,
   },
   lightboxFooter: {
     flexDirection: 'row',
@@ -666,7 +676,7 @@ const styles = StyleSheet.create({
   },
   lightboxCaption: {
     flex: 1,
-    color: GuiaColors.textSecondary,
+    color: colors.textSecondary,
     fontSize: Type.small,
     fontWeight: '600',
     textAlign: 'center',
@@ -677,9 +687,9 @@ const styles = StyleSheet.create({
     borderRadius: 22,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: GuiaColors.surfaceAlt,
+    backgroundColor: colors.surfaceAlt,
     borderWidth: 1,
-    borderColor: Glass.border,
+    borderColor: colors.border,
   },
   lightboxNavDisabled: {
     opacity: 0.4,
@@ -688,3 +698,4 @@ const styles = StyleSheet.create({
     opacity: 0.8,
   },
 });
+}

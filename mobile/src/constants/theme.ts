@@ -136,3 +136,32 @@ export const DarkGuiTheme = {
     text: GuiaColors.text,
   },
 };
+
+/** Paleta light (espelho de GuiaColors). */
+export const GuiaColorsLight = {
+  background: '#F7F7F8',
+  surface: '#FFFFFF',
+  surfaceAlt: '#F1F1F3',
+  primary: '#B8860B',
+  primaryDim: '#8A6508',
+  text: '#111111',
+  textSecondary: '#5B6470',
+  textSoft: '#374151',
+  border: '#E5E7EB',
+  borderSoft: '#F0F0F2',
+  success: '#16A34A',
+  error: '#DC2626',
+  whatsapp: '#25D366',
+  coverPlaceholder: '#E5E7EB',
+} as const;
+
+export const LightGuiTheme = {
+  ...DarkTheme,
+  colors: {
+    ...DarkTheme.colors,
+    background: GuiaColorsLight.background,
+    card: GuiaColorsLight.background,
+    primary: GuiaColorsLight.primary,
+    text: GuiaColorsLight.text,
+  },
+};

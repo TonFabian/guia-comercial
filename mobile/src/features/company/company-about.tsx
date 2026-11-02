@@ -1,6 +1,7 @@
 import { StyleSheet, Text, View } from 'react-native';
 
-import { GuiaColors, Radius, Type } from '@/constants/theme';
+import { Radius, Type } from '@/constants/theme';
+import { useThemeColors } from '@/hooks/use-theme-colors';
 
 interface CompanyAboutProps {
   description: string;
@@ -11,6 +12,9 @@ interface CompanyAboutProps {
 
 /** Descrição, serviços ofertados e endereço da empresa. */
 export function CompanyAbout({ description, services, address, city }: CompanyAboutProps) {
+  const colors = useThemeColors();
+  const styles = makeStyles(colors);
+
   return (
     <>
       <Text style={styles.description}>{description}</Text>
@@ -35,42 +39,44 @@ export function CompanyAbout({ description, services, address, city }: CompanyAb
   );
 }
 
-const styles = StyleSheet.create({
-  description: {
-    color: GuiaColors.text,
-    fontSize: Type.base,
-    lineHeight: 21,
-  },
-  addressRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 6,
-  },
-  addressLabel: {
-    color: GuiaColors.textSecondary,
-    fontSize: Type.body,
-  },
-  addressValue: {
-    color: GuiaColors.text,
-    fontSize: Type.body,
-    flexShrink: 1,
-  },
-  services: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 8,
-    marginTop: 4,
-  },
-  serviceChip: {
-    backgroundColor: GuiaColors.surfaceAlt,
-    borderRadius: Radius.chip,
-    borderWidth: 1,
-    borderColor: GuiaColors.border,
-    paddingVertical: 5,
-    paddingHorizontal: 10,
-  },
-  serviceText: {
-    color: GuiaColors.text,
-    fontSize: Type.small,
-  },
-});
+function makeStyles(colors: ReturnType<typeof useThemeColors>) {
+  return StyleSheet.create({
+    description: {
+      color: colors.text,
+      fontSize: Type.base,
+      lineHeight: 21,
+    },
+    addressRow: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: 6,
+    },
+    addressLabel: {
+      color: colors.textSecondary,
+      fontSize: Type.body,
+    },
+    addressValue: {
+      color: colors.text,
+      fontSize: Type.body,
+      flexShrink: 1,
+    },
+    services: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: 8,
+      marginTop: 4,
+    },
+    serviceChip: {
+      backgroundColor: colors.surfaceAlt,
+      borderRadius: Radius.chip,
+      borderWidth: 1,
+      borderColor: colors.border,
+      paddingVertical: 5,
+      paddingHorizontal: 10,
+    },
+    serviceText: {
+      color: colors.text,
+      fontSize: Type.small,
+    },
+  });
+}
