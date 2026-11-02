@@ -213,24 +213,6 @@ export default function SearchScreen() {
           )}
         </View>
 
-        {selectedCategories.length > 0 && (
-          <View style={styles.chipsRow}>
-            {selectedCategories.map((cat) => (
-              <View key={cat._id} style={styles.chip}>
-                <Ionicons name="pricetag-outline" size={14} color={colors.primary} />
-                <Text style={styles.chipText}>{cat.name}</Text>
-                <TouchableOpacity
-                  onPress={() => setManualCategories(selectedSlugs.filter((s) => s !== cat.slug))}
-                  hitSlop={8}
-                  accessibilityLabel={`Remover filtro ${cat.name}`}
-                >
-                  <Ionicons name="close-circle" size={16} color={colors.primary} />
-                </TouchableOpacity>
-              </View>
-            ))}
-          </View>
-        )}
-
         {loading ? (
           <ActivityIndicator style={styles.spinner} color={colors.primary} />
         ) : (
@@ -250,56 +232,56 @@ export default function SearchScreen() {
               </View>
             )}
 
-            <TouchableOpacity
-              style={[styles.nearMeButton, nearMeCity && styles.nearMeButtonActive]}
-              onPress={toggleNearMe}
-              disabled={nearMeLoading}
+            <ScrollView
+              horizontal
+              showsHorizontalScrollIndicator={false}
+              contentContainerStyle={styles.chipsScroll}
             >
-              <Ionicons name="navigate" size={16} color={nearMeCity ? colors.background : colors.primary} />
-              <Text style={[styles.nearMeText, nearMeCity && styles.nearMeTextActive]}>
-                {nearMeLoading ? 'Localizando…' : nearMeCity ? 'Perto de mim ✓' : 'Perto de mim'}
-              </Text>
-            </TouchableOpacity>
-
-            <TouchableOpacity
-              style={[styles.nearMeButton, openNowOnly && styles.nearMeButtonActive]}
-              onPress={() => setOpenNowOnly((v) => !v)}
-            >
-              <Ionicons name="time" size={16} color={openNowOnly ? colors.background : colors.primary} />
-              <Text style={[styles.nearMeText, openNowOnly && styles.nearMeTextActive]}>
-                {openNowOnly ? 'Aberto agora ✓' : 'Aberto agora'}
-              </Text>
-            </TouchableOpacity>
-
-            {filteredCategories.length > 0 && (
-              <ScrollView
-                horizontal
-                showsHorizontalScrollIndicator={false}
-                contentContainerStyle={styles.chipsScroll}
+              <TouchableOpacity
+                style={[styles.categoryChip, nearMeCity && styles.categoryChipSelected]}
+                activeOpacity={0.7}
+                onPress={toggleNearMe}
+                disabled={nearMeLoading}
               >
-                {filteredCategories.map((category) => {
-                  const selected = selectedSlugs.includes(category.slug);
-                  return (
-                    <TouchableOpacity
-                      key={category._id}
-                      style={[styles.categoryChip, selected && styles.categoryChipSelected]}
-                      activeOpacity={0.7}
-                      onPress={() => {
-                        if (selected) {
-                          setManualCategories(selectedSlugs.filter((s) => s !== category.slug));
-                        } else {
-                          setManualCategories([...selectedSlugs, category.slug]);
-                        }
-                      }}
-                    >
-                      <Text style={[styles.categoryChipText, selected && styles.categoryChipTextSelected]}>
-                        {category.name}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </ScrollView>
-            )}
+                <Ionicons name="navigate" size={14} color={nearMeCity ? colors.background : colors.primary} />
+                <Text style={[styles.categoryChipText, nearMeCity && styles.categoryChipTextSelected]}>
+                  {nearMeLoading ? 'Localizando…' : 'Perto de mim'}
+                </Text>
+              </TouchableOpacity>
+
+              <TouchableOpacity
+                style={[styles.categoryChip, openNowOnly && styles.categoryChipSelected]}
+                activeOpacity={0.7}
+                onPress={() => setOpenNowOnly((v) => !v)}
+              >
+                <Ionicons name="time" size={14} color={openNowOnly ? colors.background : colors.primary} />
+                <Text style={[styles.categoryChipText, openNowOnly && styles.categoryChipTextSelected]}>
+                  Aberto agora
+                </Text>
+              </TouchableOpacity>
+
+              {filteredCategories.map((category) => {
+                const selected = selectedSlugs.includes(category.slug);
+                return (
+                  <TouchableOpacity
+                    key={category._id}
+                    style={[styles.categoryChip, selected && styles.categoryChipSelected]}
+                    activeOpacity={0.7}
+                    onPress={() => {
+                      if (selected) {
+                        setManualCategories(selectedSlugs.filter((s) => s !== category.slug));
+                      } else {
+                        setManualCategories([...selectedSlugs, category.slug]);
+                      }
+                    }}
+                  >
+                    <Text style={[styles.categoryChipText, selected && styles.categoryChipTextSelected]}>
+                      {category.name}
+                    </Text>
+                  </TouchableOpacity>
+                );
+              })}
+            </ScrollView>
 
             {companies.length > 0 && (
               <View style={styles.group}>
