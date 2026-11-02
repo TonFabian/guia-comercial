@@ -21,6 +21,12 @@ import {
   MOCK_PHARMACY,
 } from '@/data/mock';
 
+
+/** Mocks só em desenvolvimento: em produção, falha de rede/API vira lista vazia. */
+function mockFallback<T>(mock: T[]): T[] {
+  return (__DEV__ || !isApiConfigured()) ? mock : [];
+}
+
 function isPaginated<T>(payload: RequestPayload<T>): payload is Paginated<T> {
   return typeof payload === 'object' && payload !== null && 'items' in payload;
 }
@@ -35,12 +41,12 @@ function fromPaginated<T>(payload: RequestPayload<T> | null, fallback: T[]): T[]
 
 export async function getCategories(): Promise<Category[]> {
   const payload = await request<Category>('/categories');
-  return fromPaginated(payload, MOCK_CATEGORIES);
+  return fromPaginated(payload, mockFallback(MOCK_CATEGORIES));
 }
 
 export async function getBanners(): Promise<Banner[]> {
   const payload = await request<Banner>('/banners');
-  return fromPaginated(payload, MOCK_BANNERS);
+  return fromPaginated(payload, mockFallback(MOCK_BANNERS));
 }
 
 export type CompanyPage = {
@@ -52,6 +58,7 @@ export type CompanyPage = {
 
 export async function getCompanies(page = 1, pageSize = 20): Promise<CompanyPage> {
   if (!isApiConfigured()) {
+    if (!__DEV__) return { items: [], total: 0, page, pageSize };
     const start = (page - 1) * pageSize;
     const items = MOCK_COMPANIES.slice(start, start + pageSize);
     return { items, total: MOCK_COMPANIES.length, page, pageSize };
@@ -59,26 +66,26 @@ export async function getCompanies(page = 1, pageSize = 20): Promise<CompanyPage
   const payload = await request<Company>(`/companies?page=${page}&pageSize=${pageSize}`);
   const items = fromPaginated(payload, []);
   const total = isPaginated(payload) ? (payload.total ?? items.length) : items.length;
-  const fallbackItems = page === 1 && items.length === 0 ? MOCK_COMPANIES.slice(0, pageSize) : items;
-  const fallbackTotal = page === 1 && items.length === 0 ? MOCK_COMPANIES.length : total;
+  const fallbackItems = page === 1 && items.length === 0 && (__DEV__ || !isApiConfigured()) ? MOCK_COMPANIES.slice(0, pageSize) : items;
+  const fallbackTotal = page === 1 && items.length === 0 && (__DEV__ || !isApiConfigured()) ? MOCK_COMPANIES.length : total;
   return { items: fallbackItems, total: fallbackTotal, page, pageSize };
 }
 
 export async function getCoupons(): Promise<Coupon[]> {
   const payload = await request<Coupon>('/coupons');
-  return fromPaginated(payload, MOCK_COUPONS);
+  return fromPaginated(payload, mockFallback(MOCK_COUPONS));
 }
 
 /** Empresa pelo id. `null` quando a API responde que não existe. */
 export async function getCompanyById(id: string): Promise<Company | null> {
-  if (!isApiConfigured()) return findMockCompany(id);
+  if (!isApiConfigured()) return __DEV__ ? findMockCompany(id) : null;
   try {
     const payload = await request<Company>(`/companies/${encodeURIComponent(id)}`);
-    if (!payload) return findMockCompany(id);
+    if (!payload) return __DEV__ ? findMockCompany(id) : null;
     const [company] = fromPaginated(payload, []);
-    return company ?? findMockCompany(id);
+    return company ?? (__DEV__ ? findMockCompany(id) : null);
   } catch {
-    return findMockCompany(id);
+    return __DEV__ ? findMockCompany(id) : null;
   }
 }
 
@@ -86,35 +93,34 @@ export async function getCompanyById(id: string): Promise<Company | null> {
 export async function getCouponsByCompany(companyId: string): Promise<Coupon[]> {
   const payload = await request<Coupon>(`/coupons?company=${encodeURIComponent(companyId)}`);
   if (payload) return fromPaginated(payload, []);
-  return filterMockCouponsByCompany(companyId);
+  return __DEV__ ? filterMockCouponsByCompany(companyId) : [];
 }
 
 export async function getJobs(): Promise<Job[]> {
   const payload = await request<Job>('/jobs');
-  return fromPaginated(payload, MOCK_JOBS);
+  return fromPaginated(payload, mockFallback(MOCK_JOBS));
 }
 
 export async function getFeaturedCompany(): Promise<Company | null> {
-  if (!isApiConfigured()) return MOCK_FEATURED_COMPANY;
+  if (!isApiConfigured()) return __DEV__ ? MOCK_FEATURED_COMPANY : null;
   try {
     const payload = await request<Company>('/companies?featured=true');
-    const items = fromPaginated(payload, MOCK_COMPANIES);
+    const items = fromPaginated(payload, mockFallback(MOCK_COMPANIES));
     const found = items.find((company) => company.isFeatured) ?? items[0] ?? null;
-    return found ?? MOCK_FEATURED_COMPANY;
+    return found ?? (__DEV__ ? MOCK_FEATURED_COMPANY : null);
   } catch {
-    return MOCK_FEATURED_COMPANY;
+    return __DEV__ ? MOCK_FEATURED_COMPANY : null;
   }
 }
 
 export async function getPharmacyOnDuty(): Promise<Company | null> {
-  if (!isApiConfigured()) return MOCK_PHARMACY;
+  if (!isApiConfigured()) return __DEV__ ? MOCK_PHARMACY : null;
   try {
-    // O backend filtra empresas por slug de categoria (`category=farmacia`).
     const payload = await request<Company>('/companies?category=farmacia');
     const items = fromPaginated(payload, []);
-    return items[0] ?? MOCK_PHARMACY;
+    return items[0] ?? (__DEV__ ? MOCK_PHARMACY : null);
   } catch {
-    return MOCK_PHARMACY;
+    return __DEV__ ? MOCK_PHARMACY : null;
   }
 }
 
@@ -129,7 +135,7 @@ export async function searchCompanies(query: string, page = 1, pageSize = 20): P
   const payload = await request<Company>(`/companies?q=${encodeURIComponent(term)}&page=${page}&pageSize=${pageSize}`);
   const items = fromPaginated(payload, []);
   const total = isPaginated(payload) ? (payload.total ?? items.length) : items.length;
-  const fallback = filterMockCompanies(term);
+  const fallback = (__DEV__ || !isApiConfigured()) ? filterMockCompanies(term) : [];
   const fallbackItems = page === 1 && items.length === 0 ? fallback.slice(0, pageSize) : items;
   const fallbackTotal = page === 1 && items.length === 0 ? fallback.length : total;
   return { items: fallbackItems, total: fallbackTotal, page, pageSize };
@@ -146,7 +152,7 @@ export async function getCompaniesByCategory(slug: string, page = 1, pageSize = 
   const payload = await request<Company>(`/companies?category=${encodeURIComponent(slug)}&page=${page}&pageSize=${pageSize}`);
   const items = fromPaginated(payload, []);
   const total = isPaginated(payload) ? (payload.total ?? items.length) : items.length;
-  const fallback = filterMockCompaniesByCategory(slug);
+  const fallback = (__DEV__ || !isApiConfigured()) ? filterMockCompaniesByCategory(slug) : [];
   const fallbackItems = page === 1 && items.length === 0 ? fallback.slice(0, pageSize) : items;
   const fallbackTotal = page === 1 && items.length === 0 ? fallback.length : total;
   return { items: fallbackItems, total: fallbackTotal, page, pageSize };
