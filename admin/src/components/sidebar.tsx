@@ -1,16 +1,23 @@
-import { Badge } from './badge';
+// no badge import needed
 
-/** Seções do painel. Cada entrada ainda não possui tela implementada. */
 export const SECTIONS = [
   'Empresas',
   'Categorias',
-  'Anúncios',
   'Banners',
+  'Cupons',
+  'Vagas',
   'Usuários',
 ] as const;
 
-/** Navegação lateral estática (sem CRUD por enquanto). */
-export function Sidebar() {
+export type Section = (typeof SECTIONS)[number];
+
+export function Sidebar({
+  active,
+  onChange,
+}: {
+  active: Section;
+  onChange: (s: Section) => void;
+}) {
   return (
     <aside className="sidebar">
       <h1 className="brand">Guia Comercial</h1>
@@ -18,9 +25,13 @@ export function Sidebar() {
       <nav>
         <ul className="menu">
           {SECTIONS.map((section) => (
-            <li key={section} className="menu-item">
+            <li
+              key={section}
+              className={`menu-item ${active === section ? 'active' : ''}`}
+              onClick={() => onChange(section)}
+              style={{ cursor: 'pointer' }}
+            >
               <span>{section}</span>
-              <Badge>em breve</Badge>
             </li>
           ))}
         </ul>

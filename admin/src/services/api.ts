@@ -96,8 +96,44 @@ export async function updateCompany(id: string, body: Partial<Company>): Promise
   return apiPut<Company>(`/companies/${id}`, body);
 }
 
+export async function createCategory(body: Partial<Category>): Promise<Category> {
+  return apiPost<Category>('/categories', body);
+}
+
+export async function updateCategory(id: string, body: Partial<Category>): Promise<Category> {
+  return apiPut<Category>(`/categories/${id}`, body);
+}
+
 export async function deleteCompany(id: string): Promise<void> {
   await apiDelete<void>(`/companies/${id}`);
+}
+
+export async function deleteCategory(id: string): Promise<void> {
+  await apiDelete<void>(`/categories/${id}`);
+}
+
+export async function createBanner(body: Partial<Banner>): Promise<Banner> {
+  return apiPost<Banner>('/banners', body);
+}
+
+export async function deleteBanner(id: string): Promise<void> {
+  await apiDelete<void>(`/banners/${id}`);
+}
+
+export async function createCoupon(body: Partial<Coupon>): Promise<Coupon> {
+  return apiPost<Coupon>('/coupons', body);
+}
+
+export async function deleteCoupon(id: string): Promise<void> {
+  await apiDelete<void>(`/coupons/${id}`);
+}
+
+export async function createJob(body: Partial<Job>): Promise<Job> {
+  return apiPost<Job>('/jobs', body);
+}
+
+export async function deleteJob(id: string): Promise<void> {
+  await apiDelete<void>(`/jobs/${id}`);
 }
 
 export interface UseApiResult<T> {
