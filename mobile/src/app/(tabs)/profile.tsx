@@ -9,6 +9,9 @@ import { useThemeColors } from '@/hooks/use-theme-colors';
 import { useThemeMode } from '@/providers/theme-provider';
 import { useAuthState } from '@/providers/auth-provider';
 import { useUser } from '@clerk/expo';
+import { formatPhone, onlyDigits } from '@/utils/phone';
+
+export { formatPhone, onlyDigits };
 
 const MENU = [
   { id: '1', label: 'Meus dados', icon: 'person-outline' as const },
@@ -27,7 +30,8 @@ export default function ProfileScreen() {
   const [editing, setEditing] = useState(false);
   const [firstName, setFirstName] = useState(user?.firstName ?? '');
   const [lastName, setLastName] = useState(user?.lastName ?? '');
-  const [phone, setPhone] = useState(user?.phone ?? '');
+  const [phone, setPhone] = useState(onlyDigits(user?.phone ?? ''));
+  const [phoneDisplay, setPhoneDisplay] = useState(formatPhone(user?.phone ?? ''));
   const [imageUrl, setImageUrl] = useState(user?.imageUrl ?? '');
   const [saving, setSaving] = useState(false);
 
@@ -39,7 +43,8 @@ export default function ProfileScreen() {
       }
       setFirstName(user?.firstName ?? '');
       setLastName(user?.lastName ?? '');
-      setPhone(user?.phone ?? '');
+      setPhone(onlyDigits(user?.phone ?? ''));
+      setPhoneDisplay(formatPhone(user?.phone ?? ''));
       setImageUrl(user?.imageUrl ?? '');
       setEditing(true);
       return;
@@ -148,7 +153,17 @@ export default function ProfileScreen() {
             <Text style={styles.modalTitle}>Meus dados</Text>
             <TextInput style={styles.modalInput} placeholder="Nome" value={firstName} onChangeText={setFirstName} />
             <TextInput style={styles.modalInput} placeholder="Sobrenome" value={lastName} onChangeText={setLastName} />
-            <TextInput style={styles.modalInput} placeholder="Telefone" value={phone} onChangeText={setPhone} keyboardType="phone-pad" />
+            <TextInput
+              style={styles.modalInput}
+              placeholder="Telefone"
+              value={phoneDisplay}
+              onChangeText={(raw) => {
+                const clean = onlyDigits(raw);
+                setPhone(clean);
+                setPhoneDisplay(formatPhone(clean));
+              }}
+              keyboardType="phone-pad"
+            />
             <TextInput style={styles.modalInput} placeholder="URL da foto" value={imageUrl} onChangeText={setImageUrl} autoCapitalize="none" />
             <View style={styles.modalActions}>
               <TouchableOpacity style={styles.modalButton} onPress={() => setEditing(false)}>

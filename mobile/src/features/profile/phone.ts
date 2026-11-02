@@ -1,0 +1,1 @@
+export { onlyDigits, formatPhone } from '@/utils/phone';
