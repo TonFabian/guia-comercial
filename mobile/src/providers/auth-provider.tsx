@@ -62,7 +62,7 @@ function ClerkAuthProvider({ children }: { children: ReactNode }) {
 
   // Fecha o gap entre o token de sessão do Clerk e a fachada http.ts.
   useEffect(() => {
-    registerTokenGetter(async () => (await getToken()) ?? null);
+    registerTokenGetter(async (options) => (await getToken(options)) ?? null);
     return () => registerTokenGetter(null);
   }, [getToken]);
 

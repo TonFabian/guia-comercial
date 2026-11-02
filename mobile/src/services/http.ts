@@ -25,7 +25,7 @@ export class ApiError extends Error {
 }
 
 /** Devolve o token de sessão atual ou `null` (convidado / sem Clerk). */
-export type TokenGetter = () => Promise<string | null>;
+export type TokenGetter = (options?: { skipCache?: boolean }) => Promise<string | null>;
 
 let tokenGetter: TokenGetter | null = null;
 
@@ -50,13 +50,13 @@ interface RequestInitLite {
   signal?: AbortSignal;
 }
 
-async function currentToken(): Promise<string | null> {
+async function currentToken(options?: { skipCache?: boolean }): Promise<string | null> {
   if (!tokenGetter) {
     return null;
   }
 
   try {
-    return await tokenGetter();
+    return await tokenGetter(options);
   } catch {
     return null;
   }
@@ -88,15 +88,16 @@ export async function request<T>(
       headers: {
         Accept: 'application/json',
         ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        ...(init?.body !== undefined ? { 'Content-Type': 'application/json' } : {}),
       },
       body: init?.body === undefined ? undefined : JSON.stringify(init.body),
       signal: init?.signal,
     });
 
-    // Token pode expirar entre sessões: um retry com token renovado antes
-    // de reportar o 401 a quem chamou.
+    // Token pode expirar entre sessões: um retry com token renovado (skipCache)
+    // antes de reportar o 401 a quem chamou.
     if (response.status === 401 && token) {
-      const renewed = await currentToken();
+      const renewed = await currentToken({ skipCache: true });
 
       if (renewed && renewed !== token) {
         response = await fetch(`${BASE_URL}${path}`, {
@@ -104,6 +105,7 @@ export async function request<T>(
           headers: {
             Accept: 'application/json',
             Authorization: `Bearer ${renewed}`,
+            ...(init?.body !== undefined ? { 'Content-Type': 'application/json' } : {}),
           },
           body: init?.body === undefined ? undefined : JSON.stringify(init.body),
           signal: init?.signal,
