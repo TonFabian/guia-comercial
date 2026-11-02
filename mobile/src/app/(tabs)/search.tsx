@@ -34,11 +34,14 @@ export default function SearchScreen() {
   const colors = useThemeColors();
   const styles = makeStyles(colors);
   const routeTerm = (params.q ?? '').trim();
-  const categorySlug = (params.category ?? '').trim();
+  const routeCategory = (params.category ?? '').trim();
 
   // Texto digitado manualmente prevalece sobre o parâmetro da rota.
   const [manualTerm, setManualTerm] = useState<string | null>(null);
   const term = (manualTerm ?? routeTerm).trim();
+
+  const [manualCategory, setManualCategory] = useState<string | null>(null);
+  const categorySlug = (manualCategory ?? routeCategory).trim();
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [companies, setCompanies] = useState<Company[]>([]);
@@ -161,6 +164,13 @@ export default function SearchScreen() {
           <View style={styles.chip}>
             <Ionicons name="pricetag-outline" size={14} color={colors.primary} />
             <Text style={styles.chipText}>{selectedCategory.name}</Text>
+            <TouchableOpacity
+              onPress={() => setManualCategory('')}
+              hitSlop={8}
+              accessibilityLabel={`Remover filtro ${selectedCategory.name}`}
+            >
+              <Ionicons name="close-circle" size={16} color={colors.primary} />
+            </TouchableOpacity>
           </View>
         )}
 
@@ -177,10 +187,15 @@ export default function SearchScreen() {
               <View style={styles.group}>
                 <Text style={styles.groupTitle}>Categorias</Text>
                 {filteredCategories.map((category) => (
-                  <View key={category._id} style={styles.row}>
+                  <TouchableOpacity
+                    key={category._id}
+                    style={styles.row}
+                    activeOpacity={0.7}
+                    onPress={() => setManualCategory(category.slug)}
+                  >
                     <Ionicons name="grid-outline" size={18} color={colors.primary} />
                     <Text style={styles.rowTitle}>{category.name}</Text>
-                  </View>
+                  </TouchableOpacity>
                 ))}
               </View>
             )}
