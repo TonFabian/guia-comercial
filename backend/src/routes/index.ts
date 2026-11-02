@@ -7,6 +7,7 @@ import * as companyController from '../controllers/company.controller.js';
 import * as couponController from '../controllers/coupon.controller.js';
 import { health } from '../controllers/health.controller.js';
 import * as jobController from '../controllers/job.controller.js';
+import * as reviewController from '../controllers/review.controller.js';
 import {
   createAuthDeps,
   makeAuthMiddleware,
@@ -18,6 +19,7 @@ import {
   createCompanySchema,
   createCouponSchema,
   createJobSchema,
+  createReviewSchema,
   updateUserSchema,
   validateBody,
 } from '../types/dto.js';
@@ -64,6 +66,8 @@ const companies = Router();
 companies.post('/', validateBody(createCompanySchema), companyController.create);
 companies.get('/', companyController.list);
 companies.get('/:id', companyController.getById);
+companies.get('/:id/reviews', reviewController.listReviews);
+companies.post('/:id/reviews', validateBody(createReviewSchema), reviewController.createReviewHandler);
 companies.put('/:id', validateBody(createCompanySchema.partial()), companyController.update);
 companies.delete('/:id', companyController.remove);
 
