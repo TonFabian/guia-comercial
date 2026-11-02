@@ -1,5 +1,6 @@
 import { ReviewModel } from '../models/review.model.js';
 import { CompanyModel } from '../models/company.model.js';
+import { findUserByClerkId } from './user.service.js';
 import type { Review } from '../../../shared/domain.js';
 
 export async function listReviewsByCompany(companyId: string): Promise<Review[]> {
@@ -9,10 +10,14 @@ export async function listReviewsByCompany(companyId: string): Promise<Review[]>
 export async function createReview(
   companyId: string,
   clerkId: string,
-  authorName: string | undefined,
   rating: number,
   comment?: string,
 ): Promise<Review> {
+  const user = await findUserByClerkId(clerkId);
+  const authorName = user
+    ? [user.firstName, user.lastName].filter(Boolean).join(' ').trim() || undefined
+    : undefined;
+
   const review = await ReviewModel.create({
     company: companyId,
     clerkId,

@@ -161,7 +161,6 @@ export type UpdateUserDto = z.infer<typeof updateUserSchema>;
 export const createReviewSchema = z.object({
   rating: z.number().int().min(1).max(5),
   comment: z.string().trim().optional(),
-  authorName: z.string().trim().optional(),
 });
 
 export type CreateReviewDto = z.infer<typeof createReviewSchema>;

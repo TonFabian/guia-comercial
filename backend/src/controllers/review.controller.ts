@@ -13,11 +13,10 @@ export async function createReviewHandler(req: Request, res: Response): Promise<
     res.status(401).json({ error: 'Não autenticado' });
     return;
   }
-  const { rating, comment, authorName } = req.body as {
+  const { rating, comment } = req.body as {
     rating: number;
     comment?: string;
-    authorName?: string;
   };
-  const review = await createReview(String(req.params.id), clerkId, authorName, rating, comment);
+  const review = await createReview(String(req.params.id), clerkId, rating, comment);
   res.status(201).json(review);
 }
