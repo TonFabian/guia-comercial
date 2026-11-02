@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { GuiaColors, Overlays, Radius, Spacing, Type } from '@/constants/theme';
+import { Overlays, Radius, Spacing, Type } from '@/constants/theme';
 import { CompanyAbout } from '@/features/company/company-about';
 import type { CompanyAction } from '@/features/company/company-actions';
 import { buildCompanyActions } from '@/features/company/company-actions';
@@ -24,6 +24,8 @@ import { CompanyReviews } from '@/features/company/company-reviews';
 import { CompanySection } from '@/features/company/company-section';
 import { useCompanyDetail } from '@/features/company/use-company-detail';
 import { useFavorites } from '@/features/favorites/favorites-provider';
+import { useThemeColors } from '@/hooks/use-theme-colors';
+import { useThemeMode } from '@/providers/theme-provider';
 import { callPhone, openAddress, openExternalUrl, openWhatsApp, shareCompany } from '@/utils/links';
 
 export default function CompanyDetailScreen() {
@@ -32,6 +34,9 @@ export default function CompanyDetailScreen() {
 
   const { company, coupons, loading } = useCompanyDetail(companyId || '');
   const { isFavorite, toggleFavorite } = useFavorites();
+  const colors = useThemeColors();
+  const { mode } = useThemeMode();
+  const styles = makeStyles(colors);
   const insets = useSafeAreaInsets();
 
   function handleAction(action: CompanyAction) {
@@ -61,8 +66,8 @@ export default function CompanyDetailScreen() {
   if (loading) {
     return (
       <View style={styles.center}>
-        <StatusBar style="light" />
-        <ActivityIndicator color={GuiaColors.primary} size="large" />
+        <StatusBar style={mode === 'dark' ? 'light' : 'dark'} />
+        <ActivityIndicator color={colors.primary} size="large" />
       </View>
     );
   }
@@ -70,8 +75,8 @@ export default function CompanyDetailScreen() {
   if (!company) {
     return (
       <View style={styles.center}>
-        <StatusBar style="light" />
-        <Ionicons name="storefront-outline" size={44} color={GuiaColors.textSecondary} />
+        <StatusBar style={mode === 'dark' ? 'light' : 'dark'} />
+        <Ionicons name="storefront-outline" size={44} color={colors.textSecondary} />
         <Text style={styles.notFoundTitle}>Empresa não encontrada</Text>
         <Text style={styles.notFoundText}>
           O link pode estar errado ou a empresa foi removida do guia.
@@ -92,7 +97,7 @@ export default function CompanyDetailScreen() {
 
   return (
     <View style={styles.root}>
-      <StatusBar style="light" />
+      <StatusBar style={mode === 'dark' ? 'light' : 'dark'} />
       <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
         <CompanyHero company={company} />
 
@@ -104,7 +109,7 @@ export default function CompanyDetailScreen() {
             accessibilityLabel="Voltar"
             onPress={() => router.back()}
           >
-            <Ionicons name="chevron-back" size={22} color={GuiaColors.text} />
+            <Ionicons name="chevron-back" size={22} color={colors.text} />
           </TouchableOpacity>
 
           <View style={styles.topActions}>
@@ -118,7 +123,7 @@ export default function CompanyDetailScreen() {
               <Ionicons
                 name={favorite ? 'heart' : 'heart-outline'}
                 size={20}
-                color={favorite ? GuiaColors.primary : GuiaColors.text}
+                color={favorite ? colors.primary : colors.text}
               />
             </TouchableOpacity>
             <TouchableOpacity
@@ -128,7 +133,7 @@ export default function CompanyDetailScreen() {
               accessibilityLabel="Compartilhar"
               onPress={() => void shareCompany(company)}
             >
-              <Ionicons name="share-social-outline" size={20} color={GuiaColors.text} />
+              <Ionicons name="share-social-outline" size={20} color={colors.text} />
             </TouchableOpacity>
           </View>
         </View>
@@ -170,41 +175,42 @@ export default function CompanyDetailScreen() {
   );
 }
 
-const styles = StyleSheet.create({
+function makeStyles(colors: ReturnType<typeof useThemeColors>) {
+  return StyleSheet.create({
   root: {
     flex: 1,
-    backgroundColor: GuiaColors.background,
+    backgroundColor: colors.background,
   },
   content: {
     paddingBottom: Spacing.five,
   },
   center: {
     flex: 1,
-    backgroundColor: GuiaColors.background,
+    backgroundColor: colors.background,
     alignItems: 'center',
     justifyContent: 'center',
     gap: 10,
     padding: Spacing.four,
   },
   notFoundTitle: {
-    color: GuiaColors.text,
+    color: colors.text,
     fontSize: Type.title,
     fontWeight: '700',
   },
   notFoundText: {
-    color: GuiaColors.textSecondary,
+    color: colors.textSecondary,
     fontSize: Type.base,
     textAlign: 'center',
   },
   backButton: {
     marginTop: Spacing.two,
-    backgroundColor: GuiaColors.primary,
+    backgroundColor: colors.primary,
     borderRadius: Radius.pill,
     paddingVertical: 10,
     paddingHorizontal: Spacing.four,
   },
   backButtonText: {
-    color: GuiaColors.background,
+    color: colors.background,
     fontSize: Type.body,
     fontWeight: '700',
   },
@@ -226,8 +232,9 @@ const styles = StyleSheet.create({
     borderRadius: Radius.pill,
     backgroundColor: Overlays.blackSoft,
     borderWidth: 1,
-    borderColor: GuiaColors.border,
+    borderColor: colors.border,
     alignItems: 'center',
     justifyContent: 'center',
   },
-});
+  });
+}
