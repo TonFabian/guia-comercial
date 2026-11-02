@@ -23,7 +23,8 @@ import {
   updateUserSchema,
   validateBody,
 } from '../types/dto.js';
-import { me, updateMe } from '../controllers/user.controller.js';
+import { me, updateMe, updatePushTokenController } from '../controllers/user.controller.js';
+import { broadcastNotification } from '../controllers/notification.controller.js';
 
 const routes = Router();
 
@@ -47,6 +48,8 @@ if (authDeps) {
   // ligado — em modo legado o app não a consome.
   routes.get('/me', auth.requireAuth, me);
   routes.put('/me', auth.requireAuth, validateBody(updateUserSchema.partial()), updateMe);
+  routes.put('/me/push-token', auth.requireAuth, updatePushTokenController);
+  routes.post('/notifications/broadcast', broadcastNotification);
 }
 
 // -----------------------------------------------------------------------------

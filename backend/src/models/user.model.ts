@@ -17,6 +17,7 @@ const userSchema = new Schema<User>(
     role: { type: String, enum: ['user'], default: 'user' },
     lastSid: String,
     lastSignInAt: String,
+    pushToken: String,
     favorites: { type: [String], default: [] },
     ownedCompanyIds: { type: [String], default: [] },
     preferences: {

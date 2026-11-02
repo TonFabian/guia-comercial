@@ -49,6 +49,18 @@ export async function updateUserByClerkId(
   return user;
 }
 
+export async function updatePushToken(clerkId: string, pushToken: string): Promise<void> {
+  await UserModel.updateOne({ clerkId }, { $set: { pushToken } }).exec();
+}
+
 export async function removeUserByClerkId(clerkId: string): Promise<void> {
   await UserModel.deleteOne({ clerkId }).exec();
+}
+
+export async function listPushTokens(): Promise<string[]> {
+  const users = await UserModel.find({ pushToken: { $exists: true, $ne: null } })
+    .select({ pushToken: 1 })
+    .lean()
+    .exec();
+  return users.map((u) => u.pushToken).filter((t): t is string => typeof t === 'string');
 }

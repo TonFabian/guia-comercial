@@ -224,6 +224,14 @@ export async function createReview(companyId: string, rating: number, comment?: 
     return null;
   }
 }
+export async function updatePushToken(pushToken: string): Promise<void> {
+  if (!isApiConfigured()) return;
+  try {
+    await request('/me/push-token', { method: 'PUT', body: { pushToken } });
+  } catch {
+    // ignora
+  }
+}
 export function filterMockCompanies(term: string): Company[] {
   if (!term) {
     return MOCK_COMPANIES;
