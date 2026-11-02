@@ -41,6 +41,8 @@ export default function MapScreen() {
         );
         if (cancelled) return;
         setCompanies(hydrated);
+      } catch {
+        // ignora erros de rede/API
       } finally {
         if (!cancelled) setLoading(false);
       }

@@ -97,6 +97,7 @@ export default function SearchScreen() {
       setLoading(true);
       setPage(1);
       async function load() {
+        try {
         const allCategories = await getCategories();
 
         let pageResult: { items: Company[]; total: number };
@@ -140,6 +141,12 @@ export default function SearchScreen() {
         setCompanies(finalItems);
         setTotal(finalItems.length);
         setLoading(false);
+        } catch (error: any) {
+          if (cancelled) return;
+          setCompanies([]);
+          setTotal(0);
+          setLoading(false);
+        }
       }
 
       void load();
