@@ -1,5 +1,4 @@
 import {
-  Alert,
   ListRenderItemInfo,
   Pressable,
   StyleSheet,
@@ -13,6 +12,7 @@ import { useThemeColors } from '@/hooks/use-theme-colors';
 import type { Job } from '@/types/domain';
 import { companyId, companyLabel } from '@/types/domain';
 import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import { memo } from 'react';
 import { openCompanyDetails } from '../company/open-company';
 import { SectionHeader } from './section-header';
@@ -28,7 +28,7 @@ function jobTypeLabel(type?: string) {
 }
 
 function openJob(job: Job) {
-  Alert.alert(job.title, 'Detalhes da vaga em breve.');
+  router.push(`/job/${job._id}`);
 }
 
 const JobCard = memo(function JobCard({ job }: { job: Job }) {
@@ -112,7 +112,7 @@ export function JobList({ jobs }: { jobs: Job[] }) {
               <TouchableOpacity
                 style={styles.jobButton}
                 activeOpacity={0.7}
-                onPress={() => Alert.alert(job.title, 'Detalhes da vaga em breve.')}
+                onPress={() => router.push(`/job/${job._id}`)}
               >
                 <Text style={styles.jobButtonText}>Ver Vaga</Text>
               </TouchableOpacity>
