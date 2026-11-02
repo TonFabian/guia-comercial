@@ -28,6 +28,7 @@ const companySchema = new Schema<Company>(
     instagram: String,
     facebook: String,
     openingHours: [String],
+    schedule: [{ day: Number, opens: Number, closes: Number }],
     services: [String],
     products: [
       {

@@ -86,6 +86,14 @@ async function seed(): Promise<void> {
       instagram: '@construtoraalicerce',
       facebook: 'https://facebook.com/construtoraalicerce',
       openingHours: ['Seg a Sex: 08h às 18h', 'Sáb: 08h às 12h'],
+      schedule: [
+        { day: 1, opens: 480, closes: 1080 },
+        { day: 2, opens: 480, closes: 1080 },
+        { day: 3, opens: 480, closes: 1080 },
+        { day: 4, opens: 480, closes: 1080 },
+        { day: 5, opens: 480, closes: 1080 },
+        { day: 6, opens: 480, closes: 720 },
+      ],
       services: ['Reformas', 'Projetos', 'Brita e areia'],
       products: [
         {
@@ -115,6 +123,15 @@ async function seed(): Promise<void> {
       isVerified: true,
       instagram: '@saborarte',
       openingHours: ['Todos os dias: 11h às 23h'],
+      schedule: [
+        { day: 0, opens: 660, closes: 1380 },
+        { day: 1, opens: 660, closes: 1380 },
+        { day: 2, opens: 660, closes: 1380 },
+        { day: 3, opens: 660, closes: 1380 },
+        { day: 4, opens: 660, closes: 1380 },
+        { day: 5, opens: 660, closes: 1380 },
+        { day: 6, opens: 660, closes: 1380 },
+      ],
       services: ['Delivery', 'Salão', 'Marmitex'],
       products: [
         {
@@ -137,6 +154,14 @@ async function seed(): Promise<void> {
       ratingCount: 87,
       instagram: '@oficinadoze',
       openingHours: ['Seg a Sáb: 08h às 18h'],
+      schedule: [
+        { day: 1, opens: 480, closes: 1080 },
+        { day: 2, opens: 480, closes: 1080 },
+        { day: 3, opens: 480, closes: 1080 },
+        { day: 4, opens: 480, closes: 1080 },
+        { day: 5, opens: 480, closes: 1080 },
+        { day: 6, opens: 480, closes: 1080 },
+      ],
       services: ['Troca de óleo', 'Suspensão', 'Freios'],
       products: [
         { name: 'Troca de óleo', description: 'Até 4L de óleo e filtro novos', price: 149 },
@@ -158,6 +183,15 @@ async function seed(): Promise<void> {
       website: 'https://drogariapopular.com.br',
       facebook: 'https://facebook.com/drogariapopular',
       openingHours: ['Todos os dias: 00h às 23h59'],
+      schedule: [
+        { day: 0, opens: 0, closes: 1439 },
+        { day: 1, opens: 0, closes: 1439 },
+        { day: 2, opens: 0, closes: 1439 },
+        { day: 3, opens: 0, closes: 1439 },
+        { day: 4, opens: 0, closes: 1439 },
+        { day: 5, opens: 0, closes: 1439 },
+        { day: 6, opens: 0, closes: 1439 },
+      ],
       services: ['Plantão', 'Entrega', 'Medidas de pressão'],
       products: [
         {
@@ -183,6 +217,14 @@ async function seed(): Promise<void> {
       instagram: '@barbeariacentral',
       facebook: 'https://facebook.com/barbeariacentral',
       openingHours: ['Ter a Dom: 09h às 20h'],
+      schedule: [
+        { day: 0, opens: 540, closes: 1200 },
+        { day: 2, opens: 540, closes: 1200 },
+        { day: 3, opens: 540, closes: 1200 },
+        { day: 4, opens: 540, closes: 1200 },
+        { day: 5, opens: 540, closes: 1200 },
+        { day: 6, opens: 540, closes: 1200 },
+      ],
       services: ['Corte', 'Barba', 'Pigmentação'],
       products: [
         { name: 'Corte social', description: 'Corte + barba + escovação', price: 45 },
@@ -201,9 +243,19 @@ async function seed(): Promise<void> {
       city: 'Castelo do Piauí',
       isVerified: true,
       openingHours: ['Todos os dias: 00h às 23h59'],
+      schedule: [
+        { day: 0, opens: 0, closes: 1439 },
+        { day: 1, opens: 0, closes: 1439 },
+        { day: 2, opens: 0, closes: 1439 },
+        { day: 3, opens: 0, closes: 1439 },
+        { day: 4, opens: 0, closes: 1439 },
+        { day: 5, opens: 0, closes: 1439 },
+        { day: 6, opens: 0, closes: 1439 },
+      ],
       services: ['Pronto atendimento', 'Emergência', 'Ambulatório'],
     },
   ];
+  const inseridasEmpresas = await insertIfMissing(CompanyModel, empresas, 'slug');
   console.log(`Empresas inseridas: ${inseridasEmpresas}`);
 
   const empresaPorSlug = new Map(

@@ -42,6 +42,7 @@ export interface Company {
   instagram?: string;
   facebook?: string;
   openingHours?: string[];
+  schedule?: { day: number; opens: number; closes: number }[];
   services?: string[];
   products?: CompanyProduct[];
   createdAt?: string;

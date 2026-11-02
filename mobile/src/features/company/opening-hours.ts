@@ -146,7 +146,32 @@ export function isOpenNow(hours: OpeningHour[], now: Date): boolean | null {
   return today.some((hour) => isWithinRange(hour, minutes));
 }
 
-/** Texto curto do status de funcionamento para exibir na tela. */
+export function scheduleToOpeningHours(
+  schedule: { day: number; opens: number; closes: number }[],
+): OpeningHour[] {
+  const DAY_NAMES = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+  // Group by opens/closes to produce labels
+  const groups = new Map<string, number[]>();
+  for (const s of schedule) {
+    const key = `${s.opens}-${s.closes}`;
+    if (!groups.has(key)) groups.set(key, []);
+    groups.get(key)!.push(s.day);
+  }
+  const result: OpeningHour[] = [];
+  for (const [key, days] of groups) {
+    const [opens, closes] = key.split('-').map(Number);
+    const sortedDays = [...days].sort((a, b) => a - b);
+    const label = sortedDays.map((d) => DAY_NAMES[d]).join(', ');
+    result.push({
+      raw: `${label}: ${Math.floor(opens / 60)}h${opens % 60 ? String(opens % 60).padStart(2, '0') : ''} às ${Math.floor(closes / 60)}h${closes % 60 ? String(closes % 60).padStart(2, '0') : ''}`,
+      label,
+      days: sortedDays,
+      opens,
+      closes,
+    });
+  }
+  return result;
+}
 export function openingStatusLabel(hours: OpeningHour[], now: Date): string {
   const status = isOpenNow(hours, now);
   if (status === null) return 'Horário não informado';
