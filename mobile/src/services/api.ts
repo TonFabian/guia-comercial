@@ -101,6 +101,19 @@ export async function getJobs(): Promise<Job[]> {
   return fromPaginated(payload, mockFallback(MOCK_JOBS));
 }
 
+/** Vaga pelo id. `null` quando a API responde que não existe. */
+export async function getJobById(id: string): Promise<Job | null> {
+  if (!isApiConfigured()) return __DEV__ ? findMockJob(id) : null;
+  try {
+    const payload = await request<Job>(`/jobs/${encodeURIComponent(id)}`);
+    if (!payload) return __DEV__ ? findMockJob(id) : null;
+    const [job] = fromPaginated(payload, []);
+    return job ?? (__DEV__ ? findMockJob(id) : null);
+  } catch {
+    return __DEV__ ? findMockJob(id) : null;
+  }
+}
+
 export async function getFeaturedCompany(): Promise<Company | null> {
   if (!isApiConfigured()) return __DEV__ ? MOCK_FEATURED_COMPANY : null;
   try {
@@ -187,6 +200,11 @@ export function filterMockCategories(term: string): Category[] {
 /** Empresa mockada pelo id (fallback quando a API está fora do ar). */
 export function findMockCompany(id: string): Company | null {
   return MOCK_COMPANIES.find((company) => company._id === id) ?? null;
+}
+
+/** Vaga mockada pelo id (fallback quando a API está fora do ar). */
+export function findMockJob(id: string): Job | null {
+  return MOCK_JOBS.find((job) => job._id === id) ?? null;
 }
 
 /** Cupons mockados que pertencem a uma empresa. */
