@@ -4,6 +4,11 @@ import type { AdminUser, Banner, Category, Company, Coupon, Job, Paginated } fro
 
 const BASE_URL = import.meta.env.VITE_API_URL ?? '';
 
+let authToken: string | null = null;
+export function setAuthToken(token: string | null) {
+  authToken = token;
+}
+
 /** Erro lançado para respostas non-2xx da API. */
 export class ApiError extends Error {
   readonly status: number;
@@ -16,9 +21,11 @@ export class ApiError extends Error {
 }
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
+  const headers: Record<string, string> = { 'Content-Type': 'application/json', ...((init?.headers as Record<string, string>) ?? {}) };
+  if (authToken) headers['Authorization'] = `Bearer ${authToken}`;
   const response = await fetch(`${BASE_URL}${path}`, {
-    headers: { 'Content-Type': 'application/json', ...init?.headers },
     ...init,
+    headers,
   });
 
   if (!response.ok) {

@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { SignInButton, useAuth, useUser } from '@clerk/clerk-react';
 
 import { Sidebar } from './components/sidebar';
 import {
@@ -18,12 +19,42 @@ import {
   getCoupons,
   getJobs,
   getUsers,
+  setAuthToken,
 } from './services/api';
 import type { AdminUser, Banner, Category, Company, Coupon, Job } from './types/domain';
 
 type Section = 'Empresas' | 'Categorias' | 'Banners' | 'Cupons' | 'Vagas' | 'Usuários';
 
 export default function App() {
+  const { isSignedIn, isLoaded, getToken } = useAuth();
+  const { user } = useUser();
+
+  useEffect(() => {
+    if (!isSignedIn) {
+      setAuthToken(null);
+      return;
+    }
+    (async () => {
+      const token = await getToken();
+      setAuthToken(token ?? null);
+    })();
+  }, [isSignedIn, getToken, user]);
+
+  if (!isLoaded) return <p>Carregando…</p>;
+  if (!isSignedIn) {
+    return (
+      <div className="layout">
+        <main className="content" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 16 }}>
+          <h2>Painel Administrativo</h2>
+          <p>Faça login para continuar.</p>
+          <SignInButton mode="modal">
+            <button>Entrar</button>
+          </SignInButton>
+        </main>
+      </div>
+    );
+  }
+
   const [section, setSection] = useState<Section>('Empresas');
   const [companies, setCompanies] = useState<Company[]>([]);
   const [categories, setCategories] = useState<Category[]>([]);

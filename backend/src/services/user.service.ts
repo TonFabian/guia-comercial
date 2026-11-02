@@ -15,9 +15,19 @@ export async function upsertUserFromMirror(
   clerkId: string,
   mirror: Partial<User>,
 ): Promise<User> {
+  const update: Partial<User> = { ...mirror };
+
+  const adminEmails = (process.env.ADMIN_EMAILS ?? '')
+    .split(',')
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean);
+  if (mirror.email && adminEmails.includes(mirror.email.toLowerCase())) {
+    update.role = 'admin';
+  }
+
   const user = await UserModel.findOneAndUpdate(
     { clerkId },
-    { $set: mirror },
+    { $set: update },
     { upsert: true, returnDocument: "after", setDefaultsOnInsert: true },
   ).lean<User>();
 
