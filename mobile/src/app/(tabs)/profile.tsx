@@ -1,12 +1,14 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
-import { Alert, Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useState } from 'react';
+import { Alert, Image, Modal, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Radius } from '@/constants/theme';
 import { useThemeColors } from '@/hooks/use-theme-colors';
-import { useAuthState } from '@/providers/auth-provider';
 import { useThemeMode } from '@/providers/theme-provider';
+import { useAuthState } from '@/providers/auth-provider';
+import { useAuth, useUser } from '@clerk/expo';
 
 const MENU = [
   { id: '1', label: 'Meus dados', icon: 'person-outline' as const },
@@ -17,18 +19,29 @@ const MENU = [
 
 export default function ProfileScreen() {
   const { state, user, exitGuest, signOut } = useAuthState();
+  const { user: clerkUser } = useUser();
   const { mode, toggle } = useThemeMode();
   const colors = useThemeColors();
   const styles = makeStyles(colors);
 
+  const [editing, setEditing] = useState(false);
+  const [firstName, setFirstName] = useState(user?.firstName ?? '');
+  const [lastName, setLastName] = useState(user?.lastName ?? '');
+  const [phone, setPhone] = useState(user?.phone ?? '');
+  const [imageUrl, setImageUrl] = useState(user?.imageUrl ?? '');
+  const [saving, setSaving] = useState(false);
+
   const handleMenuPress = (item: (typeof MENU)[0]) => {
     if (item.id === '1') {
-      if (state === 'signedIn') {
-        Alert.alert('Meus dados', 'Em breve');
+      if (state !== 'signedIn') {
+        router.push('/(auth)/sign-in');
         return;
       }
-
-      router.push('/(auth)/sign-in');
+      setFirstName(user?.firstName ?? '');
+      setLastName(user?.lastName ?? '');
+      setPhone(user?.phone ?? '');
+      setImageUrl(user?.imageUrl ?? '');
+      setEditing(true);
       return;
     }
     if (item.id === '4') {
@@ -37,6 +50,24 @@ export default function ProfileScreen() {
     }
     Alert.alert(item.label, 'Em breve');
   };
+
+  async function saveProfile() {
+    if (state !== 'signedIn') return;
+    setSaving(true);
+    try {
+  const { updateMe } = await import('@/services/api');
+  await updateMe({ firstName, lastName, phone, imageUrl });
+      if (clerkUser) {
+        await clerkUser.update({ firstName, lastName });
+      }
+      Alert.alert('Perfil', 'Dados atualizados com sucesso.');
+      setEditing(false);
+    } catch {
+      Alert.alert('Perfil', 'Não foi possível salvar. Tente novamente.');
+    } finally {
+      setSaving(false);
+    }
+  }
 
   /**
    * Sair encerra a sessão do Clerk (ou o modo convidado). O guard do layout
@@ -110,6 +141,26 @@ export default function ProfileScreen() {
           <Text style={styles.themeToggleText}>Tema: {mode === 'dark' ? 'Escuro' : 'Claro'}</Text>
         </TouchableOpacity>
       </SafeAreaView>
+
+      <Modal visible={editing} transparent animationType="slide" onRequestClose={() => setEditing(false)}>
+        <View style={styles.modalOverlay}>
+          <View style={styles.modalCard}>
+            <Text style={styles.modalTitle}>Meus dados</Text>
+            <TextInput style={styles.modalInput} placeholder="Nome" value={firstName} onChangeText={setFirstName} />
+            <TextInput style={styles.modalInput} placeholder="Sobrenome" value={lastName} onChangeText={setLastName} />
+            <TextInput style={styles.modalInput} placeholder="Telefone" value={phone} onChangeText={setPhone} keyboardType="phone-pad" />
+            <TextInput style={styles.modalInput} placeholder="URL da foto" value={imageUrl} onChangeText={setImageUrl} autoCapitalize="none" />
+            <View style={styles.modalActions}>
+              <TouchableOpacity style={styles.modalButton} onPress={() => setEditing(false)}>
+                <Text style={styles.modalButtonText}>Cancelar</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={[styles.modalButton, styles.modalButtonPrimary]} onPress={saveProfile} disabled={saving}>
+                <Text style={[styles.modalButtonText, styles.modalButtonPrimaryText]}>{saving ? 'Salvando…' : 'Salvar'}</Text>
+              </TouchableOpacity>
+            </View>
+          </View>
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -199,6 +250,55 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
       color: colors.text,
       fontSize: 15,
       fontWeight: '600',
+    },
+    modalOverlay: {
+      flex: 1,
+      backgroundColor: 'rgba(0,0,0,0.6)',
+      justifyContent: 'center',
+      padding: 20,
+    },
+    modalCard: {
+      backgroundColor: colors.surface,
+      borderRadius: 16,
+      padding: 20,
+      gap: 12,
+    },
+    modalTitle: {
+      color: colors.text,
+      fontSize: 18,
+      fontWeight: '700',
+    },
+    modalInput: {
+      backgroundColor: colors.background,
+      color: colors.text,
+      borderRadius: 10,
+      borderWidth: 1,
+      borderColor: colors.border,
+      paddingHorizontal: 12,
+      paddingVertical: 10,
+      fontSize: 15,
+    },
+    modalActions: {
+      flexDirection: 'row',
+      justifyContent: 'flex-end',
+      gap: 10,
+      marginTop: 8,
+    },
+    modalButton: {
+      paddingVertical: 10,
+      paddingHorizontal: 16,
+      borderRadius: 10,
+    },
+    modalButtonText: {
+      color: colors.textSecondary,
+      fontSize: 15,
+      fontWeight: '600',
+    },
+    modalButtonPrimary: {
+      backgroundColor: colors.primary,
+    },
+    modalButtonPrimaryText: {
+      color: colors.background,
     },
   });
 }

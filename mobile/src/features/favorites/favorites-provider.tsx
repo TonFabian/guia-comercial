@@ -8,6 +8,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 
+import { useAuthState } from '@/providers/auth-provider';
 import type { Company } from '@/types/domain';
 
 const STORAGE_KEY = '@guia-comercial/favorites';
@@ -36,6 +37,7 @@ function readFavorites(stored: string | null): Company[] {
 }
 
 export function FavoritesProvider({ children }: { children: ReactNode }) {
+  const auth = useAuthState();
   const [favorites, setFavorites] = useState<Company[]>([]);
   const [ready, setReady] = useState(false);
 
@@ -60,12 +62,49 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
     };
   }, []);
 
+  // Sincroniza com o backend quando logado.
+  useEffect(() => {
+    if (auth.state !== 'signedIn') return;
+    let cancelled = false;
+    (async () => {
+      const me = await (await import('@/services/api')).getMe();
+      if (cancelled || !me?.favorites) return;
+      const remoteIds = me.favorites;
+      const { getCompanyById } = await import('@/services/api');
+      const hydrated: Company[] = [];
+      for (const id of remoteIds) {
+        if (cancelled) return;
+        const company = await getCompanyById(id);
+        if (company) hydrated.push(company);
+      }
+      if (cancelled) return;
+      setFavorites((current) => {
+        const merged = [...current];
+        for (const c of hydrated) {
+          if (!merged.some((x) => x._id === c._id)) merged.push(c);
+        }
+        return merged;
+      });
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [auth.state]);
+
   useEffect(() => {
     if (!ready) return;
     void AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(favorites)).catch(() => {
       // Falha ao gravar não impede o uso do app; a lista segue em memória.
     });
-  }, [favorites, ready]);
+    // Persiste no backend se logado.
+    if (auth.state === 'signedIn') {
+      const ids = favorites.map((c) => c._id);
+      void (async () => {
+        const { updateMe } = await import('@/services/api');
+        await updateMe({ favorites: ids }).catch(() => undefined);
+      })();
+    }
+  }, [favorites, ready, auth.state]);
 
   const isFavorite = useCallback(
     (companyId: string) => favorites.some((company) => company._id === companyId),
