@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { GuiaColors, Overlays, Radius, Spacing, Type } from '@/constants/theme';
+import { GuiaColors, Radius, Spacing, Type } from '@/constants/theme';
 import { useThemeColors } from '@/hooks/use-theme-colors';
 import { useThemeMode } from '@/providers/theme-provider';
 import { callPhone, openExternalUrl, openWhatsApp } from '@/utils/links';
@@ -147,7 +147,7 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
       width: 40,
       height: 40,
       borderRadius: Radius.pill,
-      backgroundColor: Overlays.blackSoft,
+      backgroundColor: colors.surfaceAlt,
       borderWidth: 1,
       borderColor: colors.border,
       alignItems: 'center',
@@ -162,7 +162,7 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
       fontWeight: '700',
     },
     description: {
-      color: colors.textSoft,
+      color: colors.textSecondary,
       fontSize: Type.base,
       lineHeight: 20,
     },
@@ -185,7 +185,7 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
       gap: Spacing.two,
     },
     benefitText: {
-      color: colors.textSoft,
+      color: colors.textSecondary,
       fontSize: Type.base,
       flex: 1,
     },
