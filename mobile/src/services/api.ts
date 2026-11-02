@@ -6,7 +6,7 @@
  * sessão do Clerk e o comportamento de fallback (mock quando a env não está
  * definida ou a API está fora do ar; 401/403 reais estouram `ApiError`).
  */
-import type { Banner, Category, Company, Coupon, Job, Paginated, User } from '@/types/domain';
+import type { Banner, Category, Company, Coupon, Job, Paginated, Review, User } from '@/types/domain';
 
 import { isApiConfigured, request } from './http';
 import type { RequestPayload } from './http';
@@ -200,6 +200,30 @@ export async function updateMe(mirror: Partial<User>): Promise<User | null> {
   }
 }
 
+export async function getReviews(companyId: string): Promise<Review[]> {
+  if (!isApiConfigured()) return [];
+  try {
+    const payload = await request<Review>(`/companies/${encodeURIComponent(companyId)}/reviews`);
+    if (!payload) return [];
+    return Array.isArray(payload) ? payload : [payload as Review];
+  } catch {
+    return [];
+  }
+}
+
+export async function createReview(companyId: string, rating: number, comment?: string): Promise<Review | null> {
+  if (!isApiConfigured()) return null;
+  try {
+    const payload = await request<Review>(`/companies/${encodeURIComponent(companyId)}/reviews`, {
+      method: 'POST',
+      body: { rating, comment },
+    });
+    if (!payload) return null;
+    return Array.isArray(payload) ? (payload[0] ?? null) : (payload as Review);
+  } catch {
+    return null;
+  }
+}
 export function filterMockCompanies(term: string): Company[] {
   if (!term) {
     return MOCK_COMPANIES;

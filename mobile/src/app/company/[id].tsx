@@ -168,7 +168,7 @@ export default function CompanyDetailScreen() {
         )}
 
         <CompanySection title="Avaliações" icon="star-outline">
-          <CompanyReviews rating={company.rating} ratingCount={company.ratingCount} />
+          <CompanyReviews companyId={company._id} rating={company.rating} ratingCount={company.ratingCount} />
         </CompanySection>
       </ScrollView>
     </View>

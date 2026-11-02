@@ -124,7 +124,16 @@ export interface User {
   updatedAt?: string;
 }
 
-/** Resultado paginado padrão das listagens da API. */
+export interface Review {
+  _id: string;
+  company: string | Company;
+  clerkId: string;
+  authorName?: string;
+  rating: number;
+  comment?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
 export interface Paginated<T> {
   items: T[];
   total: number;
