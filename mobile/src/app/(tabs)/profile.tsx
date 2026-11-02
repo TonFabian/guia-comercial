@@ -49,6 +49,27 @@ export default function ProfileScreen() {
       setEditing(true);
       return;
     }
+    if (item.id === '2') {
+      if (state !== 'signedIn' || !user?.clerkId) {
+        router.push('/(auth)/sign-in');
+        return;
+      }
+      (async () => {
+        try {
+          const { getCompanies } = await import('@/services/api');
+          const page = await getCompanies(1, 100);
+          const owned = page.items.filter((c) => c.ownerClerkId === user.clerkId);
+          if (owned.length === 0) {
+            Alert.alert('Minha empresa', 'Você ainda não tem empresas cadastradas. Use "Anuncie no Guia" para cadastrar.');
+          } else {
+            Alert.alert('Minha empresa', owned.map((c) => c.name).join('\n'));
+          }
+        } catch {
+          Alert.alert('Minha empresa', 'Não foi possível carregar suas empresas.');
+        }
+      })();
+      return;
+    }
     if (item.id === '4') {
       handleSignOut();
       return;

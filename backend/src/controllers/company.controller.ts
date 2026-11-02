@@ -7,7 +7,7 @@ import { asyncHandler, parsePagination } from '../utils/http.js';
 export const list = asyncHandler(async (req: Request, res: Response): Promise<void> => {
   const pagination = parsePagination(req.query.page, req.query.pageSize);
   const { items, total } = await companyService.listCompanies(
-    { category: req.query.category, q: req.query.q, featured: req.query.featured },
+    { category: req.query.category, q: req.query.q, featured: req.query.featured, owner: req.query.owner },
     pagination,
   );
   res.json({ items, total, page: pagination.page, pageSize: pagination.pageSize });
@@ -24,14 +24,22 @@ export const getById = asyncHandler(async (req: Request, res: Response): Promise
 });
 
 export const create = asyncHandler(async (req: Request, res: Response): Promise<void> => {
-  const company = await companyService.createCompany(req.body as CreateCompanyDto);
+  if (process.env.CLERK_SECRET_KEY && !req.auth?.clerkId) {
+    res.status(401).json({ error: 'Não autenticado' });
+    return;
+  }
+  const company = await companyService.createCompany(req.body as CreateCompanyDto, req.auth?.clerkId);
   res.status(201).json(company);
 });
 
 export const update = asyncHandler(
   async (req: Request, res: Response): Promise<void> => {
+    if (process.env.CLERK_SECRET_KEY && !req.auth?.clerkId) {
+      res.status(401).json({ error: 'Não autenticado' });
+      return;
+    }
     throwIfInvalidId(String(req.params.id));
-    const company = await companyService.updateCompany(String(req.params.id), req.body as UpdateCompanyDto);
+    const company = await companyService.updateCompany(String(req.params.id), req.body as UpdateCompanyDto, req.auth?.clerkId);
     if (!company) {
       res.status(404).json({ error: 'empresa não encontrada' });
       return;
@@ -42,8 +50,12 @@ export const update = asyncHandler(
 
 export const remove = asyncHandler(
   async (req: Request, res: Response): Promise<void> => {
+    if (process.env.CLERK_SECRET_KEY && !req.auth?.clerkId) {
+      res.status(401).json({ error: 'Não autenticado' });
+      return;
+    }
     throwIfInvalidId(String(req.params.id));
-    await companyService.deleteCompany(String(req.params.id));
+    await companyService.deleteCompany(String(req.params.id), req.auth?.clerkId);
     res.status(204).end();
   },
 );
