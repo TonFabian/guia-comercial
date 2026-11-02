@@ -22,7 +22,7 @@ export async function createBanner(dto: CreateBannerDto) {
 }
 
 export async function updateBanner(id: string, dto: UpdateBannerDto) {
-  return BannerModel.findByIdAndUpdate(id, dto, { new: true, runValidators: true }).lean();
+  return BannerModel.findByIdAndUpdate(id, dto, { returnDocument: "after", runValidators: true }).lean();
 }
 
 export async function deleteBanner(id: string) {

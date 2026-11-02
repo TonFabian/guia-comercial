@@ -4,7 +4,7 @@ export async function upsertPushToken(token: string, clerkId?: string): Promise<
   await PushTokenModel.findOneAndUpdate(
     { token },
     { $set: { token, clerkId } },
-    { upsert: true, new: true },
+    { upsert: true, returnDocument: "after" },
   ).exec();
 }
 

@@ -48,7 +48,7 @@ export async function createCoupon(dto: CreateCouponDto) {
 }
 
 export async function updateCoupon(id: string, dto: UpdateCouponDto) {
-  return CouponModel.findByIdAndUpdate(id, dto, { new: true, runValidators: true })
+  return CouponModel.findByIdAndUpdate(id, dto, { returnDocument: "after", runValidators: true })
     .populate('company')
     .lean();
 }

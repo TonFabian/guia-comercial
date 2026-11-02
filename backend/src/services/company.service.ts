@@ -108,7 +108,7 @@ export async function updateCompany(id: string, dto: UpdateCompanyDto) {
     }
   }
 
-  return CompanyModel.findByIdAndUpdate(id, update, { new: true, runValidators: true })
+  return CompanyModel.findByIdAndUpdate(id, update, { returnDocument: "after", runValidators: true })
     .populate('category')
     .lean();
 }

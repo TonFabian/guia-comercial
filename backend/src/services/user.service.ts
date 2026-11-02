@@ -18,7 +18,7 @@ export async function upsertUserFromMirror(
   const user = await UserModel.findOneAndUpdate(
     { clerkId },
     { $set: mirror },
-    { upsert: true, new: true, setDefaultsOnInsert: true },
+    { upsert: true, returnDocument: "after", setDefaultsOnInsert: true },
   ).lean<User>();
 
   if (!user) {
@@ -43,7 +43,7 @@ export async function updateUserByClerkId(
   const user = await UserModel.findOneAndUpdate(
     { clerkId },
     { $set: mirror },
-    { new: true },
+    { returnDocument: "after" },
   ).lean<User>();
 
   return user;

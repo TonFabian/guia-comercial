@@ -28,7 +28,7 @@ export async function createJob(dto: CreateJobDto) {
 }
 
 export async function updateJob(id: string, dto: UpdateJobDto) {
-  return JobModel.findByIdAndUpdate(id, dto, { new: true, runValidators: true }).populate('company').lean();
+  return JobModel.findByIdAndUpdate(id, dto, { returnDocument: "after", runValidators: true }).populate('company').lean();
 }
 
 export async function deleteJob(id: string) {

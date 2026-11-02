@@ -31,7 +31,7 @@ export async function createCategory(dto: CreateCategoryDto) {
 }
 
 export async function updateCategory(id: string, dto: UpdateCategoryDto) {
-  return CategoryModel.findByIdAndUpdate(id, dto, { new: true, runValidators: true }).lean();
+  return CategoryModel.findByIdAndUpdate(id, dto, { returnDocument: "after", runValidators: true }).lean();
 }
 
 export async function deleteCategory(id: string) {
