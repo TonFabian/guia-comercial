@@ -29,6 +29,7 @@ import {
 import { ContactHintRow } from '@/features/home/contact-hidden-hint';
 import { SectionHeader } from '@/features/home/section-header';
 import { useThemeColors } from '@/hooks/use-theme-colors';
+import { useThemeMode } from '@/providers/theme-provider';
 import { callPhone, openMapLink, openWhatsApp } from '@/utils/links';
 
 import type { WorkingHours } from './company-details';
@@ -120,6 +121,7 @@ function WorkingHoursCard({ hours }: { hours: WorkingHours }) {
 
 export function CompanyDetailScreen({ companyId }: { companyId: string }) {
   const colors = useThemeColors();
+  const { mode } = useThemeMode();
   const styles = makeStyles(colors);
   const insets = useSafeAreaInsets();
   const { company, loading, error } = useCompanyDetail(companyId);
@@ -143,7 +145,7 @@ export function CompanyDetailScreen({ companyId }: { companyId: string }) {
   if (loading) {
     return (
       <View style={styles.centered}>
-        <StatusBar style="light" />
+        <StatusBar style={mode === 'dark' ? 'light' : 'dark'} />
         <ActivityIndicator size="large" color={colors.primary} />
         <Text style={styles.stateText}>Carregando empresa...</Text>
         <Pressable style={styles.stateButton} onPress={goBack} accessibilityRole="button">
@@ -156,7 +158,7 @@ export function CompanyDetailScreen({ companyId }: { companyId: string }) {
   if (!details) {
     return (
       <View style={styles.centered}>
-        <StatusBar style="light" />
+        <StatusBar style={mode === 'dark' ? 'light' : 'dark'} />
         <MaterialCommunityIcons name="alert-circle-outline" size={42} color={colors.primary} />
         <Text style={styles.stateText}>{error ?? 'Empresa não encontrada.'}</Text>
         <Pressable style={styles.stateButton} onPress={goBack} accessibilityRole="button">
@@ -491,7 +493,7 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
       backgroundColor: Glass.surface,
       borderRadius: Radius.chip,
       borderWidth: 1,
-      borderColor: Glass.border,
+      borderColor: colors.border,
       paddingVertical: Spacing.half,
       paddingHorizontal: 10,
     },
@@ -712,7 +714,7 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
       justifyContent: 'center',
       backgroundColor: Overlays.scrim,
       borderWidth: 1,
-      borderColor: Glass.border,
+      borderColor: colors.border,
     },
     favoriteActive: {
       backgroundColor: Overlays.amberTag,
@@ -779,7 +781,7 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     buttonDisabled: {
       backgroundColor: colors.surfaceAlt,
-      borderColor: Glass.border,
+      borderColor: colors.border,
     },
     buttonDisabledText: {
       color: colors.textSecondary,
