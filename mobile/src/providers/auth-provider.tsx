@@ -1,6 +1,7 @@
 import type { User } from '@/types/domain';
 import { useAuth, useUser } from '@clerk/expo';
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import Constants from 'expo-constants';
 import * as Notifications from 'expo-notifications';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
@@ -77,7 +78,10 @@ function ClerkAuthProvider({ children }: { children: ReactNode }) {
           if (__DEV__) console.warn('[push] permissao nao concedida:', status);
           return;
         }
-        const token = (await Notifications.getExpoPushTokenAsync()).data;
+        const projectId = Constants.expoConfig?.extra?.eas?.projectId;
+        const token = projectId
+          ? (await Notifications.getExpoPushTokenAsync({ projectId })).data
+          : (await Notifications.getExpoPushTokenAsync()).data;
         if (cancelled || !token) {
           if (__DEV__) console.warn('[push] token vazio');
           return;
