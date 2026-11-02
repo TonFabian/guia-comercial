@@ -43,9 +43,25 @@ export async function getBanners(): Promise<Banner[]> {
   return fromPaginated(payload, MOCK_BANNERS);
 }
 
-export async function getCompanies(): Promise<Company[]> {
-  const payload = await request<Company>('/companies');
-  return fromPaginated(payload, MOCK_COMPANIES);
+export type CompanyPage = {
+  items: Company[];
+  total: number;
+  page: number;
+  pageSize: number;
+};
+
+export async function getCompanies(page = 1, pageSize = 20): Promise<CompanyPage> {
+  if (!isApiConfigured()) {
+    const start = (page - 1) * pageSize;
+    const items = MOCK_COMPANIES.slice(start, start + pageSize);
+    return { items, total: MOCK_COMPANIES.length, page, pageSize };
+  }
+  const payload = await request<Company>(`/companies?page=${page}&pageSize=${pageSize}`);
+  const items = fromPaginated(payload, []);
+  const total = isPaginated(payload) ? (payload.total ?? items.length) : items.length;
+  const fallbackItems = page === 1 && items.length === 0 ? MOCK_COMPANIES.slice(0, pageSize) : items;
+  const fallbackTotal = page === 1 && items.length === 0 ? MOCK_COMPANIES.length : total;
+  return { items: fallbackItems, total: fallbackTotal, page, pageSize };
 }
 
 export async function getCoupons(): Promise<Coupon[]> {
@@ -102,18 +118,38 @@ export async function getPharmacyOnDuty(): Promise<Company | null> {
   }
 }
 
-export async function searchCompanies(query: string): Promise<Company[]> {
+export async function searchCompanies(query: string, page = 1, pageSize = 20): Promise<CompanyPage> {
   const term = query.trim().toLowerCase();
-  if (!isApiConfigured()) return filterMockCompanies(term);
-  const payload = await request<Company>(`/companies?q=${encodeURIComponent(term)}`);
-  return fromPaginated(payload, filterMockCompanies(term));
+  if (!isApiConfigured()) {
+    const filtered = filterMockCompanies(term);
+    const start = (page - 1) * pageSize;
+    const items = filtered.slice(start, start + pageSize);
+    return { items, total: filtered.length, page, pageSize };
+  }
+  const payload = await request<Company>(`/companies?q=${encodeURIComponent(term)}&page=${page}&pageSize=${pageSize}`);
+  const items = fromPaginated(payload, []);
+  const total = isPaginated(payload) ? (payload.total ?? items.length) : items.length;
+  const fallback = filterMockCompanies(term);
+  const fallbackItems = page === 1 && items.length === 0 ? fallback.slice(0, pageSize) : items;
+  const fallbackTotal = page === 1 && items.length === 0 ? fallback.length : total;
+  return { items: fallbackItems, total: fallbackTotal, page, pageSize };
 }
 
 /** Empresas de uma categoria, identificada pelo slug (ex.: `farmacia`). */
-export async function getCompaniesByCategory(slug: string): Promise<Company[]> {
-  if (!isApiConfigured()) return filterMockCompaniesByCategory(slug);
-  const payload = await request<Company>(`/companies?category=${encodeURIComponent(slug)}`);
-  return fromPaginated(payload, filterMockCompaniesByCategory(slug));
+export async function getCompaniesByCategory(slug: string, page = 1, pageSize = 20): Promise<CompanyPage> {
+  if (!isApiConfigured()) {
+    const filtered = filterMockCompaniesByCategory(slug);
+    const start = (page - 1) * pageSize;
+    const items = filtered.slice(start, start + pageSize);
+    return { items, total: filtered.length, page, pageSize };
+  }
+  const payload = await request<Company>(`/companies?category=${encodeURIComponent(slug)}&page=${page}&pageSize=${pageSize}`);
+  const items = fromPaginated(payload, []);
+  const total = isPaginated(payload) ? (payload.total ?? items.length) : items.length;
+  const fallback = filterMockCompaniesByCategory(slug);
+  const fallbackItems = page === 1 && items.length === 0 ? fallback.slice(0, pageSize) : items;
+  const fallbackTotal = page === 1 && items.length === 0 ? fallback.length : total;
+  return { items: fallbackItems, total: fallbackTotal, page, pageSize };
 }
 
 export async function searchCategories(query: string): Promise<Category[]> {

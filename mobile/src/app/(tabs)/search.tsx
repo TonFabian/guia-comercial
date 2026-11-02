@@ -43,33 +43,43 @@ export default function SearchScreen() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [page, setPage] = useState(1);
+  const [total, setTotal] = useState(0);
+  const pageSize = 20;
 
   useEffect(() => {
     let cancelled = false;
     const timer = setTimeout(() => {
       setLoading(true);
+      setPage(1);
       async function load() {
         const allCategories = await getCategories();
 
-        let results: Company[];
+        let pageResult: { items: Company[]; total: number };
         if (term && categorySlug) {
           const [byTerm, byCategory] = await Promise.all([
-            searchCompanies(term),
-            getCompaniesByCategory(categorySlug),
+            searchCompanies(term, 1, pageSize),
+            getCompaniesByCategory(categorySlug, 1, pageSize),
           ]);
-          const categoryIds = new Set(byCategory.map((company) => company._id));
-          results = byTerm.filter((company) => categoryIds.has(company._id));
+          const categoryIds = new Set(byCategory.items.map((company) => company._id));
+          const items = byTerm.items.filter((company) => categoryIds.has(company._id));
+          pageResult = { items, total: items.length };
         } else if (term) {
-          results = await searchCompanies(term);
+          const r = await searchCompanies(term, 1, pageSize);
+          pageResult = { items: r.items, total: r.total };
         } else if (categorySlug) {
-          results = await getCompaniesByCategory(categorySlug);
+          const r = await getCompaniesByCategory(categorySlug, 1, pageSize);
+          pageResult = { items: r.items, total: r.total };
         } else {
-          results = await getCompanies();
+          const r = await getCompanies(1, pageSize);
+          pageResult = { items: r.items, total: r.total };
         }
 
         if (cancelled) return;
         setCategories(allCategories);
-        setCompanies(results);
+        setCompanies(pageResult.items);
+        setTotal(pageResult.total);
         setLoading(false);
       }
 
@@ -96,6 +106,33 @@ export default function SearchScreen() {
 
   const clearSearch = () => {
     setManualTerm('');
+  };
+
+  const loadMore = async () => {
+    if (loadingMore || companies.length >= total) return;
+    setLoadingMore(true);
+    const nextPage = page + 1;
+    try {
+      let items: Company[] = [];
+      if (term && categorySlug) {
+        const [byTerm, byCategory] = await Promise.all([
+          searchCompanies(term, nextPage, pageSize),
+          getCompaniesByCategory(categorySlug, nextPage, pageSize),
+        ]);
+        const categoryIds = new Set(byCategory.items.map((c) => c._id));
+        items = byTerm.items.filter((c) => categoryIds.has(c._id));
+      } else if (term) {
+        items = (await searchCompanies(term, nextPage, pageSize)).items;
+      } else if (categorySlug) {
+        items = (await getCompaniesByCategory(categorySlug, nextPage, pageSize)).items;
+      } else {
+        items = (await getCompanies(nextPage, pageSize)).items;
+      }
+      setCompanies((prev) => [...prev, ...items]);
+      setPage(nextPage);
+    } finally {
+      setLoadingMore(false);
+    }
   };
 
   return (
@@ -173,6 +210,17 @@ export default function SearchScreen() {
               </View>
             )}
 
+            {companies.length > 0 && companies.length < total && (
+              <TouchableOpacity
+                style={styles.loadMoreButton}
+                onPress={loadMore}
+                disabled={loadingMore}
+              >
+                <Text style={styles.loadMoreText}>
+                  {loadingMore ? 'Carregando…' : 'Carregar mais'}
+                </Text>
+              </TouchableOpacity>
+            )}
             {filteredCategories.length === 0 && companies.length === 0 && (
               <Text style={styles.emptyText}>
                 {term
@@ -274,6 +322,21 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     rowSubtitle: {
       color: colors.textSecondary,
       fontSize: Type.body,
+    },
+    loadMoreButton: {
+      alignSelf: 'center',
+      paddingVertical: 12,
+      paddingHorizontal: 24,
+      borderRadius: Radius.chip,
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.border,
+      marginTop: Spacing.two,
+    },
+    loadMoreText: {
+      color: colors.primary,
+      fontSize: Type.subtitle,
+      fontWeight: '600',
     },
     emptyText: {
       color: colors.textSecondary,
