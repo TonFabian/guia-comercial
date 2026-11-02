@@ -1,7 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import { Image } from 'expo-image';
 import * as Haptics from 'expo-haptics';
+import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
@@ -31,10 +31,10 @@ import { ContactHintRow } from '@/features/home/contact-hidden-hint';
 import { SectionHeader } from '@/features/home/section-header';
 import { callPhone, openMapLink, openWhatsApp } from '@/utils/links';
 
-import { buildCompanyDetails } from './company-details';
 import type { WorkingHours } from './company-details';
+import { buildCompanyDetails } from './company-details';
 import { CompanyGallery } from './company-gallery';
-import { getOpeningStatus } from './opening-hours';
+import { getOpeningStatus, type OpeningStatus } from './opening-hours';
 import { useCompanyDetail } from './use-company-detail';
 
 const WHATSAPP_MESSAGE =
@@ -62,7 +62,7 @@ function WorkingHoursCard({ hours }: { hours: WorkingHours }) {
   }, []);
 
   const status = getOpeningStatus(hours, now);
-  const statusConfig = {
+  const statusConfig: Record<OpeningStatus, { label: string; badge: any; dot: any; text: any }> = {
     open: {
       label: 'Aberto Agora',
       badge: styles.statusOpen,
@@ -81,7 +81,8 @@ function WorkingHoursCard({ hours }: { hours: WorkingHours }) {
       dot: styles.statusDotUnknown,
       text: styles.statusTextUnknown,
     },
-  }[status];
+  };
+  const config = statusConfig[status];
 
   return (
     <View style={styles.hoursCard}>
@@ -91,9 +92,9 @@ function WorkingHoursCard({ hours }: { hours: WorkingHours }) {
           <Text style={styles.hoursCardTitle}>Atendimento</Text>
         </View>
 
-        <View style={[styles.statusBadge, statusConfig.badge]}>
-          <View style={[styles.statusDot, statusConfig.dot]} />
-          <Text style={[styles.statusText, statusConfig.text]}>{statusConfig.label}</Text>
+        <View style={[styles.statusBadge, config.badge]}>
+          <View style={[styles.statusDot, config.dot]} />
+          <Text style={[styles.statusText, config.text]}>{config.label}</Text>
         </View>
       </View>
 
@@ -102,15 +103,12 @@ function WorkingHoursCard({ hours }: { hours: WorkingHours }) {
       {HOURS_ROWS.map((row, index) => {
         const value = hours[row.key];
         const isLast = index === HOURS_ROWS.length - 1;
-        const isUnavailable =
-          value === CLOSED_HOURS || value.toLowerCase().includes('consulte');
+        const isUnavailable = value === CLOSED_HOURS || value.toLowerCase().includes('consulte');
 
         return (
           <View key={row.key} style={[styles.hoursRow, !isLast && styles.hoursDivider]}>
             <Text style={styles.hoursLabel}>{row.label}</Text>
-            <Text style={[styles.hoursValue, isUnavailable && styles.hoursClosed]}>
-              {value}
-            </Text>
+            <Text style={[styles.hoursValue, isUnavailable && styles.hoursClosed]}>{value}</Text>
           </View>
         );
       })}
@@ -188,7 +186,8 @@ export function CompanyDetailScreen({ companyId }: { companyId: string }) {
         contentContainerStyle={[
           styles.scrollContent,
           { paddingBottom: insets.bottom + Spacing.six * 2 },
-        ]}>
+        ]}
+      >
         <View style={styles.hero}>
           {details.coverUrl ? (
             <>
@@ -224,11 +223,7 @@ export function CompanyDetailScreen({ companyId }: { companyId: string }) {
                 accessibilityLabel={`Logo de ${details.name}`}
               />
             ) : (
-              <MaterialCommunityIcons
-                name="office-building"
-                size={38}
-                color={GuiaColors.primary}
-              />
+              <MaterialCommunityIcons name="office-building" size={38} color={GuiaColors.primary} />
             )}
           </View>
 
@@ -267,7 +262,8 @@ export function CompanyDetailScreen({ companyId }: { companyId: string }) {
                   }}
                   hitSlop={8}
                   accessibilityRole="button"
-                  accessibilityLabel="Abrir endereço no mapa">
+                  accessibilityLabel="Abrir endereço no mapa"
+                >
                   <Text style={styles.mapAction}>Ver mapa</Text>
                 </Pressable>
               ) : null}
@@ -298,7 +294,8 @@ export function CompanyDetailScreen({ companyId }: { companyId: string }) {
                   ]}
                   onPress={() => handleServicePress(service.name)}
                   accessibilityRole="button"
-                  accessibilityLabel={`Falar sobre ${service.name} no WhatsApp`}>
+                  accessibilityLabel={`Falar sobre ${service.name} no WhatsApp`}
+                >
                   <View style={styles.serviceIconBox}>
                     <MaterialCommunityIcons
                       name={service.icon}
@@ -308,11 +305,7 @@ export function CompanyDetailScreen({ companyId }: { companyId: string }) {
                   </View>
 
                   <Text style={styles.serviceName}>{service.name}</Text>
-                  <Ionicons
-                    name="chevron-forward"
-                    size={18}
-                    color={GuiaColors.textSecondary}
-                  />
+                  <Ionicons name="chevron-forward" size={18} color={GuiaColors.textSecondary} />
                 </Pressable>
               ))
             ) : (
@@ -333,7 +326,8 @@ export function CompanyDetailScreen({ companyId }: { companyId: string }) {
           onPress={goBack}
           hitSlop={8}
           accessibilityRole="button"
-          accessibilityLabel="Voltar">
+          accessibilityLabel="Voltar"
+        >
           <Ionicons name="chevron-back" size={22} color={GuiaColors.text} />
         </Pressable>
 
@@ -347,7 +341,8 @@ export function CompanyDetailScreen({ companyId }: { companyId: string }) {
           hitSlop={8}
           accessibilityRole="button"
           accessibilityLabel={favorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
-          accessibilityState={{ selected: favorite }}>
+          accessibilityState={{ selected: favorite }}
+        >
           <Ionicons
             name={favorite ? 'heart' : 'heart-outline'}
             size={21}
@@ -372,7 +367,8 @@ export function CompanyDetailScreen({ companyId }: { companyId: string }) {
             disabled={!details.whatsapp}
             accessibilityRole="button"
             accessibilityLabel="Falar no WhatsApp"
-            accessibilityState={{ disabled: !details.whatsapp }}>
+            accessibilityState={{ disabled: !details.whatsapp }}
+          >
             {details.whatsapp ? (
               <LinearGradient
                 colors={ButtonGradients.whatsapp}
@@ -388,10 +384,8 @@ export function CompanyDetailScreen({ companyId }: { companyId: string }) {
               color={details.whatsapp ? GuiaColors.background : GuiaColors.textSecondary}
             />
             <Text
-              style={[
-                styles.whatsappButtonText,
-                !details.whatsapp && styles.buttonDisabledText,
-              ]}>
+              style={[styles.whatsappButtonText, !details.whatsapp && styles.buttonDisabledText]}
+            >
               WhatsApp
             </Text>
           </Pressable>
@@ -408,7 +402,8 @@ export function CompanyDetailScreen({ companyId }: { companyId: string }) {
             disabled={!details.phone}
             accessibilityRole="button"
             accessibilityLabel="Ligar para a empresa"
-            accessibilityState={{ disabled: !details.phone }}>
+            accessibilityState={{ disabled: !details.phone }}
+          >
             {details.phone ? (
               <LinearGradient
                 colors={ButtonGradients.call}
@@ -735,7 +730,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 1,
     borderTopColor: Glass.border,
     paddingHorizontal: Spacing.three,
-    paddingTop: 12,
+    paddingTop: Spacing.three,
     gap: Spacing.two,
     elevation: 16,
     shadowOpacity: 0.4,

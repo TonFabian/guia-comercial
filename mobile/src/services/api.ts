@@ -33,26 +33,6 @@ function fromPaginated<T>(payload: RequestPayload<T> | null, fallback: T[]): T[]
   return [payload];
 }
 
-/** Resultado de uma requisição de recurso único. */
-type SingleResult<T> = {
-  data: T | null;
-  /** `true` quando a API não respondeu (sem env ou falha de rede). */
-  offline: boolean;
-};
-
-async function requestOne<T>(path: string): Promise<SingleResult<T>> {
-  if (!BASE_URL) return { data: null, offline: true };
-  try {
-    const response = await fetch(`${BASE_URL}${path}`, {
-      headers: { Accept: 'application/json' },
-    });
-    if (!response.ok) return { data: null, offline: false };
-    return { data: (await response.json()) as T, offline: false };
-  } catch {
-    return { data: null, offline: true };
-  }
-}
-
 export async function getCategories(): Promise<Category[]> {
   const payload = await request<Category>('/categories');
   return fromPaginated(payload, MOCK_CATEGORIES);
@@ -68,19 +48,6 @@ export async function getCompanies(): Promise<Company[]> {
   return fromPaginated(payload, MOCK_COMPANIES);
 }
 
-export async function getCompanyById(id: string): Promise<Company | null> {
-  const mock =
-    MOCK_COMPANIES.find((company) => company._id === id || company.slug === id) ?? null;
-
-  if (!isApiConfigured()) return mock;
-
-  const payload = await request<Company>(`/companies/${encodeURIComponent(id)}`);
-  if (!payload) return mock;
-
-  const [company] = fromPaginated(payload, mock ? [mock] : []);
-  return company ?? null;
-}
-
 export async function getCoupons(): Promise<Coupon[]> {
   const payload = await request<Coupon>('/coupons');
   return fromPaginated(payload, MOCK_COUPONS);
@@ -88,9 +55,15 @@ export async function getCoupons(): Promise<Coupon[]> {
 
 /** Empresa pelo id. `null` quando a API responde que não existe. */
 export async function getCompanyById(id: string): Promise<Company | null> {
-  const { data, offline } = await requestOne<Company>(`/companies/${encodeURIComponent(id)}`);
-  if (data) return data;
-  return offline ? findMockCompany(id) : null;
+  if (!isApiConfigured()) return findMockCompany(id);
+  try {
+    const payload = await request<Company>(`/companies/${encodeURIComponent(id)}`);
+    if (!payload) return findMockCompany(id);
+    const [company] = fromPaginated(payload, []);
+    return company ?? findMockCompany(id);
+  } catch {
+    return findMockCompany(id);
+  }
 }
 
 /** Cupons de uma empresa específica. */

@@ -42,8 +42,6 @@ export default function RootLayout() {
               contentStyle: { backgroundColor: GuiaColors.background },
             }}
           />
-          <Stack.Screen name="(tabs)" />
-          <Stack.Screen name="company/[id]" />
         </FavoritesProvider>
       </AuthProviders>
     </RouterThemeProvider>

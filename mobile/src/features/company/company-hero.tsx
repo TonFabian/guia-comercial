@@ -3,8 +3,8 @@ import { Image } from 'expo-image';
 import { StyleSheet, Text, View } from 'react-native';
 
 import { GuiaColors, Overlays, Radius, Spacing, Type } from '@/constants/theme';
-import { categoryLabel } from '@/types/domain';
 import type { Company } from '@/types/domain';
+import { categoryLabel } from '@/types/domain';
 
 import { CompanyRating } from './company-rating';
 
@@ -44,7 +44,11 @@ export function CompanyHero({ company }: { company: Company }) {
         <Text style={styles.name}>{company.name}</Text>
 
         <View style={styles.metaRow}>
-          <MaterialCommunityIcons name="view-grid-outline" size={14} color={GuiaColors.textSecondary} />
+          <MaterialCommunityIcons
+            name="view-grid-outline"
+            size={14}
+            color={GuiaColors.textSecondary}
+          />
           <Text style={styles.category}>{categoryLabel(company.category)}</Text>
           {company.isVerified && (
             <View style={styles.verified}>
@@ -78,6 +82,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.three,
     paddingTop: Spacing.three,
     gap: 6,
+    paddingBottom: Spacing.three,
   },
   logoBox: {
     width: 64,
