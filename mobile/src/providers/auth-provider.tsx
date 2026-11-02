@@ -79,9 +79,10 @@ function ClerkAuthProvider({ children }: { children: ReactNode }) {
           return;
         }
         const projectId = Constants.expoConfig?.extra?.eas?.projectId;
-        const token = projectId
-          ? (await Notifications.getExpoPushTokenAsync({ projectId })).data
-          : (await Notifications.getExpoPushTokenAsync()).data;
+        const tokenData = projectId
+          ? await Notifications.getExpoPushTokenAsync({ projectId })
+          : await Notifications.getExpoPushTokenAsync();
+        const token = tokenData.data;
         if (cancelled || !token) {
           if (__DEV__) console.warn('[push] token vazio');
           return;
