@@ -173,6 +173,12 @@ export default function SearchScreen() {
     setManualTerm('');
   };
 
+  const clearAllFilters = () => {
+    setManualCategories([]);
+    setNearMeCity(null);
+    setOpenNowOnly(false);
+  };
+
   const loadMore = async () => {
     if (loadingMore || companies.length >= total || selectedSlugs.length > 0 || openNowOnly || !!nearMeCity) return;
     setLoadingMore(true);
@@ -222,7 +228,29 @@ export default function SearchScreen() {
               paddingBottom: 110 + Math.max(insets.bottom, 10),
             }}
           >
-            {nearMeCity && (
+            {selectedCategories.length > 0 && (
+          <View style={styles.selectedChipsRow}>
+            {selectedCategories.map((cat) => (
+              <View key={cat._id} style={styles.chip}>
+                <Ionicons name="pricetag-outline" size={14} color={colors.primary} />
+                <Text style={styles.chipText}>{cat.name}</Text>
+                <TouchableOpacity
+                  onPress={() => setManualCategories(selectedSlugs.filter((s) => s !== cat.slug))}
+                  hitSlop={8}
+                  accessibilityLabel={`Remover filtro ${cat.name}`}
+                >
+                  <Ionicons name="close-circle" size={18} color={colors.primary} />
+                </TouchableOpacity>
+              </View>
+            ))}
+            <TouchableOpacity style={styles.clearAllButton} onPress={clearAllFilters}>
+              <Ionicons name="trash-outline" size={14} color={colors.textSecondary} />
+              <Text style={styles.clearAllText}>Limpar tudo</Text>
+            </TouchableOpacity>
+          </View>
+        )}
+
+        {nearMeCity && (
               <View style={styles.chip}>
                 <Ionicons name="location" size={14} color={colors.primary} />
                 <Text style={styles.chipText}>Perto de mim: {nearMeCity}</Text>
@@ -282,6 +310,13 @@ export default function SearchScreen() {
                 );
               })}
             </ScrollView>
+
+            {(nearMeCity || openNowOnly) && selectedCategories.length === 0 && (
+              <TouchableOpacity style={styles.clearAllButton} onPress={clearAllFilters}>
+                <Ionicons name="trash-outline" size={14} color={colors.textSecondary} />
+                <Text style={styles.clearAllText}>Limpar todos os filtros</Text>
+              </TouchableOpacity>
+            )}
 
             {companies.length > 0 && (
               <View style={styles.group}>
@@ -395,17 +430,24 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     nearMeTextActive: {
       color: colors.background,
     },
-    chipsScroll: {
+    selectedChipsRow: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
       gap: Spacing.two,
-      paddingVertical: Spacing.one,
+      marginBottom: Spacing.two,
+    },
+    chipsScroll: {
+      gap: Spacing.three,
+      paddingVertical: Spacing.two,
+      marginBottom: Spacing.two,
     },
     categoryChip: {
       backgroundColor: colors.surface,
       borderRadius: Radius.pill,
       borderWidth: 1,
       borderColor: colors.border,
-      paddingVertical: 6,
-      paddingHorizontal: 14,
+      paddingVertical: 10,
+      paddingHorizontal: 18,
       marginRight: Spacing.two,
     },
     categoryChipSelected: {
@@ -434,8 +476,9 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
       borderRadius: Radius.tag,
       borderWidth: 1,
       borderColor: colors.primary,
-      paddingVertical: 4,
-      paddingHorizontal: 10,
+      paddingVertical: 8,
+      paddingHorizontal: 12,
+      marginBottom: Spacing.two,
     },
     chipText: {
       color: colors.primary,
@@ -492,6 +535,20 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     loadMoreText: {
       color: colors.primary,
       fontSize: Type.subtitle,
+      fontWeight: '600',
+    },
+    clearAllButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      alignSelf: 'flex-start',
+      gap: 6,
+      paddingVertical: 6,
+      paddingHorizontal: 4,
+      marginBottom: Spacing.two,
+    },
+    clearAllText: {
+      color: colors.textSecondary,
+      fontSize: Type.small,
       fontWeight: '600',
     },
     emptyText: {
