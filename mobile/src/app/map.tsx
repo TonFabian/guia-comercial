@@ -1,4 +1,5 @@
 import { router } from 'expo-router';
+import * as Location from 'expo-location';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
@@ -23,7 +24,23 @@ export default function MapScreen() {
       try {
         const page = await getCompanies(1, 100);
         if (cancelled) return;
-        setCompanies(page.items);
+        const hydrated = await Promise.all(
+          page.items.map(async (c) => {
+            if (typeof c.latitude === 'number' && typeof c.longitude === 'number') return c;
+            if (!c.address) return c;
+            try {
+              const results = await Location.geocodeAsync([c.address, c.city].filter(Boolean).join(', '));
+              if (results.length > 0) {
+                return { ...c, latitude: results[0].latitude, longitude: results[0].longitude };
+              }
+            } catch {
+              // ignora
+            }
+            return c;
+          }),
+        );
+        if (cancelled) return;
+        setCompanies(hydrated);
       } finally {
         if (!cancelled) setLoading(false);
       }
