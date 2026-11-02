@@ -2,7 +2,7 @@ import { StyleSheet, Text, TouchableOpacity } from 'react-native';
 
 import { Spacing, Type } from '@/constants/theme';
 import { useThemeColors } from '@/hooks/use-theme-colors';
-import { comingSoon } from '@/utils/links';
+import { router } from 'expo-router';
 
 export function AnnounceCta() {
   const colors = useThemeColors();
@@ -11,7 +11,7 @@ export function AnnounceCta() {
     <TouchableOpacity
       style={styles.ctaContainer}
       activeOpacity={0.7}
-      onPress={() => comingSoon('Anuncie no Guia')}>
+      onPress={() => router.push('/announce')}>
       <Text style={styles.ctaText}>
         Quer sua empresa aqui? <Text style={styles.ctaHighlight}>Clique aqui e anuncie no Guia!</Text>
       </Text>
