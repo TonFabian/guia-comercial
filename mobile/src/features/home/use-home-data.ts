@@ -82,6 +82,16 @@ export function useHomeData() {
           // Tratamento de erro 401/403: usuário não autenticado → redirecionar
           // para login com mensagem amigável, sem quebrar a UI.
           if (error.status === 401 || error.status === 403) {
+            if (authState.state === 'signedIn') {
+              // Sessão Clerk válida, mas o backend rejeitou o token (ex.: secret
+              // key inválida). Não redirecionar em loop — exibe erro.
+              setState((prev) => ({
+                ...prev,
+                loading: false,
+                error: 'Não foi possível carregar os dados. Verifique a configuração do servidor.',
+              }));
+              return;
+            }
             setState({
               ...INITIAL,
               error: 'Sessão expirada. Por favor, faça login novamente.',
@@ -90,6 +100,7 @@ export function useHomeData() {
             timeoutId = setTimeout(() => {
               router.replace('/(auth)/sign-in');
             }, 1500);
+            return;
           }
           // Outros erros: manter estado de erro, mas não quebrar a UI.
           // Note: não espalhamos INITIAL aqui para não resetar loading para true.
