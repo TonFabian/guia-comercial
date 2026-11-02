@@ -14,6 +14,7 @@ import * as Location from 'expo-location';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Radius, Spacing, Type } from '@/constants/theme';
+import { isOpenNow, parseOpeningHours } from '@/features/company/opening-hours';
 import { openCompanyDetails } from '@/features/company/open-company';
 import { useThemeColors } from '@/hooks/use-theme-colors';
 import {
@@ -49,6 +50,7 @@ export default function SearchScreen() {
 
   const [nearMeCity, setNearMeCity] = useState<string | null>(null);
   const [nearMeLoading, setNearMeLoading] = useState(false);
+  const [openNowOnly, setOpenNowOnly] = useState(false);
 
   function normalizeCity(value: string | null | undefined): string {
     if (!value) return '';
@@ -99,7 +101,7 @@ export default function SearchScreen() {
         const allCategories = await getCategories();
 
         let pageResult: { items: Company[]; total: number };
-        const filtering = selectedSlugs.length > 0;
+        const filtering = selectedSlugs.length > 0 || openNowOnly || !!nearMeCity;
 
         if (filtering) {
           // Múltiplas categorias: carrega tudo e filtra no cliente.
@@ -129,6 +131,13 @@ export default function SearchScreen() {
           const target = normalizeCity(nearMeCity);
           finalItems = finalItems.filter((c) => normalizeCity(c.city) === target);
         }
+        if (openNowOnly) {
+          const now = new Date();
+          finalItems = finalItems.filter((c) => {
+            const status = isOpenNow(parseOpeningHours(c.openingHours ?? []), now);
+            return status === true;
+          });
+        }
         setCompanies(finalItems);
         setTotal(finalItems.length);
         setLoading(false);
@@ -141,7 +150,7 @@ export default function SearchScreen() {
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [term, selectedSlugs, nearMeCity]);
+  }, [term, selectedSlugs, nearMeCity, openNowOnly]);
 
   const selectedCategories = useMemo(
     () => categories.filter((category) => selectedSlugs.includes(category.slug)),
@@ -166,7 +175,7 @@ export default function SearchScreen() {
   };
 
   const loadMore = async () => {
-    if (loadingMore || companies.length >= total || selectedSlugs.length > 0) return;
+    if (loadingMore || companies.length >= total || selectedSlugs.length > 0 || openNowOnly || !!nearMeCity) return;
     setLoadingMore(true);
     const nextPage = page + 1;
     try {
@@ -250,6 +259,16 @@ export default function SearchScreen() {
               <Ionicons name="navigate" size={16} color={nearMeCity ? colors.background : colors.primary} />
               <Text style={[styles.nearMeText, nearMeCity && styles.nearMeTextActive]}>
                 {nearMeLoading ? 'Localizando…' : nearMeCity ? 'Perto de mim ✓' : 'Perto de mim'}
+              </Text>
+            </TouchableOpacity>
+
+            <TouchableOpacity
+              style={[styles.nearMeButton, openNowOnly && styles.nearMeButtonActive]}
+              onPress={() => setOpenNowOnly((v) => !v)}
+            >
+              <Ionicons name="time" size={16} color={openNowOnly ? colors.background : colors.primary} />
+              <Text style={[styles.nearMeText, openNowOnly && styles.nearMeTextActive]}>
+                {openNowOnly ? 'Aberto agora ✓' : 'Aberto agora'}
               </Text>
             </TouchableOpacity>
 
