@@ -20,7 +20,6 @@ import { useThemeColors } from '@/hooks/use-theme-colors';
 import {
   getCategories,
   getCompanies,
-  getCompaniesByCategory,
   searchCompanies,
 } from '@/services/api';
 import { isApiConfigured } from '@/services/http';
@@ -106,8 +105,8 @@ export default function SearchScreen() {
         if (filtering) {
           // Múltiplas categorias: carrega tudo e filtra no cliente.
           const r = term
-            ? await searchCompanies(term, 1, 1000)
-            : await getCompanies(1, 1000);
+            ? await searchCompanies(term, 1, 100)
+            : await getCompanies(1, 100);
           const slugSet = new Set(selectedSlugs);
           const items = r.items.filter((c) => {
             const cat = typeof c.category === 'string' ? c.category : c.category?._id ?? c.category?.slug;
@@ -331,9 +330,13 @@ export default function SearchScreen() {
                 </Text>
               </TouchableOpacity>
             )}
-            {filteredCategories.length === 0 && companies.length === 0 && (
+            {companies.length === 0 && !loading && (
               <Text style={styles.emptyText}>
-                {term
+                {nearMeCity
+                  ? `Nenhuma empresa encontrada perto de ${nearMeCity}.`
+                  : openNowOnly
+                  ? 'Nenhuma empresa aberta agora.'
+                  : term
                   ? `Nada encontrado para "${term}".`
                   : 'Pesquise por empresas, produtos ou serviços da cidade.'}
               </Text>
