@@ -63,6 +63,8 @@ export const createCompanySchema = z.object({
   whatsapp: z.string().optional(),
   address: z.string().optional(),
   city: z.string().optional(),
+  latitude: z.number().optional(),
+  longitude: z.number().optional(),
   logo: z.string().optional(),
   cover: z.string().optional(),
   gallery: z.array(z.string()).optional(),

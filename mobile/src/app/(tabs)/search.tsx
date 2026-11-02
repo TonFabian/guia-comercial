@@ -1,5 +1,5 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { useLocalSearchParams } from 'expo-router';
+import { router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
@@ -200,7 +200,13 @@ export default function SearchScreen() {
   return (
     <View style={styles.root}>
       <SafeAreaView style={styles.safeArea} edges={['top']}>
-        <Text style={styles.title}>Buscar</Text>
+        <View style={styles.titleRow}>
+          <Text style={styles.title}>Buscar</Text>
+          <TouchableOpacity onPress={() => router.push('/map')} style={styles.mapButton}>
+            <Ionicons name="map-outline" size={18} color={colors.primary} />
+            <Text style={styles.mapButtonText}>Mapa</Text>
+          </TouchableOpacity>
+        </View>
         <View style={styles.searchBar}>
           <Ionicons name="search" size={18} color={colors.textSecondary} />
           <TextInput
@@ -391,9 +397,30 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
       paddingTop: 12,
       gap: Spacing.three,
     },
+    titleRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+    },
     title: {
       color: colors.text,
       fontSize: Type.headline,
+      fontWeight: '700',
+    },
+    mapButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 4,
+      paddingVertical: 6,
+      paddingHorizontal: 10,
+      borderRadius: Radius.chip,
+      backgroundColor: colors.surface,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    mapButtonText: {
+      color: colors.primary,
+      fontSize: Type.small,
       fontWeight: '700',
     },
     searchBar: {

@@ -77,6 +77,8 @@ async function seed(): Promise<void> {
       whatsapp: '+55 85 99999-0001',
       address: 'Av. Brasil, 1520 — Centro',
       city: 'Fortaleza',
+      latitude: -3.7319,
+      longitude: -38.5267,
       registry: 'CREA-CE 12345',
       isFeatured: true,
       rating: 4.7,

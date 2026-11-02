@@ -64,9 +64,27 @@ export async function getCompanyById(id: string) {
   return CompanyModel.findById(id).populate('category').lean();
 }
 
+import { geocodeAddress } from '../utils/geocode.js';
+
 export async function createCompany(dto: CreateCompanyDto) {
+  let latitude = dto.latitude;
+  let longitude = dto.longitude;
+
+  if ((latitude === undefined || longitude === undefined) && dto.address) {
+    const coords = await geocodeAddress(dto.address, undefined);
+    if (coords) {
+      latitude = coords.latitude;
+      longitude = coords.longitude;
+    }
+  }
+
   try {
-    return await CompanyModel.create({ ...dto, category: dto.category });
+    return await CompanyModel.create({
+      ...dto,
+      category: dto.category,
+      latitude,
+      longitude,
+    });
   } catch (error) {
     if ((error as { code?: number }).code === 11000) {
       throw Object.assign(new Error('slug já existe'), { statusCode: 409 });
@@ -76,7 +94,21 @@ export async function createCompany(dto: CreateCompanyDto) {
 }
 
 export async function updateCompany(id: string, dto: UpdateCompanyDto) {
-  return CompanyModel.findByIdAndUpdate(id, dto, { new: true, runValidators: true })
+  const update: UpdateCompanyDto & { latitude?: number; longitude?: number } = { ...dto };
+
+  if (
+    (update.latitude === undefined || update.longitude === undefined) &&
+    typeof update.address === 'string' &&
+    update.address.length > 0
+  ) {
+    const coords = await geocodeAddress(update.address);
+    if (coords) {
+      update.latitude = coords.latitude;
+      update.longitude = coords.longitude;
+    }
+  }
+
+  return CompanyModel.findByIdAndUpdate(id, update, { new: true, runValidators: true })
     .populate('category')
     .lean();
 }
