@@ -40,8 +40,11 @@ export default function SearchScreen() {
   const [manualTerm, setManualTerm] = useState<string | null>(null);
   const term = (manualTerm ?? routeTerm).trim();
 
-  const [manualCategory, setManualCategory] = useState<string | null>(null);
-  const categorySlug = (manualCategory ?? routeCategory).trim();
+  const [manualCategories, setManualCategories] = useState<string[] | null>(null);
+  const selectedSlugs: string[] = useMemo(
+    () => manualCategories ?? (routeCategory ? [routeCategory] : []),
+    [manualCategories, routeCategory],
+  );
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [companies, setCompanies] = useState<Company[]>([]);
@@ -60,19 +63,23 @@ export default function SearchScreen() {
         const allCategories = await getCategories();
 
         let pageResult: { items: Company[]; total: number };
-        if (term && categorySlug) {
-          const [byTerm, byCategory] = await Promise.all([
-            searchCompanies(term, 1, pageSize),
-            getCompaniesByCategory(categorySlug, 1, pageSize),
-          ]);
-          const categoryIds = new Set(byCategory.items.map((company) => company._id));
-          const items = byTerm.items.filter((company) => categoryIds.has(company._id));
+        const filtering = selectedSlugs.length > 0;
+
+        if (filtering) {
+          // Múltiplas categorias: carrega tudo e filtra no cliente.
+          const r = term
+            ? await searchCompanies(term, 1, 1000)
+            : await getCompanies(1, 1000);
+          const slugSet = new Set(selectedSlugs);
+          const items = r.items.filter((c) => {
+            const cat = typeof c.category === 'string' ? c.category : c.category?._id ?? c.category?.slug;
+            // category may be slug or id; match by slug via categories lookup
+            const catSlug = categories.find((x) => x._id === cat)?.slug ?? (typeof c.category === 'string' ? c.category : c.category?.slug);
+            return slugSet.has(catSlug ?? '');
+          });
           pageResult = { items, total: items.length };
         } else if (term) {
           const r = await searchCompanies(term, 1, pageSize);
-          pageResult = { items: r.items, total: r.total };
-        } else if (categorySlug) {
-          const r = await getCompaniesByCategory(categorySlug, 1, pageSize);
           pageResult = { items: r.items, total: r.total };
         } else {
           const r = await getCompanies(1, pageSize);
@@ -93,41 +100,38 @@ export default function SearchScreen() {
       cancelled = true;
       clearTimeout(timer);
     };
-  }, [term, categorySlug]);
+  }, [term, selectedSlugs]);
 
-  const selectedCategory = useMemo(
-    () => categories.find((category) => category.slug === categorySlug) ?? null,
-    [categories, categorySlug],
+  const selectedCategories = useMemo(
+    () => categories.filter((category) => selectedSlugs.includes(category.slug)),
+    [categories, selectedSlugs],
   );
 
   const filteredCategories = useMemo(() => {
-    if (!term) return categories;
-    return categories.filter((category) =>
-      category.name.toLowerCase().includes(term.toLowerCase()),
-    );
-  }, [categories, term]);
+    let result = categories;
+    if (term) {
+      result = result.filter((category) =>
+        category.name.toLowerCase().includes(term.toLowerCase()),
+      );
+    }
+    if (selectedSlugs.length > 0) {
+      result = result.filter((category) => !selectedSlugs.includes(category.slug));
+    }
+    return result;
+  }, [categories, term, selectedSlugs]);
 
   const clearSearch = () => {
     setManualTerm('');
   };
 
   const loadMore = async () => {
-    if (loadingMore || companies.length >= total) return;
+    if (loadingMore || companies.length >= total || selectedSlugs.length > 0) return;
     setLoadingMore(true);
     const nextPage = page + 1;
     try {
       let items: Company[] = [];
-      if (term && categorySlug) {
-        const [byTerm, byCategory] = await Promise.all([
-          searchCompanies(term, nextPage, pageSize),
-          getCompaniesByCategory(categorySlug, nextPage, pageSize),
-        ]);
-        const categoryIds = new Set(byCategory.items.map((c) => c._id));
-        items = byTerm.items.filter((c) => categoryIds.has(c._id));
-      } else if (term) {
+      if (term) {
         items = (await searchCompanies(term, nextPage, pageSize)).items;
-      } else if (categorySlug) {
-        items = (await getCompaniesByCategory(categorySlug, nextPage, pageSize)).items;
       } else {
         items = (await getCompanies(nextPage, pageSize)).items;
       }
@@ -160,17 +164,21 @@ export default function SearchScreen() {
           )}
         </View>
 
-        {selectedCategory && (
-          <View style={styles.chip}>
-            <Ionicons name="pricetag-outline" size={14} color={colors.primary} />
-            <Text style={styles.chipText}>{selectedCategory.name}</Text>
-            <TouchableOpacity
-              onPress={() => setManualCategory('')}
-              hitSlop={8}
-              accessibilityLabel={`Remover filtro ${selectedCategory.name}`}
-            >
-              <Ionicons name="close-circle" size={16} color={colors.primary} />
-            </TouchableOpacity>
+        {selectedCategories.length > 0 && (
+          <View style={styles.chipsRow}>
+            {selectedCategories.map((cat) => (
+              <View key={cat._id} style={styles.chip}>
+                <Ionicons name="pricetag-outline" size={14} color={colors.primary} />
+                <Text style={styles.chipText}>{cat.name}</Text>
+                <TouchableOpacity
+                  onPress={() => setManualCategories(selectedSlugs.filter((s) => s !== cat.slug))}
+                  hitSlop={8}
+                  accessibilityLabel={`Remover filtro ${cat.name}`}
+                >
+                  <Ionicons name="close-circle" size={16} color={colors.primary} />
+                </TouchableOpacity>
+              </View>
+            ))}
           </View>
         )}
 
@@ -191,7 +199,13 @@ export default function SearchScreen() {
                     key={category._id}
                     style={styles.row}
                     activeOpacity={0.7}
-                    onPress={() => setManualCategory(category.slug)}
+                    onPress={() => {
+                      if (selectedSlugs.includes(category.slug)) {
+                        setManualCategories(selectedSlugs.filter((s) => s !== category.slug));
+                      } else {
+                        setManualCategories([...selectedSlugs, category.slug]);
+                      }
+                    }}
                   >
                     <Ionicons name="grid-outline" size={18} color={colors.primary} />
                     <Text style={styles.rowTitle}>{category.name}</Text>
@@ -283,6 +297,11 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
       color: colors.text,
       fontSize: Type.subtitle,
       paddingVertical: 0,
+    },
+    chipsRow: {
+      flexDirection: 'row',
+      flexWrap: 'wrap',
+      gap: Spacing.two,
     },
     chip: {
       flexDirection: 'row',
