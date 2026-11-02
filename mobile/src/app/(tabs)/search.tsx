@@ -224,6 +224,13 @@ export default function SearchScreen() {
         ) : (
           <ScrollView
             showsVerticalScrollIndicator={false}
+            onScroll={(e) => {
+              const { contentOffset, contentSize, layoutMeasurement } = e.nativeEvent;
+              if (contentOffset.y + layoutMeasurement.height >= contentSize.height - 200) {
+                void loadMore();
+              }
+            }}
+            scrollEventThrottle={200}
             contentContainerStyle={{
               paddingBottom: 110 + Math.max(insets.bottom, 10),
             }}

@@ -56,6 +56,7 @@ async function seed(): Promise<void> {
     { name: 'Farmácia', slug: 'farmacia', icon: 'pill', order: 4 },
     { name: 'Beleza', slug: 'beleza', icon: 'content-cut', order: 5 },
     { name: 'Serviços', slug: 'servicos', icon: 'tools', order: 6 },
+    { name: 'Saúde', slug: 'saude', icon: 'hospital-building', order: 7 },
   ];
 
   const inseridas = await insertIfMissing(CategoryModel, categorias, 'slug');
@@ -189,9 +190,20 @@ async function seed(): Promise<void> {
         { name: 'Barba terapia', description: 'Toalha quente, oil e finalizado', price: 35 },
       ],
     },
+    {
+      name: 'Hospital Nilo Lima',
+      slug: 'hospital-nilo-lima',
+      description: 'Pronto atendimento municipal de Castelo do Piauí.',
+      category: categoriaPorSlug.get('saude'),
+      phone: '+55 86 3000-0000',
+      whatsapp: '+55 86 3000-0000',
+      address: 'Av. Principal, s/n — Centro',
+      city: 'Castelo do Piauí',
+      isVerified: true,
+      openingHours: ['Todos os dias: 00h às 23h59'],
+      services: ['Pronto atendimento', 'Emergência', 'Ambulatório'],
+    },
   ];
-
-  const inseridasEmpresas = await insertIfMissing(CompanyModel, empresas, 'slug');
   console.log(`Empresas inseridas: ${inseridasEmpresas}`);
 
   const empresaPorSlug = new Map(
