@@ -70,3 +70,4 @@ coverage/
 
 # agents
 .superpowers/
+.playwright-mcp/

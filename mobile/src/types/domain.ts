@@ -102,6 +102,9 @@ export interface User {
   role: 'user';
   lastSid?: string;
   lastSignInAt?: string;
+  favorites?: string[];
+  ownedCompanyIds?: string[];
+  preferences?: { notifications: boolean };
   createdAt?: string;
   updatedAt?: string;
 }
