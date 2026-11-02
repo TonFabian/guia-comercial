@@ -45,6 +45,13 @@ export const PUBLIC_UTILITIES: PublicUtility[] = [
     action: { kind: 'pharmacy' },
   },
   {
+    id: 'hospital',
+    title: 'Hospitais',
+    description: 'Pronto atendimento e emergências',
+    icon: 'hospital-building',
+    action: { kind: 'search', term: 'hospital' },
+  },
+  {
     id: 'fuel',
     title: 'Postos de Combustível',
     description: 'Onde abastecer e preços da cidade',
