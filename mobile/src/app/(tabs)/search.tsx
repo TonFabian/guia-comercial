@@ -1,5 +1,5 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { router, useLocalSearchParams } from 'expo-router';
+import { useLocalSearchParams } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
@@ -13,6 +13,7 @@ import {
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { GuiaColors, Radius, Spacing, Type } from '@/constants/theme';
+import { openCompanyDetails } from '@/features/company/open-company';
 import {
   getCategories,
   getCompanies,
@@ -160,10 +161,10 @@ export default function SearchScreen() {
                   <TouchableOpacity
                     key={company._id}
                     style={styles.row}
-                    activeOpacity={0.75}
-                    onPress={() => router.push(`/company/${company._id}`)}
+                    activeOpacity={0.7}
                     accessibilityRole="button"
-                    accessibilityLabel={`Abrir perfil de ${company.name}`}
+                    accessibilityLabel={`Ver detalhes de ${company.name}`}
+                    onPress={() => openCompanyDetails(company._id)}
                   >
                     <View style={styles.rowBody}>
                       <Text style={styles.rowTitle}>{company.name}</Text>

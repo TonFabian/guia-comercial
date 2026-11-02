@@ -6,6 +6,7 @@
     "@clerk/expo": "^4.14.0",
     "@expo/ui": "~58.0.21",
     "@expo/vector-icons": "^15.0.2",
+    "@react-native-async-storage/async-storage": "2.2.0",
     "expo": "~58.0.16",
     "expo-auth-session": "~58.0.14",
     "expo-blur": "~58.0.5",
@@ -38,15 +39,19 @@
     "@types/react": "~19.3.0",
     "eslint": "^9.0.0",
     "eslint-config-expo": "~58.0.4",
-    "typescript": "~6.0.3"
+    "patch-package": "^8.0.1",
+    "typescript": "~6.0.3",
+    "vitest": "^5.0.5"
   },
   "scripts": {
     "start": "expo start",
+    "postinstall": "patch-package",
     "reset-project": "node ./scripts/reset-project.js",
     "android": "expo start --android",
     "ios": "expo start --ios",
     "web": "expo start --web",
     "lint": "expo lint",
+    "test": "vitest run",
     "typecheck": "tsc --noEmit"
   },
   "private": true

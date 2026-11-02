@@ -1,11 +1,12 @@
-import type { ReactNode } from 'react';
-import { Stack, ThemeProvider as RouterThemeProvider } from 'expo-router';
 import { ClerkProvider } from '@clerk/expo';
 import { tokenCache } from '@clerk/expo/token-cache';
+import { ThemeProvider as RouterThemeProvider, Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
+import type { ReactNode } from 'react';
 
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
 import { DarkGuiTheme, GuiaColors } from '@/constants/theme';
+import { FavoritesProvider } from '@/features/favorites/favorites-provider';
 import { AuthProvider } from '@/providers/auth-provider';
 
 SplashScreen.preventAutoHideAsync();
@@ -33,13 +34,17 @@ export default function RootLayout() {
   return (
     <RouterThemeProvider value={DarkGuiTheme}>
       <AuthProviders>
-        <AnimatedSplashOverlay />
-        <Stack
-          screenOptions={{
-            headerShown: false,
-            contentStyle: { backgroundColor: GuiaColors.background },
-          }}
-        />
+        <FavoritesProvider>
+          <AnimatedSplashOverlay />
+          <Stack
+            screenOptions={{
+              headerShown: false,
+              contentStyle: { backgroundColor: GuiaColors.background },
+            }}
+          />
+          <Stack.Screen name="(tabs)" />
+          <Stack.Screen name="company/[id]" />
+        </FavoritesProvider>
       </AuthProviders>
     </RouterThemeProvider>
   );

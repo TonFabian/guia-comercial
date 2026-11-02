@@ -54,7 +54,7 @@ export default function ProfileScreen() {
     }
   };
 
-  const nomeExibido = user 
+  const nomeExibido = user
     ? [user.firstName, user.lastName].filter(Boolean).join(' ') || user.email
     : 'Visitante';
 
@@ -66,9 +66,7 @@ export default function ProfileScreen() {
           style={styles.avatarBox}
           activeOpacity={state === 'signedIn' ? 1 : 0.7}
           onPress={handleLoginPress}
-          accessibilityLabel={
-            state === 'signedIn' ? `Perfil de ${nomeExibido}` : 'Entrar na conta'
-          }
+          accessibilityLabel={state === 'signedIn' ? `Perfil de ${nomeExibido}` : 'Entrar na conta'}
         >
           {user?.imageUrl ? (
             <Image source={{ uri: user.imageUrl }} style={styles.avatarImagem} />
@@ -81,7 +79,7 @@ export default function ProfileScreen() {
           <Text style={styles.userHint}>
             {state === 'guest'
               ? 'Convidado — entre para ver contatos e cupons'
-              : user?.email ?? 'Faça login para salvar favoritos'}
+              : (user?.email ?? 'Faça login para salvar favoritos')}
           </Text>
         </TouchableOpacity>
         <View style={styles.menu}>
@@ -90,7 +88,8 @@ export default function ProfileScreen() {
               key={item.id}
               style={styles.menuItem}
               activeOpacity={0.7}
-              onPress={() => handleMenuPress(item)}>
+              onPress={() => handleMenuPress(item)}
+            >
               <Ionicons name={item.icon} size={20} color={GuiaColors.textSecondary} />
               <Text style={styles.menuLabel}>{item.label}</Text>
               <Ionicons name="chevron-forward" size={16} color={GuiaColors.textSecondary} />

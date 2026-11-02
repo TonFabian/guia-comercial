@@ -36,6 +36,7 @@ export const Overlays = {
   whiteSoft: 'rgba(255,255,255,0.25)',
   whiteMild: 'rgba(255,255,255,0.75)',
   whiteFaint: 'rgba(255,255,255,0.7)',
+  blackSoft: 'rgba(0,0,0,0.25)',
   amberTag: 'rgba(255, 193, 7, 0.2)',
   amberGlow: 'rgba(255, 193, 7, 0.14)',
   goldBorder: 'rgba(212, 175, 55, 0.45)',

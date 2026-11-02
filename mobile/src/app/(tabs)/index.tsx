@@ -12,13 +12,11 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { GuiaColors } from '@/constants/theme';
 import { GuestBanner } from '@/features/auth/guest-banner';
 import { AnnounceCta } from '@/features/home/announce-cta';
-import { BannerCarousel } from '@/features/home/banner-carousel';
 import { CategoryList } from '@/features/home/category-list';
-import { CouponList } from '@/features/home/coupon-list';
 import { FeaturedCompany } from '@/features/home/featured-company';
 import { Header } from '@/features/home/header';
 import { JobList } from '@/features/home/job-list';
-import { PublicUtilities } from '@/features/home/public-utilities';
+import { PublicUtilitySection } from '@/features/home/public-utility-section';
 import { SearchBar } from '@/features/home/search-bar';
 import { useHomeData } from '@/features/home/use-home-data';
 
@@ -26,8 +24,7 @@ import { useHomeData } from '@/features/home/use-home-data';
 const SHOW_COUPONS = false;
 
 export default function HomeScreen() {
-  const { loading, banners, categories, coupons, featuredCompany, jobs, error } =
-    useHomeData();
+  const { loading, categories, featuredCompany, jobs, pharmacy, error } = useHomeData();
   const insets = useSafeAreaInsets();
 
   // Se houve erro de auth (401), já o useHomeData redirecionou.
@@ -64,9 +61,7 @@ export default function HomeScreen() {
             <>
               <CategoryList categories={categories} />
               <FeaturedCompany company={featuredCompany} />
-              <BannerCarousel banners={banners} />
-              <PublicUtilities />
-              {SHOW_COUPONS ? <CouponList coupons={coupons} /> : null}
+              <PublicUtilitySection pharmacy={pharmacy} />
               <JobList jobs={jobs} />
               <AnnounceCta />
             </>
