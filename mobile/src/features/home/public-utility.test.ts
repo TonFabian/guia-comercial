@@ -31,6 +31,16 @@ describe('atalhos de utilidade pública', () => {
     }
   });
 
+  it('não expõe atalho de transporte público', () => {
+    const transportUtility = PUBLIC_UTILITIES.find((utility) =>
+      /ônibus|onibus|transporte|rotas urbanas/i.test(
+        `${utility.title} ${utility.description}`,
+      ),
+    );
+
+    expect(transportUtility).toBeUndefined();
+  });
+
   it('lista os telefones de emergência nacionais', () => {
     expect(EMERGENCY_PHONES.map((phone) => phone.number)).toEqual(['190', '193', '192']);
   });
@@ -59,12 +69,6 @@ describe('destino dos atalhos de utilidade pública', () => {
     const destination = resolveUtilityDestination(findUtility('fuel'), null);
 
     expect(destination).toEqual({ kind: 'search', term: 'posto de combustível' });
-  });
-
-  it('leva à busca de ônibus', () => {
-    const destination = resolveUtilityDestination(findUtility('bus'), null);
-
-    expect(destination).toEqual({ kind: 'search', term: 'ônibus' });
   });
 
   it('leva à busca de coleta de lixo', () => {

@@ -2,7 +2,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { router } from 'expo-router';
 
-import { Radius, Spacing, Type } from '@/constants/theme';
+import { Overlays, Radius, Spacing, Type } from '@/constants/theme';
 import { useThemeColors } from '@/hooks/use-theme-colors';
 import { useAuthState } from '@/providers/auth-provider';
 
@@ -45,7 +45,7 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
       gap: Spacing.two,
       marginHorizontal: 16,
       marginBottom: Spacing.four,
-      backgroundColor: colors.surfaceAlt,
+      backgroundColor: Overlays.amberGlow,
       borderColor: colors.primaryDim,
       borderWidth: 1,
       borderRadius: Radius.chip,

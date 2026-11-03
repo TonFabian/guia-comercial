@@ -1,25 +1,24 @@
+import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
+import { memo } from 'react';
 import {
+  FlatList,
   ListRenderItemInfo,
   Pressable,
   StyleSheet,
   Text,
-  TouchableOpacity,
   View,
 } from 'react-native';
 
 import { Overlays, Radius, Spacing, Type } from '@/constants/theme';
 import { useThemeColors } from '@/hooks/use-theme-colors';
 import type { Job } from '@/types/domain';
-import { companyId, companyLabel } from '@/types/domain';
-import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
-import { memo } from 'react';
-import { openCompanyDetails } from '../company/open-company';
+import { companyLabel } from '@/types/domain';
 import { SectionHeader } from './section-header';
 
 const JOB_TYPE_LABELS: Record<string, string> = {
-  CLT: 'Tempo integral',
-  'Part-time': 'Meio período',
+  CLT: 'Tempo Integral',
+  'Part-time': 'Meio Período',
 };
 
 function jobTypeLabel(type?: string) {
@@ -92,34 +91,14 @@ export function JobList({ jobs }: { jobs: Job[] }) {
   return (
     <View style={styles.section}>
       <SectionHeader title="Oportunidades na Cidade" />
-      <View style={styles.jobsList}>
-        {jobs.map((job) => {
-          const targetId = companyId(job.company);
-          return (
-            <View key={job._id} style={styles.jobItem}>
-              <View style={styles.jobInfo}>
-                <Text style={styles.jobRole}>{job.title}</Text>
-                <TouchableOpacity
-                  disabled={!targetId}
-                  activeOpacity={0.7}
-                  accessibilityRole="button"
-                  accessibilityLabel={`Ver empresa ${companyLabel(job.company)}`}
-                  onPress={() => targetId && openCompanyDetails(targetId)}
-                >
-                  <Text style={styles.jobCompany}>{companyLabel(job.company)}</Text>
-                </TouchableOpacity>
-              </View>
-              <TouchableOpacity
-                style={styles.jobButton}
-                activeOpacity={0.7}
-                onPress={() => router.push(`/job/${job._id}`)}
-              >
-                <Text style={styles.jobButtonText}>Ver Vaga</Text>
-              </TouchableOpacity>
-            </View>
-          );
-        })}
-      </View>
+      <FlatList
+        horizontal
+        data={jobs}
+        keyExtractor={jobKey}
+        renderItem={renderJob}
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.jobsContent}
+      />
     </View>
   );
 }

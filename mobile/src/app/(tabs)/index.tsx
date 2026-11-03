@@ -12,19 +12,21 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useThemeColors } from '@/hooks/use-theme-colors';
 import { GuestBanner } from '@/features/auth/guest-banner';
 import { AnnounceCta } from '@/features/home/announce-cta';
+import { BannerCarousel } from '@/features/home/banner-carousel';
 import { CategoryList } from '@/features/home/category-list';
 import { FeaturedCompany } from '@/features/home/featured-company';
 import { Header } from '@/features/home/header';
 import { JobList } from '@/features/home/job-list';
-import { PublicUtilitySection } from '@/features/home/public-utility-section';
+import { PublicUtilities } from '@/features/home/public-utilities';
 import { SearchBar } from '@/features/home/search-bar';
+import { SectionHeader } from '@/features/home/section-header';
 import { useHomeData } from '@/features/home/use-home-data';
 
 /** Cupons desativados a pedido do produto; flag mantém a seção reativável. */
 const SHOW_COUPONS = false;
 
 export default function HomeScreen() {
-  const { loading, categories, featuredCompany, jobs, pharmacy, error } = useHomeData();
+  const { loading, categories, banners, featuredCompany, jobs, error } = useHomeData();
   const insets = useSafeAreaInsets();
   const colors = useThemeColors();
   const styles = makeStyles(colors);
@@ -63,7 +65,13 @@ export default function HomeScreen() {
             <>
               <CategoryList categories={categories} />
               <FeaturedCompany company={featuredCompany} />
-              <PublicUtilitySection pharmacy={pharmacy} />
+              {banners.length > 0 ? (
+                <>
+                  <SectionHeader title="Promoções da Semana" />
+                  <BannerCarousel banners={banners} />
+                </>
+              ) : null}
+              <PublicUtilities />
               <JobList jobs={jobs} />
               <AnnounceCta />
             </>

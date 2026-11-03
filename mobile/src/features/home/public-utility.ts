@@ -66,13 +66,6 @@ export const PUBLIC_UTILITIES: PublicUtility[] = [
     action: { kind: 'emergency-phones' },
   },
   {
-    id: 'bus',
-    title: 'Ônibus e Transporte',
-    description: 'Linhas e horários do transporte urbano',
-    icon: 'bus-clock',
-    action: { kind: 'search', term: 'ônibus' },
-  },
-  {
     id: 'trash',
     title: 'Coleta de Lixo',
     description: 'Cronograma de coleta por bairro',

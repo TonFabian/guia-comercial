@@ -4,13 +4,13 @@ import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import MapView, { Marker } from 'react-native-maps';
 
-import { Radius, Spacing, Type } from '@/constants/theme';
+import { Type } from '@/constants/theme';
 import { getCompanies } from '@/services/api';
 import type { Company } from '@/types/domain';
 import { useThemeColors } from '@/hooks/use-theme-colors';
-import { openCompanyDetails } from '@/features/company/open-company';
+import { InteractiveMap } from '@/features/map/interactive-map';
+import type { MappableCompany } from '@/features/map/interactive-map.types';
 
 export default function MapScreen() {
   const colors = useThemeColors();
@@ -53,18 +53,9 @@ export default function MapScreen() {
   }, []);
 
   const withCoords = companies.filter(
-    (c) => typeof c.latitude === 'number' && typeof c.longitude === 'number',
+    (c): c is MappableCompany =>
+      typeof c.latitude === 'number' && typeof c.longitude === 'number',
   );
-
-  const initialRegion =
-    withCoords.length > 0
-      ? {
-          latitude: withCoords[0].latitude as number,
-          longitude: withCoords[0].longitude as number,
-          latitudeDelta: 0.1,
-          longitudeDelta: 0.1,
-        }
-      : { latitude: -3.7319, longitude: -38.5267, latitudeDelta: 0.1, longitudeDelta: 0.1 };
 
   if (loading) {
     return (
@@ -96,17 +87,7 @@ export default function MapScreen() {
             <Text style={styles.emptyText}>Nenhuma empresa com localização cadastrada.</Text>
           </View>
         ) : (
-          <MapView style={styles.map} initialRegion={initialRegion}>
-            {withCoords.map((company) => (
-              <Marker
-                key={company._id}
-                coordinate={{ latitude: company.latitude as number, longitude: company.longitude as number }}
-                title={company.name}
-                description={company.address ?? undefined}
-                onPress={() => openCompanyDetails(company._id)}
-              />
-            ))}
-          </MapView>
+          <InteractiveMap companies={withCoords} />
         )}
       </SafeAreaView>
     </View>
@@ -121,7 +102,6 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     topButton: { paddingVertical: 6, paddingHorizontal: 10 },
     topButtonText: { color: colors.primary, fontSize: Type.base, fontWeight: '600' },
     title: { color: colors.text, fontSize: Type.headline, fontWeight: '700' },
-    map: { flex: 1 },
     center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 20 },
     emptyText: { color: colors.textSecondary, fontSize: Type.base, textAlign: 'center' },
   });

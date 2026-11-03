@@ -26,6 +26,7 @@ import {
   Spacing,
   Type,
 } from '@/constants/theme';
+import { useFavorites } from '@/features/favorites/favorites-provider';
 import { ContactHintRow } from '@/features/home/contact-hidden-hint';
 import { SectionHeader } from '@/features/home/section-header';
 import { useThemeColors } from '@/hooks/use-theme-colors';
@@ -125,8 +126,9 @@ export function CompanyDetailScreen({ companyId }: { companyId: string }) {
   const styles = makeStyles(colors);
   const insets = useSafeAreaInsets();
   const { company, loading, error } = useCompanyDetail(companyId);
+  const { isFavorite, toggleFavorite } = useFavorites();
   const details = useMemo(() => (company ? buildCompanyDetails(company) : null), [company]);
-  const [favorite, setFavorite] = useState(false);
+  const favorite = company ? isFavorite(company._id) : false;
 
   function goBack() {
     if (router.canGoBack()) {
@@ -137,8 +139,9 @@ export function CompanyDetailScreen({ companyId }: { companyId: string }) {
     router.replace('/');
   }
 
-  function toggleFavorite() {
-    setFavorite((current) => !current);
+  function handleToggleFavorite() {
+    if (!company) return;
+    toggleFavorite(company);
     void Haptics.selectionAsync().catch(() => undefined);
   }
 
@@ -339,7 +342,7 @@ export function CompanyDetailScreen({ companyId }: { companyId: string }) {
             favorite && styles.favoriteActive,
             pressed && styles.pressed,
           ]}
-          onPress={toggleFavorite}
+          onPress={handleToggleFavorite}
           hitSlop={8}
           accessibilityRole="button"
           accessibilityLabel={favorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
@@ -525,13 +528,15 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
       lineHeight: 18,
     },
     mapButton: {
-      paddingHorizontal: Spacing.one,
-      paddingVertical: 2,
+      backgroundColor: colors.primary,
+      borderRadius: Radius.pill,
+      paddingVertical: Spacing.one + 2,
+      paddingHorizontal: Spacing.three,
     },
     mapAction: {
-      color: colors.primary,
+      color: colors.background,
       fontSize: Type.small,
-      fontWeight: '700',
+      fontWeight: '800',
     },
     section: {
       marginBottom: Spacing.four,
