@@ -164,3 +164,19 @@ export const createReviewSchema = z.object({
 });
 
 export type CreateReviewDto = z.infer<typeof createReviewSchema>;
+
+// ---------------------------------------------------------------------------
+// Notice (Mural de Avisos)
+// ---------------------------------------------------------------------------
+
+export const createNoticeSchema = z.object({
+  title: z.string().min(1),
+  body: z.string().min(1),
+  type: z.enum(['general', 'alert', 'health']).optional(),
+  startsAt: z.string().optional(),
+  expiresAt: z.string().optional(),
+  active: z.boolean().optional(),
+});
+
+export type CreateNoticeDto = z.infer<typeof createNoticeSchema>;
+export type UpdateNoticeDto = Partial<CreateNoticeDto>;

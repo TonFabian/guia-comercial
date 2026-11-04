@@ -12,8 +12,10 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { useThemeColors } from '@/hooks/use-theme-colors';
 import { GuestBanner } from '@/features/auth/guest-banner';
-import type { AutonomousProfessional } from '@/types/domain';
+import type { AutonomousProfessional, Company, Notice } from '@/types/domain';
 import { AutonomousProfessionals } from '@/features/home/autonomous-professionals';
+import { NoticesCarousel } from '@/features/home/notices-carousel';
+import { OtherCompanies } from '@/features/home/other-companies';
 import { AnnounceCta } from '@/features/home/announce-cta';
 import { BannerCarousel } from '@/features/home/banner-carousel';
 import { CategoryList } from '@/features/home/category-list';
@@ -35,13 +37,24 @@ export default function HomeScreen() {
   const styles = makeStyles(colors);
 
   const [professionals, setProfessionals] = useState<AutonomousProfessional[]>([]);
+  const [notices, setNotices] = useState<Notice[]>([]);
+  const [otherCompanies, setOtherCompanies] = useState<Company[]>([]);
+
   useEffect(() => {
     let cancelled = false;
     (async () => {
       try {
-        const { getAutonomousProfessionals } = await import('@/services/api');
-        const list = await getAutonomousProfessionals();
-        if (!cancelled) setProfessionals(list);
+        const { getAutonomousProfessionals, getNotices, getCompanies } = await import('@/services/api');
+        const [pros, nts, page] = await Promise.all([
+          getAutonomousProfessionals(),
+          getNotices(),
+          getCompanies(1, 50),
+        ]);
+        if (!cancelled) {
+          setProfessionals(pros);
+          setNotices(nts);
+          setOtherCompanies(page.items.filter((c) => !c.isFeatured));
+        }
       } catch {
         // ignora
       }
@@ -85,6 +98,7 @@ export default function HomeScreen() {
             <>
               <CategoryList categories={categories} />
               <FeaturedCompany company={featuredCompany} />
+              <OtherCompanies companies={otherCompanies} />
               {banners.length > 0 ? (
                 <>
                   <SectionHeader title="Promoções da Semana" />
@@ -94,6 +108,7 @@ export default function HomeScreen() {
               <PublicUtilities />
               <JobList jobs={jobs} />
               <AutonomousProfessionals professionals={professionals} />
+              <NoticesCarousel notices={notices} />
               <AnnounceCta />
             </>
           )}

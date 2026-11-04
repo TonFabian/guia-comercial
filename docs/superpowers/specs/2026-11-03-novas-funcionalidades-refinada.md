@@ -11,13 +11,13 @@
 |---|---|---|
 | "Outras Empresas" (listagem gratuita) | `Company.isFeatured` já diferencia destaque vs. resto; busca lista todas. | Não conflita. Reaproveita `isFeatured=false`. |
 | "Mural de Avisos" | Existe "Dicas & Utilidade Pública" (atalhos) + push notifications (campanhas). | Parcial: mural é um quadro persistente; push é alerta. Complementares, mas precisam de entidade `Notice`. |
-| "Profissionais Autônomos" | Categoria "Serviços" existe; sem entidade dedicada. | Conflito de modelagem: nova entidade vs. flag/categoria em `Company`. |
-| "Botão Compartilhar" | **Já implementado** (`shareCompany` em `utils/links.ts`, usado no detalhe). | Redundante — não refazer. |
-| Hierarquia da Home | Atual: Header → Busca → Convidado → Categorias → Destaque → Utilidade → Vagas → CTA. | Reordenação aceitável, mas "Sem Transporte Público" contradiz o atalho "Ônibus e Transporte" existente (manter). |
+| "Profissionais Autônomos" | ✅ Implementado como entidade dedicada `AutonomousProfessional` (decisão: abordagem B). | Resolvido — não mais conflito. |
+| "Botão Compartilhar" | ✅ Já implementado (`shareCompany` em `utils/links.ts`, usado no detalhe). | Redundante — não refazer. |
+| Hierarquia da Home | Atual: Header → Busca → Convidado → Categorias → Destaque → Utilidade → Vagas → CTA. | Reordenação aceitável. Transporte Público removido (decisão do mantenedor). |
 
 ## 2. Funcionalidades refinadas
 
-### 2.1 "Outras Empresas & Serviços Locais"
+### 2.1 "Outras Empresas & Serviços Locais" (PENDENTE)
 
 - **Dados:** reutiliza `Company` com `isFeatured === false`. Sem nova entidade.
 - **API:** `GET /companies?featured=false&page=&pageSize=` (backend já suporta `featured`).
@@ -26,7 +26,7 @@
 - **A11y:** `accessibilityLabel` por card; `accessibilityRole="button"`.
 - **Não inclui** badge "Destaque" nem galeria expansível (conforme spec).
 
-### 2.2 Mural de Avisos & Comunicados Locais
+### 2.2 Mural de Avisos & Comunicados Locais (PENDENTE)
 
 - **Dados:** nova entidade `Notice { _id, title, body, type: 'general'|'alert'|'health', startsAt, expiresAt, active }`.
 - **API:** `GET /notices?active=true` (público), `POST/PUT/DELETE /notices` (admin, auth).
@@ -34,38 +34,36 @@
 - **Estados:** loading, vazio ("Sem avisos no momento"), expiração automática por `expiresAt`.
 - **Relação com push:** push = alerta imediato; mural = referência persistente. Complementares.
 
-### 2.3 Guia de Profissionais Autônomos
+### 2.3 Guia de Profissionais Autônomos (✅ IMPLEMENTADO)
 
-- **Dados:** reutiliza `Company` com `isAutonomous: boolean` (novo campo) e categoria "Autônomos" (novo slug). Sem nova entidade (evita duplicação de CRUD, busca, favoritos).
-- **API:** `GET /companies?autonomous=true` (filtro no backend) ou filtro client-side por `isAutonomous`.
-- **Mobile:** chip `[🧰 Autônomos]` na busca + seção dedicada na Home com cards compactos (foto circular, nome, especialidade, botão WhatsApp).
-- **Estados:** vazio, loading.
+- **Dados:** entidade dedicada `AutonomousProfessional` (name, slug, specialty, description, phone, whatsapp, photo, city, rating, ratingCount, ownerClerkId).
+- **API:** `GET /autonomous-professionals`, `GET/POST/PUT/DELETE /autonomous-professionals/:id` (auth + ownership).
+- **Mobile:** seção "Profissionais Independentes" na Home + tela de detalhe `app/autonomous/[id].tsx`.
+- **Status:** concluído (branch merged em master).
 
-### 2.4 Botão de Compartilhar Empresa
+### 2.4 Botão de Compartilhar Empresa (✅ IMPLEMENTADO)
 
-- **Status:** ✅ já implementado (`shareCompany` em `utils/links.ts`, usado em `company/[id].tsx` via `handleAction('share')`). Nenhuma ação necessária.
+- `shareCompany` em `utils/links.ts`, usado em `company/[id].tsx` via `handleAction('share')`. Nenhuma ação necessária.
 
 ### 2.5 Hierarquia da Home (proposta)
 
 1. Header / Localização
 2. Barra de Pesquisa
 3. Banner Informativo (Convidado)
-4. Categorias Rápidas (manter "Transporte Público" — já existe como atalho)
+4. Categorias Rápidas (Transporte Público removido)
 5. ⭐ Empresas em Destaque
-6. 🏪 Outras Empresas (listagem gratuita)
+6. 🏪 Outras Empresas (listagem gratuita) *(pendente)*
 7. 🔥 Promoções da Semana / Banners
 8. 📞 Telefones Úteis & Serviços
-9. 📢 Mural de Avisos Úteis
-10. 🧰 Profissionais Autônomos
+9. 📢 Mural de Avisos Úteis *(pendente)*
+10. 🧰 Profissionais Autônomos ✅
 11. 💼 Oportunidades na Cidade
 12. Rodapé (Anuncie Conosco)
 
-## 3. Abordagens (decisão pendente)
+## 3. Abordagens (decisões)
 
-### 3.1 Profissionais Autônomos — nova entidade vs. flag em Company
-
-- **A (recomendada):** flag `isAutonomous` + categoria "Autônomos" em `Company`. Reaproveita busca, favoritos, detalhe, admin CRUD. Menos código.
-- **B:** entidade dedicada `AutonomousProfessional`. Mais campos específicos (especialidade, foto), mas duplica CRUD, busca, favoritos, detalhe.
+### 3.1 Profissionais Autônomos — ✅ Decisão: entidade dedicada (B)
+- Implementado como `AutonomousProfessional` (não reutiliza `Company`).
 
 ### 3.2 Mural de Avisos — nova entidade vs. reuso de Banner
 
@@ -74,7 +72,7 @@
 
 ### 3.3 "Outras Empresas" — seção separada vs. filtro na busca
 
-- **A (recomendada):** seção separada na Home (como a spec original). Dá visibilidade aos gratuitos.
+- **A (recomendada):** seção separada na Home. Dá visibilidade aos gratuitos.
 - **B:** apenas filtro "Não destacadas" na busca. Menos UI, mas menos visibilidade.
 
 ## 4. Constraints

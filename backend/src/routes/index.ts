@@ -8,6 +8,7 @@ import * as companyController from '../controllers/company.controller.js';
 import * as couponController from '../controllers/coupon.controller.js';
 import { health } from '../controllers/health.controller.js';
 import * as jobController from '../controllers/job.controller.js';
+import * as noticeController from '../controllers/notice.controller.js';
 import * as reviewController from '../controllers/review.controller.js';
 import {
   createAuthDeps,
@@ -20,6 +21,7 @@ import {
   createCompanySchema,
   createCouponSchema,
   createJobSchema,
+  createNoticeSchema,
   createReviewSchema,
   updateUserSchema,
   validateBody,
@@ -112,11 +114,19 @@ autonomousProfessionals.get('/:id', autonomousProfessionalController.getById);
 autonomousProfessionals.put('/:id', autonomousProfessionalController.update);
 autonomousProfessionals.delete('/:id', autonomousProfessionalController.remove);
 
+const notices = Router();
+notices.post('/', validateBody(createNoticeSchema), noticeController.create);
+notices.get('/', noticeController.list);
+notices.get('/:id', noticeController.getById);
+notices.put('/:id', validateBody(createNoticeSchema.partial()), noticeController.update);
+notices.delete('/:id', noticeController.remove);
+
 routes.use('/categories', categories);
 routes.use('/companies', companies);
 routes.use('/banners', banners);
 routes.use('/coupons', coupons);
 routes.use('/jobs', jobs);
+routes.use('/notices', notices);
 routes.use('/autonomous-professionals', autonomousProfessionals);
 
 export default routes;

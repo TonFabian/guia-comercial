@@ -143,6 +143,19 @@ export interface AutonomousProfessional {
   updatedAt?: string;
 }
 
+/** Aviso/comunicado local exibido no Mural da Home. */
+export interface Notice {
+  _id: string;
+  title: string;
+  body: string;
+  type: 'general' | 'alert' | 'health';
+  startsAt?: string;
+  expiresAt?: string;
+  active: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export interface Paginated<T> {
   items: T[];
   total: number;
