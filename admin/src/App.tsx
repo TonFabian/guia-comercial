@@ -190,13 +190,37 @@ export default function App() {
 // ---------------------------------------------------------------------------
 
 function EmpresasSection({ companies, categories, onReload, onDelete, setError }: { companies: Company[]; categories: Category[]; onReload: () => void; onDelete: (id: string) => void; setError: (error: string | null) => void; }) {
-  const [form, setForm] = useState({ name: '', slug: '', description: '', category: '', city: '' });
+  const [form, setForm] = useState({ name: '', slug: '', description: '', category: '', city: '', phone: '', whatsapp: '', samePhone: false });
+
+  function handlePhoneChange(value: string) {
+    setForm((prev) => ({
+      ...prev,
+      phone: value,
+      whatsapp: prev.samePhone ? value : prev.whatsapp,
+    }));
+  }
+
+  function handleSamePhoneChange(checked: boolean) {
+    setForm((prev) => ({
+      ...prev,
+      samePhone: checked,
+      whatsapp: checked ? prev.phone : prev.whatsapp,
+    }));
+  }
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
     try {
-      await createCompany({ ...form });
-      setForm({ name: '', slug: '', description: '', category: '', city: '' });
+      await createCompany({
+        name: form.name,
+        slug: form.slug,
+        description: form.description,
+        category: form.category,
+        city: form.city,
+        phone: form.phone || undefined,
+        whatsapp: form.whatsapp || undefined,
+      });
+      setForm({ name: '', slug: '', description: '', category: '', city: '', phone: '', whatsapp: '', samePhone: false });
       await onReload();
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
@@ -216,6 +240,12 @@ function EmpresasSection({ companies, categories, onReload, onDelete, setError }
           ))}
         </select>
         <input placeholder="Cidade" value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} />
+        <input placeholder="Telefone (ligar)" value={form.phone} onChange={(e) => handlePhoneChange(e.target.value)} />
+        <label style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <input type="checkbox" checked={form.samePhone} onChange={(e) => handleSamePhoneChange(e.target.checked)} />
+          Usar o mesmo número para WhatsApp
+        </label>
+        <input placeholder="WhatsApp" value={form.whatsapp} onChange={(e) => setForm({ ...form, whatsapp: e.target.value })} disabled={form.samePhone} />
         <button type="submit">Criar</button>
       </form>
       <Table
