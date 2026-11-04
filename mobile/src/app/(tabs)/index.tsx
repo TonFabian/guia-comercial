@@ -108,7 +108,7 @@ export default function HomeScreen() {
           showsVerticalScrollIndicator={false}
         >
           <Header />
-          {cities.length > 0 && (
+          {cities.length > 1 && (
             <View style={styles.cityRow}>
               <Ionicons name="location-outline" size={16} color={colors.primary} />
               <Text style={styles.cityLabel}>Cidade:</Text>
