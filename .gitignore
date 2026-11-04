@@ -71,3 +71,7 @@ coverage/
 # agents
 .superpowers/
 .playwright-mcp/
+
+# Documentos locais de trabalho (nao versionar)
+ROADMAP.md
+REFACTORING_NOTES.md
