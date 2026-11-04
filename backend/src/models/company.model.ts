@@ -16,7 +16,7 @@ const companySchema = new Schema<Company>(
     phone: String,
     whatsapp: String,
     address: String,
-    city: String,
+    city: Schema.Types.Mixed,
     latitude: Number,
     longitude: Number,
     logo: String,
