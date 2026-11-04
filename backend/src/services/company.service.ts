@@ -12,7 +12,7 @@ import { geocodeAddress } from '../utils/geocode.js';
 
 /** Critério de busca compatível com FilterQuery<Company>. */
 type CompanyQuery = {
-  category?: string;
+  category?: string | { $in: string[] };
   $or?: Array<Record<string, unknown>>;
   isFeatured?: boolean;
   ownerClerkId?: string;
@@ -20,7 +20,7 @@ type CompanyQuery = {
 };
 
 export interface CompanyListFilters {
-  /** slug da categoria */
+  /** slug da categoria (aceita várias separadas por vírgula) */
   category?: unknown;
   /** busca textual em name/description */
   q?: unknown;
@@ -40,8 +40,20 @@ export async function listCompanies(
   const query: CompanyQuery = {};
 
   if (typeof filters.category === 'string' && filters.category.length > 0) {
-    const rawCategory = await findCategoryIdBySlug(filters.category);
-    query.category = rawCategory ?? new Types.ObjectId().toString();
+    // Uma ou mais categorias: slugs separados por vírgula. Slug inexistente é
+    // ignorado — sem nenhum slug válido a consulta não traz empresa alguma.
+    const slugs = filters.category
+      .split(',')
+      .map((slug) => slug.trim())
+      .filter(Boolean);
+
+    const ids = await Promise.all(slugs.map((slug) => findCategoryIdBySlug(slug)));
+    const encontradas = ids.filter((id): id is string => id !== null);
+
+    query.category =
+      encontradas.length > 0
+        ? { $in: encontradas }
+        : new Types.ObjectId().toString();
   }
 
   if (typeof filters.q === 'string' && filters.q.length > 0) {

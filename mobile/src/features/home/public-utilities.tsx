@@ -1,7 +1,7 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import * as Haptics from 'expo-haptics';
-import { useState } from 'react';
-import { Modal, Pressable, StyleSheet, Text, View } from 'react-native';
+import { useMemo, useState } from 'react';
+import { ActivityIndicator, Modal, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 import {
   Glass,
@@ -12,24 +12,41 @@ import {
   UtilityColors,
 } from '@/constants/theme';
 import { useThemeColors } from '@/hooks/use-theme-colors';
-import { MOCK_PUBLIC_UTILITIES, type PublicUtility } from '@/data/public-utilities';
+import type { PublicUtility } from '@/types/domain';
 import { callPhone } from '@/utils/links';
+import { toUtilityView } from './public-utility-view';
+import type { UtilityView } from './public-utility-view';
 import { SectionHeader } from './section-header';
 
-export function PublicUtilities({
-  utilities = MOCK_PUBLIC_UTILITIES,
-}: {
-  utilities?: PublicUtility[];
-}) {
+interface Props {
+  utilities: PublicUtility[];
+  loading?: boolean;
+  error?: string | null;
+  onRetry?: () => void;
+}
+
+export function PublicUtilities({ utilities, loading = false, error = null, onRetry }: Props) {
   const colors = useThemeColors();
   const styles = makeStyles(colors);
-  const [selectedUtility, setSelectedUtility] = useState<PublicUtility | null>(null);
+  const [selectedUtility, setSelectedUtility] = useState<UtilityView | null>(null);
   const selectedPhone = selectedUtility?.phone ?? null;
 
-  function handleUtilityPress(utility: PublicUtility) {
+  // Os nomes válidos vêm da própria fonte de ícones — o dado do banco pode
+  // mandar qualquer texto.
+  const knownIcons = useMemo(
+    () => new Set(Object.keys(MaterialCommunityIcons.glyphMap)),
+    [],
+  );
+
+  const cards = useMemo(
+    () => utilities.map((utility) => toUtilityView(utility, UtilityColors, knownIcons)),
+    [utilities, knownIcons],
+  );
+
+  function handleUtilityPress(utility: UtilityView) {
     void Haptics.selectionAsync().catch(() => undefined);
 
-    if (utility.action === 'call' && utility.phone) {
+    if (utility.canCall && utility.phone) {
       void callPhone(utility.phone);
       return;
     }
@@ -44,74 +61,95 @@ export function PublicUtilities({
   return (
     <View style={styles.section}>
       <SectionHeader title="Telefones Úteis & Serviços" />
-      <View style={styles.grid}>
-        {utilities.map((utility) => {
-          const isCallAction = utility.action === 'call' && Boolean(utility.phone);
-          const badgeTextColor =
-            utility.accent === UtilityColors.sanitation
-              ? colors.background
-              : colors.text;
 
-          return (
-            <Pressable
-              key={utility.id}
-              style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
-              onPress={() => handleUtilityPress(utility)}
+      {loading ? (
+        <View style={styles.center}>
+          <ActivityIndicator color={colors.primary} />
+        </View>
+      ) : error ? (
+        <View style={styles.center}>
+          <Text style={styles.empty}>{error}</Text>
+          {onRetry ? (
+            <TouchableOpacity
+              style={styles.retryButton}
+              onPress={onRetry}
               accessibilityRole="button"
-              accessibilityLabel={
-                isCallAction
-                  ? `Ligar para ${utility.name} no número ${utility.phone}`
-                  : `Ver detalhes de ${utility.name}`
-              }>
-              <View style={styles.cardTop}>
-                <View style={[styles.iconTag, { backgroundColor: `${utility.accent}22` }]}>
-                  <MaterialCommunityIcons
-                    name={utility.icon}
-                    size={22}
-                    color={utility.accent}
-                  />
-                </View>
+              accessibilityLabel="Tentar carregar os telefones úteis novamente"
+            >
+              <Text style={styles.retryText}>Tentar novamente</Text>
+            </TouchableOpacity>
+          ) : null}
+        </View>
+      ) : cards.length === 0 ? (
+        <Text style={styles.empty}>Nenhum serviço disponível no momento.</Text>
+      ) : (
+        <View style={styles.grid}>
+          {cards.map((utility) => {
+            const badgeTextColor =
+              utility.accent === UtilityColors.sanitation ? colors.background : colors.text;
 
-                {isCallAction ? (
-                  <View style={[styles.phoneBadge, { backgroundColor: utility.accent }]}>
-                    <Text style={[styles.phoneBadgeText, { color: badgeTextColor }]}>
-                      {utility.phone}
-                    </Text>
-                  </View>
-                ) : (
-                  <View style={styles.detailsBadge}>
+            return (
+              <Pressable
+                key={utility.id}
+                style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
+                onPress={() => handleUtilityPress(utility)}
+                accessibilityRole="button"
+                accessibilityLabel={
+                  utility.canCall
+                    ? `Ligar para ${utility.name} no número ${utility.phone}`
+                    : `Ver detalhes de ${utility.name}`
+                }
+              >
+                <View style={styles.cardTop}>
+                  <View style={[styles.iconTag, { backgroundColor: `${utility.accent}22` }]}>
                     <MaterialCommunityIcons
-                      name="information-outline"
-                      size={14}
-                      color={colors.textSecondary}
+                      name={utility.icon}
+                      size={22}
+                      color={utility.accent}
                     />
                   </View>
-                )}
-              </View>
 
-              <View style={styles.cardBody}>
-                <Text style={styles.cardTitle} numberOfLines={2}>
-                  {utility.name}
-                </Text>
-                <Text style={styles.cardDescription} numberOfLines={2}>
-                  {utility.description}
-                </Text>
-              </View>
+                  {utility.canCall ? (
+                    <View style={[styles.phoneBadge, { backgroundColor: utility.accent }]}>
+                      <Text style={[styles.phoneBadgeText, { color: badgeTextColor }]}>
+                        {utility.phone}
+                      </Text>
+                    </View>
+                  ) : (
+                    <View style={styles.detailsBadge}>
+                      <MaterialCommunityIcons
+                        name="information-outline"
+                        size={14}
+                        color={colors.textSecondary}
+                      />
+                    </View>
+                  )}
+                </View>
 
-              <View style={styles.cardAction}>
-                <Text style={styles.cardActionText}>
-                  {isCallAction ? 'Toque para ligar' : 'Ver detalhes'}
-                </Text>
-                <MaterialCommunityIcons
-                  name={isCallAction ? 'phone' : 'chevron-right'}
-                  size={14}
-                  color={colors.primary}
-                />
-              </View>
-            </Pressable>
-          );
-        })}
-      </View>
+                <View style={styles.cardBody}>
+                  <Text style={styles.cardTitle} numberOfLines={2}>
+                    {utility.name}
+                  </Text>
+                  <Text style={styles.cardDescription} numberOfLines={2}>
+                    {utility.description}
+                  </Text>
+                </View>
+
+                <View style={styles.cardAction}>
+                  <Text style={styles.cardActionText}>
+                    {utility.canCall ? 'Toque para ligar' : 'Ver detalhes'}
+                  </Text>
+                  <MaterialCommunityIcons
+                    name={utility.canCall ? 'phone' : 'chevron-right'}
+                    size={14}
+                    color={colors.primary}
+                  />
+                </View>
+              </Pressable>
+            );
+          })}
+        </View>
+      )}
 
       <Modal
         visible={selectedUtility !== null}
@@ -159,7 +197,7 @@ export function PublicUtilities({
                 <Text style={styles.modalDescription}>{selectedUtility.description}</Text>
               </View>
 
-              {selectedUtility.details?.length ? (
+              {selectedUtility.details.length > 0 ? (
                 <View style={styles.modalDetails}>
                   {selectedUtility.details.map((detail) => (
                     <View key={detail} style={styles.modalDetailRow}>
@@ -285,6 +323,31 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
       gap: Spacing.one,
     },
     cardActionText: {
+      color: colors.primary,
+      fontSize: Type.small,
+      fontWeight: '700',
+    },
+    center: {
+      paddingVertical: Spacing.four,
+      alignItems: 'center',
+      gap: Spacing.two,
+      paddingHorizontal: Spacing.three,
+    },
+    empty: {
+      color: colors.textSecondary,
+      fontSize: Type.small,
+      paddingHorizontal: Spacing.three,
+      paddingVertical: Spacing.two,
+      textAlign: 'center',
+    },
+    retryButton: {
+      paddingVertical: Spacing.two,
+      paddingHorizontal: Spacing.three,
+      borderRadius: Radius.chip,
+      borderWidth: 1,
+      borderColor: colors.border,
+    },
+    retryText: {
       color: colors.primary,
       fontSize: Type.small,
       fontWeight: '700',

@@ -181,3 +181,24 @@ export const createNoticeSchema = z.object({
 
 export type CreateNoticeDto = z.infer<typeof createNoticeSchema>;
 export type UpdateNoticeDto = Partial<CreateNoticeDto>;
+
+// ---------------------------------------------------------------------------
+// Public Utility (utilidade pública)
+// ---------------------------------------------------------------------------
+
+export const createPublicUtilitySchema = z.object({
+  name: z.string().trim().min(1),
+  description: z.string().trim().min(1),
+  category: z.enum(['emergency', 'health', 'civil', 'sanitation']).optional(),
+  // `null` limpa o campo já salvo (o painel precisa remover um telefone ou
+  // cidade antiga sem excluir e recriar o registro).
+  phone: z.string().trim().min(1).nullish(),
+  details: z.array(z.string().trim().min(1)).optional(),
+  icon: z.string().trim().min(1).nullish(),
+  city: z.string().trim().min(1).nullish(),
+  order: z.number().int().optional(),
+  active: z.boolean().optional(),
+});
+
+export type CreatePublicUtilityDto = z.infer<typeof createPublicUtilitySchema>;
+export type UpdatePublicUtilityDto = Partial<CreatePublicUtilityDto>;

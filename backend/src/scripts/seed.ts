@@ -20,6 +20,7 @@ import { CouponModel } from '../models/coupon.model.js';
 import { JobModel } from '../models/job.model.js';
 import { AutonomousProfessionalModel } from '../models/autonomous-professional.model.js';
 import { NoticeModel } from '../models/notice.model.js';
+import { PublicUtilityModel } from '../models/public-utility.model.js';
 
 const shouldReset = process.argv.includes('--reset');
 
@@ -51,6 +52,7 @@ async function seed(): Promise<void> {
       JobModel.deleteMany({}),
       AutonomousProfessionalModel.deleteMany({}),
       NoticeModel.deleteMany({}),
+      PublicUtilityModel.deleteMany({}),
     ]);
     console.log('Coleções limpas (--reset)');
   }
@@ -425,6 +427,62 @@ async function seed(): Promise<void> {
   ];
   const inseridosAvisos = await insertIfMissing(NoticeModel, avisos, 'title');
   console.log(`Avisos inseridos: ${inseridosAvisos}`);
+
+  const servicosPublicos = [
+    {
+      name: 'Polícia Militar',
+      description: 'Emergência em Castelo do Piauí',
+      category: 'emergency',
+      phone: '190',
+      icon: 'shield-alert',
+      city: casteloId,
+      order: 1,
+      active: true,
+    },
+    {
+      name: 'Polícia Civil',
+      description: 'Ocorrências e denúncias',
+      category: 'civil',
+      phone: '197',
+      icon: 'shield-account',
+      city: casteloId,
+      order: 2,
+      active: true,
+    },
+    {
+      name: 'Hospital Nilo Lima',
+      description: 'Pronto atendimento municipal',
+      category: 'health',
+      details: [
+        'O telefone direto da unidade ainda não foi cadastrado.',
+        'Consulte a escala de plantão na recepção do hospital.',
+        'Em emergências, acione o SAMU pelo 192.',
+      ],
+      icon: 'hospital-building',
+      city: casteloId,
+      order: 3,
+      active: true,
+    },
+    {
+      name: 'Coleta de Lixo',
+      description: 'Dias e horários por bairro',
+      category: 'sanitation',
+      details: [
+        'O cronograma por bairro ainda não foi cadastrado.',
+        'Consulte a Secretaria de Limpeza Urbana do município para confirmar dias e horários.',
+      ],
+      icon: 'trash-can',
+      city: casteloId,
+      order: 4,
+      active: true,
+    },
+  ];
+  const inseridosServicos = await insertIfMissing(
+    PublicUtilityModel,
+    servicosPublicos,
+    'name',
+  );
+  console.log(`Serviços públicos inseridos: ${inseridosServicos}`);
 }
 
 async function main(): Promise<void> {

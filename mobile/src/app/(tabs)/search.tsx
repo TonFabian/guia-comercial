@@ -1,6 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   ScrollView,
@@ -14,15 +14,21 @@ import * as Location from 'expo-location';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Radius, Spacing, Type } from '@/constants/theme';
-import { isOpenNow, parseOpeningHours } from '@/features/company/opening-hours';
 import { openCompanyDetails } from '@/features/company/open-company';
-import { useThemeColors } from '@/hooks/use-theme-colors';
 import {
-  getCategories,
-  getCompanies,
-  searchCompanies,
-} from '@/services/api';
-import { isApiConfigured } from '@/services/http';
+  deriveSearchView,
+  loadFirstPage,
+  loadNextPage,
+  SEARCH_PAGE_SIZE,
+} from '@/features/search/search-pagination';
+import type {
+  CompanyPageFetcher,
+  SearchFilters,
+  SearchState,
+} from '@/features/search/search-pagination';
+import { useVoiceSearch } from '@/features/search/use-voice-search';
+import { useThemeColors } from '@/hooks/use-theme-colors';
+import { getCategories, searchCompanies } from '@/services/api';
 import type { Category, Company } from '@/types/domain';
 import { categoryLabel } from '@/types/domain';
 
@@ -51,11 +57,115 @@ export default function SearchScreen() {
   const [nearMeLoading, setNearMeLoading] = useState(false);
   const [openNowOnly, setOpenNowOnly] = useState(false);
 
-  function normalizeCity(value: string | { name?: string } | null | undefined): string {
-    const name = typeof value === 'string' ? value : (value?.name ?? '');
-    if (!name) return '';
-    return name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
-  }
+  const [categories, setCategories] = useState<Category[]>([]);
+  const [loaded, setLoaded] = useState<Company[]>([]);
+  const [serverTotal, setServerTotal] = useState(0);
+  const [page, setPage] = useState(0);
+  const [exhausted, setExhausted] = useState(true);
+  const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const [reloadToken, setReloadToken] = useState(0);
+
+  const filters = useMemo<SearchFilters>(
+    () => ({ term, categorySlugs: selectedSlugs, openNowOnly, nearMeCity }),
+    [term, selectedSlugs, openNowOnly, nearMeCity],
+  );
+
+  /** O filtro de categoria vai para o servidor (vários slugs na mesma requisição). */
+  const fetcher = useCallback<CompanyPageFetcher>(
+    (currentFilters, pageNumber, pageSize) =>
+      searchCompanies({
+        q: currentFilters.term,
+        categories: currentFilters.categorySlugs,
+        page: pageNumber,
+        pageSize,
+      }),
+    [],
+  );
+
+  // Categorias: carregadas uma vez, sem depender dos filtros da busca.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const list = await getCategories();
+        if (!cancelled) setCategories(list);
+      } catch {
+        if (!cancelled) setCategories([]);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Busca: recomeça do zero quando qualquer filtro muda.
+  useEffect(() => {
+    let cancelled = false;
+    const timer = setTimeout(() => {
+      void (async () => {
+        setLoading(true);
+        setError(null);
+        try {
+          const result = await loadFirstPage(filters, fetcher, SEARCH_PAGE_SIZE);
+          if (cancelled) return;
+          setLoaded(result.loaded);
+          setServerTotal(result.serverTotal);
+          setPage(result.page);
+          setExhausted(result.exhausted);
+        } catch (caught) {
+          if (cancelled) return;
+          setLoaded([]);
+          setServerTotal(0);
+          setPage(0);
+          setExhausted(true);
+          setError(
+            caught instanceof Error
+              ? caught.message
+              : 'Não foi possível carregar as empresas.',
+          );
+        } finally {
+          if (!cancelled) setLoading(false);
+        }
+      })();
+    }, DEBOUNCE_MS);
+
+    return () => {
+      cancelled = true;
+      clearTimeout(timer);
+    };
+  }, [filters, fetcher, reloadToken]);
+
+  const state = useMemo<SearchState>(
+    () => ({ loaded, serverTotal, page, exhausted }),
+    [loaded, serverTotal, page, exhausted],
+  );
+
+  const view = useMemo(
+    () => deriveSearchView(state, filters, new Date()),
+    [state, filters],
+  );
+
+  const loadMore = useCallback(async () => {
+    if (loadingMore || !view.hasMore) return;
+    setLoadingMore(true);
+    try {
+      const next = await loadNextPage(state, filters, fetcher, SEARCH_PAGE_SIZE);
+      setLoaded(next.loaded);
+      setServerTotal(next.serverTotal);
+      setPage(next.page);
+      setExhausted(next.exhausted);
+    } catch {
+      setError('Não foi possível carregar mais empresas.');
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [loadingMore, view.hasMore, state, filters, fetcher]);
+
+  const { listening, error: voiceError, start: startVoice } = useVoiceSearch((transcript) => {
+    setManualTerm(transcript);
+  });
 
   async function toggleNearMe() {
     if (nearMeCity) {
@@ -79,81 +189,6 @@ export default function SearchScreen() {
       setNearMeLoading(false);
     }
   }
-
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [companies, setCompanies] = useState<Company[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [page, setPage] = useState(1);
-  const [total, setTotal] = useState(0);
-  const pageSize = 20;
-
-  useEffect(() => {
-    let cancelled = false;
-    const timer = setTimeout(() => {
-      setLoading(true);
-      setPage(1);
-      async function load() {
-        try {
-        const allCategories = await getCategories();
-
-        let pageResult: { items: Company[]; total: number };
-        const filtering = selectedSlugs.length > 0 || openNowOnly || !!nearMeCity;
-
-        if (filtering) {
-          // Múltiplas categorias: carrega tudo e filtra no cliente.
-          const r = term
-            ? await searchCompanies(term, 1, 100)
-            : await getCompanies(1, 100);
-          const slugSet = new Set(selectedSlugs);
-          const items = r.items.filter((c) => {
-            const cat = typeof c.category === 'string' ? c.category : c.category?._id ?? c.category?.slug;
-            // category may be slug or id; match by slug via categories lookup
-            const catSlug = categories.find((x) => x._id === cat)?.slug ?? (typeof c.category === 'string' ? c.category : c.category?.slug);
-            return slugSet.has(catSlug ?? '');
-          });
-          pageResult = { items, total: items.length };
-        } else if (term) {
-          const r = await searchCompanies(term, 1, pageSize);
-          pageResult = { items: r.items, total: r.total };
-        } else {
-          const r = await getCompanies(1, pageSize);
-          pageResult = { items: r.items, total: r.total };
-        }
-
-        if (cancelled) return;
-        setCategories(allCategories);
-        let finalItems = pageResult.items;
-        if (nearMeCity) {
-          const target = normalizeCity(nearMeCity);
-          finalItems = finalItems.filter((c) => normalizeCity(c.city) === target);
-        }
-        if (openNowOnly) {
-          const now = new Date();
-          finalItems = finalItems.filter((c) => {
-            const status = isOpenNow(parseOpeningHours(c.openingHours ?? []), now);
-            return status === true;
-          });
-        }
-        setCompanies(finalItems);
-        setTotal(finalItems.length);
-        setLoading(false);
-        } catch (error: any) {
-          if (cancelled) return;
-          setCompanies([]);
-          setTotal(0);
-          setLoading(false);
-        }
-      }
-
-      void load();
-    }, DEBOUNCE_MS);
-
-    return () => {
-      cancelled = true;
-      clearTimeout(timer);
-    };
-  }, [term, selectedSlugs, nearMeCity, openNowOnly]);
 
   const selectedCategories = useMemo(
     () => categories.filter((category) => selectedSlugs.includes(category.slug)),
@@ -183,22 +218,8 @@ export default function SearchScreen() {
     setOpenNowOnly(false);
   };
 
-  const loadMore = async () => {
-    if (loadingMore || companies.length >= total || selectedSlugs.length > 0 || openNowOnly || !!nearMeCity) return;
-    setLoadingMore(true);
-    const nextPage = page + 1;
-    try {
-      let items: Company[] = [];
-      if (term) {
-        items = (await searchCompanies(term, nextPage, pageSize)).items;
-      } else {
-        items = (await getCompanies(nextPage, pageSize)).items;
-      }
-      setCompanies((prev) => [...prev, ...items]);
-      setPage(nextPage);
-    } finally {
-      setLoadingMore(false);
-    }
+  const retry = () => {
+    setReloadToken((token) => token + 1);
   };
 
   return (
@@ -222,12 +243,41 @@ export default function SearchScreen() {
             autoCorrect={false}
             returnKeyType="search"
           />
+          <TouchableOpacity
+            style={styles.micButton}
+            activeOpacity={0.7}
+            onPress={startVoice}
+            accessibilityRole="button"
+            accessibilityLabel={listening ? 'Ouvindo, fale agora' : 'Buscar por voz'}
+          >
+            <Ionicons
+              name={listening ? 'mic' : 'mic-outline'}
+              size={18}
+              color={listening ? colors.primary : colors.textSecondary}
+            />
+          </TouchableOpacity>
           {term.length > 0 && (
-            <TouchableOpacity onPress={clearSearch} hitSlop={8}>
+            <TouchableOpacity onPress={clearSearch} hitSlop={8} accessibilityLabel="Limpar busca">
               <Ionicons name="close-circle" size={18} color={colors.textSecondary} />
             </TouchableOpacity>
           )}
         </View>
+
+        {voiceError ? <Text style={styles.voiceError}>{voiceError}</Text> : null}
+
+        {error ? (
+          <View style={styles.errorBox}>
+            <Text style={styles.errorText}>{error}</Text>
+            <TouchableOpacity
+              style={styles.retryButton}
+              onPress={retry}
+              accessibilityRole="button"
+              accessibilityLabel="Tentar carregar as empresas novamente"
+            >
+              <Text style={styles.retryText}>Tentar novamente</Text>
+            </TouchableOpacity>
+          </View>
+        ) : null}
 
         {loading ? (
           <ActivityIndicator style={styles.spinner} color={colors.primary} />
@@ -287,6 +337,8 @@ export default function SearchScreen() {
                 activeOpacity={0.7}
                 onPress={toggleNearMe}
                 disabled={nearMeLoading}
+                accessibilityRole="button"
+                accessibilityLabel="Filtrar empresas perto de mim"
               >
                 <Ionicons name="navigate" size={14} color={nearMeCity ? colors.background : colors.primary} />
                 <Text style={[styles.categoryChipText, nearMeCity && styles.categoryChipTextSelected]}>
@@ -298,6 +350,8 @@ export default function SearchScreen() {
                 style={[styles.categoryChip, openNowOnly && styles.categoryChipSelected]}
                 activeOpacity={0.7}
                 onPress={() => setOpenNowOnly((v) => !v)}
+                accessibilityRole="button"
+                accessibilityLabel="Filtrar empresas abertas agora"
               >
                 <Ionicons name="time" size={14} color={openNowOnly ? colors.background : colors.primary} />
                 <Text style={[styles.categoryChipText, openNowOnly && styles.categoryChipTextSelected]}>
@@ -319,6 +373,8 @@ export default function SearchScreen() {
                         setManualCategories([...selectedSlugs, category.slug]);
                       }
                     }}
+                    accessibilityRole="button"
+                    accessibilityLabel={`Filtrar por ${category.name}`}
                   >
                     <Text style={[styles.categoryChipText, selected && styles.categoryChipTextSelected]}>
                       {category.name}
@@ -335,10 +391,17 @@ export default function SearchScreen() {
               </TouchableOpacity>
             )}
 
-            {companies.length > 0 && (
+            {view.items.length > 0 && (
               <View style={styles.group}>
-                <Text style={styles.groupTitle}>Empresas</Text>
-                {companies.map((company) => (
+                <View style={styles.groupHeader}>
+                  <Text style={styles.groupTitle}>Empresas</Text>
+                  <Text style={styles.groupCount}>
+                    {view.total > view.items.length
+                      ? `${view.items.length} de ${view.total}`
+                      : `${view.items.length}`}
+                  </Text>
+                </View>
+                {view.items.map((company) => (
                   <TouchableOpacity
                     key={company._id}
                     style={styles.row}
@@ -360,18 +423,20 @@ export default function SearchScreen() {
               </View>
             )}
 
-            {companies.length > 0 && companies.length < total && (
+            {view.hasMore && (
               <TouchableOpacity
                 style={styles.loadMoreButton}
                 onPress={loadMore}
                 disabled={loadingMore}
+                accessibilityRole="button"
+                accessibilityLabel="Carregar mais empresas"
               >
                 <Text style={styles.loadMoreText}>
                   {loadingMore ? 'Carregando…' : 'Carregar mais'}
                 </Text>
               </TouchableOpacity>
             )}
-            {companies.length === 0 && !loading && (
+            {view.items.length === 0 && !loading && !error && (
               <Text style={styles.emptyText}>
                 {nearMeCity
                   ? `Nenhuma empresa encontrada perto de ${nearMeCity}.`
@@ -444,29 +509,33 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
       fontSize: Type.subtitle,
       paddingVertical: 0,
     },
-    nearMeButton: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      alignSelf: 'flex-start',
-      gap: 6,
+    micButton: {
+      padding: 4,
+    },
+    voiceError: {
+      color: colors.error,
+      fontSize: Type.small,
+    },
+    errorBox: {
+      gap: Spacing.two,
+      alignItems: 'flex-start',
+    },
+    errorText: {
+      color: colors.error,
+      fontSize: Type.body,
+    },
+    retryButton: {
+      paddingVertical: Spacing.two,
+      paddingHorizontal: Spacing.three,
+      borderRadius: Radius.chip,
       backgroundColor: colors.surface,
-      borderRadius: Radius.tag,
       borderWidth: 1,
-      borderColor: colors.primary,
-      paddingVertical: 6,
-      paddingHorizontal: 12,
-      marginBottom: Spacing.two,
+      borderColor: colors.border,
     },
-    nearMeButtonActive: {
-      backgroundColor: colors.primary,
-    },
-    nearMeText: {
+    retryText: {
       color: colors.primary,
       fontSize: Type.small,
       fontWeight: '700',
-    },
-    nearMeTextActive: {
-      color: colors.background,
     },
     selectedChipsRow: {
       flexDirection: 'row',
@@ -500,11 +569,6 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     categoryChipTextSelected: {
       color: colors.background,
     },
-    chipsRow: {
-      flexDirection: 'row',
-      flexWrap: 'wrap',
-      gap: Spacing.two,
-    },
     chip: {
       flexDirection: 'row',
       alignItems: 'center',
@@ -529,12 +593,22 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     group: {
       marginBottom: Spacing.four,
     },
+    groupHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      marginBottom: Spacing.two,
+    },
     groupTitle: {
       color: colors.textSecondary,
       fontSize: Type.small,
       fontWeight: '700',
       textTransform: 'uppercase',
-      marginBottom: Spacing.two,
+    },
+    groupCount: {
+      color: colors.textSecondary,
+      fontSize: Type.small,
+      fontWeight: '600',
     },
     row: {
       flexDirection: 'row',

@@ -1,11 +1,78 @@
 import { CityModel } from '../models/city.model.js';
 import { UserModel } from '../models/user.model.js';
-import type { User } from '../../../shared/domain.js';
+import type { City, User } from '../../../shared/domain.js';
+import type { Pagination } from '../utils/http.js';
 
 /** Acesso a dados do espelho local de usuários do Clerk. */
 
 export function findUserByClerkId(clerkId: string): Promise<User | null> {
   return UserModel.findOne({ clerkId }).populate('city').lean<User>().exec();
+}
+
+/**
+ * Garante que a sessão é de um administrador.
+ *
+ * 401 sem identidade; 403 quando o espelho existe mas não é admin.
+ */
+export async function assertAdmin(
+  clerkId: string | undefined,
+  recurso: string,
+): Promise<void> {
+  if (!clerkId) {
+    throw Object.assign(new Error('Não autenticado'), { statusCode: 401 });
+  }
+
+  const user = await findUserByClerkId(clerkId);
+  if (user?.role !== 'admin') {
+    throw Object.assign(new Error(`sem permissão para ${recurso}`), { statusCode: 403 });
+  }
+}
+
+/** Item da listagem de usuários do painel admin (sem dados sensíveis). */
+export interface AdminUserListItem {
+  _id: string;
+  name?: string;
+  email: string;
+  role: 'user' | 'admin';
+  city?: string | City;
+  createdAt?: string;
+}
+
+/**
+ * Lista os usuários do espelho local para o painel admin.
+ *
+ * `pushToken` e os identificadores de sessão não entram na resposta: o painel
+ * precisa de nome, e-mail, role e cidade, não de credencial de push.
+ */
+export async function listUsers(
+  pagination: Pagination,
+): Promise<{ items: AdminUserListItem[]; total: number }> {
+  const [usuarios, total] = await Promise.all([
+    UserModel.find({})
+      .select({ pushToken: 0, clerkId: 0, lastSid: 0, lastSignInAt: 0 })
+      .populate('city')
+      .sort({ createdAt: -1 })
+      .skip(pagination.skip)
+      .limit(pagination.limit)
+      .lean<User[]>(),
+    UserModel.countDocuments({}),
+  ]);
+
+  return { items: usuarios.map(toAdminUserListItem), total };
+}
+
+/** Normaliza o documento lean no item público da listagem admin. */
+function toAdminUserListItem(user: User): AdminUserListItem {
+  const nome = [user.firstName, user.lastName].filter(Boolean).join(' ');
+
+  return {
+    _id: String(user._id),
+    ...(nome ? { name: nome } : {}),
+    email: user.email,
+    role: user.role,
+    ...(user.city ? { city: user.city } : {}),
+    ...(user.createdAt ? { createdAt: user.createdAt } : {}),
+  };
 }
 
 /**

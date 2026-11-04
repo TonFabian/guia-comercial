@@ -1,66 +1,61 @@
-import type MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-
-import { UtilityColors } from '@/constants/theme';
-
-export interface PublicUtility {
-  id: string;
-  name: string;
-  description: string;
-  icon: React.ComponentProps<typeof MaterialCommunityIcons>['name'];
-  accent: string;
-  action: 'call' | 'details';
-  phone?: string;
-  details?: string[];
-}
+import type { PublicUtility } from '@/types/domain';
 
 /**
- * Dados de utilidade pública exibidos na Home.
+ * Serviços de utilidade pública exibidos na Home.
+ *
+ * Dados de exemplo usados apenas como fallback quando o backend não
+ * responde (em desenvolvimento). A cor do card vem do tema, por categoria —
+ * nunca do dado.
  *
  * Sem telefone local confirmado, o campo fica ausente e o card abre os
  * detalhes — nunca discamos um número inventado.
  */
 export const MOCK_PUBLIC_UTILITIES: PublicUtility[] = [
   {
-    id: 'policia-militar',
+    _id: 'policia-militar',
     name: 'Polícia Militar',
     description: 'Emergência em Castelo do Piauí',
+    category: 'emergency',
     icon: 'shield-alert',
-    accent: UtilityColors.emergency,
-    action: 'call',
     phone: '190',
+    active: true,
+    order: 1,
   },
   {
-    id: 'policia-civil',
+    _id: 'policia-civil',
     name: 'Polícia Civil',
     description: 'Ocorrências e denúncias',
+    category: 'civil',
     icon: 'shield-account',
-    accent: UtilityColors.civil,
-    action: 'call',
     phone: '197',
+    active: true,
+    order: 2,
   },
   {
-    id: 'hospital-nilo-lima',
+    _id: 'hospital-nilo-lima',
     name: 'Hospital Nilo Lima',
     description: 'Pronto atendimento municipal',
+    category: 'health',
     icon: 'hospital-building',
-    accent: UtilityColors.health,
-    action: 'details',
     details: [
       'O telefone direto da unidade ainda não foi cadastrado.',
       'Consulte a escala de plantão na recepção do hospital.',
       'Em emergências, acione o SAMU pelo 192.',
     ],
+    active: true,
+    order: 3,
   },
   {
-    id: 'coleta-de-lixo',
+    _id: 'coleta-de-lixo',
     name: 'Coleta de Lixo',
     description: 'Dias e horários por bairro',
-    icon: 'trash-can',
-    accent: UtilityColors.sanitation,
-    action: 'details',
+    category: 'sanitation',
+    icon: 'trash-can-outline',
     details: [
       'O cronograma por bairro ainda não foi cadastrado.',
       'Consulte a Secretaria de Limpeza Urbana do município para confirmar dias e horários.',
     ],
+    active: true,
+    order: 4,
   },
 ];

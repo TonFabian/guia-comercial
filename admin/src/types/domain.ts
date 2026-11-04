@@ -158,6 +158,28 @@ export interface AutonomousProfessional {
   updatedAt?: string;
 }
 
+/** Categorias de utilidade pública (emergência, saúde, segurança, saneamento). */
+export type PublicUtilityCategory = 'emergency' | 'health' | 'civil' | 'sanitation';
+
+/** Serviço de utilidade pública exibido na Home (polícia, hospital, coleta...). */
+export interface PublicUtility {
+  _id: string;
+  name: string;
+  description: string;
+  category: PublicUtilityCategory;
+  /** Telefone de disque direto. Ausente quando o card abre apenas detalhes. */
+  phone?: string | null;
+  details?: string[];
+  /** Nome do ícone (MaterialCommunityIcons) — a cor vem do tema, não do dado. */
+  icon?: string | null;
+  /** `null` quando o serviço atende todas as cidades. */
+  city?: string | City | null;
+  order?: number;
+  active: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 /** Aviso/comunicado local exibido no Mural da Home. */
 export interface Notice {
   _id: string;

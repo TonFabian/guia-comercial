@@ -6,7 +6,7 @@
  * sessão do Clerk e o comportamento de fallback (mock quando a env não está
  * definida ou a API está fora do ar; 401/403 reais estouram `ApiError`).
  */
-import type { AutonomousProfessional, Banner, Category, City, Company, Coupon, Job, Notice, Paginated, Review, User } from '@/types/domain';
+import type { AutonomousProfessional, Banner, Category, City, Company, Coupon, Job, Notice, Paginated, PublicUtility, Review, User } from '@/types/domain';
 
 import { isApiConfigured, request } from './http';
 import type { RequestPayload } from './http';
@@ -20,6 +20,7 @@ import {
   MOCK_JOBS,
   MOCK_PHARMACY,
 } from '@/data/mock';
+import { MOCK_PUBLIC_UTILITIES } from '@/data/public-utilities';
 
 
 /** Mocks só em desenvolvimento: em produção, falha de rede/API vira lista vazia. */
@@ -159,35 +160,37 @@ export async function getPharmacyOnDuty(city?: string): Promise<Company | null> 
   }
 }
 
-export async function searchCompanies(query: string, page = 1, pageSize = 20): Promise<CompanyPage> {
-  const term = query.trim().toLowerCase();
-  if (!isApiConfigured()) {
-    const filtered = filterMockCompanies(term);
-    const start = (page - 1) * pageSize;
-    const items = filtered.slice(start, start + pageSize);
-    return { items, total: filtered.length, page, pageSize };
-  }
-  const payload = await request<Company>(`/companies?q=${encodeURIComponent(term)}&page=${page}&pageSize=${pageSize}`);
-  const items = fromPaginated(payload, []);
-  const total = isPaginated(payload) ? (payload.total ?? items.length) : items.length;
-  const fallback = (__DEV__ || !isApiConfigured()) ? filterMockCompanies(term) : [];
-  const fallbackItems = page === 1 && items.length === 0 ? fallback.slice(0, pageSize) : items;
-  const fallbackTotal = page === 1 && items.length === 0 ? fallback.length : total;
-  return { items: fallbackItems, total: fallbackTotal, page, pageSize };
-}
+/** Parâmetros aceitos pela busca de empresas. */
+export type CompanySearchParams = {
+  /** Texto digitado pelo usuário. */
+  q?: string;
+  /** Slugs das categorias (o backend aceita várias, separadas por vírgula). */
+  categories?: string[];
+  page?: number;
+  pageSize?: number;
+};
 
-/** Empresas de uma categoria, identificada pelo slug (ex.: `farmacia`). */
-export async function getCompaniesByCategory(slug: string, page = 1, pageSize = 20): Promise<CompanyPage> {
+export async function searchCompanies(params: CompanySearchParams = {}): Promise<CompanyPage> {
+  const term = (params.q ?? '').trim().toLowerCase();
+  const categories = params.categories ?? [];
+  const page = params.page ?? 1;
+  const pageSize = params.pageSize ?? 20;
+
   if (!isApiConfigured()) {
-    const filtered = filterMockCompaniesByCategory(slug);
+    const filtered = filterMockCompanies(term, categories);
     const start = (page - 1) * pageSize;
     const items = filtered.slice(start, start + pageSize);
     return { items, total: filtered.length, page, pageSize };
   }
-  const payload = await request<Company>(`/companies?category=${encodeURIComponent(slug)}&page=${page}&pageSize=${pageSize}`);
+
+  const search = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
+  if (term) search.set('q', term);
+  if (categories.length > 0) search.set('category', categories.join(','));
+
+  const payload = await request<Company>(`/companies?${search.toString()}`);
   const items = fromPaginated(payload, []);
   const total = isPaginated(payload) ? (payload.total ?? items.length) : items.length;
-  const fallback = (__DEV__ || !isApiConfigured()) ? filterMockCompaniesByCategory(slug) : [];
+  const fallback = (__DEV__ || !isApiConfigured()) ? filterMockCompanies(term, categories) : [];
   const fallbackItems = page === 1 && items.length === 0 ? fallback.slice(0, pageSize) : items;
   const fallbackTotal = page === 1 && items.length === 0 ? fallback.length : total;
   return { items: fallbackItems, total: fallbackTotal, page, pageSize };
@@ -280,6 +283,27 @@ export async function getNotices(): Promise<Notice[]> {
   }
 }
 
+/**
+ * Serviços de utilidade pública ativos (polícia, hospital, coleta...).
+ *
+ * Sem backend configurado (ou fora do ar) o app usa os dados locais de
+ * exemplo; em produção com a API configurada, uma falha vira erro para a
+ * tela mostrar — nunca uma lista inventada.
+ */
+export async function getPublicUtilities(): Promise<PublicUtility[]> {
+  if (!isApiConfigured()) {
+    return __DEV__ ? MOCK_PUBLIC_UTILITIES : [];
+  }
+
+  const payload = await request<PublicUtility>('/public-utilities?active=true');
+  if (!payload) {
+    if (__DEV__) return MOCK_PUBLIC_UTILITIES;
+    throw new Error('Não foi possível carregar os telefones úteis.');
+  }
+
+  return fromPaginated(payload, []);
+}
+
 export async function getCities(): Promise<City[]> {
   if (!isApiConfigured()) return [];
   try {
@@ -302,18 +326,25 @@ export async function updateCompany(id: string, body: Partial<Company>): Promise
   }
 }
 
-export function filterMockCompanies(term: string): Company[] {
-  if (!term) return MOCK_COMPANIES;
-  return MOCK_COMPANIES.filter((company) => company.name.toLowerCase().includes(term));
-}
+/** Filtra as empresas mockadas pelo termo e pelas categorias (slug ou id). */
+export function filterMockCompanies(term: string, categories: string[] = []): Company[] {
+  const byTerm = term
+    ? MOCK_COMPANIES.filter((company) => company.name.toLowerCase().includes(term))
+    : MOCK_COMPANIES;
 
-/** Filtra as empresas mockadas pela categoria (aceita slug ou id). */
-export function filterMockCompaniesByCategory(slug: string): Company[] {
-  const category = MOCK_CATEGORIES.find(
-    (item) => item.slug === slug || item._id === slug || item.name.toLowerCase() === slug.toLowerCase(),
+  if (categories.length === 0) return byTerm;
+
+  const categoryIds = new Set(
+    MOCK_CATEGORIES.filter(
+      (category) => categories.includes(category.slug) || categories.includes(category._id),
+    ).map((category) => category._id),
   );
-  if (!category) return MOCK_COMPANIES;
-  return MOCK_COMPANIES.filter((company) => company.category === category._id);
+
+  return byTerm.filter((company) => {
+    const reference = company.category;
+    const id = typeof reference === 'string' ? reference : reference._id;
+    return categoryIds.has(id);
+  });
 }
 
 export function filterMockCategories(term: string): Category[] {

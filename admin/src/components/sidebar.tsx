@@ -3,10 +3,12 @@
 export const SECTIONS = [
   'Empresas',
   'Categorias',
+  'Cidades',
   'Banners',
   'Cupons',
   'Vagas',
   'Avisos',
+  'Utilidade Pública',
   'Usuários',
 ] as const;
 

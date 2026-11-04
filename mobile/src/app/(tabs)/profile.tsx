@@ -73,11 +73,14 @@ export default function ProfileScreen() {
       router.push('/my-company');
       return;
     }
+    if (item.id === '3') {
+      router.push('/settings');
+      return;
+    }
     if (item.id === '4') {
       handleSignOut();
       return;
     }
-    Alert.alert(item.label, 'Em breve');
   };
 
   async function saveProfile() {

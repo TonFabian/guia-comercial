@@ -10,6 +10,7 @@ import * as couponController from '../controllers/coupon.controller.js';
 import { health } from '../controllers/health.controller.js';
 import * as jobController from '../controllers/job.controller.js';
 import * as noticeController from '../controllers/notice.controller.js';
+import * as publicUtilityController from '../controllers/public-utility.controller.js';
 import * as reviewController from '../controllers/review.controller.js';
 import {
   createAuthDeps,
@@ -23,11 +24,12 @@ import {
   createCouponSchema,
   createJobSchema,
   createNoticeSchema,
+  createPublicUtilitySchema,
   createReviewSchema,
   updateUserSchema,
   validateBody,
 } from '../types/dto.js';
-import { me, updateMe } from '../controllers/user.controller.js';
+import { listUsers, me, updateMe } from '../controllers/user.controller.js';
 import { broadcastPush, registerPushToken } from '../controllers/push-token.controller.js';
 
 const routes = Router();
@@ -127,6 +129,24 @@ cities.post('/', cityController.create);
 cities.get('/', cityController.list);
 cities.delete('/:id', cityController.remove);
 
+// Utilidades públicas (polícia, hospital, coleta): leitura aberta, escrita
+// restrita ao admin — o controller devolve 401 sem sessão e o service 403
+// para quem não é admin.
+const publicUtilities = Router();
+publicUtilities.post(
+  '/',
+  validateBody(createPublicUtilitySchema),
+  publicUtilityController.create,
+);
+publicUtilities.get('/', publicUtilityController.list);
+publicUtilities.get('/:id', publicUtilityController.getById);
+publicUtilities.put(
+  '/:id',
+  validateBody(createPublicUtilitySchema.partial()),
+  publicUtilityController.update,
+);
+publicUtilities.delete('/:id', publicUtilityController.remove);
+
 routes.use('/categories', categories);
 routes.use('/cities', cities);
 routes.use('/companies', companies);
@@ -134,6 +154,14 @@ routes.use('/banners', banners);
 routes.use('/coupons', coupons);
 routes.use('/jobs', jobs);
 routes.use('/notices', notices);
+routes.use('/public-utilities', publicUtilities);
 routes.use('/autonomous-professionals', autonomousProfessionals);
+
+// -----------------------------------------------------------------------------
+// Usuários (painel admin)
+// -----------------------------------------------------------------------------
+// A listagem exige sessão de admin: 401 sem identidade, 403 para usuário
+// comum. Fica fora do bloco do Clerk porque a autorização mora no controller.
+routes.get('/users', listUsers);
 
 export default routes;

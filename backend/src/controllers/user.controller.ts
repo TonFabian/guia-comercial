@@ -1,8 +1,15 @@
-import type { RequestHandler } from 'express';
+import type { Request, RequestHandler, Response } from 'express';
 import type { UpdateUserDto } from '../types/dto.js';
 
 import type { User } from '../../../shared/domain.js';
-import { findUserByClerkId, updateUserByClerkId, updatePushToken } from '../services/user.service.js';
+import {
+  assertAdmin,
+  findUserByClerkId,
+  listUsers as listUsersService,
+  updateUserByClerkId,
+  updatePushToken,
+} from '../services/user.service.js';
+import { asyncHandler, parsePagination } from '../utils/http.js';
 
 export interface UpdateMeDeps {
   update: typeof updateUserByClerkId;
@@ -84,6 +91,29 @@ export function makeMeController(deps: MeDeps = { find: findUserByClerkId }): Re
 }
 
 export const me: RequestHandler = makeMeController();
+
+/**
+ * GET /users: listagem de usuários do painel admin.
+ *
+ * Exige sessão de admin: 401 sem identidade e 403 para usuário sem a role
+ * `admin`. A resposta não traz `pushToken` nem identificadores de sessão.
+ */
+export const listUsers = asyncHandler(
+  async (req: Request, res: Response): Promise<void> => {
+    const clerkId = req.auth?.clerkId;
+
+    if (!clerkId) {
+      res.status(401).json({ error: 'Não autenticado' });
+      return;
+    }
+
+    await assertAdmin(clerkId, 'listar usuários');
+
+    const pagination = parsePagination(req.query.page, req.query.pageSize);
+    const { items, total } = await listUsersService(pagination);
+    res.json({ items, total, page: pagination.page, pageSize: pagination.pageSize });
+  },
+);
 
 /** Normaliza `_id` (ObjectId no doc lean) para string, shape `User`. */
 function toUserJson(user: User): User {

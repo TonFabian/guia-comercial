@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { createCompanySchema } from './dto.js';
+import { createCompanySchema, createPublicUtilitySchema } from './dto.js';
 
 const EMPRESA_BASE = {
   name: 'Barbearia Central',
@@ -62,5 +62,48 @@ describe('createCompanySchema', () => {
 
     expect(parsed.isVerified).toBeUndefined();
     expect(parsed.products).toBeUndefined();
+  });
+});
+
+describe('createPublicUtilitySchema', () => {
+  const SERVICO_BASE = {
+    name: 'Polícia Militar',
+    description: 'Emergência em Castelo do Piauí',
+    category: 'emergency',
+  };
+
+  it('aceita o serviço público completo', () => {
+    const parsed = createPublicUtilitySchema.parse({
+      ...SERVICO_BASE,
+      phone: '190',
+      details: ['Disque emergência'],
+      icon: 'shield-alert',
+      city: 'castelo-do-piaui',
+      order: 1,
+      active: true,
+    });
+
+    expect(parsed.category).toBe('emergency');
+    expect(parsed.phone).toBe('190');
+    expect(parsed.details).toEqual(['Disque emergência']);
+    expect(parsed.order).toBe(1);
+  });
+
+  it('rejeita categoria fora da lista', () => {
+    const result = createPublicUtilitySchema.safeParse({
+      ...SERVICO_BASE,
+      category: 'outra-categoria',
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it('rejeita serviço sem nome', () => {
+    const result = createPublicUtilitySchema.safeParse({
+      ...SERVICO_BASE,
+      name: '   ',
+    });
+
+    expect(result.success).toBe(false);
   });
 });

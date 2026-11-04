@@ -1,48 +1,102 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { SignInButton, useAuth, useUser } from '@clerk/clerk-react';
 
 import { Sidebar } from './components/sidebar';
-import {
-  createBanner,
-  createCategory,
-  createCompany,
-  createCoupon,
-  createJob,
-  createNotice,
-  deleteBanner,
-  deleteCategory,
-  deleteCompany,
-  deleteCoupon,
-  deleteJob,
-  deleteNotice,
-  updateNotice,
-  getBanners,
-  getCategories,
-  getCompanies,
-  getCoupons,
-  getJobs,
-  getNotices,
-  getUsers,
-  setAuthToken,
-} from './services/api';
-import type { AdminUser, Banner, Category, Company, Coupon, Job, Notice } from './types/domain';
+import type { Section } from './components/sidebar';
+import { AvisosSection } from './components/sections/avisos';
+import { BannersSection } from './components/sections/banners';
+import { CategoriasSection } from './components/sections/categorias';
+import { CidadesSection } from './components/sections/cidades';
+import { CuponsSection } from './components/sections/cupons';
+import { EmpresasSection } from './components/sections/empresas';
+import { UsuariosSection } from './components/sections/usuarios';
+import { UtilidadePublicaSection } from './components/sections/utilidade-publica';
+import { VagasSection } from './components/sections/vagas';
+import { hintStyle } from './components/styles';
+import { getCategories, getCities, getCompanies, setAuthToken } from './services/api';
+import type { Catalog, CatalogErrors } from './types/catalog';
 
-type Section = 'Empresas' | 'Categorias' | 'Banners' | 'Cupons' | 'Vagas' | 'Avisos' | 'Usuários';
+/** Catálogo vazio — evita `undefined` enquanto os dados de referência carregam. */
+const EMPTY_CATALOG: Catalog = { categories: [], cities: [], companyOptions: [], companyOptionsTotal: 0 };
 
 export default function App() {
   const { isSignedIn, isLoaded, getToken } = useAuth();
   const { user } = useUser();
 
+  const [section, setSection] = useState<Section>('Empresas');
+  const [catalog, setCatalog] = useState<Catalog>(EMPTY_CATALOG);
+  const [catalogErrors, setCatalogErrors] = useState<CatalogErrors>({});
+  const [catalogLoading, setCatalogLoading] = useState(true);
+  const [authReady, setAuthReady] = useState(false);
+
+  // O token do Clerk precisa estar pronto antes de qualquer chamada autenticada.
   useEffect(() => {
     if (!isSignedIn) {
       setAuthToken(null);
+      setAuthReady(false);
       return;
     }
+
+    let cancelled = false;
     (async () => {
       const token = await getToken();
+      if (cancelled) return;
       setAuthToken(token ?? null);
+      setAuthReady(true);
     })();
+
+    return () => {
+      cancelled = true;
+    };
   }, [isSignedIn, getToken, user]);
+
+  /**
+   * Carrega os dados de referência (categorias, cidades e empresas usadas como
+   * opção nos selects).
+   *
+   * Cada recurso é tratado por fora: uma falha em um deles não pode esvaziar
+   * o painel inteiro — o erro aparece na seção que depende do recurso.
+   */
+  const loadCatalog = useCallback(async () => {
+    setCatalogLoading(true);
+
+    const [categories, cities, companies] = await Promise.allSettled([
+      getCategories(1, 100),
+      getCities(),
+      getCompanies(1, 100),
+    ]);
+
+    const nextCatalog: Catalog = { categories: [], cities: [], companyOptions: [], companyOptionsTotal: 0 };
+    const nextErrors: CatalogErrors = {};
+
+    if (categories.status === 'fulfilled') {
+      nextCatalog.categories = categories.value.items ?? [];
+    } else {
+      nextErrors.categories = messageOf(categories.reason);
+    }
+
+    if (cities.status === 'fulfilled') {
+      nextCatalog.cities = cities.value;
+    } else {
+      nextErrors.cities = messageOf(cities.reason);
+    }
+
+    if (companies.status === 'fulfilled') {
+      nextCatalog.companyOptions = companies.value.items ?? [];
+      nextCatalog.companyOptionsTotal = companies.value.total ?? 0;
+    } else {
+      nextErrors.companyOptions = messageOf(companies.reason);
+    }
+
+    setCatalog(nextCatalog);
+    setCatalogErrors(nextErrors);
+    setCatalogLoading(false);
+  }, []);
+
+  useEffect(() => {
+    if (!authReady) return;
+    void loadCatalog();
+  }, [authReady, loadCatalog]);
 
   if (!isLoaded) return <p>Carregando…</p>;
   if (!isSignedIn) {
@@ -59,500 +113,58 @@ export default function App() {
     );
   }
 
-  const [section, setSection] = useState<Section>('Empresas');
-  const [companies, setCompanies] = useState<Company[]>([]);
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [banners, setBanners] = useState<Banner[]>([]);
-  const [coupons, setCoupons] = useState<Coupon[]>([]);
-  const [notices, setNotices] = useState<Notice[]>([]);
-  const [jobs, setJobs] = useState<Job[]>([]);
-  const [users, setUsers] = useState<AdminUser[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-
-  async function loadAll() {
-    setLoading(true);
-    setError(null);
-    try {
-      const [c, cat, b, cp, j, u, n] = await Promise.all([
-        getCompanies(1),
-        getCategories(),
-        getBanners(),
-        getCoupons(),
-        getJobs(),
-        getUsers(),
-        getNotices(),
-      ]);
-      setCompanies(c.items ?? []);
-      setCategories(cat.items ?? []);
-      setBanners(b.items ?? []);
-      setCoupons(cp.items ?? []);
-      setJobs(j.items ?? []);
-      setUsers(u.items ?? []);
-      setNotices(n.items ?? []);
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  useEffect(() => {
-    void loadAll();
-  }, []);
-
-  async function remove(kind: string, id: string) {
-    if (!confirm(`Excluir ${kind}?`)) return;
-    try {
-      if (kind === 'empresa') await deleteCompany(id);
-      else if (kind === 'categoria') await deleteCategory(id);
-      else if (kind === 'banner') await deleteBanner(id);
-      else if (kind === 'cupom') await deleteCoupon(id);
-      else if (kind === 'vaga') await deleteJob(id);
-      else if (kind === 'aviso') await deleteNotice(id);
-      await loadAll();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
-    }
-  }
-
   return (
     <div className="layout">
       <Sidebar active={section} onChange={setSection} />
       <main className="content">
         <h2>{section}</h2>
-        {error && <p style={{ color: 'red' }}>{error}</p>}
-        {loading ? (
-          <p>Carregando…</p>
-        ) : (
-          <>
-            {section === 'Empresas' && (
-              <EmpresasSection
-                companies={companies}
-                categories={categories}
-                onReload={loadAll}
-                onDelete={(id: string) => remove('empresa', id)}
-                setError={setError}
-              />
-            )}
-            {section === 'Categorias' && (
-              <CategoriasSection
-                categories={categories}
-                onReload={loadAll}
-                onDelete={(id: string) => remove('categoria', id)}
-                setError={setError}
-              />
-            )}
-            {section === 'Banners' && (
-              <BannersSection
-                banners={banners}
-                onReload={loadAll}
-                onDelete={(id: string) => remove('banner', id)}
-                setError={setError}
-              />
-            )}
-            {section === 'Cupons' && (
-              <CuponsSection
-                coupons={coupons}
-                companies={companies}
-                onReload={loadAll}
-                onDelete={(id: string) => remove('cupom', id)}
-                setError={setError}
-              />
-            )}
-            {section === 'Vagas' && (
-              <VagasSection
-                jobs={jobs}
-                companies={companies}
-                onReload={loadAll}
-                onDelete={(id: string) => remove('vaga', id)}
-                setError={setError}
-              />
-            )}
-            {section === 'Avisos' && (
-              <AvisosSection
-                notices={notices}
-                onReload={loadAll}
-                onDelete={(id: string) => remove('aviso', id)}
-                setError={setError}
-              />
-            )}
-            {section === 'Usuários' && <UsuariosSection users={users} />}
-          </>
+        {catalogLoading && <p style={hintStyle}>Carregando dados de referência…</p>}
+
+        {section === 'Empresas' && (
+          <EmpresasSection
+            categories={catalog.categories}
+            categoriesError={catalogErrors.categories ?? null}
+            cities={catalog.cities}
+            citiesError={catalogErrors.cities ?? null}
+          />
         )}
+        {section === 'Categorias' && <CategoriasSection />}
+        {section === 'Cidades' && (
+          <CidadesSection
+            cities={catalog.cities}
+            citiesError={catalogErrors.cities ?? null}
+            onReload={() => void loadCatalog()}
+          />
+        )}
+        {section === 'Banners' && <BannersSection />}
+        {section === 'Cupons' && (
+          <CuponsSection
+            companies={catalog.companyOptions}
+            companiesTotal={catalog.companyOptionsTotal}
+            companiesError={catalogErrors.companyOptions ?? null}
+          />
+        )}
+        {section === 'Vagas' && (
+          <VagasSection
+            companies={catalog.companyOptions}
+            companiesTotal={catalog.companyOptionsTotal}
+            companiesError={catalogErrors.companyOptions ?? null}
+          />
+        )}
+        {section === 'Avisos' && <AvisosSection />}
+        {section === 'Utilidade Pública' && (
+          <UtilidadePublicaSection
+            cities={catalog.cities}
+            citiesError={catalogErrors.cities ?? null}
+          />
+        )}
+        {section === 'Usuários' && <UsuariosSection />}
       </main>
     </div>
   );
 }
 
-// ---------------------------------------------------------------------------
-// Empresas
-// ---------------------------------------------------------------------------
-
-function EmpresasSection({ companies, categories, onReload, onDelete, setError }: { companies: Company[]; categories: Category[]; onReload: () => void; onDelete: (id: string) => void; setError: (error: string | null) => void; }) {
-  const [form, setForm] = useState({ name: '', slug: '', description: '', category: '', city: '', phone: '', whatsapp: '', samePhone: false });
-
-  function handlePhoneChange(value: string) {
-    setForm((prev) => ({
-      ...prev,
-      phone: value,
-      whatsapp: prev.samePhone ? value : prev.whatsapp,
-    }));
-  }
-
-  function handleSamePhoneChange(checked: boolean) {
-    setForm((prev) => ({
-      ...prev,
-      samePhone: checked,
-      whatsapp: checked ? prev.phone : prev.whatsapp,
-    }));
-  }
-
-  async function handleCreate(e: React.FormEvent) {
-    e.preventDefault();
-    try {
-      await createCompany({
-        name: form.name,
-        slug: form.slug,
-        description: form.description,
-        category: form.category,
-        city: form.city,
-        phone: form.phone || undefined,
-        whatsapp: form.whatsapp || undefined,
-      });
-      setForm({ name: '', slug: '', description: '', category: '', city: '', phone: '', whatsapp: '', samePhone: false });
-      await onReload();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
-    }
-  }
-
-  return (
-    <>
-      <form onSubmit={handleCreate} style={formStyle}>
-        <input placeholder="Nome" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
-        <input placeholder="Slug" value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value })} required />
-        <input placeholder="Descrição" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} required />
-        <select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} required>
-          <option value="">Categoria</option>
-          {categories.map((c: Category) => (
-            <option key={c._id} value={c._id}>{c.name}</option>
-          ))}
-        </select>
-        <input placeholder="Cidade" value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} />
-        <input placeholder="Telefone (ligar)" value={form.phone} onChange={(e) => handlePhoneChange(e.target.value)} />
-        <label style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <input type="checkbox" checked={form.samePhone} onChange={(e) => handleSamePhoneChange(e.target.checked)} />
-          Usar o mesmo número para WhatsApp
-        </label>
-        <input placeholder="WhatsApp" value={form.whatsapp} onChange={(e) => setForm({ ...form, whatsapp: e.target.value })} disabled={form.samePhone} />
-        <button type="submit">Criar</button>
-      </form>
-      <Table
-        headers={['Nome', 'Categoria', 'Cidade', 'Ações']}
-        rows={companies.map((c: Company) => [
-          c.name,
-          typeof c.category === 'string' ? c.category : c.category?.name,
-          (typeof c.city === 'string' ? c.city : c.city?.name) ?? '—',
-          <button key={c._id} onClick={() => onDelete(c._id)}>Excluir</button>,
-        ])}
-      />
-    </>
-  );
+/** Converte um motivo de rejeição em mensagem exibível. */
+function messageOf(reason: unknown): string {
+  return reason instanceof Error ? reason.message : String(reason);
 }
-
-// ---------------------------------------------------------------------------
-// Categorias
-// ---------------------------------------------------------------------------
-
-function CategoriasSection({ categories, onReload, onDelete, setError }: { categories: Category[]; onReload: () => void; onDelete: (id: string) => void; setError: (error: string | null) => void; }) {
-  const [form, setForm] = useState({ name: '', slug: '', icon: '', order: 0 });
-
-  async function handleCreate(e: React.FormEvent) {
-    e.preventDefault();
-    try {
-      await createCategory({ name: form.name, slug: form.slug, icon: form.icon, order: form.order });
-      setForm({ name: '', slug: '', icon: '', order: 0 });
-      await onReload();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
-    }
-  }
-
-  return (
-    <>
-      <form onSubmit={handleCreate} style={formStyle}>
-        <input placeholder="Nome" value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
-        <input placeholder="Slug" value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value })} required />
-        <input placeholder="Ícone" value={form.icon} onChange={(e) => setForm({ ...form, icon: e.target.value })} />
-        <input type="number" placeholder="Ordem" value={form.order} onChange={(e) => setForm({ ...form, order: Number(e.target.value) })} />
-        <button type="submit">Criar</button>
-      </form>
-      <Table
-        headers={['Nome', 'Slug', 'Ações']}
-        rows={categories.map((c: Category) => [c.name, c.slug, <button key={c._id} onClick={() => onDelete(c._id)}>Excluir</button>])}
-      />
-    </>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Banners
-// ---------------------------------------------------------------------------
-
-function BannersSection({ banners, onReload, onDelete, setError }: { banners: Banner[]; onReload: () => void; onDelete: (id: string) => void; setError: (error: string | null) => void; }) {
-  const [form, setForm] = useState({ title: '', image: '', link: '' });
-
-  async function handleCreate(e: React.FormEvent) {
-    e.preventDefault();
-    try {
-      await createBanner({ title: form.title, image: form.image, link: form.link });
-      setForm({ title: '', image: '', link: '' });
-      await onReload();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
-    }
-  }
-
-  return (
-    <>
-      <form onSubmit={handleCreate} style={formStyle}>
-        <input placeholder="Título" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required />
-        <input placeholder="URL da imagem" value={form.image} onChange={(e) => setForm({ ...form, image: e.target.value })} />
-        <input placeholder="Link" value={form.link} onChange={(e) => setForm({ ...form, link: e.target.value })} />
-        <button type="submit">Criar</button>
-      </form>
-      <Table
-        headers={['Título', 'Ações']}
-        rows={banners.map((b: Banner) => [b.title, <button key={b._id} onClick={() => onDelete(b._id)}>Excluir</button>])}
-      />
-    </>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Cupons
-// ---------------------------------------------------------------------------
-
-function CuponsSection({ coupons, companies, onReload, onDelete, setError }: { coupons: Coupon[]; companies: Company[]; onReload: () => void; onDelete: (id: string) => void; setError: (error: string | null) => void; }) {
-  const [form, setForm] = useState({ code: '', discount: '', company: '' });
-
-  async function handleCreate(e: React.FormEvent) {
-    e.preventDefault();
-    try {
-      await createCoupon({ code: form.code, discount: form.discount, company: form.company });
-      setForm({ code: '', discount: '', company: '' });
-      await onReload();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
-    }
-  }
-
-  return (
-    <>
-      <form onSubmit={handleCreate} style={formStyle}>
-        <input placeholder="Código" value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })} required />
-        <input placeholder="Desconto" value={form.discount} onChange={(e) => setForm({ ...form, discount: e.target.value })} />
-        <select value={form.company} onChange={(e) => setForm({ ...form, company: e.target.value })} required>
-          <option value="">Empresa</option>
-          {companies.map((c: Company) => (
-            <option key={c._id} value={c._id}>{c.name}</option>
-          ))}
-        </select>
-        <button type="submit">Criar</button>
-      </form>
-      <Table
-        headers={['Código', 'Desconto', 'Ações']}
-        rows={coupons.map((c: Coupon) => [c.code, `${c.discount}%`, <button key={c._id} onClick={() => onDelete(c._id)}>Excluir</button>])}
-      />
-    </>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Vagas
-// ---------------------------------------------------------------------------
-
-function VagasSection({ jobs, companies, onReload, onDelete, setError }: { jobs: Job[]; companies: Company[]; onReload: () => void; onDelete: (id: string) => void; setError: (error: string | null) => void; }) {
-  const [form, setForm] = useState({ title: '', company: '', description: '', location: '', type: 'CLT' });
-
-  async function handleCreate(e: React.FormEvent) {
-    e.preventDefault();
-    try {
-      await createJob({ title: form.title, company: form.company, description: form.description, location: form.location, type: form.type });
-      setForm({ title: '', company: '', description: '', location: '', type: 'CLT' });
-      await onReload();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
-    }
-  }
-
-  return (
-    <>
-      <form onSubmit={handleCreate} style={formStyle}>
-        <input placeholder="Título" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required />
-        <select value={form.company} onChange={(e) => setForm({ ...form, company: e.target.value })} required>
-          <option value="">Empresa</option>
-          {companies.map((c: Company) => (
-            <option key={c._id} value={c._id}>{c.name}</option>
-          ))}
-        </select>
-        <input placeholder="Descrição" value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
-        <input placeholder="Localização" value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} />
-        <select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })}>
-          <option value="CLT">CLT</option>
-          <option value="Part-time">Meio período</option>
-        </select>
-        <button type="submit">Criar</button>
-      </form>
-      <Table
-        headers={['Título', 'Empresa', 'Localização', 'Ações']}
-        rows={jobs.map((j: Job) => [
-          j.title,
-          typeof j.company === 'string' ? j.company : j.company?.name,
-          j.location ?? '—',
-          <button key={j._id} onClick={() => onDelete(j._id)}>Excluir</button>,
-        ])}
-      />
-    </>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Avisos
-// ---------------------------------------------------------------------------
-
-function AvisosSection({ notices, onReload, onDelete, setError }: { notices: Notice[]; onReload: () => void; onDelete: (id: string) => void; setError: (error: string | null) => void; }) {
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [form, setForm] = useState({
-    title: '',
-    body: '',
-    type: 'general' as 'general' | 'alert' | 'health',
-    startsAt: '',
-    expiresAt: '',
-    active: true,
-  });
-
-  function resetForm() {
-    setEditingId(null);
-    setForm({ title: '', body: '', type: 'general', startsAt: '', expiresAt: '', active: true });
-  }
-
-  function startEdit(n: Notice) {
-    setEditingId(n._id);
-    setForm({
-      title: n.title,
-      body: n.body,
-      type: n.type,
-      startsAt: n.startsAt ?? '',
-      expiresAt: n.expiresAt ?? '',
-      active: n.active,
-    });
-  }
-
-  async function handleSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const payload = {
-      title: form.title,
-      body: form.body,
-      type: form.type,
-      startsAt: form.startsAt ? new Date(form.startsAt).toISOString() : undefined,
-      expiresAt: form.expiresAt ? new Date(form.expiresAt).toISOString() : undefined,
-      active: form.active,
-    };
-    try {
-      if (editingId) await updateNotice(editingId, payload);
-      else await createNotice(payload);
-      resetForm();
-      await onReload();
-    } catch (e) {
-      setError(e instanceof Error ? e.message : String(e));
-    }
-  }
-
-  return (
-    <>
-      <form onSubmit={handleSubmit} style={formStyle}>
-        <input placeholder="Título" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required />
-        <textarea placeholder="Texto do aviso" value={form.body} onChange={(e) => setForm({ ...form, body: e.target.value })} required style={{ minWidth: 300, minHeight: 60 }} />
-        <select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value as 'general' | 'alert' | 'health' })}>
-          <option value="general">Geral</option>
-          <option value="alert">Alerta</option>
-          <option value="health">Saúde</option>
-        </select>
-        <input type="datetime-local" placeholder="Início (opcional)" value={form.startsAt} onChange={(e) => setForm({ ...form, startsAt: e.target.value })} />
-        <input type="datetime-local" placeholder="Expira em (opcional)" value={form.expiresAt} onChange={(e) => setForm({ ...form, expiresAt: e.target.value })} />
-        <label style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-          <input type="checkbox" checked={form.active} onChange={(e) => setForm({ ...form, active: e.target.checked })} />
-          Ativo
-        </label>
-        <button type="submit">{editingId ? 'Salvar' : 'Criar'}</button>
-        {editingId ? <button type="button" onClick={resetForm}>Cancelar</button> : null}
-      </form>
-      <Table
-        headers={['Título', 'Tipo', 'Validade', 'Ações']}
-        rows={notices.map((n: Notice) => [
-          n.title,
-          n.type,
-          n.expiresAt ? new Date(n.expiresAt).toLocaleString() : '—',
-          <>
-            <button key={`edit-${n._id}`} onClick={() => startEdit(n)}>Editar</button>{' '}
-            <button key={`del-${n._id}`} onClick={() => onDelete(n._id)}>Excluir</button>
-          </>,
-        ])}
-      />
-    </>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Usuários (somente leitura)
-// ---------------------------------------------------------------------------
-
-function UsuariosSection({ users }: { users: AdminUser[] }) {
-  return (
-    <Table
-      headers={['Nome', 'E-mail', 'Role']}
-      rows={users.map((u: AdminUser) => [
-        u.name ?? '—',
-        u.email,
-        u.role,
-      ])}
-    />
-  );
-}
-
-// ---------------------------------------------------------------------------
-// Tabela genérica
-// ---------------------------------------------------------------------------
-
-function Table({ headers, rows }: { headers: string[]; rows: (string | number | React.ReactNode)[][] }) {
-  return (
-    <table>
-      <thead>
-        <tr>
-          {headers.map((h) => (
-            <th key={h}>{h}</th>
-          ))}
-        </tr>
-      </thead>
-      <tbody>
-        {rows.map((row, i) => (
-          <tr key={i}>
-            {row.map((cell, j) => (
-              <td key={j}>{cell}</td>
-            ))}
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  );
-}
-
-const formStyle: React.CSSProperties = {
-  display: 'flex',
-  gap: 8,
-  flexWrap: 'wrap',
-  marginBottom: 24,
-  alignItems: 'center',
-};

@@ -1,5 +1,5 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Button,
@@ -28,8 +28,8 @@ import { SearchBar } from '@/features/home/search-bar';
 import { SectionHeader } from '@/features/home/section-header';
 import { useHomeData } from '@/features/home/use-home-data';
 import { useThemeColors } from '@/hooks/use-theme-colors';
-import { getAutonomousProfessionals, getCities, getCompanies, getNotices } from '@/services/api';
-import type { AutonomousProfessional, Company, Notice } from '@/types/domain';
+import { getAutonomousProfessionals, getCities, getCompanies, getNotices, getPublicUtilities } from '@/services/api';
+import type { AutonomousProfessional, Company, Notice, PublicUtility } from '@/types/domain';
 
 /** Cupons desativados a pedido do produto; flag mantém a seção reativável. */
 const SHOW_COUPONS = false;
@@ -67,11 +67,43 @@ export default function HomeScreen() {
   const [professionals, setProfessionals] = useState<AutonomousProfessional[]>([]);
   const [notices, setNotices] = useState<Notice[]>([]);
   const [otherCompanies, setOtherCompanies] = useState<Company[]>([]);
+  const [utilities, setUtilities] = useState<PublicUtility[]>([]);
 
   const [noticesLoading, setNoticesLoading] = useState(true);
   const [otherCompaniesLoading, setOtherCompaniesLoading] = useState(true);
+  const [utilitiesLoading, setUtilitiesLoading] = useState(true);
   const [noticesError, setNoticesError] = useState<string | null>(null);
   const [otherCompaniesError, setOtherCompaniesError] = useState<string | null>(null);
+  const [utilitiesError, setUtilitiesError] = useState<string | null>(null);
+  const [utilitiesToken, setUtilitiesToken] = useState(0);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      setUtilitiesLoading(true);
+      setUtilitiesError(null);
+      try {
+        const list = await getPublicUtilities();
+        if (!cancelled) setUtilities(list);
+      } catch (error) {
+        if (!cancelled) {
+          setUtilities([]);
+          setUtilitiesError(
+            error instanceof Error ? error.message : 'Erro ao carregar os telefones úteis',
+          );
+        }
+      } finally {
+        if (!cancelled) setUtilitiesLoading(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [utilitiesToken]);
+
+  const reloadUtilities = useCallback(() => {
+    setUtilitiesToken((token) => token + 1);
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -185,7 +217,12 @@ export default function HomeScreen() {
                   <BannerCarousel banners={banners} />
                 </>
               ) : null}
-              <PublicUtilities />
+              <PublicUtilities
+                utilities={utilities}
+                loading={utilitiesLoading}
+                error={utilitiesError}
+                onRetry={reloadUtilities}
+              />
               <NoticesCarousel notices={notices} loading={noticesLoading} error={noticesError} />
               <AutonomousProfessionals professionals={professionals} />
               <JobList jobs={jobs} />
