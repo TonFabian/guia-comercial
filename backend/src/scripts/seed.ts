@@ -70,8 +70,6 @@ async function seed(): Promise<void> {
 
   const cidades = [
     { name: 'Castelo do Piauí', slug: 'castelo-do-piaui', state: 'PI' },
-    { name: 'Fortaleza', slug: 'fortaleza', state: 'CE' },
-    { name: 'Teresina', slug: 'teresina', state: 'PI' },
   ];
   const inseridasCidades = await insertIfMissing(CityModel, cidades, 'slug');
   console.log(`Cidades inseridas: ${inseridasCidades}`);
