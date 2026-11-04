@@ -20,6 +20,9 @@ export default function MyCompanyScreen() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [hoursText, setHoursText] = useState('');
   const [promotionText, setPromotionText] = useState('');
+  const [phone, setPhone] = useState('');
+  const [whatsapp, setWhatsapp] = useState('');
+  const [samePhone, setSamePhone] = useState(false);
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -46,6 +49,11 @@ export default function MyCompanyScreen() {
     setEditingId(company._id);
     setHoursText((company.openingHours ?? []).join('\n'));
     setPromotionText(company.promotion ?? '');
+    const p = company.phone ?? '';
+    const w = company.whatsapp ?? '';
+    setPhone(p);
+    setWhatsapp(w);
+    setSamePhone(Boolean(p) && p === w);
   }
 
   async function save() {
@@ -53,10 +61,14 @@ export default function MyCompanyScreen() {
     setSaving(true);
     try {
       const hours = hoursText.split('\n').map((s) => s.trim()).filter(Boolean);
-      await updateCompany(editingId, { openingHours: hours, promotion: promotionText.trim() || undefined });
+      const phoneValue = phone.trim() || undefined;
+      const whatsappValue = samePhone ? phoneValue : (whatsapp.trim() || undefined);
+      await updateCompany(editingId, { openingHours: hours, promotion: promotionText.trim() || undefined, phone: phoneValue, whatsapp: whatsappValue });
       setCompanies((prev) =>
         prev.map((c) =>
-          c._id === editingId ? { ...c, openingHours: hours, promotion: promotionText.trim() || undefined } : c,
+          c._id === editingId
+            ? { ...c, openingHours: hours, promotion: promotionText.trim() || undefined, phone: phoneValue ?? null, whatsapp: whatsappValue ?? null }
+            : c,
         ),
       );
       setEditingId(null);
@@ -120,6 +132,38 @@ export default function MyCompanyScreen() {
                       placeholder="Ex.: 20% OFF em pizzas hoje!"
                       placeholderTextColor={colors.textSecondary}
                     />
+                    <Text style={styles.label}>Telefone (ligar)</Text>
+                    <TextInput
+                      style={[styles.input, styles.phoneInput]}
+                      value={phone}
+                      onChangeText={(v) => {
+                        setPhone(v);
+                        if (samePhone) setWhatsapp(v);
+                      }}
+                      placeholder="(85) 99999-0000"
+                      placeholderTextColor={colors.textSecondary}
+                      keyboardType="phone-pad"
+                    />
+                    <TouchableOpacity style={styles.checkboxRow} onPress={() => {
+                      const next = !samePhone;
+                      setSamePhone(next);
+                      if (next) setWhatsapp(phone);
+                    }}>
+                      <View style={[styles.checkbox, samePhone && styles.checkboxChecked]}>
+                        {samePhone ? <Text style={styles.checkboxMark}>✓</Text> : null}
+                      </View>
+                      <Text style={styles.checkboxLabel}>Usar o mesmo número para WhatsApp</Text>
+                    </TouchableOpacity>
+                    <Text style={styles.label}>WhatsApp</Text>
+                    <TextInput
+                      style={[styles.input, styles.phoneInput, samePhone && styles.inputDisabled]}
+                      value={whatsapp}
+                      onChangeText={setWhatsapp}
+                      placeholder="(85) 99999-0000"
+                      placeholderTextColor={colors.textSecondary}
+                      keyboardType="phone-pad"
+                      editable={!samePhone}
+                    />
                     <View style={styles.actions}>
                       <TouchableOpacity style={styles.btn} onPress={() => setEditingId(null)}>
                         <Text style={styles.btnText}>Cancelar</Text>
@@ -174,6 +218,13 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     promoLine: { color: colors.primary, fontSize: 14, fontWeight: '600' },
     hourLineMuted: { color: colors.textSecondary, fontSize: 14, fontStyle: 'italic' },
     input: { backgroundColor: colors.background, color: colors.text, borderRadius: 10, borderWidth: 1, borderColor: colors.border, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, minHeight: 80, textAlignVertical: 'top' },
+    phoneInput: { minHeight: 44 },
+    inputDisabled: { opacity: 0.6 },
+    checkboxRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginVertical: 4 },
+    checkbox: { width: 22, height: 22, borderRadius: 6, borderWidth: 1, borderColor: colors.border, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.background },
+    checkboxChecked: { backgroundColor: colors.primary, borderColor: colors.primary },
+    checkboxMark: { color: colors.background, fontSize: 14, fontWeight: '700' },
+    checkboxLabel: { color: colors.text, fontSize: 14 },
     actions: { flexDirection: 'row', justifyContent: 'flex-end', gap: 10, marginTop: 8 },
     btn: { paddingVertical: 8, paddingHorizontal: 16, borderRadius: 10, backgroundColor: colors.surfaceAlt },
     btnText: { color: colors.text, fontSize: 14, fontWeight: '600' },
