@@ -3,6 +3,7 @@ import { Router } from 'express';
 import { guestLogin } from '../controllers/auth.controller.js';
 import * as autonomousProfessionalController from '../controllers/autonomous-professional.controller.js';
 import * as bannerController from '../controllers/banner.controller.js';
+import * as cityController from '../controllers/city.controller.js';
 import * as categoryController from '../controllers/category.controller.js';
 import * as companyController from '../controllers/company.controller.js';
 import * as couponController from '../controllers/coupon.controller.js';
@@ -121,7 +122,13 @@ notices.get('/:id', noticeController.getById);
 notices.put('/:id', validateBody(createNoticeSchema.partial()), noticeController.update);
 notices.delete('/:id', noticeController.remove);
 
+const cities = Router();
+cities.post('/', cityController.create);
+cities.get('/', cityController.list);
+cities.delete('/:id', cityController.remove);
+
 routes.use('/categories', categories);
+routes.use('/cities', cities);
 routes.use('/companies', companies);
 routes.use('/banners', banners);
 routes.use('/coupons', coupons);

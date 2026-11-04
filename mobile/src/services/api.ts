@@ -6,7 +6,7 @@
  * sessão do Clerk e o comportamento de fallback (mock quando a env não está
  * definida ou a API está fora do ar; 401/403 reais estouram `ApiError`).
  */
-import type { AutonomousProfessional, Banner, Category, Company, Coupon, Job, Notice, Paginated, Review, User } from '@/types/domain';
+import type { AutonomousProfessional, Banner, Category, City, Company, Coupon, Job, Notice, Paginated, Review, User } from '@/types/domain';
 
 import { isApiConfigured, request } from './http';
 import type { RequestPayload } from './http';
@@ -56,18 +56,31 @@ export type CompanyPage = {
   pageSize: number;
 };
 
-export async function getCompanies(page = 1, pageSize = 20): Promise<CompanyPage> {
+function normalizeCity(value: string | null | undefined): string {
+  if (!value) return '';
+  return value.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+}
+
+export async function getCompanies(page = 1, pageSize = 20, city?: string): Promise<CompanyPage> {
   if (!isApiConfigured()) {
     if (!__DEV__) return { items: [], total: 0, page, pageSize };
+    let items = MOCK_COMPANIES;
+    if (city) {
+      const target = normalizeCity(city);
+      items = items.filter((c) => normalizeCity(c.city) === target);
+    }
     const start = (page - 1) * pageSize;
-    const items = MOCK_COMPANIES.slice(start, start + pageSize);
-    return { items, total: MOCK_COMPANIES.length, page, pageSize };
+    const sliced = items.slice(start, start + pageSize);
+    return { items: sliced, total: items.length, page, pageSize };
   }
-  const payload = await request<Company>(`/companies?page=${page}&pageSize=${pageSize}`);
+  const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
+  if (city) params.set('city', city);
+  const payload = await request<Company>(`/companies?${params.toString()}`);
   const items = fromPaginated(payload, []);
   const total = isPaginated(payload) ? (payload.total ?? items.length) : items.length;
-  const fallbackItems = page === 1 && items.length === 0 && (__DEV__ || !isApiConfigured()) ? MOCK_COMPANIES.slice(0, pageSize) : items;
-  const fallbackTotal = page === 1 && items.length === 0 && (__DEV__ || !isApiConfigured()) ? MOCK_COMPANIES.length : total;
+  const allowMockFallback = __DEV__ || !isApiConfigured();
+  const fallbackItems = page === 1 && items.length === 0 && allowMockFallback ? MOCK_COMPANIES.slice(0, pageSize) : items;
+  const fallbackTotal = page === 1 && items.length === 0 && allowMockFallback ? MOCK_COMPANIES.length : total;
   return { items: fallbackItems, total: fallbackTotal, page, pageSize };
 }
 
@@ -114,10 +127,12 @@ export async function getJobById(id: string): Promise<Job | null> {
   }
 }
 
-export async function getFeaturedCompany(): Promise<Company | null> {
+export async function getFeaturedCompany(city?: string): Promise<Company | null> {
   if (!isApiConfigured()) return __DEV__ ? MOCK_FEATURED_COMPANY : null;
   try {
-    const payload = await request<Company>('/companies?featured=true');
+    const params = new URLSearchParams({ featured: 'true' });
+    if (city) params.set('city', city);
+    const payload = await request<Company>(`/companies?${params.toString()}`);
     const items = fromPaginated(payload, mockFallback(MOCK_COMPANIES));
     const found = items.find((company) => company.isFeatured) ?? items[0] ?? null;
     return found ?? (__DEV__ ? MOCK_FEATURED_COMPANY : null);
@@ -126,10 +141,12 @@ export async function getFeaturedCompany(): Promise<Company | null> {
   }
 }
 
-export async function getPharmacyOnDuty(): Promise<Company | null> {
+export async function getPharmacyOnDuty(city?: string): Promise<Company | null> {
   if (!isApiConfigured()) return __DEV__ ? MOCK_PHARMACY : null;
   try {
-    const payload = await request<Company>('/companies?category=farmacia');
+    const params = new URLSearchParams({ category: 'farmacia' });
+    if (city) params.set('city', city);
+    const payload = await request<Company>(`/companies?${params.toString()}`);
     const items = fromPaginated(payload, []);
     return items[0] ?? (__DEV__ ? MOCK_PHARMACY : null);
   } catch {
@@ -249,6 +266,17 @@ export async function getNotices(): Promise<Notice[]> {
     const payload = await request<Notice>('/notices?active=true');
     if (!payload) return [];
     return Array.isArray(payload) ? payload : [payload as Notice];
+  } catch {
+    return [];
+  }
+}
+
+export async function getCities(): Promise<City[]> {
+  if (!isApiConfigured()) return [];
+  try {
+    const payload = await request<City>('/cities');
+    if (!payload) return [];
+    return Array.isArray(payload) ? payload : [payload as City];
   } catch {
     return [];
   }

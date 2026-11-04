@@ -156,6 +156,16 @@ export interface Notice {
   updatedAt?: string;
 }
 
+/** Cidade suportada pelo guia. */
+export interface City {
+  _id: string;
+  name: string;
+  slug: string;
+  state: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export interface Paginated<T> {
   items: T[];
   total: number;

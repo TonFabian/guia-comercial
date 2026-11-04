@@ -1,3 +1,4 @@
+import Ionicons from '@expo/vector-icons/Ionicons';
 import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
@@ -6,36 +7,56 @@ import {
   StatusBar,
   StyleSheet,
   Text,
+  TouchableOpacity,
   View,
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { useThemeColors } from '@/hooks/use-theme-colors';
-import { getAutonomousProfessionals, getCompanies, getNotices } from '@/services/api';
+import { Radius, Type } from '@/constants/theme';
 import { GuestBanner } from '@/features/auth/guest-banner';
-import type { AutonomousProfessional, Company, Notice } from '@/types/domain';
-import { AutonomousProfessionals } from '@/features/home/autonomous-professionals';
-import { NoticesCarousel } from '@/features/home/notices-carousel';
-import { OtherCompanies } from '@/features/home/other-companies';
 import { AnnounceCta } from '@/features/home/announce-cta';
+import { AutonomousProfessionals } from '@/features/home/autonomous-professionals';
 import { BannerCarousel } from '@/features/home/banner-carousel';
 import { CategoryList } from '@/features/home/category-list';
 import { FeaturedCompany } from '@/features/home/featured-company';
 import { Header } from '@/features/home/header';
 import { JobList } from '@/features/home/job-list';
+import { NoticesCarousel } from '@/features/home/notices-carousel';
+import { OtherCompanies } from '@/features/home/other-companies';
 import { PublicUtilities } from '@/features/home/public-utilities';
 import { SearchBar } from '@/features/home/search-bar';
 import { SectionHeader } from '@/features/home/section-header';
 import { useHomeData } from '@/features/home/use-home-data';
+import { useThemeColors } from '@/hooks/use-theme-colors';
+import { getAutonomousProfessionals, getCompanies, getNotices } from '@/services/api';
+import type { AutonomousProfessional, Company, Notice } from '@/types/domain';
 
 /** Cupons desativados a pedido do produto; flag mantém a seção reativável. */
 const SHOW_COUPONS = false;
 
 export default function HomeScreen() {
-  const { loading, categories, banners, featuredCompany, jobs, error } = useHomeData();
+  const [selectedCity, setSelectedCity] = useState<string | undefined>(undefined);
+  const [cities, setCities] = useState<{ _id: string; name: string; slug: string }[]>([]);
+  const { loading, categories, banners, featuredCompany, jobs, error } = useHomeData(selectedCity);
   const insets = useSafeAreaInsets();
   const colors = useThemeColors();
   const styles = makeStyles(colors);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const { getCities } = await import('@/services/api');
+        const list = await getCities();
+        if (!cancelled) setCities(list);
+      } catch {
+        // ignora
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const [professionals, setProfessionals] = useState<AutonomousProfessional[]>([]);
   const [notices, setNotices] = useState<Notice[]>([]);
@@ -88,6 +109,42 @@ export default function HomeScreen() {
           showsVerticalScrollIndicator={false}
         >
           <Header />
+          {cities.length > 0 && (
+            <View style={styles.cityRow}>
+              <Ionicons name="location-outline" size={16} color={colors.primary} />
+              <Text style={styles.cityLabel}>Cidade:</Text>
+              <ScrollView
+                horizontal
+                showsHorizontalScrollIndicator={false}
+                contentContainerStyle={{ gap: 8 }}
+              >
+                <TouchableOpacity
+                  style={[styles.cityChip, !selectedCity && styles.cityChipActive]}
+                  onPress={() => setSelectedCity(undefined)}
+                >
+                  <Text style={[styles.cityChipText, !selectedCity && styles.cityChipTextActive]}>
+                    Todas
+                  </Text>
+                </TouchableOpacity>
+                {cities.map((c) => (
+                  <TouchableOpacity
+                    key={c._id}
+                    style={[styles.cityChip, selectedCity === c.slug && styles.cityChipActive]}
+                    onPress={() => setSelectedCity(c.slug)}
+                  >
+                    <Text
+                      style={[
+                        styles.cityChipText,
+                        selectedCity === c.slug && styles.cityChipTextActive,
+                      ]}
+                    >
+                      {c.name}
+                    </Text>
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            </View>
+          )}
           <SearchBar />
           <GuestBanner />
           {loading ? (
@@ -95,7 +152,7 @@ export default function HomeScreen() {
               <ActivityIndicator color={colors.primary} />
             </View>
           ) : (
-            <>
+            <View style={{ flex: 1 }}>
               <CategoryList categories={categories} />
               <FeaturedCompany company={featuredCompany} />
               <OtherCompanies companies={otherCompanies} />
@@ -110,7 +167,7 @@ export default function HomeScreen() {
               <AutonomousProfessionals professionals={professionals} />
               <NoticesCarousel notices={notices} />
               <AnnounceCta />
-            </>
+            </View>
           )}
         </ScrollView>
       </SafeAreaView>
@@ -132,6 +189,38 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     scrollContent: {
       paddingBottom: 110,
+    },
+    cityRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: 8,
+      paddingHorizontal: 16,
+      marginBottom: 12,
+    },
+    cityLabel: {
+      color: colors.textSecondary,
+      fontSize: Type.base,
+      fontWeight: '600',
+    },
+    cityChip: {
+      backgroundColor: colors.surface,
+      borderRadius: Radius.pill,
+      borderWidth: 1,
+      borderColor: colors.border,
+      paddingVertical: 6,
+      paddingHorizontal: 12,
+    },
+    cityChipActive: {
+      backgroundColor: colors.primary,
+      borderColor: colors.primary,
+    },
+    cityChipText: {
+      color: colors.textSecondary,
+      fontSize: Type.small,
+      fontWeight: '600',
+    },
+    cityChipTextActive: {
+      color: colors.background,
     },
     center: {
       paddingVertical: 40,
