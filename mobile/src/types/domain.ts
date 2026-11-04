@@ -31,7 +31,7 @@ export interface Company {
   phone?: string | null;
   whatsapp?: string | null;
   address?: string | null;
-  city?: string;
+  city?: string | City;
   latitude?: number;
   longitude?: number;
   logo?: string;
@@ -105,6 +105,7 @@ export interface User {
   phone?: string;
   imageUrl?: string;
   role: 'user' | 'admin';
+  city?: string | City;
   lastSid?: string;
   lastSignInAt?: string;
   pushToken?: string;
@@ -135,7 +136,7 @@ export interface AutonomousProfessional {
   phone?: string | null;
   whatsapp?: string | null;
   photo?: string;
-  city?: string;
+  city?: string | City;
   rating?: number;
   ratingCount?: number;
   ownerClerkId?: string;

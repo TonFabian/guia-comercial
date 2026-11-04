@@ -15,6 +15,7 @@ const userSchema = new Schema<User>(
     phone: { type: String, trim: true },
     imageUrl: { type: String, trim: true },
     role: { type: String, enum: ['user', 'admin'], default: 'user' },
+    city: Schema.Types.Mixed,
     lastSid: String,
     lastSignInAt: String,
     pushToken: String,

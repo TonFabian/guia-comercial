@@ -63,9 +63,11 @@ export async function openExternalUrl(url: string, title: string) {
   }
 }
 
+import { cityName } from './city';
+
 /** Compartilha os dados da empresa pelo menu nativo do sistema. */
 export async function shareCompany(company: Company) {
-  const details = [company.address, company.city].filter(Boolean).join(' — ');
+  const details = [cityName(company.city), company.address].filter(Boolean).join(' — ');
   try {
     await Share.share({
       message: details ? `${company.name}\n${details}` : company.name,

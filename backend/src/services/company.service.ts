@@ -1,6 +1,7 @@
 import { isValidObjectId, Types } from 'mongoose';
 
 import { CategoryModel } from '../models/category.model.js';
+import { CityModel } from '../models/city.model.js';
 import { CompanyModel } from '../models/company.model.js';
 import { findUserByClerkId } from './user.service.js';
 import type { Company } from '../../../shared/domain.js';
@@ -58,7 +59,9 @@ export async function listCompanies(
   }
 
   if (typeof filters.city === 'string' && filters.city.length > 0) {
-    query.city = new RegExp(`^${escapeRegex(filters.city)}$`, 'i');
+    const slug = filters.city.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '-');
+    const found = await CityModel.findOne({ slug }).lean();
+    query.city = found ? found._id : new Types.ObjectId().toString();
   }
 
   const [items, total] = await Promise.all([
@@ -90,12 +93,24 @@ export async function createCompany(dto: CreateCompanyDto, ownerClerkId?: string
     }
   }
 
+  // Resolve cidade para o documento City (estruturado) ou default Castelo do Piauí.
+  let city: unknown = dto.city;
+  if (typeof city === 'string' || city === undefined) {
+    const slug = city
+      ? String(city).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '-')
+      : 'castelo-do-piaui';
+    const found = await CityModel.findOne({ slug }).lean();
+    city = found
+      ? found._id
+      : (await CityModel.findOne({ slug: 'castelo-do-piaui' }).lean())?._id;
+  }
+
   try {
     return await CompanyModel.create({
       ...dto,
       category: dto.category,
       ownerClerkId,
-      city: dto.city || 'Castelo do Piauí',
+      city,
       latitude,
       longitude,
     });
@@ -133,7 +148,14 @@ async function assertOwner(companyId: string, clerkId?: string): Promise<void> {
 export async function updateCompany(id: string, dto: UpdateCompanyDto, clerkId?: string) {
   await assertOwner(id, clerkId);
 
-  const update: UpdateCompanyDto & { latitude?: number; longitude?: number } = { ...dto };
+  const update: UpdateCompanyDto & { latitude?: number; longitude?: number; city?: unknown } = { ...dto };
+
+  if (typeof update.city === 'string') {
+    const slug = update.city.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '-');
+    const found = await CityModel.findOne({ slug }).lean();
+    update.city = found ? found._id : undefined;
+    if (update.city === undefined) delete (update as any).city;
+  }
 
   if (
     (update.latitude === undefined || update.longitude === undefined) &&
