@@ -1,3 +1,4 @@
+import Constants from 'expo-constants';
 import { Platform } from 'react-native';
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router, useFocusEffect } from 'expo-router';
@@ -55,7 +56,12 @@ export function SearchBar() {
       return;
     }
 
-    // Native: @react-native-voice/voice (requer dev build).
+    // Expo Go nao suporta modulos nativos de voz — evita crash.
+    if (Constants.appOwnership === 'expo') {
+      return;
+    }
+
+    // Dev build: @react-native-voice/voice.
     let Voice: any = null;
     try {
       Voice = require('@react-native-voice/voice').default;
