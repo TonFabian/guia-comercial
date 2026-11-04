@@ -123,6 +123,10 @@ export async function deleteNotice(id: string): Promise<void> {
   await apiDelete<void>(`/notices/${id}`);
 }
 
+export async function updateNotice(id: string, body: Partial<Notice>): Promise<Notice> {
+  return apiPut<Notice>(`/notices/${id}`, body);
+}
+
 export async function deleteCompany(id: string): Promise<void> {
   await apiDelete<void>(`/companies/${id}`);
 }
