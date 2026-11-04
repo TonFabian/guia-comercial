@@ -94,15 +94,14 @@ export async function createCompany(dto: CreateCompanyDto, ownerClerkId?: string
   }
 
   // Resolve cidade para o documento City (estruturado) ou default Castelo do Piauí.
-  let city: unknown = dto.city;
+  let city: string | undefined = typeof dto.city === 'string' ? dto.city : undefined;
   if (typeof city === 'string' || city === undefined) {
     const slug = city
-      ? String(city).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '-')
+      ? city.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '-')
       : 'castelo-do-piaui';
     const found = await CityModel.findOne({ slug }).lean();
-    city = found
-      ? found._id
-      : (await CityModel.findOne({ slug: 'castelo-do-piaui' }).lean())?._id;
+    const fallback = await CityModel.findOne({ slug: 'castelo-do-piaui' }).lean();
+    city = found ? String(found._id) : fallback ? String(fallback._id) : undefined;
   }
 
   try {
@@ -110,7 +109,7 @@ export async function createCompany(dto: CreateCompanyDto, ownerClerkId?: string
       ...dto,
       category: dto.category,
       ownerClerkId,
-      city,
+      city: city as Company['city'],
       latitude,
       longitude,
     });
@@ -148,13 +147,14 @@ async function assertOwner(companyId: string, clerkId?: string): Promise<void> {
 export async function updateCompany(id: string, dto: UpdateCompanyDto, clerkId?: string) {
   await assertOwner(id, clerkId);
 
-  const update: UpdateCompanyDto & { latitude?: number; longitude?: number; city?: unknown } = { ...dto };
+  const update: UpdateCompanyDto & { latitude?: number; longitude?: number; city?: string | unknown } = { ...dto };
 
   if (typeof update.city === 'string') {
     const slug = update.city.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '-');
     const found = await CityModel.findOne({ slug }).lean();
-    update.city = found ? found._id : undefined;
-    if (update.city === undefined) delete (update as any).city;
+    const fallback = await CityModel.findOne({ slug: 'castelo-do-piaui' }).lean();
+    update.city = found ? String(found._id) : fallback ? String(fallback._id) : undefined;
+    if (update.city === undefined) delete (update as Record<string, unknown>).city;
   }
 
   if (

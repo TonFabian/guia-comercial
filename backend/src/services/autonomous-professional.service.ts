@@ -16,13 +16,14 @@ export async function getProfessionalById(id: string) {
 }
 
 export async function createProfessional(dto: Partial<AutonomousProfessional>, ownerClerkId?: string) {
-  let city = dto.city;
+  let city = typeof dto.city === 'string' ? dto.city : undefined;
   if (typeof city === 'string' || city === undefined) {
     const slug = city
-      ? String(city).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '-')
+      ? city.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '-')
       : 'castelo-do-piaui';
     const found = await CityModel.findOne({ slug }).lean();
-    city = found ? found._id : (await CityModel.findOne({ slug: 'castelo-do-piaui' }).lean())?._id;
+    const fallback = await CityModel.findOne({ slug: 'castelo-do-piaui' }).lean();
+    city = found ? String(found._id) : fallback ? String(fallback._id) : undefined;
   }
   try {
     return await AutonomousProfessionalModel.create({ ...dto, ownerClerkId, city });

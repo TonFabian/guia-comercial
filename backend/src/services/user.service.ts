@@ -29,7 +29,7 @@ export async function upsertUserFromMirror(
   // Default cidade = Castelo do Piauí (primeira cidade do MVP).
   if (!update.city) {
     const city = await CityModel.findOne({ slug: 'castelo-do-piaui' }).lean();
-    if (city) (update as any).city = city._id;
+    if (city) (update as Record<string, unknown>).city = String(city._id);
   }
 
   const user = await UserModel.findOneAndUpdate(
