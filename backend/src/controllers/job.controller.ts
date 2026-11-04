@@ -21,14 +21,22 @@ export const getById = asyncHandler(async (req: Request, res: Response): Promise
 });
 
 export const create = asyncHandler(async (req: Request, res: Response): Promise<void> => {
-  const job = await jobService.createJob(req.body as CreateJobDto);
+  if (process.env.CLERK_SECRET_KEY && !req.auth?.clerkId) {
+    res.status(401).json({ error: 'Não autenticado' });
+    return;
+  }
+  const job = await jobService.createJob(req.body as CreateJobDto, req.auth?.clerkId);
   res.status(201).json(job);
 });
 
 export const update = asyncHandler(
   async (req: Request, res: Response): Promise<void> => {
+    if (process.env.CLERK_SECRET_KEY && !req.auth?.clerkId) {
+      res.status(401).json({ error: 'Não autenticado' });
+      return;
+    }
     throwIfInvalidId(String(req.params.id));
-    const job = await jobService.updateJob(String(req.params.id), req.body as UpdateJobDto);
+    const job = await jobService.updateJob(String(req.params.id), req.body as UpdateJobDto, req.auth?.clerkId);
     if (!job) {
       res.status(404).json({ error: 'vaga não encontrada' });
       return;
@@ -39,8 +47,12 @@ export const update = asyncHandler(
 
 export const remove = asyncHandler(
   async (req: Request, res: Response): Promise<void> => {
+    if (process.env.CLERK_SECRET_KEY && !req.auth?.clerkId) {
+      res.status(401).json({ error: 'Não autenticado' });
+      return;
+    }
     throwIfInvalidId(String(req.params.id));
-    await jobService.deleteJob(String(req.params.id));
+    await jobService.deleteJob(String(req.params.id), req.auth?.clerkId);
     res.status(204).end();
   },
 );

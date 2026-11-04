@@ -3,6 +3,7 @@ import { isValidObjectId, Types } from 'mongoose';
 import { CouponModel } from '../models/coupon.model.js';
 import type { CreateCouponDto, UpdateCouponDto } from '../types/dto.js';
 import type { Pagination } from '../utils/http.js';
+import { assertAdmin } from './user.service.js';
 
 /** Filtros aceitos na listagem de cupons. */
 export interface CouponListFilters {
@@ -42,18 +43,21 @@ export async function getCouponById(id: string) {
   return CouponModel.findById(id).populate('company').lean();
 }
 
-export async function createCoupon(dto: CreateCouponDto) {
+export async function createCoupon(dto: CreateCouponDto, clerkId?: string) {
+  await assertAdmin(clerkId, 'gerenciar cupons');
   // expiresAt já chega validado (ISO); o driver Mongo aceita string ISO.
   return CouponModel.create(dto);
 }
 
-export async function updateCoupon(id: string, dto: UpdateCouponDto) {
+export async function updateCoupon(id: string, dto: UpdateCouponDto, clerkId?: string) {
+  await assertAdmin(clerkId, 'gerenciar cupons');
   return CouponModel.findByIdAndUpdate(id, dto, { returnDocument: "after", runValidators: true })
     .populate('company')
     .lean();
 }
 
-export async function deleteCoupon(id: string) {
+export async function deleteCoupon(id: string, clerkId?: string) {
+  await assertAdmin(clerkId, 'gerenciar cupons');
   const doc = await CouponModel.findByIdAndDelete(id).lean();
   if (!doc) {
     throw Object.assign(new Error('cupom não encontrado'), { statusCode: 404 });

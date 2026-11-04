@@ -13,6 +13,9 @@ export function findUserByClerkId(clerkId: string): Promise<User | null> {
  * Garante que a sessão é de um administrador.
  *
  * 401 sem identidade; 403 quando o espelho existe mas não é admin.
+ *
+ * Modo legado (sem CLERK_SECRET_KEY): não há sessão, portanto mutações
+ * administrativas são bloqueadas (fail-closed).
  */
 export async function assertAdmin(
   clerkId: string | undefined,

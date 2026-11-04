@@ -1,23 +1,43 @@
 import type { Request, Response } from 'express';
 
+import { assertAdmin } from '../services/user.service.js';
 import { upsertPushToken, listAllPushTokens } from '../services/push-token.service.js';
 
 export async function registerPushToken(req: Request, res: Response): Promise<void> {
-  const { token, clerkId } = req.body as { token?: string; clerkId?: string };
+  const { token } = req.body as { token?: string };
   if (!token) {
     res.status(400).json({ error: 'token é obrigatório' });
     return;
   }
-  await upsertPushToken(token, clerkId);
+  if (process.env.CLERK_SECRET_KEY && !req.auth) {
+    res.status(401).json({ error: 'Não autenticado' });
+    return;
+  }
+  await upsertPushToken(token, req.auth?.clerkId);
   res.json({ ok: true });
 }
 
 export async function broadcastPush(req: Request, res: Response): Promise<void> {
+  // Fail-closed: sem nenhum mecanismo de proteção configurado, não transmitir.
+  if (!process.env.CLERK_SECRET_KEY && !process.env.NOTIFY_SECRET) {
+    res.status(401).json({ error: 'Não autenticado' });
+    return;
+  }
+
+  if (process.env.CLERK_SECRET_KEY) {
+    if (!req.auth?.clerkId) {
+      res.status(401).json({ error: 'Não autenticado' });
+      return;
+    }
+    await assertAdmin(req.auth.clerkId, 'broadcast de notificações');
+  }
+
   const secret = process.env.NOTIFY_SECRET;
   if (secret && req.headers['x-notify-secret'] !== secret) {
     res.status(403).json({ error: 'Não autorizado' });
     return;
   }
+
   const { title, body } = req.body as { title?: string; body?: string };
   if (!title) {
     res.status(400).json({ error: 'title é obrigatório' });

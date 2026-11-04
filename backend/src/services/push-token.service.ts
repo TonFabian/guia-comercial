@@ -9,6 +9,9 @@ export async function upsertPushToken(token: string, clerkId?: string): Promise<
 }
 
 export async function listAllPushTokens(): Promise<string[]> {
-  const docs = await PushTokenModel.find().select({ token: 1 }).lean().exec();
+  const docs = await PushTokenModel.find({ token: { $exists: true, $ne: null } })
+    .select({ token: 1 })
+    .lean()
+    .exec();
   return docs.map((d) => d.token).filter((t): t is string => typeof t === 'string');
 }

@@ -12,7 +12,7 @@ import { getCompanyById, getMe, updateMe } from '@/services/api';
 import { useAuthState } from '@/providers/auth-provider';
 import type { Company } from '@/types/domain';
 
-const STORAGE_KEY = '@guia-comercial/favorites';
+const STORAGE_KEY_BASE = '@guia-comercial/favorites';
 
 interface FavoritesContextValue {
   /** Empresas favoritas, da mais recente para a mais antiga. */
@@ -24,6 +24,10 @@ interface FavoritesContextValue {
 }
 
 const FavoritesContext = createContext<FavoritesContextValue | null>(null);
+
+function favoritesStorageKey(clerkId: string | undefined): string {
+  return `${STORAGE_KEY_BASE}:${clerkId ?? 'guest'}`;
+}
 
 function readFavorites(stored: string | null): Company[] {
   if (!stored) return [];
@@ -41,19 +45,27 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
   const auth = useAuthState();
   const [favorites, setFavorites] = useState<Company[]>([]);
   const [ready, setReady] = useState(false);
+  const [loadedFor, setLoadedFor] = useState<string | undefined>(undefined);
 
   useEffect(() => {
     let cancelled = false;
 
+    const key = favoritesStorageKey(auth.user?.clerkId);
+
     async function load() {
+      setReady(false);
+      setFavorites([]);
       try {
-        const stored = await AsyncStorage.getItem(STORAGE_KEY);
+        const stored = await AsyncStorage.getItem(key);
         if (cancelled) return;
         setFavorites(readFavorites(stored));
       } catch {
         // Sem acesso ao armazenamento: segue com a lista vazia.
       } finally {
-        if (!cancelled) setReady(true);
+        if (!cancelled) {
+          setReady(true);
+          setLoadedFor(auth.user?.clerkId);
+        }
       }
     }
 
@@ -61,7 +73,7 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [auth.user?.clerkId, auth.state]);
 
   // Sincroniza com o backend quando logado.
   useEffect(() => {
@@ -89,11 +101,13 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
     return () => {
       cancelled = true;
     };
-  }, [auth.state]);
+  }, [auth.state, auth.user?.clerkId]);
 
   useEffect(() => {
     if (!ready) return;
-    void AsyncStorage.setItem(STORAGE_KEY, JSON.stringify(favorites)).catch(() => {
+    if (loadedFor !== auth.user?.clerkId) return;
+    const key = favoritesStorageKey(auth.user?.clerkId);
+    void AsyncStorage.setItem(key, JSON.stringify(favorites)).catch(() => {
       // Falha ao gravar não impede o uso do app; a lista segue em memória.
     });
     // Persiste no backend se logado.
@@ -103,7 +117,7 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
         await updateMe({ favorites: ids }).catch(() => undefined);
       })();
     }
-  }, [favorites, ready, auth.state]);
+  }, [favorites, ready, auth.state, auth.user?.clerkId, loadedFor]);
 
   const isFavorite = useCallback(
     (companyId: string) => favorites.some((company) => company._id === companyId),

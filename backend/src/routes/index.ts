@@ -18,8 +18,10 @@ import {
 } from '../middlewares/auth.middleware.js';
 import { guestScrub } from '../middlewares/guest.middleware.js';
 import {
+  createAutonomousProfessionalSchema,
   createBannerSchema,
   createCategorySchema,
+  createCitySchema,
   createCompanySchema,
   createCouponSchema,
   createJobSchema,
@@ -46,7 +48,6 @@ if (authDeps) {
   const auth = makeAuthMiddleware(authDeps);
 
   routes.use(auth.optionalAuth);
-  routes.use(guestScrub());
   // Handshake explícito de convidado: não cria sessão nem token; as chamadas
   // seguintes continuam sem Authorization e são redigidas pelo scrub.
   routes.post('/auth/guest', guestLogin);
@@ -57,6 +58,12 @@ if (authDeps) {
   routes.post('/push-tokens', registerPushToken);
   routes.post('/notifications/broadcast', broadcastPush);
 }
+
+// O scrub de convidado Ǹ montado sempre (mesmo fora do bloco do Clerk): no modo
+// legado `req.auth` fica `undefined` e o middleware Ǹ no-op, preservando o
+// comportamento antigo. Em modo autenticado, ele redige contato/c��digo antes
+// de responder para quem Ǹ convidado.
+routes.use(guestScrub());
 
 // -----------------------------------------------------------------------------
 // Categories
@@ -111,10 +118,10 @@ jobs.put('/:id', validateBody(createJobSchema.partial()), jobController.update);
 jobs.delete('/:id', jobController.remove);
 
 const autonomousProfessionals = Router();
-autonomousProfessionals.post('/', autonomousProfessionalController.create);
+autonomousProfessionals.post('/', validateBody(createAutonomousProfessionalSchema), autonomousProfessionalController.create);
 autonomousProfessionals.get('/', autonomousProfessionalController.list);
 autonomousProfessionals.get('/:id', autonomousProfessionalController.getById);
-autonomousProfessionals.put('/:id', autonomousProfessionalController.update);
+autonomousProfessionals.put('/:id', validateBody(createAutonomousProfessionalSchema.partial()), autonomousProfessionalController.update);
 autonomousProfessionals.delete('/:id', autonomousProfessionalController.remove);
 
 const notices = Router();
@@ -125,7 +132,7 @@ notices.put('/:id', validateBody(createNoticeSchema.partial()), noticeController
 notices.delete('/:id', noticeController.remove);
 
 const cities = Router();
-cities.post('/', cityController.create);
+cities.post('/', validateBody(createCitySchema), cityController.create);
 cities.get('/', cityController.list);
 cities.delete('/:id', cityController.remove);
 

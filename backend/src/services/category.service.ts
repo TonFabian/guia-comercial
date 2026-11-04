@@ -3,6 +3,7 @@ import { isValidObjectId } from 'mongoose';
 import { CategoryModel } from '../models/category.model.js';
 import type { CreateCategoryDto, UpdateCategoryDto } from '../types/dto.js';
 import type { Pagination } from '../utils/http.js';
+import { assertAdmin } from './user.service.js';
 
 /** Regras de dados para categorias. */
 
@@ -18,7 +19,8 @@ export async function getCategoryById(id: string) {
   return CategoryModel.findById(id).lean();
 }
 
-export async function createCategory(dto: CreateCategoryDto) {
+export async function createCategory(dto: CreateCategoryDto, clerkId?: string) {
+  await assertAdmin(clerkId, 'gerenciar categorias');
   try {
     return await CategoryModel.create(dto);
   } catch (error) {
@@ -30,11 +32,13 @@ export async function createCategory(dto: CreateCategoryDto) {
   }
 }
 
-export async function updateCategory(id: string, dto: UpdateCategoryDto) {
+export async function updateCategory(id: string, dto: UpdateCategoryDto, clerkId?: string) {
+  await assertAdmin(clerkId, 'gerenciar categorias');
   return CategoryModel.findByIdAndUpdate(id, dto, { returnDocument: "after", runValidators: true }).lean();
 }
 
-export async function deleteCategory(id: string) {
+export async function deleteCategory(id: string, clerkId?: string) {
+  await assertAdmin(clerkId, 'gerenciar categorias');
   const doc = await CategoryModel.findByIdAndDelete(id).lean();
   if (!doc) {
     throw Object.assign(new Error('categoria não encontrada'), { statusCode: 404 });

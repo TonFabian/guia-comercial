@@ -1,9 +1,22 @@
 import type { Request, Response } from 'express';
 
-import { listPushTokens } from '../services/user.service.js';
+import { assertAdmin, listPushTokens } from '../services/user.service.js';
 
 export async function broadcastNotification(req: Request, res: Response): Promise<void> {
-  // Proteção simples: em produção, exige segredo via env NOTIFY_SECRET.
+  // Fail-closed: sem nenhum mecanismo de proteção configurado, não transmitir.
+  if (!process.env.CLERK_SECRET_KEY && !process.env.NOTIFY_SECRET) {
+    res.status(401).json({ error: 'Não autenticado' });
+    return;
+  }
+
+  if (process.env.CLERK_SECRET_KEY) {
+    if (!req.auth?.clerkId) {
+      res.status(401).json({ error: 'Não autenticado' });
+      return;
+    }
+    await assertAdmin(req.auth.clerkId, 'broadcast de notificações');
+  }
+
   const secret = process.env.NOTIFY_SECRET;
   if (secret && req.headers['x-notify-secret'] !== secret) {
     res.status(403).json({ error: 'Não autorizado' });

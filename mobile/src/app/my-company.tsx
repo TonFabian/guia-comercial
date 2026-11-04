@@ -77,7 +77,7 @@ export default function MyCompanyScreen() {
       const descriptionValue = description.trim() || undefined;
       const addressValue = address.trim() || undefined;
       const promotionValue = promotionText.trim() || undefined;
-      await updateCompany(editingId, {
+      const updated = await updateCompany(editingId, {
         openingHours: hours,
         promotion: promotionValue,
         description: descriptionValue,
@@ -85,17 +85,21 @@ export default function MyCompanyScreen() {
         phone: phoneValue,
         whatsapp: whatsappValue,
       });
+      if (!updated) {
+        Alert.alert('Empresa', 'Não foi possível salvar. Tente novamente.');
+        return;
+      }
       setCompanies((prev) =>
         prev.map((c) =>
           c._id === editingId
             ? {
                 ...c,
-                openingHours: hours,
-                promotion: promotionValue,
-                description: descriptionValue ?? c.description,
-                address: addressValue ?? c.address,
-                phone: phoneValue ?? null,
-                whatsapp: whatsappValue ?? null,
+                openingHours: updated.openingHours ?? hours,
+                promotion: updated.promotion ?? promotionValue,
+                description: updated.description ?? descriptionValue ?? c.description,
+                address: updated.address ?? addressValue ?? c.address,
+                phone: updated.phone ?? phoneValue ?? null,
+                whatsapp: updated.whatsapp ?? whatsappValue ?? null,
               }
             : c,
         ),

@@ -6,6 +6,7 @@ import * as Notifications from 'expo-notifications';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { registerTokenGetter } from '@/services/http';
+import { updatePushToken } from '@/services/api';
 
 const GUEST_KEY = 'guia:guest';
 
@@ -87,22 +88,13 @@ function ClerkAuthProvider({ children }: { children: ReactNode }) {
           if (__DEV__) console.warn('[push] token vazio');
           return;
         }
-        const BASE = process.env.EXPO_PUBLIC_API_URL;
-        if (!BASE) {
+        if (!process.env.EXPO_PUBLIC_API_URL) {
           if (__DEV__) console.warn('[push] EXPO_PUBLIC_API_URL nao definida');
           return;
         }
-        if (__DEV__) console.log('[push] registrando', token, 'em', BASE);
-        const res = await fetch(`${BASE}/push-tokens`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ token, clerkId: user?.id }),
-        });
-        if (!res.ok) {
-          if (__DEV__) console.warn('[push] falha:', res.status, await res.text());
-        } else if (__DEV__) {
-          console.log('[push] registrado com sucesso');
-        }
+        if (__DEV__) console.log('[push] registrando token');
+        await updatePushToken(token);
+        if (__DEV__) console.log('[push] registrado com sucesso');
       } catch (e) {
         if (__DEV__) console.warn('[push] erro:', e);
       }

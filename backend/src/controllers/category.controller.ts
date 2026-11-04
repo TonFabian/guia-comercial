@@ -21,14 +21,22 @@ export const getById = asyncHandler(async (req: Request, res: Response): Promise
 });
 
 export const create = asyncHandler(async (req: Request, res: Response): Promise<void> => {
-  const category = await categoryService.createCategory(req.body as CreateCategoryDto);
+  if (process.env.CLERK_SECRET_KEY && !req.auth?.clerkId) {
+    res.status(401).json({ error: 'Não autenticado' });
+    return;
+  }
+  const category = await categoryService.createCategory(req.body as CreateCategoryDto, req.auth?.clerkId);
   res.status(201).json(category);
 });
 
 export const update = asyncHandler(
   async (req: Request, res: Response): Promise<void> => {
+    if (process.env.CLERK_SECRET_KEY && !req.auth?.clerkId) {
+      res.status(401).json({ error: 'Não autenticado' });
+      return;
+    }
     throwIfInvalidId(String(req.params.id));
-    const category = await categoryService.updateCategory(String(req.params.id), req.body as UpdateCategoryDto);
+    const category = await categoryService.updateCategory(String(req.params.id), req.body as UpdateCategoryDto, req.auth?.clerkId);
     if (!category) {
       res.status(404).json({ error: 'categoria não encontrada' });
       return;
@@ -39,8 +47,12 @@ export const update = asyncHandler(
 
 export const remove = asyncHandler(
   async (req: Request, res: Response): Promise<void> => {
+    if (process.env.CLERK_SECRET_KEY && !req.auth?.clerkId) {
+      res.status(401).json({ error: 'Não autenticado' });
+      return;
+    }
     throwIfInvalidId(String(req.params.id));
-    await categoryService.deleteCategory(String(req.params.id));
+    await categoryService.deleteCategory(String(req.params.id), req.auth?.clerkId);
     res.status(204).end();
   },
 );

@@ -1,4 +1,4 @@
-import type { Company, Coupon, Job, Paginated } from '../../../shared/domain.js';
+import type { AutonomousProfessional, Company, Coupon, Job, Paginated } from '../../../shared/domain.js';
 
 /** Empresa com os campos de contato substituídos por `null`. */
 export type ScrubbedCompany<T extends Company = Company> = Omit<
@@ -8,6 +8,15 @@ export type ScrubbedCompany<T extends Company = Company> = Omit<
   phone: string | null;
   whatsapp: string | null;
   address: string | null;
+};
+
+/** Profissional autônomo com os campos de contato substituídos por `null`. */
+export type ScrubbedAutonomousProfessional<T extends AutonomousProfessional = AutonomousProfessional> = Omit<
+  T,
+  'phone' | 'whatsapp'
+> & {
+  phone: string | null;
+  whatsapp: string | null;
 };
 
 /** Cupom com o código substituído por `null`. */
@@ -21,16 +30,18 @@ type ScrubbedCompanyReference<C> = C extends Company ? ScrubbedCompany<C> : C;
 /** Redação conforme o tipo do item; tipos sem dado sensível passam intactos. */
 type Scrubbed<T> = T extends Company
   ? ScrubbedCompany<T>
-  : T extends Coupon
-    ? Omit<T, 'code' | 'company'> & {
-        code: string | null;
-        company: ScrubbedCompanyReference<T['company']>;
-      }
-    : T extends Job
-      ? Omit<T, 'company'> & {
+  : T extends AutonomousProfessional
+    ? ScrubbedAutonomousProfessional<T>
+    : T extends Coupon
+      ? Omit<T, 'code' | 'company'> & {
+          code: string | null;
           company: ScrubbedCompanyReference<T['company']>;
         }
-      : T;
+      : T extends Job
+        ? Omit<T, 'company'> & {
+            company: ScrubbedCompanyReference<T['company']>;
+          }
+        : T;
 
 /**
  * Remove os contatos da empresa para quem não está autenticado.
@@ -53,6 +64,15 @@ export function scrubCompany<T extends Company>(
  */
 export function scrubCoupon<T extends Coupon>(coupon: T): ScrubbedCoupon<T> {
   return { ...coupon, code: null };
+}
+
+/**
+ * Remove os contatos do profissional autônomo para quem não está autenticado.
+ */
+export function scrubAutonomousProfessional<T extends AutonomousProfessional>(
+  professional: T,
+): ScrubbedAutonomousProfessional<T> {
+  return { ...professional, phone: null, whatsapp: null };
 }
 
 /**
@@ -102,6 +122,10 @@ function scrubValue(value: unknown): unknown {
     return scrubCompany(value);
   }
 
+  if (isAutonomousProfessional(value)) {
+    return scrubAutonomousProfessional(value);
+  }
+
   const scrubbed: object = isCoupon(value) ? scrubCoupon(value) : value;
   const nested = readPopulatedCompany(value);
 
@@ -149,5 +173,16 @@ function isCoupon(value: unknown): value is Coupon {
     'code' in value &&
     'company' in value &&
     'title' in value
+  );
+}
+
+export function isAutonomousProfessional(
+  value: unknown,
+): value is AutonomousProfessional {
+  return (
+    isRecord(value) &&
+    'slug' in value &&
+    'name' in value &&
+    'specialty' in value
   );
 }

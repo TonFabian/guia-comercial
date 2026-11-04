@@ -202,3 +202,39 @@ export const createPublicUtilitySchema = z.object({
 
 export type CreatePublicUtilityDto = z.infer<typeof createPublicUtilitySchema>;
 export type UpdatePublicUtilityDto = Partial<CreatePublicUtilityDto>;
+
+// ---------------------------------------------------------------------------
+// Autonomous Professional
+// ---------------------------------------------------------------------------
+
+export const createAutonomousProfessionalSchema = z.object({
+  name: z.string().min(1),
+  slug: slugSchema,
+  specialty: z.string().min(1),
+  description: z.string().optional(),
+  phone: z.string().optional(),
+  whatsapp: z.string().optional(),
+  photo: z.string().optional(),
+  city: z.string().optional(),
+  rating: z.number().min(0).max(5).optional(),
+  ratingCount: z.number().int().nonnegative().optional(),
+  ownerClerkId: z.string().optional(),
+});
+
+export type CreateAutonomousProfessionalDto = z.infer<typeof createAutonomousProfessionalSchema>;
+
+export type UpdateAutonomousProfessionalDto = Partial<CreateAutonomousProfessionalDto>;
+
+// ---------------------------------------------------------------------------
+// City
+// ---------------------------------------------------------------------------
+
+export const createCitySchema = z.object({
+  name: z.string().min(1),
+  slug: slugSchema,
+  state: z.string().min(1),
+});
+
+export type CreateCityDto = z.infer<typeof createCitySchema>;
+
+export type UpdateCityDto = Partial<CreateCityDto>;

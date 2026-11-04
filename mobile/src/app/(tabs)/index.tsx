@@ -2,7 +2,6 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
-  Button,
   ScrollView,
   StatusBar,
   StyleSheet,
@@ -35,13 +34,14 @@ import type { AutonomousProfessional, Company, Notice, PublicUtility } from '@/t
 const SHOW_COUPONS = false;
 
 export default function HomeScreen() {
+  const [retryKey, setRetryKey] = useState(0);
   const [selectedCity, setSelectedCity] = useState<string | undefined>(undefined);
   const [cities, setCities] = useState<{ _id: string; name: string; slug: string }[]>([]);
   const selectedCityName = useMemo(
     () => cities.find((c) => c.slug === selectedCity)?.name,
     [cities, selectedCity],
   );
-  const { loading, categories, banners, featuredCompany, jobs, error } = useHomeData(selectedCity);
+  const { loading, categories, banners, featuredCompany, jobs, error } = useHomeData(selectedCity, retryKey);
   const insets = useSafeAreaInsets();
   const colors = useThemeColors();
   const styles = makeStyles(colors);
@@ -62,7 +62,7 @@ export default function HomeScreen() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [retryKey]);
 
   const [professionals, setProfessionals] = useState<AutonomousProfessional[]>([]);
   const [notices, setNotices] = useState<Notice[]>([]);
@@ -99,7 +99,7 @@ export default function HomeScreen() {
     return () => {
       cancelled = true;
     };
-  }, [utilitiesToken]);
+  }, [utilitiesToken, retryKey]);
 
   const reloadUtilities = useCallback(() => {
     setUtilitiesToken((token) => token + 1);
@@ -138,7 +138,7 @@ export default function HomeScreen() {
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [retryKey]);
 
   // Se houve erro de auth (401), já o useHomeData redirecionou.
   // Se ainda estiver com erro (ex.: fallback), mostramos mensagem.
@@ -146,7 +146,9 @@ export default function HomeScreen() {
     return (
       <View style={styles.errorContainer}>
         <Text style={styles.errorText}>{error}</Text>
-        <Button title="Tentar novamente" onPress={() => window.location.reload()} />
+        <TouchableOpacity style={styles.retryButton} onPress={() => setRetryKey((k) => k + 1)}>
+          <Text style={styles.retryButtonText}>Tentar novamente</Text>
+        </TouchableOpacity>
       </View>
     );
   }
@@ -297,6 +299,18 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
       fontSize: 18,
       color: colors.error,
       textAlign: 'center',
+    },
+    retryButton: {
+      marginTop: 16,
+      paddingVertical: 10,
+      paddingHorizontal: 20,
+      borderRadius: 10,
+      backgroundColor: colors.primary,
+    },
+    retryButtonText: {
+      color: colors.background,
+      fontSize: 14,
+      fontWeight: '600',
     },
   });
 }

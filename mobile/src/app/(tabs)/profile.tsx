@@ -6,7 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Radius } from '@/constants/theme';
 import { useThemeColors } from '@/hooks/use-theme-colors';
-import { getCompanies, getMe, updateMe } from '@/services/api';
+import { getMe, updateMe } from '@/services/api';
 import { useThemeMode } from '@/providers/theme-provider';
 import { useAuthState } from '@/providers/auth-provider';
 import { useUser } from '@clerk/expo';
@@ -88,15 +88,19 @@ export default function ProfileScreen() {
     setSaving(true);
     try {
       const updated = await updateMe({ firstName, lastName, phone, imageUrl });
-      if (updated) {
-        setFirstName(updated.firstName ?? firstName);
-        setLastName(updated.lastName ?? lastName);
-        setPhone(onlyDigits(updated.phone ?? phone));
-        setPhoneDisplay(formatPhone(updated.phone ?? phone));
-        setImageUrl(updated.imageUrl ?? imageUrl);
+      if (!updated) {
+        Alert.alert('Perfil', 'Não foi possível salvar. Tente novamente.');
+        return;
       }
+      setFirstName(updated.firstName ?? firstName);
+      setLastName(updated.lastName ?? lastName);
+      setPhone(onlyDigits(updated.phone ?? phone));
+      setPhoneDisplay(formatPhone(updated.phone ?? phone));
+      setImageUrl(updated.imageUrl ?? imageUrl);
       if (clerkUser) {
-        await clerkUser.update({ firstName, lastName });
+        // O Clerk só aceita os campos suportados pelo recurso do usuário.
+        // Telefone e imagem ficam persistidos no backend e refletidos via /me.
+        await clerkUser.update({ firstName, lastName }).catch(() => undefined);
       }
       Alert.alert('Perfil', 'Dados atualizados com sucesso.');
       setEditing(false);

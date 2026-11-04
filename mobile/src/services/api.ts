@@ -25,7 +25,7 @@ import { MOCK_PUBLIC_UTILITIES } from '@/data/public-utilities';
 
 /** Mocks só em desenvolvimento: em produção, falha de rede/API vira lista vazia. */
 function mockFallback<T>(mock: T[]): T[] {
-  return (__DEV__ || !isApiConfigured()) ? mock : [];
+  return __DEV__ ? mock : [];
 }
 
 function isPaginated<T>(payload: RequestPayload<T>): payload is Paginated<T> {
@@ -84,7 +84,7 @@ export async function getCompanies(page = 1, pageSize = 20, city?: string, featu
   const payload = await request<Company>(`/companies?${params.toString()}`);
   const items = fromPaginated(payload, []);
   const total = isPaginated(payload) ? (payload.total ?? items.length) : items.length;
-  const allowMockFallback = __DEV__ || !isApiConfigured();
+  const allowMockFallback = __DEV__;
   const fallbackItems = page === 1 && items.length === 0 && allowMockFallback ? MOCK_COMPANIES.slice(0, pageSize) : items;
   const fallbackTotal = page === 1 && items.length === 0 && allowMockFallback ? MOCK_COMPANIES.length : total;
   return { items: fallbackItems, total: fallbackTotal, page, pageSize };
@@ -190,7 +190,7 @@ export async function searchCompanies(params: CompanySearchParams = {}): Promise
   const payload = await request<Company>(`/companies?${search.toString()}`);
   const items = fromPaginated(payload, []);
   const total = isPaginated(payload) ? (payload.total ?? items.length) : items.length;
-  const fallback = (__DEV__ || !isApiConfigured()) ? filterMockCompanies(term, categories) : [];
+  const fallback = __DEV__ ? filterMockCompanies(term, categories) : [];
   const fallbackItems = page === 1 && items.length === 0 ? fallback.slice(0, pageSize) : items;
   const fallbackTotal = page === 1 && items.length === 0 ? fallback.length : total;
   return { items: fallbackItems, total: fallbackTotal, page, pageSize };
@@ -252,9 +252,9 @@ export async function createReview(companyId: string, rating: number, comment?: 
 export async function updatePushToken(pushToken: string): Promise<void> {
   if (!isApiConfigured()) return;
   try {
-    await request('/me/push-token', { method: 'PUT', body: { pushToken } });
+    await request('/push-tokens', { method: 'POST', body: { token: pushToken } });
   } catch {
-    // ignora
+    // Registro de push token não deve quebrar o app.
   }
 }
 export async function getAutonomousProfessionals(): Promise<AutonomousProfessional[]> {
@@ -317,13 +317,9 @@ export async function getCities(): Promise<City[]> {
 
 export async function updateCompany(id: string, body: Partial<Company>): Promise<Company | null> {
   if (!isApiConfigured()) return null;
-  try {
-    const payload = await request<Company>(`/companies/${encodeURIComponent(id)}`, { method: 'PUT', body });
-    if (!payload) return null;
-    return Array.isArray(payload) ? (payload[0] ?? null) : (payload as Company);
-  } catch {
-    return null;
-  }
+  const payload = await request<Company>(`/companies/${encodeURIComponent(id)}`, { method: 'PUT', body });
+  if (!payload) return null;
+  return Array.isArray(payload) ? (payload[0] ?? null) : (payload as Company);
 }
 
 /** Filtra as empresas mockadas pelo termo e pelas categorias (slug ou id). */
