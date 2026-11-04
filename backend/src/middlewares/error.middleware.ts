@@ -18,10 +18,10 @@ function isMongooseError(error: unknown): error is MongooseError {
 
 /**
  * Mapeamento de erros conhecidos:
+ *  - Mongo duplicate key (code 11000)                   → 409 (precedência)
  *  - erro com `statusCode` (gerado nos services)       → statusCode
  *  - Mongoose ValidationError                          → 400
  *  - Mongoose CastError (id malformado / cast falhou)  → 404
- *  - Mongo duplicate key (code 11000)                  → 409
  *  - ZodError (payload inválido)                       → 400
  *  - qualquer outro erro                               → 500 (message só em dev)
  */
@@ -30,8 +30,14 @@ export function mapError(error: unknown): MappedError {
   let message = 'Erro interno do servidor';
 
   const httpError = error as HttpError;
+  const code = (error as { code?: number }).code;
 
-  if (typeof httpError.statusCode === 'number') {
+  // Duplicate key (Mongo) tem precedência sobre statusCode customizado, exceto
+  // quando statusCode já é 409 (mantém a mensagem customizada).
+  if (code === 11000 && httpError.statusCode !== 409) {
+    status = 409;
+    message = 'Registro duplicado';
+  } else if (typeof httpError.statusCode === 'number') {
     status = httpError.statusCode;
     message = httpError.message;
   } else if (isMongooseError(error)) {
@@ -48,7 +54,7 @@ export function mapError(error: unknown): MappedError {
   } else if ((error as { name?: string }).name === 'ZodError') {
     status = 400;
     message = 'Dados inválidos';
-  } else if ((error as { code?: number }).code === 11000) {
+  } else if (code === 11000) {
     status = 409;
     message = 'Registro duplicado';
   }

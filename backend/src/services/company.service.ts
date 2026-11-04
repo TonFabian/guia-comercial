@@ -58,7 +58,7 @@ export async function listCompanies(
 
   if (typeof filters.q === 'string' && filters.q.length > 0) {
     const regex = new RegExp(escapeRegex(filters.q), 'i');
-    query.$or = [{ name: regex }, { description: regex }];
+    query.$or = [{ name: regex }, { description: regex }, { address: regex }, { services: regex }];
   }
 
   if (filters.featured === 'true' || filters.featured === true) {
@@ -118,10 +118,12 @@ export async function createCompany(dto: CreateCompanyDto, ownerClerkId?: string
     city = found ? String(found._id) : fallback ? String(fallback._id) : undefined;
   }
 
+  const resolvedCategory = await resolveCategoryId(dto.category);
+
   try {
     return await CompanyModel.create({
       ...dto,
-      category: dto.category,
+      category: resolvedCategory,
       ownerClerkId,
       city: city as Company['city'],
       latitude,
@@ -175,6 +177,10 @@ export async function updateCompany(id: string, dto: UpdateCompanyDto, clerkId?:
   const previous = await CompanyModel.findById(id).select({ promotion: 1, name: 1 }).lean();
 
   const update: UpdateCompanyDto & { latitude?: number; longitude?: number; city?: string | unknown } = { ...dto };
+
+  if (typeof update.category === 'string') {
+    update.category = await resolveCategoryId(update.category);
+  }
 
   if (typeof update.city === 'string') {
     const slug = update.city.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '-');
@@ -242,6 +248,12 @@ async function notifyPromotion(companyName: string, promotion: string): Promise<
 }
 
 // helpers
+
+async function resolveCategoryId(value: string): Promise<string> {
+  if (isValidObjectId(value)) return value;
+  const found = await findCategoryIdBySlug(value);
+  return found ?? value;
+}
 
 async function findCategoryIdBySlug(slug: string): Promise<string | null> {
   const category = await CategoryModel.findOne({ slug }).select({ _id: 1 }).lean();

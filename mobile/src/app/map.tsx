@@ -24,22 +24,30 @@ export default function MapScreen() {
       try {
         const page = await getCompanies(1, 100);
         if (cancelled) return;
-        const hydrated = await Promise.all(
-          page.items.map(async (c) => {
-            if (typeof c.latitude === 'number' && typeof c.longitude === 'number') return c;
-            if (!c.address) return c;
-            try {
-              const results = await Location.geocodeAsync([c.address, c.city].filter(Boolean).join(', '));
-              if (results.length > 0) {
-                return { ...c, latitude: results[0].latitude, longitude: results[0].longitude };
-              }
-            } catch {
-              // ignora
+        const MAX_GEOCODE = 20;
+        const toGeocode = page.items
+          .filter((c) => typeof c.latitude !== 'number' || typeof c.longitude !== 'number')
+          .filter((c) => Boolean(c.address))
+          .slice(0, MAX_GEOCODE);
+
+        const coords = new Map<string, { latitude: number; longitude: number }>();
+        for (const c of toGeocode) {
+          if (cancelled) return;
+          try {
+            const results = await Location.geocodeAsync([c.address, c.city].filter(Boolean).join(', '));
+            if (results.length > 0) {
+              coords.set(c._id, { latitude: results[0].latitude, longitude: results[0].longitude });
             }
-            return c;
-          }),
-        );
+          } catch {
+            // ignora
+          }
+        }
         if (cancelled) return;
+        const hydrated = page.items.map((c) => {
+          const found = coords.get(c._id);
+          if (found) return { ...c, latitude: found.latitude, longitude: found.longitude };
+          return c;
+        });
         setCompanies(hydrated);
       } catch {
         // ignora erros de rede/API

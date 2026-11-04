@@ -5,7 +5,7 @@
  * instalação guarda a sua própria lista.
  */
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
 import type { ReactNode } from 'react';
 
 import { getCompanyById, getMe, updateMe } from '@/services/api';
@@ -46,6 +46,7 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
   const [favorites, setFavorites] = useState<Company[]>([]);
   const [ready, setReady] = useState(false);
   const [loadedFor, setLoadedFor] = useState<string | undefined>(undefined);
+  const lastPersistedRef = useRef<string | null>(null);
 
   useEffect(() => {
     let cancelled = false;
@@ -58,7 +59,16 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
       try {
         const stored = await AsyncStorage.getItem(key);
         if (cancelled) return;
-        setFavorites(readFavorites(stored));
+        const loaded = readFavorites(stored);
+        // Preserva toggles feitos antes de `ready` (merge, sem duplicar).
+        setFavorites((current) => {
+          const merged = [...loaded];
+          for (const c of current) {
+            if (!merged.some((x) => x._id === c._id)) merged.unshift(c);
+          }
+          return merged;
+        });
+        lastPersistedRef.current = JSON.stringify(loaded.map((c) => c._id));
       } catch {
         // Sem acesso ao armazenamento: segue com a lista vazia.
       } finally {
@@ -83,13 +93,17 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
       const me = await getMe();
       if (cancelled || !me?.favorites) return;
       const remoteIds = me.favorites;
-      const hydrated: Company[] = [];
-      for (const id of remoteIds) {
-        if (cancelled) return;
-        const company = await getCompanyById(id);
-        if (company) hydrated.push(company);
-      }
+      const results = await Promise.all(
+        remoteIds.map(async (id) => {
+          try {
+            return await getCompanyById(id);
+          } catch {
+            return null;
+          }
+        }),
+      );
       if (cancelled) return;
+      const hydrated = results.filter((c): c is Company => c !== null);
       setFavorites((current) => {
         const merged = [...current];
         for (const c of hydrated) {
@@ -106,16 +120,25 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!ready) return;
     if (loadedFor !== auth.user?.clerkId) return;
+    const ids = favorites.map((c) => c._id);
+    const serialized = JSON.stringify(ids);
+    if (serialized === lastPersistedRef.current) return;
     const key = favoritesStorageKey(auth.user?.clerkId);
-    void AsyncStorage.setItem(key, JSON.stringify(favorites)).catch(() => {
+    void AsyncStorage.setItem(key, serialized).catch(() => {
       // Falha ao gravar não impede o uso do app; a lista segue em memória.
     });
     // Persiste no backend se logado.
     if (auth.state === 'signedIn') {
-      const ids = favorites.map((c) => c._id);
+      lastPersistedRef.current = serialized;
       void (async () => {
-        await updateMe({ favorites: ids }).catch(() => undefined);
+        try {
+          await updateMe({ favorites: ids });
+        } catch {
+          // Falha ao persistir no backend não desfaz o estado local.
+        }
       })();
+    } else {
+      lastPersistedRef.current = serialized;
     }
   }, [favorites, ready, auth.state, auth.user?.clerkId, loadedFor]);
 

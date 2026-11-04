@@ -3,6 +3,7 @@ import { useRouter } from 'expo-router';
 import { useEffect, useState } from 'react';
 
 import type { DisplayBanner } from '@/data/mock';
+import { ApiError } from '@/services/http';
 import {
   getBanners,
   getCategories,
@@ -53,6 +54,7 @@ export function useHomeData(city?: string, retryKey = 0) {
     // Só tenta carregar dados quando o Clerk NÃO está em estado de loading.
     // Isso evita requisições antes do token estar disponível.
     if (authState.state === 'signedIn' || authState.state === 'guest') {
+      let cancelled = false;
       let timeoutId: ReturnType<typeof setTimeout> | null = null;
 
       async function load() {
@@ -68,6 +70,7 @@ export function useHomeData(city?: string, retryKey = 0) {
             ],
           );
 
+          if (cancelled) return;
           setState({
             loading: false,
             categories,
@@ -78,10 +81,15 @@ export function useHomeData(city?: string, retryKey = 0) {
             pharmacy,
             error: null,
           });
-        } catch (error: any) {
+        } catch (error) {
+          if (cancelled) return;
+          const status =
+            error instanceof ApiError
+              ? error.status
+              : (error as { status?: number } | null)?.status;
           // Tratamento de erro 401/403: usuário não autenticado → redirecionar
           // para login com mensagem amigável, sem quebrar a UI.
-          if (error.status === 401 || error.status === 403) {
+          if (status === 401 || status === 403) {
             if (authState.state === 'signedIn') {
               // Sessão Clerk válida, mas o backend rejeitou o token (ex.: secret
               // key inválida). Não redirecionar em loop — exibe erro.
@@ -98,7 +106,7 @@ export function useHomeData(city?: string, retryKey = 0) {
             });
             // Redireciona após pequeno delay para mostrar a mensagem
             timeoutId = setTimeout(() => {
-              router.replace('/(auth)/sign-in');
+              if (!cancelled) router.replace('/(auth)/sign-in');
             }, 1500);
             return;
           }
@@ -107,7 +115,7 @@ export function useHomeData(city?: string, retryKey = 0) {
           setState((prev) => ({
             ...prev,
             loading: false,
-            error: error.message || 'Erro ao carregar dados',
+            error: error instanceof Error ? error.message : 'Erro ao carregar dados',
           }));
         }
       }
@@ -116,6 +124,7 @@ export function useHomeData(city?: string, retryKey = 0) {
 
       // Cleanup do timeout na desmontagem do efeito
       return () => {
+        cancelled = true;
         if (timeoutId) clearTimeout(timeoutId);
       };
     }

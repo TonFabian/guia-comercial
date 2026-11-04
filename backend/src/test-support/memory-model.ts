@@ -331,7 +331,9 @@ function casarDocumento(
 
 function casarValor(valor: unknown, condicao: unknown): boolean {
   if (condicao instanceof RegExp) {
-    return typeof valor === 'string' && condicao.test(valor);
+    if (typeof valor === 'string') return condicao.test(valor);
+    if (Array.isArray(valor)) return valor.some((item) => typeof item === 'string' && condicao.test(item));
+    return false;
   }
 
   if (condicao !== null && typeof condicao === 'object' && !Array.isArray(condicao)) {

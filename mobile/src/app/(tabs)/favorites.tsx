@@ -1,5 +1,5 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Radius, Spacing, Type } from '@/constants/theme';
@@ -27,9 +27,13 @@ export default function FavoritesScreen() {
             </Text>
           </View>
         ) : (
-          <View style={styles.list}>
-            {favorites.map((company) => (
-              <View key={company._id} style={styles.card}>
+          <FlatList
+            data={favorites}
+            keyExtractor={(company) => company._id}
+            showsVerticalScrollIndicator={false}
+            contentContainerStyle={styles.list}
+            renderItem={({ item: company }) => (
+              <View style={styles.card}>
                 <TouchableOpacity
                   style={styles.cardBody}
                   activeOpacity={0.7}
@@ -53,8 +57,8 @@ export default function FavoritesScreen() {
                   <Ionicons name="heart" size={20} color={colors.primary} />
                 </TouchableOpacity>
               </View>
-            ))}
-          </View>
+            )}
+          />
         )}
       </SafeAreaView>
     </View>

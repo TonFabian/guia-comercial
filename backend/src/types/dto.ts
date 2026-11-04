@@ -11,6 +11,10 @@ const slugSchema = z
   .min(1)
   .regex(/^[a-z0-9]+(?:-[a-z0-9]+)*$/, 'slug deve estar em kebab-case (ex.: restaurantes)');
 
+const objectIdSchema = z
+  .string()
+  .regex(/^[0-9a-fA-F]{24}$/, 'id inválido');
+
 const isoDate = z
   .string()
   .refine((value) => !Number.isNaN(Date.parse(value)), 'data inválida (use ISO 8601)');
@@ -59,7 +63,7 @@ export const createCompanySchema = z.object({
   slug: slugSchema,
   description: z.string().min(1),
   promotion: z.string().optional(),
-  category: z.string().min(1),
+  category: objectIdSchema,
   phone: z.string().optional(),
   whatsapp: z.string().optional(),
   address: z.string().optional(),
@@ -109,7 +113,7 @@ export type UpdateBannerDto = Partial<CreateBannerDto>;
 
 export const createCouponSchema = z.object({
   title: z.string().min(1),
-  company: z.string().min(1),
+  company: objectIdSchema,
   code: z.string().min(1),
   discount: z.string().optional(),
   description: z.string().optional(),
@@ -126,7 +130,7 @@ export type UpdateCouponDto = Partial<CreateCouponDto>;
 
 export const createJobSchema = z.object({
   title: z.string().min(1),
-  company: z.string().min(1),
+  company: objectIdSchema,
   description: z.string().optional(),
   location: z.string().optional(),
   type: z.string().optional(),
@@ -174,8 +178,8 @@ export const createNoticeSchema = z.object({
   title: z.string().min(1),
   body: z.string().min(1),
   type: z.enum(['general', 'alert', 'health']).optional(),
-  startsAt: z.string().optional(),
-  expiresAt: z.string().optional(),
+  startsAt: isoDate.optional(),
+  expiresAt: isoDate.optional(),
   active: z.boolean().optional(),
 });
 

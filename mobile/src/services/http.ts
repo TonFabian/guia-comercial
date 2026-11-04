@@ -118,10 +118,15 @@ export async function request<T>(
     }
 
     if (!response.ok) {
-      return null;
+      throw new ApiError(response.status, await readErrorBody(response));
     }
 
-    return (await response.json()) as RequestPayload<T>;
+    try {
+      return (await response.json()) as RequestPayload<T>;
+    } catch {
+      // Corpo não-JSON (ex.: 204): não lança, devolve null.
+      return null;
+    }
   } catch (error) {
     if (error instanceof ApiError) {
       throw error;

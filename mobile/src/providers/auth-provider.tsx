@@ -92,9 +92,7 @@ function ClerkAuthProvider({ children }: { children: ReactNode }) {
           if (__DEV__) console.warn('[push] EXPO_PUBLIC_API_URL nao definida');
           return;
         }
-        if (__DEV__) console.log('[push] registrando token');
         await updatePushToken(token);
-        if (__DEV__) console.log('[push] registrado com sucesso');
       } catch (e) {
         if (__DEV__) console.warn('[push] erro:', e);
       }

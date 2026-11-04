@@ -3,6 +3,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
+  FlatList,
   ScrollView,
   StyleSheet,
   Text,
@@ -282,172 +283,174 @@ export default function SearchScreen() {
         {loading ? (
           <ActivityIndicator style={styles.spinner} color={colors.primary} />
         ) : (
-          <ScrollView
+          <FlatList
+            data={view.items}
+            keyExtractor={(item) => item._id}
             showsVerticalScrollIndicator={false}
-            onScroll={(e) => {
-              const { contentOffset, contentSize, layoutMeasurement } = e.nativeEvent;
-              if (contentOffset.y + layoutMeasurement.height >= contentSize.height - 200) {
-                void loadMore();
-              }
+            onEndReached={() => {
+              void loadMore();
             }}
-            scrollEventThrottle={200}
+            onEndReachedThreshold={0.5}
             contentContainerStyle={{
               paddingBottom: 110 + Math.max(insets.bottom, 10),
             }}
-          >
-            {selectedCategories.length > 0 && (
-          <View style={styles.selectedChipsRow}>
-            {selectedCategories.map((cat) => (
-              <View key={cat._id} style={styles.chip}>
-                <Ionicons name="pricetag-outline" size={14} color={colors.primary} />
-                <Text style={styles.chipText}>{cat.name}</Text>
-                <TouchableOpacity
-                  onPress={() => setManualCategories(selectedSlugs.filter((s) => s !== cat.slug))}
-                  hitSlop={8}
-                  accessibilityLabel={`Remover filtro ${cat.name}`}
+            ListHeaderComponent={
+              <>
+                {selectedCategories.length > 0 && (
+                  <View style={styles.selectedChipsRow}>
+                    {selectedCategories.map((cat) => (
+                      <View key={cat._id} style={styles.chip}>
+                        <Ionicons name="pricetag-outline" size={14} color={colors.primary} />
+                        <Text style={styles.chipText}>{cat.name}</Text>
+                        <TouchableOpacity
+                          onPress={() => setManualCategories(selectedSlugs.filter((s) => s !== cat.slug))}
+                          hitSlop={8}
+                          accessibilityLabel={`Remover filtro ${cat.name}`}
+                        >
+                          <Ionicons name="close-circle" size={18} color={colors.primary} />
+                        </TouchableOpacity>
+                      </View>
+                    ))}
+                    <TouchableOpacity style={styles.clearAllButton} onPress={clearAllFilters}>
+                      <Ionicons name="trash-outline" size={14} color={colors.textSecondary} />
+                      <Text style={styles.clearAllText}>Limpar tudo</Text>
+                    </TouchableOpacity>
+                  </View>
+                )}
+
+                {nearMeCity && (
+                  <View style={styles.chip}>
+                    <Ionicons name="location" size={14} color={colors.primary} />
+                    <Text style={styles.chipText}>Perto de mim: {nearMeCity}</Text>
+                    <TouchableOpacity onPress={() => setNearMeCity(null)} hitSlop={8}>
+                      <Ionicons name="close-circle" size={16} color={colors.primary} />
+                    </TouchableOpacity>
+                  </View>
+                )}
+
+                <ScrollView
+                  horizontal
+                  showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={styles.chipsScroll}
                 >
-                  <Ionicons name="close-circle" size={18} color={colors.primary} />
-                </TouchableOpacity>
-              </View>
-            ))}
-            <TouchableOpacity style={styles.clearAllButton} onPress={clearAllFilters}>
-              <Ionicons name="trash-outline" size={14} color={colors.textSecondary} />
-              <Text style={styles.clearAllText}>Limpar tudo</Text>
-            </TouchableOpacity>
-          </View>
-        )}
-
-        {nearMeCity && (
-              <View style={styles.chip}>
-                <Ionicons name="location" size={14} color={colors.primary} />
-                <Text style={styles.chipText}>Perto de mim: {nearMeCity}</Text>
-                <TouchableOpacity onPress={() => setNearMeCity(null)} hitSlop={8}>
-                  <Ionicons name="close-circle" size={16} color={colors.primary} />
-                </TouchableOpacity>
-              </View>
-            )}
-
-            <ScrollView
-              horizontal
-              showsHorizontalScrollIndicator={false}
-              contentContainerStyle={styles.chipsScroll}
-            >
-              <TouchableOpacity
-                style={[styles.categoryChip, nearMeCity && styles.categoryChipSelected]}
-                activeOpacity={0.7}
-                onPress={toggleNearMe}
-                disabled={nearMeLoading}
-                accessibilityRole="button"
-                accessibilityLabel="Filtrar empresas perto de mim"
-              >
-                <Ionicons name="navigate" size={14} color={nearMeCity ? colors.background : colors.primary} />
-                <Text style={[styles.categoryChipText, nearMeCity && styles.categoryChipTextSelected]}>
-                  {nearMeLoading ? 'Localizando…' : 'Perto de mim'}
-                </Text>
-              </TouchableOpacity>
-
-              <TouchableOpacity
-                style={[styles.categoryChip, openNowOnly && styles.categoryChipSelected]}
-                activeOpacity={0.7}
-                onPress={() => setOpenNowOnly((v) => !v)}
-                accessibilityRole="button"
-                accessibilityLabel="Filtrar empresas abertas agora"
-              >
-                <Ionicons name="time" size={14} color={openNowOnly ? colors.background : colors.primary} />
-                <Text style={[styles.categoryChipText, openNowOnly && styles.categoryChipTextSelected]}>
-                  Aberto agora
-                </Text>
-              </TouchableOpacity>
-
-              {filteredCategories.map((category) => {
-                const selected = selectedSlugs.includes(category.slug);
-                return (
                   <TouchableOpacity
-                    key={category._id}
-                    style={[styles.categoryChip, selected && styles.categoryChipSelected]}
+                    style={[styles.categoryChip, nearMeCity && styles.categoryChipSelected]}
                     activeOpacity={0.7}
-                    onPress={() => {
-                      if (selected) {
-                        setManualCategories(selectedSlugs.filter((s) => s !== category.slug));
-                      } else {
-                        setManualCategories([...selectedSlugs, category.slug]);
-                      }
-                    }}
+                    onPress={toggleNearMe}
+                    disabled={nearMeLoading}
                     accessibilityRole="button"
-                    accessibilityLabel={`Filtrar por ${category.name}`}
+                    accessibilityLabel="Filtrar empresas perto de mim"
                   >
-                    <Text style={[styles.categoryChipText, selected && styles.categoryChipTextSelected]}>
-                      {category.name}
+                    <Ionicons name="navigate" size={14} color={nearMeCity ? colors.background : colors.primary} />
+                    <Text style={[styles.categoryChipText, nearMeCity && styles.categoryChipTextSelected]}>
+                      {nearMeLoading ? 'Localizando…' : 'Perto de mim'}
                     </Text>
                   </TouchableOpacity>
-                );
-              })}
-            </ScrollView>
 
-            {(nearMeCity || openNowOnly) && selectedCategories.length === 0 && (
-              <TouchableOpacity style={styles.clearAllButton} onPress={clearAllFilters}>
-                <Ionicons name="trash-outline" size={14} color={colors.textSecondary} />
-                <Text style={styles.clearAllText}>Limpar todos os filtros</Text>
-              </TouchableOpacity>
-            )}
+                  <TouchableOpacity
+                    style={[styles.categoryChip, openNowOnly && styles.categoryChipSelected]}
+                    activeOpacity={0.7}
+                    onPress={() => setOpenNowOnly((v) => !v)}
+                    accessibilityRole="button"
+                    accessibilityLabel="Filtrar empresas abertas agora"
+                  >
+                    <Ionicons name="time" size={14} color={openNowOnly ? colors.background : colors.primary} />
+                    <Text style={[styles.categoryChipText, openNowOnly && styles.categoryChipTextSelected]}>
+                      Aberto agora
+                    </Text>
+                  </TouchableOpacity>
 
-            {view.items.length > 0 && (
-              <View style={styles.group}>
-                <View style={styles.groupHeader}>
-                  <Text style={styles.groupTitle}>Empresas</Text>
-                  <Text style={styles.groupCount}>
-                    {view.total > view.items.length
-                      ? `${view.items.length} de ${view.total}`
-                      : `${view.items.length}`}
+                  {filteredCategories.map((category) => {
+                    const selected = selectedSlugs.includes(category.slug);
+                    return (
+                      <TouchableOpacity
+                        key={category._id}
+                        style={[styles.categoryChip, selected && styles.categoryChipSelected]}
+                        activeOpacity={0.7}
+                        onPress={() => {
+                          if (selected) {
+                            setManualCategories(selectedSlugs.filter((s) => s !== category.slug));
+                          } else {
+                            setManualCategories([...selectedSlugs, category.slug]);
+                          }
+                        }}
+                        accessibilityRole="button"
+                        accessibilityLabel={`Filtrar por ${category.name}`}
+                      >
+                        <Text style={[styles.categoryChipText, selected && styles.categoryChipTextSelected]}>
+                          {category.name}
+                        </Text>
+                      </TouchableOpacity>
+                    );
+                  })}
+                </ScrollView>
+
+                {(nearMeCity || openNowOnly) && selectedCategories.length === 0 && (
+                  <TouchableOpacity style={styles.clearAllButton} onPress={clearAllFilters}>
+                    <Ionicons name="trash-outline" size={14} color={colors.textSecondary} />
+                    <Text style={styles.clearAllText}>Limpar todos os filtros</Text>
+                  </TouchableOpacity>
+                )}
+
+                {view.items.length > 0 && (
+                  <View style={styles.groupHeader}>
+                    <Text style={styles.groupTitle}>Empresas</Text>
+                    <Text style={styles.groupCount}>
+                      {view.total > view.items.length
+                        ? `${view.items.length} de ${view.total}`
+                        : `${view.items.length}`}
+                    </Text>
+                  </View>
+                )}
+              </>
+            }
+            renderItem={({ item: company }) => (
+              <TouchableOpacity
+                style={styles.row}
+                activeOpacity={0.7}
+                accessibilityRole="button"
+                accessibilityLabel={`Ver detalhes de ${company.name}`}
+                onPress={() => openCompanyDetails(company._id)}
+              >
+                <View style={styles.rowBody}>
+                  <Text style={styles.rowTitle}>{company.name}</Text>
+                  <Text style={styles.rowSubtitle}>
+                    {categoryLabel(company.category)}
+                    {company.address ? ` — ${company.address}` : ''}
                   </Text>
                 </View>
-                {view.items.map((company) => (
-                  <TouchableOpacity
-                    key={company._id}
-                    style={styles.row}
-                    activeOpacity={0.7}
-                    accessibilityRole="button"
-                    accessibilityLabel={`Ver detalhes de ${company.name}`}
-                    onPress={() => openCompanyDetails(company._id)}
-                  >
-                    <View style={styles.rowBody}>
-                      <Text style={styles.rowTitle}>{company.name}</Text>
-                      <Text style={styles.rowSubtitle}>
-                        {categoryLabel(company.category)}
-                        {company.address ? ` — ${company.address}` : ''}
-                      </Text>
-                    </View>
-                    <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
-                  </TouchableOpacity>
-                ))}
-              </View>
-            )}
-
-            {view.hasMore && (
-              <TouchableOpacity
-                style={styles.loadMoreButton}
-                onPress={loadMore}
-                disabled={loadingMore}
-                accessibilityRole="button"
-                accessibilityLabel="Carregar mais empresas"
-              >
-                <Text style={styles.loadMoreText}>
-                  {loadingMore ? 'Carregando…' : 'Carregar mais'}
-                </Text>
+                <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
               </TouchableOpacity>
             )}
-            {view.items.length === 0 && !loading && !error && (
-              <Text style={styles.emptyText}>
-                {nearMeCity
-                  ? `Nenhuma empresa encontrada perto de ${nearMeCity}.`
-                  : openNowOnly
-                  ? 'Nenhuma empresa aberta agora.'
-                  : term
-                  ? `Nada encontrado para "${term}".`
-                  : 'Pesquise por empresas, produtos ou serviços da cidade.'}
-              </Text>
-            )}
-          </ScrollView>
+            ListFooterComponent={
+              <>
+                {view.hasMore && (
+                  <TouchableOpacity
+                    style={styles.loadMoreButton}
+                    onPress={loadMore}
+                    disabled={loadingMore}
+                    accessibilityRole="button"
+                    accessibilityLabel="Carregar mais empresas"
+                  >
+                    <Text style={styles.loadMoreText}>
+                      {loadingMore ? 'Carregando…' : 'Carregar mais'}
+                    </Text>
+                  </TouchableOpacity>
+                )}
+                {view.items.length === 0 && !loading && !error && (
+                  <Text style={styles.emptyText}>
+                    {nearMeCity
+                      ? `Nenhuma empresa encontrada perto de ${nearMeCity}.`
+                      : openNowOnly
+                      ? 'Nenhuma empresa aberta agora.'
+                      : term
+                      ? `Nada encontrado para "${term}".`
+                      : 'Pesquise por empresas, produtos ou serviços da cidade.'}
+                  </Text>
+                )}
+              </>
+            }
+          />
         )}
       </SafeAreaView>
     </View>

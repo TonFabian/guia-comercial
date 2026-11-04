@@ -1,12 +1,13 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Alert, Image, Modal, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Radius } from '@/constants/theme';
 import { useThemeColors } from '@/hooks/use-theme-colors';
 import { getMe, updateMe } from '@/services/api';
+import type { User } from '@/types/domain';
 import { useThemeMode } from '@/providers/theme-provider';
 import { useAuthState } from '@/providers/auth-provider';
 import { useUser } from '@clerk/expo';
@@ -35,6 +36,28 @@ export default function ProfileScreen() {
   const [phoneDisplay, setPhoneDisplay] = useState(formatPhone(user?.phone ?? ''));
   const [imageUrl, setImageUrl] = useState(user?.imageUrl ?? '');
   const [saving, setSaving] = useState(false);
+  const [meUser, setMeUser] = useState<User | null>(null);
+
+  useEffect(() => {
+    if (state !== 'signedIn') {
+      return;
+    }
+    let cancelled = false;
+    void getMe()
+      .then((me) => {
+        if (cancelled || !me) return;
+        setMeUser(me);
+        setFirstName(me.firstName ?? user?.firstName ?? '');
+        setLastName(me.lastName ?? user?.lastName ?? '');
+        setPhone(onlyDigits(me.phone ?? user?.phone ?? ''));
+        setPhoneDisplay(formatPhone(me.phone ?? user?.phone ?? ''));
+        setImageUrl(me.imageUrl ?? user?.imageUrl ?? '');
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, [state, user?.clerkId]);
 
   const handleMenuPress = async (item: (typeof MENU)[0]) => {
     if (item.id === '1') {
@@ -97,6 +120,7 @@ export default function ProfileScreen() {
       setPhone(onlyDigits(updated.phone ?? phone));
       setPhoneDisplay(formatPhone(updated.phone ?? phone));
       setImageUrl(updated.imageUrl ?? imageUrl);
+      setMeUser(updated);
       if (clerkUser) {
         // O Clerk só aceita os campos suportados pelo recurso do usuário.
         // Telefone e imagem ficam persistidos no backend e refletidos via /me.
@@ -132,8 +156,9 @@ export default function ProfileScreen() {
     }
   };
 
-  const nomeExibido = user
-    ? [user.firstName, user.lastName].filter(Boolean).join(' ') || user.email
+  const displayUser = state === 'signedIn' ? (meUser ?? user) : null;
+  const nomeExibido = displayUser
+    ? [displayUser.firstName, displayUser.lastName].filter(Boolean).join(' ') || displayUser.email
     : 'Visitante';
 
   return (
@@ -146,8 +171,8 @@ export default function ProfileScreen() {
           onPress={handleLoginPress}
           accessibilityLabel={state === 'signedIn' ? `Perfil de ${nomeExibido}` : 'Entrar na conta'}
         >
-          {user?.imageUrl ? (
-            <Image source={{ uri: user.imageUrl }} style={styles.avatarImagem} />
+          {displayUser?.imageUrl ? (
+            <Image source={{ uri: displayUser.imageUrl }} style={styles.avatarImagem} />
           ) : (
             <View style={styles.avatar}>
               <Ionicons name="person" size={36} color={colors.primary} />
@@ -157,7 +182,7 @@ export default function ProfileScreen() {
           <Text style={styles.userHint}>
             {state === 'guest'
               ? 'Convidado — entre para ver contatos e cupons'
-              : (user?.email ?? 'Faça login para salvar favoritos')}
+              : (displayUser?.email ?? 'Faça login para salvar favoritos')}
           </Text>
         </TouchableOpacity>
         <View style={styles.menu}>
