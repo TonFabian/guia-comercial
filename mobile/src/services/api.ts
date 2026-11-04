@@ -62,7 +62,7 @@ function normalizeCity(value: string | { name?: string } | null | undefined): st
   return name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
 }
 
-export async function getCompanies(page = 1, pageSize = 20, city?: string): Promise<CompanyPage> {
+export async function getCompanies(page = 1, pageSize = 20, city?: string, featured?: boolean): Promise<CompanyPage> {
   if (!isApiConfigured()) {
     if (!__DEV__) return { items: [], total: 0, page, pageSize };
     let items = MOCK_COMPANIES;
@@ -70,12 +70,16 @@ export async function getCompanies(page = 1, pageSize = 20, city?: string): Prom
       const target = normalizeCity(city);
       items = items.filter((c) => normalizeCity(c.city) === target);
     }
+    if (featured !== undefined) {
+      items = items.filter((c) => Boolean(c.isFeatured) === featured);
+    }
     const start = (page - 1) * pageSize;
     const sliced = items.slice(start, start + pageSize);
     return { items: sliced, total: items.length, page, pageSize };
   }
   const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
   if (city) params.set('city', city);
+  if (featured !== undefined) params.set('featured', String(featured));
   const payload = await request<Company>(`/companies?${params.toString()}`);
   const items = fromPaginated(payload, []);
   const total = isPaginated(payload) ? (payload.total ?? items.length) : items.length;
@@ -270,7 +274,7 @@ export async function getNotices(): Promise<Notice[]> {
   try {
     const payload = await request<Notice>('/notices?active=true');
     if (!payload) return [];
-    return Array.isArray(payload) ? payload : [payload as Notice];
+    return fromPaginated(payload, []);
   } catch {
     return [];
   }

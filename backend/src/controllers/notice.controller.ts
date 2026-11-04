@@ -1,12 +1,13 @@
 import type { Request, Response } from 'express';
 
 import * as service from '../services/notice.service.js';
-import { asyncHandler } from '../utils/http.js';
+import { asyncHandler, parsePagination } from '../utils/http.js';
 
 export const list = asyncHandler(async (req: Request, res: Response): Promise<void> => {
+  const pagination = parsePagination(req.query.page, req.query.pageSize);
   const activeOnly = req.query.active === 'true';
-  const notices = await service.listNotices(activeOnly);
-  res.json(notices);
+  const { items, total } = await service.listNotices(activeOnly, pagination);
+  res.json({ items, total, page: pagination.page, pageSize: pagination.pageSize });
 });
 
 export const getById = asyncHandler(async (req: Request, res: Response): Promise<void> => {
@@ -23,7 +24,7 @@ export const create = asyncHandler(async (req: Request, res: Response): Promise<
     res.status(401).json({ error: 'Não autenticado' });
     return;
   }
-  const doc = await service.createNotice(req.body);
+  const doc = await service.createNotice(req.body, req.auth?.clerkId);
   res.status(201).json(doc);
 });
 
@@ -32,7 +33,7 @@ export const update = asyncHandler(async (req: Request, res: Response): Promise<
     res.status(401).json({ error: 'Não autenticado' });
     return;
   }
-  const doc = await service.updateNotice(String(req.params.id), req.body);
+  const doc = await service.updateNotice(String(req.params.id), req.body, req.auth?.clerkId);
   if (!doc) {
     res.status(404).json({ error: 'aviso não encontrado' });
     return;
@@ -45,6 +46,6 @@ export const remove = asyncHandler(async (req: Request, res: Response): Promise<
     res.status(401).json({ error: 'Não autenticado' });
     return;
   }
-  await service.deleteNotice(String(req.params.id));
+  await service.deleteNotice(String(req.params.id), req.auth?.clerkId);
   res.status(204).end();
 });

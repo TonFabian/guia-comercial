@@ -68,22 +68,39 @@ export default function HomeScreen() {
   const [notices, setNotices] = useState<Notice[]>([]);
   const [otherCompanies, setOtherCompanies] = useState<Company[]>([]);
 
+  const [noticesLoading, setNoticesLoading] = useState(true);
+  const [otherCompaniesLoading, setOtherCompaniesLoading] = useState(true);
+  const [noticesError, setNoticesError] = useState<string | null>(null);
+  const [otherCompaniesError, setOtherCompaniesError] = useState<string | null>(null);
+
   useEffect(() => {
     let cancelled = false;
     (async () => {
+      setNoticesLoading(true);
+      setOtherCompaniesLoading(true);
+      setNoticesError(null);
+      setOtherCompaniesError(null);
       try {
         const [pros, nts, page] = await Promise.all([
           getAutonomousProfessionals(),
           getNotices(),
-          getCompanies(1, 50),
+          getCompanies(1, 50, undefined, false),
         ]);
         if (!cancelled) {
           setProfessionals(pros);
           setNotices(nts);
-          setOtherCompanies(page.items.filter((c) => !c.isFeatured));
+          setOtherCompanies(page.items);
         }
-      } catch {
-        // ignora
+      } catch (e) {
+        if (!cancelled) {
+          setNoticesError(e instanceof Error ? e.message : 'Erro ao carregar avisos');
+          setOtherCompaniesError(e instanceof Error ? e.message : 'Erro ao carregar empresas');
+        }
+      } finally {
+        if (!cancelled) {
+          setNoticesLoading(false);
+          setOtherCompaniesLoading(false);
+        }
       }
     })();
     return () => {
@@ -161,7 +178,7 @@ export default function HomeScreen() {
             <View style={{ flex: 1 }}>
               <CategoryList categories={categories} />
               <FeaturedCompany company={featuredCompany} />
-              <OtherCompanies companies={otherCompanies} />
+              <OtherCompanies companies={otherCompanies} loading={otherCompaniesLoading} error={otherCompaniesError} />
               {banners.length > 0 ? (
                 <>
                   <SectionHeader title="Promoções da Semana" />
@@ -169,9 +186,9 @@ export default function HomeScreen() {
                 </>
               ) : null}
               <PublicUtilities />
-              <JobList jobs={jobs} />
+              <NoticesCarousel notices={notices} loading={noticesLoading} error={noticesError} />
               <AutonomousProfessionals professionals={professionals} />
-              <NoticesCarousel notices={notices} />
+              <JobList jobs={jobs} />
               <AnnounceCta />
             </View>
           )}

@@ -1,6 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
-import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 import { Radius, Spacing, Type } from '@/constants/theme';
 import { useThemeColors } from '@/hooks/use-theme-colors';
@@ -8,41 +8,59 @@ import type { Company } from '@/types/domain';
 import { categoryLabel } from '@/types/domain';
 import { SectionHeader } from './section-header';
 
-export function OtherCompanies({ companies }: { companies: Company[] }) {
+interface Props {
+  companies: Company[];
+  loading?: boolean;
+  error?: string | null;
+}
+
+export function OtherCompanies({ companies, loading = false, error = null }: Props) {
   const colors = useThemeColors();
   const styles = makeStyles(colors);
-  if (companies.length === 0) return null;
 
   return (
     <View style={styles.section}>
       <View style={styles.headerRow}>
         <SectionHeader title="Outras Empresas & Serviços Locais" />
-        <TouchableOpacity onPress={() => router.push('/search')}>
+        <TouchableOpacity onPress={() => router.push('/search')} accessibilityRole="button" accessibilityLabel="Ver todas as empresas">
           <Text style={styles.seeAll}>Ver todas ›</Text>
         </TouchableOpacity>
       </View>
-      <View style={styles.list}>
-        {companies.map((c) => (
-          <TouchableOpacity
-            key={c._id}
-            style={styles.card}
-            activeOpacity={0.7}
-            onPress={() => router.push(`/company/${c._id}` as any)}
-          >
-            <View style={styles.thumb}>
-              <Ionicons name="storefront-outline" size={20} color={colors.primary} />
-            </View>
-            <View style={styles.body}>
-              <Text style={styles.name} numberOfLines={1}>{c.name}</Text>
-              <Text style={styles.meta} numberOfLines={1}>
-                {categoryLabel(c.category)}
-                {c.address ? ` · ${c.address}` : ''}
-              </Text>
-            </View>
-            <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
-          </TouchableOpacity>
-        ))}
-      </View>
+
+      {loading ? (
+        <View style={styles.center}>
+          <ActivityIndicator color={colors.primary} />
+        </View>
+      ) : error ? (
+        <Text style={styles.empty}>{error}</Text>
+      ) : companies.length === 0 ? (
+        <Text style={styles.empty}>Nenhuma empresa cadastrada</Text>
+      ) : (
+        <View style={styles.list}>
+          {companies.map((c) => (
+            <TouchableOpacity
+              key={c._id}
+              style={styles.card}
+              activeOpacity={0.7}
+              accessibilityRole="button"
+              accessibilityLabel={`Empresa ${c.name}, ${categoryLabel(c.category)}`}
+              onPress={() => router.push(`/company/${c._id}` as any)}
+            >
+              <View style={styles.thumb}>
+                <Ionicons name="storefront-outline" size={20} color={colors.primary} />
+              </View>
+              <View style={styles.body}>
+                <Text style={styles.name} numberOfLines={1}>{c.name}</Text>
+                <Text style={styles.meta} numberOfLines={1}>
+                  {categoryLabel(c.category)}
+                  {c.address ? ` · ${c.address}` : ''}
+                </Text>
+              </View>
+              <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
+            </TouchableOpacity>
+          ))}
+        </View>
+      )}
     </View>
   );
 }
@@ -58,5 +76,7 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     body: { flex: 1, gap: 2 },
     name: { color: colors.text, fontSize: 14, fontWeight: '700' },
     meta: { color: colors.textSecondary, fontSize: 12 },
+    center: { paddingVertical: 20, alignItems: 'center' },
+    empty: { color: colors.textSecondary, fontSize: Type.small, paddingHorizontal: 16, paddingVertical: 12 },
   });
 }

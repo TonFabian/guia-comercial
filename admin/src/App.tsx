@@ -188,7 +188,7 @@ export default function App() {
 // Empresas
 // ---------------------------------------------------------------------------
 
-function EmpresasSection({ companies, categories, onReload, onDelete, setError }: any) {
+function EmpresasSection({ companies, categories, onReload, onDelete, setError }: { companies: Company[]; categories: Category[]; onReload: () => void; onDelete: (id: string) => void; setError: (error: string | null) => void; }) {
   const [form, setForm] = useState({ name: '', slug: '', description: '', category: '', city: '' });
 
   async function handleCreate(e: React.FormEvent) {
@@ -222,7 +222,7 @@ function EmpresasSection({ companies, categories, onReload, onDelete, setError }
         rows={companies.map((c: Company) => [
           c.name,
           typeof c.category === 'string' ? c.category : c.category?.name,
-          c.city ?? '—',
+          (typeof c.city === 'string' ? c.city : c.city?.name) ?? '—',
           <button key={c._id} onClick={() => onDelete(c._id)}>Excluir</button>,
         ])}
       />
@@ -234,7 +234,7 @@ function EmpresasSection({ companies, categories, onReload, onDelete, setError }
 // Categorias
 // ---------------------------------------------------------------------------
 
-function CategoriasSection({ categories, onReload, onDelete, setError }: any) {
+function CategoriasSection({ categories, onReload, onDelete, setError }: { categories: Category[]; onReload: () => void; onDelete: (id: string) => void; setError: (error: string | null) => void; }) {
   const [form, setForm] = useState({ name: '', slug: '', icon: '', order: 0 });
 
   async function handleCreate(e: React.FormEvent) {
@@ -269,7 +269,7 @@ function CategoriasSection({ categories, onReload, onDelete, setError }: any) {
 // Banners
 // ---------------------------------------------------------------------------
 
-function BannersSection({ banners, onReload, onDelete, setError }: any) {
+function BannersSection({ banners, onReload, onDelete, setError }: { banners: Banner[]; onReload: () => void; onDelete: (id: string) => void; setError: (error: string | null) => void; }) {
   const [form, setForm] = useState({ title: '', image: '', link: '' });
 
   async function handleCreate(e: React.FormEvent) {
@@ -303,7 +303,7 @@ function BannersSection({ banners, onReload, onDelete, setError }: any) {
 // Cupons
 // ---------------------------------------------------------------------------
 
-function CuponsSection({ coupons, companies, onReload, onDelete, setError }: any) {
+function CuponsSection({ coupons, companies, onReload, onDelete, setError }: { coupons: Coupon[]; companies: Company[]; onReload: () => void; onDelete: (id: string) => void; setError: (error: string | null) => void; }) {
   const [form, setForm] = useState({ code: '', discount: '', company: '' });
 
   async function handleCreate(e: React.FormEvent) {
@@ -342,7 +342,7 @@ function CuponsSection({ coupons, companies, onReload, onDelete, setError }: any
 // Vagas
 // ---------------------------------------------------------------------------
 
-function VagasSection({ jobs, companies, onReload, onDelete, setError }: any) {
+function VagasSection({ jobs, companies, onReload, onDelete, setError }: { jobs: Job[]; companies: Company[]; onReload: () => void; onDelete: (id: string) => void; setError: (error: string | null) => void; }) {
   const [form, setForm] = useState({ title: '', company: '', description: '', location: '', type: 'CLT' });
 
   async function handleCreate(e: React.FormEvent) {
@@ -391,7 +391,7 @@ function VagasSection({ jobs, companies, onReload, onDelete, setError }: any) {
 // Avisos
 // ---------------------------------------------------------------------------
 
-function AvisosSection({ notices, onReload, onDelete, setError }: any) {
+function AvisosSection({ notices, onReload, onDelete, setError }: { notices: Notice[]; onReload: () => void; onDelete: (id: string) => void; setError: (error: string | null) => void; }) {
   const [form, setForm] = useState({ title: '', body: '', type: 'general' as 'general' | 'alert' | 'health' });
 
   async function handleCreate(e: React.FormEvent) {
@@ -429,7 +429,7 @@ function AvisosSection({ notices, onReload, onDelete, setError }: any) {
 // Usuários (somente leitura)
 // ---------------------------------------------------------------------------
 
-function UsuariosSection({ users }: any) {
+function UsuariosSection({ users }: { users: AdminUser[] }) {
   return (
     <Table
       headers={['Nome', 'E-mail', 'Role']}
