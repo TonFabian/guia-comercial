@@ -75,3 +75,6 @@ coverage/
 # Documentos locais de trabalho (nao versionar)
 ROADMAP.md
 REFACTORING_NOTES.md
+
+# Nenhum pacote na raiz do monorepo
+package-lock.json

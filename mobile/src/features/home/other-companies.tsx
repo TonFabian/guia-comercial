@@ -6,6 +6,7 @@ import { Radius, Spacing, Type } from '@/constants/theme';
 import { useThemeColors } from '@/hooks/use-theme-colors';
 import type { Company } from '@/types/domain';
 import { categoryLabel } from '@/types/domain';
+import { openWhatsApp } from '@/utils/links';
 import { SectionHeader } from './section-header';
 
 interface Props {
@@ -56,6 +57,16 @@ export function OtherCompanies({ companies, loading = false, error = null }: Pro
                   {c.address ? ` · ${c.address}` : ''}
                 </Text>
               </View>
+              {(c.whatsapp || c.phone) ? (
+                <TouchableOpacity
+                  style={styles.whatsappBtn}
+                  accessibilityRole="button"
+                  accessibilityLabel={`WhatsApp ${c.name}`}
+                  onPress={() => openWhatsApp((c.whatsapp ?? c.phone) as string)}
+                >
+                  <Ionicons name="logo-whatsapp" size={18} color="#25D366" />
+                </TouchableOpacity>
+              ) : null}
               <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
             </TouchableOpacity>
           ))}
@@ -74,6 +85,7 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     card: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 12, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: colors.border },
     thumb: { width: 40, height: 40, borderRadius: 8, backgroundColor: colors.surfaceAlt, alignItems: 'center', justifyContent: 'center' },
     body: { flex: 1, gap: 2 },
+    whatsappBtn: { padding: 6, borderRadius: Radius.chip, backgroundColor: colors.surfaceAlt },
     name: { color: colors.text, fontSize: 14, fontWeight: '700' },
     meta: { color: colors.textSecondary, fontSize: 12 },
     center: { paddingVertical: 20, alignItems: 'center' },

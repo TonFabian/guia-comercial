@@ -15,6 +15,7 @@ import {
   deleteCoupon,
   deleteJob,
   deleteNotice,
+  updateNotice,
   getBanners,
   getCategories,
   getCompanies,
@@ -189,13 +190,37 @@ export default function App() {
 // ---------------------------------------------------------------------------
 
 function EmpresasSection({ companies, categories, onReload, onDelete, setError }: { companies: Company[]; categories: Category[]; onReload: () => void; onDelete: (id: string) => void; setError: (error: string | null) => void; }) {
-  const [form, setForm] = useState({ name: '', slug: '', description: '', category: '', city: '' });
+  const [form, setForm] = useState({ name: '', slug: '', description: '', category: '', city: '', phone: '', whatsapp: '', samePhone: false });
+
+  function handlePhoneChange(value: string) {
+    setForm((prev) => ({
+      ...prev,
+      phone: value,
+      whatsapp: prev.samePhone ? value : prev.whatsapp,
+    }));
+  }
+
+  function handleSamePhoneChange(checked: boolean) {
+    setForm((prev) => ({
+      ...prev,
+      samePhone: checked,
+      whatsapp: checked ? prev.phone : prev.whatsapp,
+    }));
+  }
 
   async function handleCreate(e: React.FormEvent) {
     e.preventDefault();
     try {
-      await createCompany({ ...form });
-      setForm({ name: '', slug: '', description: '', category: '', city: '' });
+      await createCompany({
+        name: form.name,
+        slug: form.slug,
+        description: form.description,
+        category: form.category,
+        city: form.city,
+        phone: form.phone || undefined,
+        whatsapp: form.whatsapp || undefined,
+      });
+      setForm({ name: '', slug: '', description: '', category: '', city: '', phone: '', whatsapp: '', samePhone: false });
       await onReload();
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
@@ -215,6 +240,12 @@ function EmpresasSection({ companies, categories, onReload, onDelete, setError }
           ))}
         </select>
         <input placeholder="Cidade" value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })} />
+        <input placeholder="Telefone (ligar)" value={form.phone} onChange={(e) => handlePhoneChange(e.target.value)} />
+        <label style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <input type="checkbox" checked={form.samePhone} onChange={(e) => handleSamePhoneChange(e.target.checked)} />
+          Usar o mesmo número para WhatsApp
+        </label>
+        <input placeholder="WhatsApp" value={form.whatsapp} onChange={(e) => setForm({ ...form, whatsapp: e.target.value })} disabled={form.samePhone} />
         <button type="submit">Criar</button>
       </form>
       <Table
@@ -392,13 +423,47 @@ function VagasSection({ jobs, companies, onReload, onDelete, setError }: { jobs:
 // ---------------------------------------------------------------------------
 
 function AvisosSection({ notices, onReload, onDelete, setError }: { notices: Notice[]; onReload: () => void; onDelete: (id: string) => void; setError: (error: string | null) => void; }) {
-  const [form, setForm] = useState({ title: '', body: '', type: 'general' as 'general' | 'alert' | 'health' });
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [form, setForm] = useState({
+    title: '',
+    body: '',
+    type: 'general' as 'general' | 'alert' | 'health',
+    startsAt: '',
+    expiresAt: '',
+    active: true,
+  });
 
-  async function handleCreate(e: React.FormEvent) {
+  function resetForm() {
+    setEditingId(null);
+    setForm({ title: '', body: '', type: 'general', startsAt: '', expiresAt: '', active: true });
+  }
+
+  function startEdit(n: Notice) {
+    setEditingId(n._id);
+    setForm({
+      title: n.title,
+      body: n.body,
+      type: n.type,
+      startsAt: n.startsAt ?? '',
+      expiresAt: n.expiresAt ?? '',
+      active: n.active,
+    });
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+    const payload = {
+      title: form.title,
+      body: form.body,
+      type: form.type,
+      startsAt: form.startsAt ? new Date(form.startsAt).toISOString() : undefined,
+      expiresAt: form.expiresAt ? new Date(form.expiresAt).toISOString() : undefined,
+      active: form.active,
+    };
     try {
-      await createNotice({ title: form.title, body: form.body, type: form.type });
-      setForm({ title: '', body: '', type: 'general' });
+      if (editingId) await updateNotice(editingId, payload);
+      else await createNotice(payload);
+      resetForm();
       await onReload();
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
@@ -407,7 +472,7 @@ function AvisosSection({ notices, onReload, onDelete, setError }: { notices: Not
 
   return (
     <>
-      <form onSubmit={handleCreate} style={formStyle}>
+      <form onSubmit={handleSubmit} style={formStyle}>
         <input placeholder="Título" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required />
         <textarea placeholder="Texto do aviso" value={form.body} onChange={(e) => setForm({ ...form, body: e.target.value })} required style={{ minWidth: 300, minHeight: 60 }} />
         <select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value as 'general' | 'alert' | 'health' })}>
@@ -415,11 +480,26 @@ function AvisosSection({ notices, onReload, onDelete, setError }: { notices: Not
           <option value="alert">Alerta</option>
           <option value="health">Saúde</option>
         </select>
-        <button type="submit">Criar</button>
+        <input type="datetime-local" placeholder="Início (opcional)" value={form.startsAt} onChange={(e) => setForm({ ...form, startsAt: e.target.value })} />
+        <input type="datetime-local" placeholder="Expira em (opcional)" value={form.expiresAt} onChange={(e) => setForm({ ...form, expiresAt: e.target.value })} />
+        <label style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <input type="checkbox" checked={form.active} onChange={(e) => setForm({ ...form, active: e.target.checked })} />
+          Ativo
+        </label>
+        <button type="submit">{editingId ? 'Salvar' : 'Criar'}</button>
+        {editingId ? <button type="button" onClick={resetForm}>Cancelar</button> : null}
       </form>
       <Table
-        headers={['Título', 'Tipo', 'Ações']}
-        rows={notices.map((n: Notice) => [n.title, n.type, <button key={n._id} onClick={() => onDelete(n._id)}>Excluir</button>])}
+        headers={['Título', 'Tipo', 'Validade', 'Ações']}
+        rows={notices.map((n: Notice) => [
+          n.title,
+          n.type,
+          n.expiresAt ? new Date(n.expiresAt).toLocaleString() : '—',
+          <>
+            <button key={`edit-${n._id}`} onClick={() => startEdit(n)}>Editar</button>{' '}
+            <button key={`del-${n._id}`} onClick={() => onDelete(n._id)}>Excluir</button>
+          </>,
+        ])}
       />
     </>
   );
