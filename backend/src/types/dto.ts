@@ -58,6 +58,7 @@ export const createCompanySchema = z.object({
   name: z.string().min(1),
   slug: slugSchema,
   description: z.string().min(1),
+  promotion: z.string().optional(),
   category: z.string().min(1),
   phone: z.string().optional(),
   whatsapp: z.string().optional(),

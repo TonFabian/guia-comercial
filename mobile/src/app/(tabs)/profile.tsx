@@ -55,19 +55,7 @@ export default function ProfileScreen() {
         router.push('/(auth)/sign-in');
         return;
       }
-      (async () => {
-        try {
-          const page = await getCompanies(1, 100);
-          const owned = page.items.filter((c) => c.ownerClerkId === user.clerkId);
-          if (owned.length === 0) {
-            Alert.alert('Minha empresa', 'Você ainda não tem empresas cadastradas. Use "Anuncie no Guia" para cadastrar.');
-          } else {
-            Alert.alert('Minha empresa', owned.map((c) => c.name).join('\n'));
-          }
-        } catch {
-          Alert.alert('Minha empresa', 'Não foi possível carregar suas empresas.');
-        }
-      })();
+      router.push('/my-company');
       return;
     }
     if (item.id === '4') {

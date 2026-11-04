@@ -19,6 +19,7 @@ export default function MyCompanyScreen() {
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [hoursText, setHoursText] = useState('');
+  const [promotionText, setPromotionText] = useState('');
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -44,6 +45,7 @@ export default function MyCompanyScreen() {
   function startEdit(company: Company) {
     setEditingId(company._id);
     setHoursText((company.openingHours ?? []).join('\n'));
+    setPromotionText(company.promotion ?? '');
   }
 
   async function save() {
@@ -51,9 +53,11 @@ export default function MyCompanyScreen() {
     setSaving(true);
     try {
       const hours = hoursText.split('\n').map((s) => s.trim()).filter(Boolean);
-      await updateCompany(editingId, { openingHours: hours });
+      await updateCompany(editingId, { openingHours: hours, promotion: promotionText.trim() || undefined });
       setCompanies((prev) =>
-        prev.map((c) => (c._id === editingId ? { ...c, openingHours: hours } : c)),
+        prev.map((c) =>
+          c._id === editingId ? { ...c, openingHours: hours, promotion: promotionText.trim() || undefined } : c,
+        ),
       );
       setEditingId(null);
       Alert.alert('Empresa', 'Horários atualizados com sucesso.');
@@ -108,6 +112,14 @@ export default function MyCompanyScreen() {
                       placeholder="Seg a Sex: 08h às 18h"
                       placeholderTextColor={colors.textSecondary}
                     />
+                    <Text style={styles.label}>Promoção (opcional)</Text>
+                    <TextInput
+                      style={styles.input}
+                      value={promotionText}
+                      onChangeText={setPromotionText}
+                      placeholder="Ex.: 20% OFF em pizzas hoje!"
+                      placeholderTextColor={colors.textSecondary}
+                    />
                     <View style={styles.actions}>
                       <TouchableOpacity style={styles.btn} onPress={() => setEditingId(null)}>
                         <Text style={styles.btnText}>Cancelar</Text>
@@ -120,6 +132,7 @@ export default function MyCompanyScreen() {
                 ) : (
                   <>
                     <Text style={styles.label}>Horários</Text>
+                    {c.promotion ? <Text style={styles.promoLine}>🔥 {c.promotion}</Text> : null}
                     {(c.openingHours ?? []).map((h, i) => (
                       <Text key={i} style={styles.hourLine}>{h}</Text>
                     ))}
@@ -158,6 +171,7 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     cardMeta: { color: colors.textSecondary, fontSize: 13 },
     label: { color: colors.textSecondary, fontSize: 12, fontWeight: '700', textTransform: 'uppercase', marginTop: 4 },
     hourLine: { color: colors.text, fontSize: 14 },
+    promoLine: { color: colors.primary, fontSize: 14, fontWeight: '600' },
     hourLineMuted: { color: colors.textSecondary, fontSize: 14, fontStyle: 'italic' },
     input: { backgroundColor: colors.background, color: colors.text, borderRadius: 10, borderWidth: 1, borderColor: colors.border, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, minHeight: 80, textAlignVertical: 'top' },
     actions: { flexDirection: 'row', justifyContent: 'flex-end', gap: 10, marginTop: 8 },

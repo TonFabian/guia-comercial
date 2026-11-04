@@ -49,6 +49,7 @@ export type CompanyDetails = {
   media: CompanyMedia[];
   city?: string;
   address?: string;
+  promotion?: string;
   mapLink?: string;
   about: CompanyAbout;
   servicesList: CompanyService[];
@@ -142,6 +143,7 @@ export function buildCompanyDetails(company: Company): CompanyDetails {
     media: buildMedia(company),
     city: cityName(company.city),
     address: company.address ?? undefined,
+    promotion: company.promotion,
     mapLink: company.address
       ? `https://maps.google.com/?q=${encodeURIComponent(company.address)}`
       : undefined,
