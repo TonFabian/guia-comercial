@@ -1,5 +1,5 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
   Button,
@@ -37,6 +37,10 @@ const SHOW_COUPONS = false;
 export default function HomeScreen() {
   const [selectedCity, setSelectedCity] = useState<string | undefined>(undefined);
   const [cities, setCities] = useState<{ _id: string; name: string; slug: string }[]>([]);
+  const selectedCityName = useMemo(
+    () => cities.find((c) => c.slug === selectedCity)?.name,
+    [cities, selectedCity],
+  );
   const { loading, categories, banners, featuredCompany, jobs, error } = useHomeData(selectedCity);
   const insets = useSafeAreaInsets();
   const colors = useThemeColors();
@@ -110,7 +114,7 @@ export default function HomeScreen() {
           ])}
           showsVerticalScrollIndicator={false}
         >
-          <Header />
+          <Header city={selectedCityName} />
           {cities.length > 1 && (
             <View style={styles.cityRow}>
               <Ionicons name="location-outline" size={16} color={colors.primary} />

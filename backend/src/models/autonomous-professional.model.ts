@@ -11,7 +11,7 @@ const schema = new Schema<AutonomousProfessional>(
     phone: String,
     whatsapp: String,
     photo: String,
-    city: Schema.Types.Mixed,
+    city: { type: Schema.Types.ObjectId, ref: 'City' },
     rating: { type: Number, min: 0, max: 5 },
     ratingCount: { type: Number, min: 0 },
     ownerClerkId: { type: String, trim: true, index: true },

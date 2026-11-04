@@ -255,7 +255,11 @@ export async function getAutonomousProfessionals(): Promise<AutonomousProfession
   try {
     const payload = await request<AutonomousProfessional>('/autonomous-professionals');
     if (!payload) return [];
-    return Array.isArray(payload) ? payload : [payload as AutonomousProfessional];
+    // A API responde no formato paginado ({ items, total, ... }).
+    if (Array.isArray(payload)) return payload;
+    const paginated = payload as unknown as Paginated<AutonomousProfessional>;
+    if (paginated.items) return paginated.items;
+    return [payload as AutonomousProfessional];
   } catch {
     return [];
   }

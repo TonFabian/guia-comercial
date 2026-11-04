@@ -17,7 +17,7 @@ const companySchema = new Schema<Company>(
     phone: String,
     whatsapp: String,
     address: String,
-    city: Schema.Types.Mixed,
+    city: { type: Schema.Types.ObjectId, ref: 'City' },
     latitude: Number,
     longitude: Number,
     logo: String,

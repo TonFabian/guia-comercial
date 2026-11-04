@@ -4,14 +4,14 @@ import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { Spacing, Type } from '@/constants/theme';
 import { useThemeColors } from '@/hooks/use-theme-colors';
 
-export function Header() {
+export function Header({ city }: { city?: string }) {
   const colors = useThemeColors();
   const styles = makeStyles(colors);
   return (
     <View style={styles.header}>
-      <TouchableOpacity style={styles.locationButton} activeOpacity={0.7}>
+      <TouchableOpacity style={styles.locationButton} activeOpacity={0.7} accessibilityRole="button" accessibilityLabel="Cidade atual">
         <Ionicons name="location-sharp" size={18} color={colors.primary} />
-        <Text style={styles.locationText}>Sua cidade</Text>
+        <Text style={styles.locationText} numberOfLines={1} ellipsizeMode="tail">{city ?? 'Castelo do Piauí'}</Text>
         <Ionicons name="chevron-down" size={14} color={colors.textSecondary} />
       </TouchableOpacity>
       <Text style={styles.headerTitle}>
@@ -39,6 +39,8 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
       color: colors.text,
       fontSize: Type.base,
       fontWeight: '600',
+      maxWidth: 180,
+      flexShrink: 1,
     },
     headerTitle: {
       color: colors.text,

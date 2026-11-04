@@ -156,11 +156,19 @@ function sanitizeAuthError(error: unknown): string {
     .slice(0, 200);
 }
 
-/** Garante o espelho local antes de registrar a sessão. */
+/**
+ * Garante o espelho local antes de registrar a sessão.
+ *
+ * Só grava quando o registro ainda não existe ou está sem a cidade
+ * (campo com default). Assim o Clerk continua sendo a fonte da verdade sem
+ * gerar uma chamada à API do Clerk a cada requisição.
+ */
 async function ensureMirror(deps: AuthDeps, clerkId: string): Promise<void> {
   const existing = await deps.find(clerkId);
 
-  if (existing) {
+  // `city` precisa estar populado (objeto City) para consultas por cidade.
+  const cityOk = Boolean(existing?.city && typeof existing.city === 'object');
+  if (existing && cityOk) {
     return;
   }
 

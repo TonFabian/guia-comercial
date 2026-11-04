@@ -67,6 +67,7 @@ export async function listCompanies(
   const [items, total] = await Promise.all([
     CompanyModel.find(query)
       .populate('category')
+      .populate('city')
       .sort({ isFeatured: -1, name: 1 })
       .skip(pagination.skip)
       .limit(pagination.limit)
@@ -78,7 +79,7 @@ export async function listCompanies(
 }
 
 export async function getCompanyById(id: string) {
-  return CompanyModel.findById(id).populate('category').lean();
+  return CompanyModel.findById(id).populate('category').populate('city').lean();
 }
 
 export async function createCompany(dto: CreateCompanyDto, ownerClerkId?: string) {
@@ -126,7 +127,21 @@ async function assertOwner(companyId: string, clerkId?: string): Promise<void> {
   if (!existing) {
     throw Object.assign(new Error('empresa não encontrada'), { statusCode: 404 });
   }
-  if (existing.ownerClerkId && clerkId && existing.ownerClerkId !== clerkId) {
+
+  // Sem auth configurada (modo legado), a autorização fica desabilitada.
+  if (!process.env.CLERK_SECRET_KEY) {
+    return;
+  }
+
+  if (!clerkId) {
+    throw Object.assign(new Error('não autenticado'), { statusCode: 401 });
+  }
+
+  // Empresa com dono definido: só o próprio dono ou um admin pode mutar.
+  if (existing.ownerClerkId) {
+    if (existing.ownerClerkId === clerkId) {
+      return;
+    }
     const user = await findUserByClerkId(clerkId);
     if (user?.role !== 'admin') {
       throw Object.assign(new Error('sem permissão para editar esta empresa'), { statusCode: 403 });
@@ -134,13 +149,10 @@ async function assertOwner(companyId: string, clerkId?: string): Promise<void> {
     return;
   }
 
-  // Empresa sem dono definido: em modo com auth, apenas admins podem mutar
-  // (evita tomada de posse por usuários comuns).
-  if (process.env.CLERK_SECRET_KEY && clerkId) {
-    const user = await findUserByClerkId(clerkId);
-    if (user?.role !== 'admin') {
-      throw Object.assign(new Error('sem permissão para editar esta empresa'), { statusCode: 403 });
-    }
+  // Empresa sem dono (legado): apenas admins, evitando tomada de posse.
+  const user = await findUserByClerkId(clerkId);
+  if (user?.role !== 'admin') {
+    throw Object.assign(new Error('sem permissão para editar esta empresa'), { statusCode: 403 });
   }
 }
 
@@ -171,6 +183,7 @@ export async function updateCompany(id: string, dto: UpdateCompanyDto, clerkId?:
 
   return CompanyModel.findByIdAndUpdate(id, update, { returnDocument: 'after', runValidators: true })
     .populate('category')
+    .populate('city')
     .lean();
 }
 

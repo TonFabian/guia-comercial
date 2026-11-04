@@ -5,7 +5,7 @@ import type { User } from '../../../shared/domain.js';
 /** Acesso a dados do espelho local de usuários do Clerk. */
 
 export function findUserByClerkId(clerkId: string): Promise<User | null> {
-  return UserModel.findOne({ clerkId }).lean<User>().exec();
+  return UserModel.findOne({ clerkId }).populate('city').lean<User>().exec();
 }
 
 /**
@@ -29,7 +29,7 @@ export async function upsertUserFromMirror(
   // Default cidade = Castelo do Piauí (primeira cidade do MVP).
   if (!update.city) {
     const city = await CityModel.findOne({ slug: 'castelo-do-piaui' }).lean();
-    if (city) (update as Record<string, unknown>).city = String(city._id);
+    if (city) (update as Record<string, unknown>).city = city._id;
   }
 
   const user = await UserModel.findOneAndUpdate(
@@ -61,7 +61,9 @@ export async function updateUserByClerkId(
     { clerkId },
     { $set: mirror },
     { returnDocument: "after" },
-  ).lean<User>();
+  )
+    .populate('city')
+    .lean<User>();
 
   return user;
 }
