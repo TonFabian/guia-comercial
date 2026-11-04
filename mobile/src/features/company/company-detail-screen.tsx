@@ -256,6 +256,12 @@ export function CompanyDetailScreen({ companyId }: { companyId: string }) {
             ) : null}
           </View>
 
+          {details.promotion ? (
+            <View style={styles.promotionBanner}>
+              <Text style={styles.promotionText}>🔥 {details.promotion}</Text>
+            </View>
+          ) : null}
+
           {location ? (
             <View style={styles.addressRow}>
               <Ionicons name="location-outline" size={16} color={colors.textSecondary} />
@@ -515,6 +521,19 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
       color: colors.background,
       fontSize: Type.small,
       fontWeight: '800',
+    },
+    promotionBanner: {
+      backgroundColor: colors.surfaceAlt,
+      borderRadius: Radius.card,
+      borderWidth: 1,
+      borderColor: colors.primary,
+      padding: Spacing.two,
+      marginHorizontal: Spacing.four,
+    },
+    promotionText: {
+      color: colors.primary,
+      fontSize: Type.base,
+      fontWeight: '700',
     },
     addressRow: {
       flexDirection: 'row',

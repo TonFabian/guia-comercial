@@ -11,6 +11,7 @@ const companySchema = new Schema<Company>(
     name: { type: String, required: true, trim: true },
     slug: { type: String, required: true, unique: true, lowercase: true, trim: true },
     description: { type: String, required: true },
+    promotion: { type: String, trim: true },
     category: { type: Schema.Types.ObjectId, ref: 'Category', required: true },
     ownerClerkId: { type: String, trim: true, index: true },
     phone: String,

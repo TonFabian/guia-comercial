@@ -37,6 +37,8 @@ export interface Company {
   slug: string;
   description: string;
   category: string | Category;
+  /** Promoção/destaque atual do estabelecimento (editável pelo lojista). */
+  promotion?: string;
   /** Clerk ID do dono/gerente da empresa (autorização de edição). */
   ownerClerkId?: string;
   /** Convidado recebe `null` (o backend redige o contato comercial). */
