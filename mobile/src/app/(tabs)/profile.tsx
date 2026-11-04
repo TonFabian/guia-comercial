@@ -6,7 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Radius } from '@/constants/theme';
 import { useThemeColors } from '@/hooks/use-theme-colors';
-import { getCompanies, updateMe } from '@/services/api';
+import { getCompanies, getMe, updateMe } from '@/services/api';
 import { useThemeMode } from '@/providers/theme-provider';
 import { useAuthState } from '@/providers/auth-provider';
 import { useUser } from '@clerk/expo';
@@ -36,7 +36,7 @@ export default function ProfileScreen() {
   const [imageUrl, setImageUrl] = useState(user?.imageUrl ?? '');
   const [saving, setSaving] = useState(false);
 
-  const handleMenuPress = (item: (typeof MENU)[0]) => {
+  const handleMenuPress = async (item: (typeof MENU)[0]) => {
     if (item.id === '1') {
       if (state !== 'signedIn') {
         router.push('/(auth)/sign-in');
@@ -47,6 +47,21 @@ export default function ProfileScreen() {
       setPhone(onlyDigits(user?.phone ?? ''));
       setPhoneDisplay(formatPhone(user?.phone ?? ''));
       setImageUrl(user?.imageUrl ?? '');
+      // O telefone (e demais dados) são persistidos no backend (/me); o recurso
+      // do Clerk pode não refletir o valor salvo anteriormente, então buscamos
+      // o espelho atualizado antes de abrir o formulário.
+      try {
+        const me = await getMe();
+        if (me) {
+          setFirstName(me.firstName ?? user?.firstName ?? '');
+          setLastName(me.lastName ?? user?.lastName ?? '');
+          setPhone(onlyDigits(me.phone ?? user?.phone ?? ''));
+          setPhoneDisplay(formatPhone(me.phone ?? user?.phone ?? ''));
+          setImageUrl(me.imageUrl ?? user?.imageUrl ?? '');
+        }
+      } catch {
+        // mantém os valores do Clerk como fallback
+      }
       setEditing(true);
       return;
     }
@@ -69,7 +84,14 @@ export default function ProfileScreen() {
     if (state !== 'signedIn') return;
     setSaving(true);
     try {
-  await updateMe({ firstName, lastName, phone, imageUrl });
+      const updated = await updateMe({ firstName, lastName, phone, imageUrl });
+      if (updated) {
+        setFirstName(updated.firstName ?? firstName);
+        setLastName(updated.lastName ?? lastName);
+        setPhone(onlyDigits(updated.phone ?? phone));
+        setPhoneDisplay(formatPhone(updated.phone ?? phone));
+        setImageUrl(updated.imageUrl ?? imageUrl);
+      }
       if (clerkUser) {
         await clerkUser.update({ firstName, lastName });
       }
