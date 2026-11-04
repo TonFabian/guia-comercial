@@ -5,7 +5,7 @@ import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'rea
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Radius, Spacing, Type } from '@/constants/theme';
-// api import is dynamic to avoid expo lint parse issues
+import { getAutonomousProfessionals } from '@/services/api';
 import type { AutonomousProfessional } from '@/types/domain';
 import { useThemeColors } from '@/hooks/use-theme-colors';
 import { openWhatsApp, callPhone } from '@/utils/links';
@@ -21,7 +21,7 @@ export default function AutonomousDetailScreen() {
     let cancelled = false;
     (async () => {
       try {
-        const list = await (await import('@/services/api')).getAutonomousProfessionals();
+        const list = await getAutonomousProfessionals();
         const found = list.find((p) => p._id === id) ?? null;
         if (!cancelled) setPro(found);
       } finally {

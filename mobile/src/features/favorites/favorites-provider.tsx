@@ -8,6 +8,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
 
+import { getCompanyById, getMe, updateMe } from '@/services/api';
 import { useAuthState } from '@/providers/auth-provider';
 import type { Company } from '@/types/domain';
 
@@ -67,10 +68,9 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
     if (auth.state !== 'signedIn') return;
     let cancelled = false;
     (async () => {
-      const me = await (await import('@/services/api')).getMe();
+      const me = await getMe();
       if (cancelled || !me?.favorites) return;
       const remoteIds = me.favorites;
-      const { getCompanyById } = await import('@/services/api');
       const hydrated: Company[] = [];
       for (const id of remoteIds) {
         if (cancelled) return;
@@ -100,7 +100,6 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
     if (auth.state === 'signedIn') {
       const ids = favorites.map((c) => c._id);
       void (async () => {
-        const { updateMe } = await import('@/services/api');
         await updateMe({ favorites: ids }).catch(() => undefined);
       })();
     }

@@ -16,7 +16,7 @@ import { Overlays, Radius, Spacing, Type } from '@/constants/theme';
 import { openCompanyDetails } from '@/features/company/open-company';
 import { useThemeColors } from '@/hooks/use-theme-colors';
 import { useThemeMode } from '@/providers/theme-provider';
-// api import is dynamic to avoid expo lint parse issues
+import { getJobById } from '@/services/api';
 import type { Job } from '@/types/domain';
 import { companyId, companyLabel } from '@/types/domain';
 
@@ -45,7 +45,7 @@ export default function JobDetailScreen() {
     let cancelled = false;
     (async () => {
       try {
-        const found = await (await import('@/services/api')).getJobById(jobId);
+        const found = await getJobById(jobId);
         if (cancelled) return;
         setJob(found);
       } catch {

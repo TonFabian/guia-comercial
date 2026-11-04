@@ -16,9 +16,9 @@ export function AutonomousProfessionals({ professionals }: { professionals: Auto
     <View style={styles.section}>
       <SectionHeader title="Profissionais Independentes" />
       <View style={styles.list}>
-        {professionals.map((p) => (
+        {professionals.map((p, idx) => (
           <TouchableOpacity
-            key={p._id}
+            key={p._id ?? idx}
             style={styles.card}
             activeOpacity={0.7}
             onPress={() => router.push(`/autonomous/${p._id}`)}

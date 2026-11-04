@@ -5,6 +5,7 @@ import { ActivityIndicator, StyleSheet, Text, TextInput, TouchableOpacity, View 
 import { Spacing, Type } from '@/constants/theme';
 import { useThemeColors } from '@/hooks/use-theme-colors';
 import { useAuthState } from '@/providers/auth-provider';
+import { createReview, getReviews } from '@/services/api';
 import type { Review } from '@/types/domain';
 
 import { CompanyRating } from './company-rating';
@@ -30,7 +31,6 @@ export function CompanyReviews({ companyId, rating, ratingCount }: CompanyReview
   useEffect(() => {
     let cancelled = false;
     (async () => {
-      const { getReviews } = await import('@/services/api');
       const list = await getReviews(companyId);
       if (!cancelled) {
         setReviews(list);
@@ -45,7 +45,6 @@ export function CompanyReviews({ companyId, rating, ratingCount }: CompanyReview
   async function submit() {
     if (auth.state !== 'signedIn') return;
     setSubmitting(true);
-    const { createReview } = await import('@/services/api');
     const created = await createReview(companyId, ratingInput, comment.trim() || undefined);
     if (created) {
       setReviews((prev) => [created, ...prev]);

@@ -6,6 +6,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Radius } from '@/constants/theme';
 import { useThemeColors } from '@/hooks/use-theme-colors';
+import { getCompanies, updateMe } from '@/services/api';
 import { useThemeMode } from '@/providers/theme-provider';
 import { useAuthState } from '@/providers/auth-provider';
 import { useUser } from '@clerk/expo';
@@ -56,7 +57,6 @@ export default function ProfileScreen() {
       }
       (async () => {
         try {
-          const { getCompanies } = await import('@/services/api');
           const page = await getCompanies(1, 100);
           const owned = page.items.filter((c) => c.ownerClerkId === user.clerkId);
           if (owned.length === 0) {
@@ -81,7 +81,6 @@ export default function ProfileScreen() {
     if (state !== 'signedIn') return;
     setSaving(true);
     try {
-  const { updateMe } = await import('@/services/api');
   await updateMe({ firstName, lastName, phone, imageUrl });
       if (clerkUser) {
         await clerkUser.update({ firstName, lastName });

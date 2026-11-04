@@ -11,6 +11,7 @@ import {
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useThemeColors } from '@/hooks/use-theme-colors';
+import { getAutonomousProfessionals, getCompanies, getNotices } from '@/services/api';
 import { GuestBanner } from '@/features/auth/guest-banner';
 import type { AutonomousProfessional, Company, Notice } from '@/types/domain';
 import { AutonomousProfessionals } from '@/features/home/autonomous-professionals';
@@ -44,7 +45,6 @@ export default function HomeScreen() {
     let cancelled = false;
     (async () => {
       try {
-        const { getAutonomousProfessionals, getNotices, getCompanies } = await import('@/services/api');
         const [pros, nts, page] = await Promise.all([
           getAutonomousProfessionals(),
           getNotices(),
