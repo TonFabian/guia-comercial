@@ -8,22 +8,25 @@ import {
   createCompany,
   createCoupon,
   createJob,
+  createNotice,
   deleteBanner,
   deleteCategory,
   deleteCompany,
   deleteCoupon,
   deleteJob,
+  deleteNotice,
   getBanners,
   getCategories,
   getCompanies,
   getCoupons,
   getJobs,
+  getNotices,
   getUsers,
   setAuthToken,
 } from './services/api';
-import type { AdminUser, Banner, Category, Company, Coupon, Job } from './types/domain';
+import type { AdminUser, Banner, Category, Company, Coupon, Job, Notice } from './types/domain';
 
-type Section = 'Empresas' | 'Categorias' | 'Banners' | 'Cupons' | 'Vagas' | 'Usuários';
+type Section = 'Empresas' | 'Categorias' | 'Banners' | 'Cupons' | 'Vagas' | 'Avisos' | 'Usuários';
 
 export default function App() {
   const { isSignedIn, isLoaded, getToken } = useAuth();
@@ -60,6 +63,7 @@ export default function App() {
   const [categories, setCategories] = useState<Category[]>([]);
   const [banners, setBanners] = useState<Banner[]>([]);
   const [coupons, setCoupons] = useState<Coupon[]>([]);
+  const [notices, setNotices] = useState<Notice[]>([]);
   const [jobs, setJobs] = useState<Job[]>([]);
   const [users, setUsers] = useState<AdminUser[]>([]);
   const [loading, setLoading] = useState(true);
@@ -69,13 +73,14 @@ export default function App() {
     setLoading(true);
     setError(null);
     try {
-      const [c, cat, b, cp, j, u] = await Promise.all([
+      const [c, cat, b, cp, j, u, n] = await Promise.all([
         getCompanies(1),
         getCategories(),
         getBanners(),
         getCoupons(),
         getJobs(),
         getUsers(),
+        getNotices(),
       ]);
       setCompanies(c.items ?? []);
       setCategories(cat.items ?? []);
@@ -83,6 +88,7 @@ export default function App() {
       setCoupons(cp.items ?? []);
       setJobs(j.items ?? []);
       setUsers(u.items ?? []);
+      setNotices(n.items ?? []);
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
     } finally {
@@ -102,6 +108,7 @@ export default function App() {
       else if (kind === 'banner') await deleteBanner(id);
       else if (kind === 'cupom') await deleteCoupon(id);
       else if (kind === 'vaga') await deleteJob(id);
+      else if (kind === 'aviso') await deleteNotice(id);
       await loadAll();
     } catch (e) {
       setError(e instanceof Error ? e.message : String(e));
@@ -158,6 +165,14 @@ export default function App() {
                 companies={companies}
                 onReload={loadAll}
                 onDelete={(id: string) => remove('vaga', id)}
+                setError={setError}
+              />
+            )}
+            {section === 'Avisos' && (
+              <AvisosSection
+                notices={notices}
+                onReload={loadAll}
+                onDelete={(id: string) => remove('aviso', id)}
                 setError={setError}
               />
             )}
@@ -367,6 +382,44 @@ function VagasSection({ jobs, companies, onReload, onDelete, setError }: any) {
           j.location ?? '—',
           <button key={j._id} onClick={() => onDelete(j._id)}>Excluir</button>,
         ])}
+      />
+    </>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Avisos
+// ---------------------------------------------------------------------------
+
+function AvisosSection({ notices, onReload, onDelete, setError }: any) {
+  const [form, setForm] = useState({ title: '', body: '', type: 'general' as 'general' | 'alert' | 'health' });
+
+  async function handleCreate(e: React.FormEvent) {
+    e.preventDefault();
+    try {
+      await createNotice({ title: form.title, body: form.body, type: form.type });
+      setForm({ title: '', body: '', type: 'general' });
+      await onReload();
+    } catch (e) {
+      setError(e instanceof Error ? e.message : String(e));
+    }
+  }
+
+  return (
+    <>
+      <form onSubmit={handleCreate} style={formStyle}>
+        <input placeholder="Título" value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required />
+        <textarea placeholder="Texto do aviso" value={form.body} onChange={(e) => setForm({ ...form, body: e.target.value })} required style={{ minWidth: 300, minHeight: 60 }} />
+        <select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value as 'general' | 'alert' | 'health' })}>
+          <option value="general">Geral</option>
+          <option value="alert">Alerta</option>
+          <option value="health">Saúde</option>
+        </select>
+        <button type="submit">Criar</button>
+      </form>
+      <Table
+        headers={['Título', 'Tipo', 'Ações']}
+        rows={notices.map((n: Notice) => [n.title, n.type, <button key={n._id} onClick={() => onDelete(n._id)}>Excluir</button>])}
       />
     </>
   );

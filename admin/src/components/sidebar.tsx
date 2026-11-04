@@ -6,6 +6,7 @@ export const SECTIONS = [
   'Banners',
   'Cupons',
   'Vagas',
+  'Avisos',
   'Usuários',
 ] as const;
 

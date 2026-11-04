@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react';
 
-import type { AdminUser, Banner, Category, Company, Coupon, Job, Paginated } from '../types/domain';
+import type { AdminUser, Banner, Category, Company, Coupon, Job, Notice, Paginated } from '../types/domain';
 
 const BASE_URL = import.meta.env.VITE_API_URL ?? '';
 
@@ -109,6 +109,18 @@ export async function createCategory(body: Partial<Category>): Promise<Category>
 
 export async function updateCategory(id: string, body: Partial<Category>): Promise<Category> {
   return apiPut<Category>(`/categories/${id}`, body);
+}
+
+export async function getNotices(): Promise<Paginated<Notice>> {
+  return request<Paginated<Notice>>('/notices');
+}
+
+export async function createNotice(body: Partial<Notice>): Promise<Notice> {
+  return apiPost<Notice>('/notices', body);
+}
+
+export async function deleteNotice(id: string): Promise<void> {
+  await apiDelete<void>(`/notices/${id}`);
 }
 
 export async function deleteCompany(id: string): Promise<void> {
