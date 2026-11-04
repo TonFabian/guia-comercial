@@ -47,7 +47,10 @@ export default function HomeScreen() {
     (async () => {
       try {
         const list = await getCities();
-        if (!cancelled) setCities(list);
+        if (!cancelled) {
+          setCities(list);
+          if (list.length === 1) setSelectedCity(list[0].slug);
+        }
       } catch {
         // ignora
       }

@@ -95,6 +95,7 @@ export async function createCompany(dto: CreateCompanyDto, ownerClerkId?: string
       ...dto,
       category: dto.category,
       ownerClerkId,
+      city: dto.city || 'Castelo do Piauí',
       latitude,
       longitude,
     });

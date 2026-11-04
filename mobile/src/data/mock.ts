@@ -57,7 +57,7 @@ export const MOCK_COMPANIES: Company[] = [
       'Fundada em 2008, a Construtora Alicerce nasceu com o propósito de transformar a forma de construir em Castelo do Piauí. Ao longo de mais de uma década, ajudamos famílias e empresas a tirar projetos do papel, unindo planejamento, qualidade e respeito aos prazos. Nossa missão é construir espaços seguros, funcionais e duradouros, sempre com transparência e atenção às pessoas.',
     category: '1',
     address: 'Av. Brasil, 1520 — Centro',
-    city: 'Sua Cidade',
+    city: 'Castelo do Piauí',
     registry: 'CREA-PI',
     isFeatured: true,
     rating: 4.7,
