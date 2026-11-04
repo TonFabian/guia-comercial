@@ -24,21 +24,27 @@ import { PublicUtilityModel } from '../models/public-utility.model.js';
 
 const shouldReset = process.argv.includes('--reset');
 
-/** Insere apenas os documentos cuja chave natural ainda não existe no banco. */
+/** Insere apenas os documentos cuja chave natural ainda não existe no banco.
+ *
+ * Usa upsert atomico por documento (updateOne com upsert) em vez de
+ * find + insert, evitando corrida entre verificacao e insercao. */
 async function insertIfMissing<T>(
   model: mongoose.Model<T>,
   documents: Record<string, unknown>[],
   uniqueField: string,
 ): Promise<number> {
-  const fresh = [];
+  let inserted = 0;
   for (const doc of documents) {
-    const exists = await model.exists({ [uniqueField]: doc[uniqueField] });
-    if (!exists) fresh.push(doc);
+    const result = await model.updateOne(
+      { [uniqueField]: doc[uniqueField] },
+      { $setOnInsert: doc },
+      { upsert: true },
+    );
+    if (result.upsertedCount && result.upsertedCount > 0) {
+      inserted += 1;
+    }
   }
-  if (fresh.length > 0) {
-    await model.create(fresh as Parameters<typeof model.create>[0]);
-  }
-  return fresh.length;
+  return inserted;
 }
 
 async function seed(): Promise<void> {
@@ -276,12 +282,16 @@ async function seed(): Promise<void> {
       services: ['Pronto atendimento', 'Emergência', 'Ambulatório'],
     },
   ];
-  const inseridasEmpresas = await insertIfMissing(CompanyModel, empresas, 'slug');
-  console.log(`Empresas inseridas: ${inseridasEmpresas}`);
-
-  const empresaPorSlug = new Map(
-    (await CompanyModel.find().lean()).map((empresa) => [empresa.slug, empresa._id]),
-  );
+  let empresaPorSlug = new Map();
+  if (!casteloId) {
+    console.log('Cidade padrao nao encontrada; pulando empresas');
+  } else {
+    const inseridasEmpresas = await insertIfMissing(CompanyModel, empresas, 'slug');
+    console.log(`Empresas inseridas: ${inseridasEmpresas}`);
+    empresaPorSlug = new Map(
+      (await CompanyModel.find().lean()).map((empresa) => [empresa.slug, empresa._id]),
+    );
+  }
 
   const banners = [
     {

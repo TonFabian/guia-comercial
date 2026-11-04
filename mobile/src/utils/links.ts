@@ -5,6 +5,7 @@
  */
 import { Alert, Linking, Share } from 'react-native';
 
+import { cityName } from './city';
 import type { Company } from '@/types/domain';
 
 function toDigits(phone: string): string {
@@ -62,8 +63,6 @@ export async function openExternalUrl(url: string, title: string) {
     Alert.alert(title, `Não foi possível abrir o link (${url}).`);
   }
 }
-
-import { cityName } from './city';
 
 /** Compartilha os dados da empresa pelo menu nativo do sistema. */
 export async function shareCompany(company: Company) {

@@ -67,7 +67,7 @@ export const createCompanySchema = z.object({
   phone: z.string().optional(),
   whatsapp: z.string().optional(),
   address: z.string().optional(),
-  city: z.string().optional(),
+  city: z.string().trim().min(1).nullish(),
   latitude: z.number().optional(),
   longitude: z.number().optional(),
   logo: z.string().optional(),

@@ -302,14 +302,14 @@ export function CompanyGallery({ media }: { media: CompanyMedia[] }) {
     ({ item, index }: ListRenderItemInfo<GalleryMedia>) => (
       <PreviewCard item={item} index={index} onPress={openLightbox} colors={colors} />
     ),
-    [openLightbox],
+    [openLightbox, colors],
   );
 
   const renderGridItem = useCallback(
     ({ item, index }: ListRenderItemInfo<GalleryMedia>) => (
       <GridCard item={item} index={index} size={gridItemSize} onPress={openLightbox} colors={colors} />
     ),
-    [gridItemSize, openLightbox],
+    [gridItemSize, openLightbox, colors],
   );
 
   if (mediaItems.length === 0) return null;

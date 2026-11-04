@@ -1,6 +1,6 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
-import { useColorScheme } from 'react-native';
+
 
 export type ThemeMode = 'light' | 'dark';
 
@@ -15,7 +15,6 @@ interface ThemeContextValue {
 const ThemeContext = createContext<ThemeContextValue | null>(null);
 
 export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const system = useColorScheme();
   const [mode, setModeState] = useState<ThemeMode>('dark');
   const [loaded, setLoaded] = useState(false);
 

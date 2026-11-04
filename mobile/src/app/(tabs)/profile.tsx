@@ -169,6 +169,7 @@ export default function ProfileScreen() {
           style={styles.avatarBox}
           activeOpacity={state === 'signedIn' ? 1 : 0.7}
           onPress={handleLoginPress}
+          accessibilityRole="button"
           accessibilityLabel={state === 'signedIn' ? `Perfil de ${nomeExibido}` : 'Entrar na conta'}
         >
           {displayUser?.imageUrl ? (

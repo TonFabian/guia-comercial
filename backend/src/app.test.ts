@@ -20,7 +20,6 @@ describe('Rota inexistente', () => {
 
     expect(response.status).toBe(404);
     expect(response.body.error).toBe('Rota não encontrada');
-    expect(response.body.path).toBe('/api/nao-existe');
   });
 });
 

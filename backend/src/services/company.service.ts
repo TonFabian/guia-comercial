@@ -108,14 +108,20 @@ export async function createCompany(dto: CreateCompanyDto, ownerClerkId?: string
   }
 
   // Resolve cidade para o documento City (estruturado) ou default Castelo do Piauí.
-  let city: string | undefined = typeof dto.city === 'string' ? dto.city : undefined;
-  if (typeof city === 'string' || city === undefined) {
-    const slug = city
-      ? city.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '-')
-      : 'castelo-do-piaui';
-    const found = await CityModel.findOne({ slug }).lean();
+  let city: string | null | undefined;
+  if (dto.city === undefined) {
     const fallback = await CityModel.findOne({ slug: 'castelo-do-piaui' }).lean();
-    city = found ? String(found._id) : fallback ? String(fallback._id) : undefined;
+    city = fallback ? String(fallback._id) : undefined;
+  } else if (dto.city === null) {
+    city = null;
+  } else {
+    const slug = dto.city
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/\s+/g, '-');
+    const found = await CityModel.findOne({ slug }).lean();
+    city = found ? String(found._id) : undefined;
   }
 
   const resolvedCategory = await resolveCategoryId(dto.category);
@@ -125,7 +131,7 @@ export async function createCompany(dto: CreateCompanyDto, ownerClerkId?: string
       ...dto,
       category: resolvedCategory,
       ownerClerkId,
-      city: city as Company['city'],
+      city: city as unknown as Company['city'],
       latitude,
       longitude,
     });
@@ -182,12 +188,20 @@ export async function updateCompany(id: string, dto: UpdateCompanyDto, clerkId?:
     update.category = await resolveCategoryId(update.category);
   }
 
-  if (typeof update.city === 'string') {
-    const slug = update.city.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '-');
+  if (update.city === null) {
+    update.city = null;
+  } else if (typeof update.city === 'string') {
+    const slug = update.city
+      .toLowerCase()
+      .normalize('NFD')
+      .replace(/[\u0300-\u036f]/g, '')
+      .replace(/\s+/g, '-');
     const found = await CityModel.findOne({ slug }).lean();
-    const fallback = await CityModel.findOne({ slug: 'castelo-do-piaui' }).lean();
-    update.city = found ? String(found._id) : fallback ? String(fallback._id) : undefined;
-    if (update.city === undefined) delete (update as Record<string, unknown>).city;
+    if (found) {
+      update.city = String(found._id);
+    } else {
+      delete (update as Record<string, unknown>).city;
+    }
   }
 
   if (

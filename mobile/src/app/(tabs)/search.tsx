@@ -258,7 +258,7 @@ export default function SearchScreen() {
             />
           </TouchableOpacity>
           {term.length > 0 && (
-            <TouchableOpacity onPress={clearSearch} hitSlop={8} accessibilityLabel="Limpar busca">
+            <TouchableOpacity onPress={clearSearch} hitSlop={8} accessibilityRole="button" accessibilityLabel="Limpar busca">
               <Ionicons name="close-circle" size={18} color={colors.textSecondary} />
             </TouchableOpacity>
           )}

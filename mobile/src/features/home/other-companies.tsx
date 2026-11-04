@@ -45,7 +45,7 @@ export function OtherCompanies({ companies, loading = false, error = null }: Pro
               activeOpacity={0.7}
               accessibilityRole="button"
               accessibilityLabel={`Empresa ${c.name}, ${categoryLabel(c.category)}`}
-              onPress={() => router.push(`/company/${c._id}` as any)}
+              onPress={() => router.push({ pathname: '/company/[id]', params: { id: c._id } })}
             >
               <View style={styles.thumb}>
                 <Ionicons name="storefront-outline" size={20} color={colors.primary} />

@@ -30,9 +30,6 @@ import { useThemeColors } from '@/hooks/use-theme-colors';
 import { getAutonomousProfessionals, getCities, getCompanies, getNotices, getPublicUtilities } from '@/services/api';
 import type { AutonomousProfessional, Company, Notice, PublicUtility } from '@/types/domain';
 
-/** Cupons desativados a pedido do produto; flag mantém a seção reativável. */
-const SHOW_COUPONS = false;
-
 export default function HomeScreen() {
   const [retryKey, setRetryKey] = useState(0);
   const [selectedCity, setSelectedCity] = useState<string | undefined>(undefined);
