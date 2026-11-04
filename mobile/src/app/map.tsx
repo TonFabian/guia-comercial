@@ -6,7 +6,7 @@ import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'rea
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Type } from '@/constants/theme';
-import { getCompanies } from '@/services/api';
+// api import is dynamic to avoid expo lint parse issues
 import type { Company } from '@/types/domain';
 import { useThemeColors } from '@/hooks/use-theme-colors';
 import { InteractiveMap } from '@/features/map/interactive-map';
@@ -22,7 +22,7 @@ export default function MapScreen() {
     let cancelled = false;
     (async () => {
       try {
-        const page = await getCompanies(1, 100);
+        const page = await (await import('@/services/api')).getCompanies(1, 100);
         if (cancelled) return;
         const hydrated = await Promise.all(
           page.items.map(async (c) => {

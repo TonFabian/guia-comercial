@@ -1,3 +1,4 @@
+import { useEffect, useState } from 'react';
 import {
   ActivityIndicator,
   Button,
@@ -11,6 +12,8 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { useThemeColors } from '@/hooks/use-theme-colors';
 import { GuestBanner } from '@/features/auth/guest-banner';
+import type { AutonomousProfessional } from '@/types/domain';
+import { AutonomousProfessionals } from '@/features/home/autonomous-professionals';
 import { AnnounceCta } from '@/features/home/announce-cta';
 import { BannerCarousel } from '@/features/home/banner-carousel';
 import { CategoryList } from '@/features/home/category-list';
@@ -30,6 +33,23 @@ export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const colors = useThemeColors();
   const styles = makeStyles(colors);
+
+  const [professionals, setProfessionals] = useState<AutonomousProfessional[]>([]);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const { getAutonomousProfessionals } = await import('@/services/api');
+        const list = await getAutonomousProfessionals();
+        if (!cancelled) setProfessionals(list);
+      } catch {
+        // ignora
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   // Se houve erro de auth (401), já o useHomeData redirecionou.
   // Se ainda estiver com erro (ex.: fallback), mostramos mensagem.
@@ -73,6 +93,7 @@ export default function HomeScreen() {
               ) : null}
               <PublicUtilities />
               <JobList jobs={jobs} />
+              <AutonomousProfessionals professionals={professionals} />
               <AnnounceCta />
             </>
           )}
