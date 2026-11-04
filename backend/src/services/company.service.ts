@@ -4,6 +4,7 @@ import { CategoryModel } from '../models/category.model.js';
 import { CityModel } from '../models/city.model.js';
 import { CompanyModel } from '../models/company.model.js';
 import { findUserByClerkId } from './user.service.js';
+import { listAllPushTokens } from './push-token.service.js';
 import type { Company } from '../../../shared/domain.js';
 import type { CreateCompanyDto, UpdateCompanyDto } from '../types/dto.js';
 import type { Pagination } from '../utils/http.js';
@@ -159,6 +160,8 @@ async function assertOwner(companyId: string, clerkId?: string): Promise<void> {
 export async function updateCompany(id: string, dto: UpdateCompanyDto, clerkId?: string) {
   await assertOwner(id, clerkId);
 
+  const previous = await CompanyModel.findById(id).select({ promotion: 1, name: 1 }).lean();
+
   const update: UpdateCompanyDto & { latitude?: number; longitude?: number; city?: string | unknown } = { ...dto };
 
   if (typeof update.city === 'string') {
@@ -181,10 +184,21 @@ export async function updateCompany(id: string, dto: UpdateCompanyDto, clerkId?:
     }
   }
 
-  return CompanyModel.findByIdAndUpdate(id, update, { returnDocument: 'after', runValidators: true })
+  const updated = await CompanyModel.findByIdAndUpdate(id, update, { returnDocument: 'after', runValidators: true })
     .populate('category')
     .populate('city')
     .lean();
+
+  // Notifica clientes quando uma nova promoção é publicada (melhoria P3).
+  if (
+    typeof dto.promotion === 'string' &&
+    dto.promotion.trim().length > 0 &&
+    dto.promotion !== previous?.promotion
+  ) {
+    void notifyPromotion(updated?.name ?? 'Empresa', dto.promotion).catch(() => undefined);
+  }
+
+  return updated;
 }
 
 export async function deleteCompany(id: string, clerkId?: string) {
@@ -198,6 +212,21 @@ export async function deleteCompany(id: string, clerkId?: string) {
 
 export function isObjectId(value: string): boolean {
   return isValidObjectId(value);
+}
+
+async function notifyPromotion(companyName: string, promotion: string): Promise<void> {
+  const tokens = await listAllPushTokens();
+  if (tokens.length === 0) return;
+  const messages = tokens.map((to) => ({
+    to,
+    title: `Nova promoção: ${companyName}`,
+    body: promotion,
+  }));
+  await fetch('https://exp.host/--/api/v2/push/send', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(messages),
+  });
 }
 
 // helpers

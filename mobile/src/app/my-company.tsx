@@ -10,6 +10,7 @@ import type { Company } from '@/types/domain';
 import { useAuthState } from '@/providers/auth-provider';
 import { useThemeColors } from '@/hooks/use-theme-colors';
 import { cityName } from '@/utils/city';
+import { filterOwnedCompanies, resolveContactNumbers } from '@/features/company/owner';
 
 export default function MyCompanyScreen() {
   const colors = useThemeColors();
@@ -20,6 +21,8 @@ export default function MyCompanyScreen() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [hoursText, setHoursText] = useState('');
   const [promotionText, setPromotionText] = useState('');
+  const [description, setDescription] = useState('');
+  const [address, setAddress] = useState('');
   const [phone, setPhone] = useState('');
   const [whatsapp, setWhatsapp] = useState('');
   const [samePhone, setSamePhone] = useState(false);
@@ -33,8 +36,15 @@ export default function MyCompanyScreen() {
     let cancelled = false;
     (async () => {
       try {
-        const page = await getCompanies(1, 100);
-        const owned = page.items.filter((c) => c.ownerClerkId === auth.user?.clerkId);
+        const all: Company[] = [];
+        let page = 1;
+        while (true) {
+          const res = await getCompanies(page, 100);
+          all.push(...res.items);
+          if (res.items.length < 100 || all.length >= res.total) break;
+          page += 1;
+        }
+        const owned = filterOwnedCompanies(all, auth.user?.clerkId);
         if (!cancelled) setCompanies(owned);
       } catch {
         if (!cancelled) setCompanies([]);
@@ -49,6 +59,8 @@ export default function MyCompanyScreen() {
     setEditingId(company._id);
     setHoursText((company.openingHours ?? []).join('\n'));
     setPromotionText(company.promotion ?? '');
+    setDescription(company.description ?? '');
+    setAddress(company.address ?? '');
     const p = company.phone ?? '';
     const w = company.whatsapp ?? '';
     setPhone(p);
@@ -61,13 +73,30 @@ export default function MyCompanyScreen() {
     setSaving(true);
     try {
       const hours = hoursText.split('\n').map((s) => s.trim()).filter(Boolean);
-      const phoneValue = phone.trim() || undefined;
-      const whatsappValue = samePhone ? phoneValue : (whatsapp.trim() || undefined);
-      await updateCompany(editingId, { openingHours: hours, promotion: promotionText.trim() || undefined, phone: phoneValue, whatsapp: whatsappValue });
+      const { phone: phoneValue, whatsapp: whatsappValue } = resolveContactNumbers(phone, whatsapp, samePhone);
+      const descriptionValue = description.trim() || undefined;
+      const addressValue = address.trim() || undefined;
+      const promotionValue = promotionText.trim() || undefined;
+      await updateCompany(editingId, {
+        openingHours: hours,
+        promotion: promotionValue,
+        description: descriptionValue,
+        address: addressValue,
+        phone: phoneValue,
+        whatsapp: whatsappValue,
+      });
       setCompanies((prev) =>
         prev.map((c) =>
           c._id === editingId
-            ? { ...c, openingHours: hours, promotion: promotionText.trim() || undefined, phone: phoneValue ?? null, whatsapp: whatsappValue ?? null }
+            ? {
+                ...c,
+                openingHours: hours,
+                promotion: promotionValue,
+                description: descriptionValue ?? c.description,
+                address: addressValue ?? c.address,
+                phone: phoneValue ?? null,
+                whatsapp: whatsappValue ?? null,
+              }
             : c,
         ),
       );
@@ -122,6 +151,22 @@ export default function MyCompanyScreen() {
                       onChangeText={setHoursText}
                       multiline
                       placeholder="Seg a Sex: 08h às 18h"
+                      placeholderTextColor={colors.textSecondary}
+                    />
+                    <Text style={styles.label}>Descrição</Text>
+                    <TextInput
+                      style={[styles.input, styles.phoneInput]}
+                      value={description}
+                      onChangeText={setDescription}
+                      placeholder="Descrição da empresa"
+                      placeholderTextColor={colors.textSecondary}
+                    />
+                    <Text style={styles.label}>Endereço</Text>
+                    <TextInput
+                      style={[styles.input, styles.phoneInput]}
+                      value={address}
+                      onChangeText={setAddress}
+                      placeholder="Rua, número, bairro"
                       placeholderTextColor={colors.textSecondary}
                     />
                     <Text style={styles.label}>Promoção (opcional)</Text>
