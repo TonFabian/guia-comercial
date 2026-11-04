@@ -1,6 +1,7 @@
 import { Router } from 'express';
 
 import { guestLogin } from '../controllers/auth.controller.js';
+import * as autonomousProfessionalController from '../controllers/autonomous-professional.controller.js';
 import * as bannerController from '../controllers/banner.controller.js';
 import * as categoryController from '../controllers/category.controller.js';
 import * as companyController from '../controllers/company.controller.js';
@@ -104,10 +105,18 @@ jobs.get('/:id', jobController.getById);
 jobs.put('/:id', validateBody(createJobSchema.partial()), jobController.update);
 jobs.delete('/:id', jobController.remove);
 
+const autonomousProfessionals = Router();
+autonomousProfessionals.post('/', autonomousProfessionalController.create);
+autonomousProfessionals.get('/', autonomousProfessionalController.list);
+autonomousProfessionals.get('/:id', autonomousProfessionalController.getById);
+autonomousProfessionals.put('/:id', autonomousProfessionalController.update);
+autonomousProfessionals.delete('/:id', autonomousProfessionalController.remove);
+
 routes.use('/categories', categories);
 routes.use('/companies', companies);
 routes.use('/banners', banners);
 routes.use('/coupons', coupons);
 routes.use('/jobs', jobs);
+routes.use('/autonomous-professionals', autonomousProfessionals);
 
 export default routes;

@@ -125,6 +125,24 @@ export interface Review {
   createdAt?: string;
   updatedAt?: string;
 }
+/** Profissional autônomo (prestador de serviço sem estabelecimento físico). */
+export interface AutonomousProfessional {
+  _id: string;
+  name: string;
+  slug: string;
+  specialty: string;
+  description?: string;
+  phone?: string | null;
+  whatsapp?: string | null;
+  photo?: string;
+  city?: string;
+  rating?: number;
+  ratingCount?: number;
+  ownerClerkId?: string;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export interface Paginated<T> {
   items: T[];
   total: number;

@@ -6,7 +6,7 @@
  * sessão do Clerk e o comportamento de fallback (mock quando a env não está
  * definida ou a API está fora do ar; 401/403 reais estouram `ApiError`).
  */
-import type { Banner, Category, Company, Coupon, Job, Paginated, Review, User } from '@/types/domain';
+import type { AutonomousProfessional, Banner, Category, Company, Coupon, Job, Paginated, Review, User } from '@/types/domain';
 
 import { isApiConfigured, request } from './http';
 import type { RequestPayload } from './http';
@@ -232,6 +232,17 @@ export async function updatePushToken(pushToken: string): Promise<void> {
     // ignora
   }
 }
+export async function getAutonomousProfessionals(): Promise<AutonomousProfessional[]> {
+  if (!isApiConfigured()) return [];
+  try {
+    const payload = await request<AutonomousProfessional>('/autonomous-professionals');
+    if (!payload) return [];
+    return Array.isArray(payload) ? payload : [payload as AutonomousProfessional];
+  } catch {
+    return [];
+  }
+}
+
 export function filterMockCompanies(term: string): Company[] {
   if (!term) {
     return MOCK_COMPANIES;
