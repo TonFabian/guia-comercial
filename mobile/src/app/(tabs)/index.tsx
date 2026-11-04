@@ -28,7 +28,7 @@ import { SearchBar } from '@/features/home/search-bar';
 import { SectionHeader } from '@/features/home/section-header';
 import { useHomeData } from '@/features/home/use-home-data';
 import { useThemeColors } from '@/hooks/use-theme-colors';
-import { getAutonomousProfessionals, getCompanies, getNotices } from '@/services/api';
+import { getAutonomousProfessionals, getCities, getCompanies, getNotices } from '@/services/api';
 import type { AutonomousProfessional, Company, Notice } from '@/types/domain';
 
 /** Cupons desativados a pedido do produto; flag mantém a seção reativável. */
@@ -46,7 +46,6 @@ export default function HomeScreen() {
     let cancelled = false;
     (async () => {
       try {
-        const { getCities } = await import('@/services/api');
         const list = await getCities();
         if (!cancelled) setCities(list);
       } catch {
