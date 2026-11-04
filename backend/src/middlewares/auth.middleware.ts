@@ -45,6 +45,29 @@ export interface AuthMiddleware {
  * A fábrica existe para que os testes substituam a verificação do Clerk e o
  * acesso ao banco sem rede nem Mongo; a montagem real usa `createAuthDeps()`.
  */
+/**
+ * Exige sessão autenticada **quando o Clerk está configurado**.
+ *
+ * No modo legado (sem `CLERK_SECRET_KEY`), a autorização fica desabilitada e
+ * o middleware é no-op — consistente com o padrão já usado por `assertOwner` e
+ * pelo `optionalAuth` montado globalmente.
+ *
+ * Centralizar essa checagem aqui evita repetir o mesmo `if` em todos os
+ * controllers de recurso (DRY): as rotas de mutação aplicam este middleware e
+ * os controllers assumem que `req.auth?.clerkId` está presente em modo Clerk.
+ */
+export const requireAuthIfConfigured: RequestHandler = (req, res, next): void => {
+  if (!process.env.CLERK_SECRET_KEY) {
+    next();
+    return;
+  }
+  if (!req.auth?.clerkId) {
+    res.status(401).json({ error: 'Não autenticado' });
+    return;
+  }
+  next();
+};
+
 export function makeAuthMiddleware(deps: AuthDeps): AuthMiddleware {
   return {
     requireAuth: createHandler(deps, { allowGuest: false }),

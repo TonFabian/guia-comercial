@@ -34,27 +34,19 @@ export const getById = asyncHandler(async (req: Request, res: Response): Promise
 // As mutações são restritas ao admin: sem sessão o controller responde 401 e
 // o service devolve 403 para quem não tem a role `admin`.
 export const create = asyncHandler(async (req: Request, res: Response): Promise<void> => {
-  if (!req.auth?.clerkId) {
-    res.status(401).json({ error: 'Não autenticado' });
-    return;
-  }
 
-  const doc = await service.createPublicUtility(req.body, req.auth.clerkId);
+  const doc = await service.createPublicUtility(req.body, req.auth?.clerkId);
   res.status(201).json(doc);
 });
 
 export const update = asyncHandler(async (req: Request, res: Response): Promise<void> => {
-  if (!req.auth?.clerkId) {
-    res.status(401).json({ error: 'Não autenticado' });
-    return;
-  }
 
   const id = String(req.params.id);
   if (!isValidObjectId(id)) {
     throw Object.assign(new Error('id inválido'), { statusCode: 404 });
   }
 
-  const doc = await service.updatePublicUtility(id, req.body, req.auth.clerkId);
+  const doc = await service.updatePublicUtility(id, req.body, req.auth?.clerkId);
   if (!doc) {
     res.status(404).json({ error: 'serviço público não encontrado' });
     return;
@@ -63,16 +55,12 @@ export const update = asyncHandler(async (req: Request, res: Response): Promise<
 });
 
 export const remove = asyncHandler(async (req: Request, res: Response): Promise<void> => {
-  if (!req.auth?.clerkId) {
-    res.status(401).json({ error: 'Não autenticado' });
-    return;
-  }
 
   const id = String(req.params.id);
   if (!isValidObjectId(id)) {
     throw Object.assign(new Error('id inválido'), { statusCode: 404 });
   }
 
-  await service.deletePublicUtility(id, req.auth.clerkId);
+  await service.deletePublicUtility(id, req.auth?.clerkId);
   res.status(204).end();
 });

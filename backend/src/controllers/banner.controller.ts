@@ -21,20 +21,12 @@ export const getById = asyncHandler(async (req: Request, res: Response): Promise
 });
 
 export const create = asyncHandler(async (req: Request, res: Response): Promise<void> => {
-  if (process.env.CLERK_SECRET_KEY && !req.auth?.clerkId) {
-    res.status(401).json({ error: 'Não autenticado' });
-    return;
-  }
   const banner = await bannerService.createBanner(req.body as CreateBannerDto, req.auth?.clerkId);
   res.status(201).json(banner);
 });
 
 export const update = asyncHandler(
   async (req: Request, res: Response): Promise<void> => {
-    if (process.env.CLERK_SECRET_KEY && !req.auth?.clerkId) {
-      res.status(401).json({ error: 'Não autenticado' });
-      return;
-    }
     throwIfInvalidId(String(req.params.id));
     const banner = await bannerService.updateBanner(String(req.params.id), req.body as UpdateBannerDto, req.auth?.clerkId);
     if (!banner) {
@@ -47,10 +39,6 @@ export const update = asyncHandler(
 
 export const remove = asyncHandler(
   async (req: Request, res: Response): Promise<void> => {
-    if (process.env.CLERK_SECRET_KEY && !req.auth?.clerkId) {
-      res.status(401).json({ error: 'Não autenticado' });
-      return;
-    }
     throwIfInvalidId(String(req.params.id));
     await bannerService.deleteBanner(String(req.params.id), req.auth?.clerkId);
     res.status(204).end();

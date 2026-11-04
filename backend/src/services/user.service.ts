@@ -21,6 +21,13 @@ export async function assertAdmin(
   clerkId: string | undefined,
   recurso: string,
 ): Promise<void> {
+  // Em modo legado (sem Clerk), a autorização fica desabilitada — consistente
+  // com assertOwner em company.service. Em modo autenticado, exige sessão e
+  // role `admin`.
+  if (!process.env.CLERK_SECRET_KEY) {
+    return;
+  }
+
   if (!clerkId) {
     throw Object.assign(new Error('Não autenticado'), { statusCode: 401 });
   }

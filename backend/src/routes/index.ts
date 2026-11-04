@@ -1,3 +1,4 @@
+import type { RequestHandler } from 'express';
 import { Router } from 'express';
 
 import { guestLogin } from '../controllers/auth.controller.js';
@@ -15,6 +16,7 @@ import * as reviewController from '../controllers/review.controller.js';
 import {
   createAuthDeps,
   makeAuthMiddleware,
+  requireAuthIfConfigured,
 } from '../middlewares/auth.middleware.js';
 import { guestScrub } from '../middlewares/guest.middleware.js';
 import {
@@ -48,6 +50,10 @@ if (authDeps) {
   const auth = makeAuthMiddleware(authDeps);
 
   routes.use(auth.optionalAuth);
+  // Scrub de convidado: redige contato/código antes de responder. Montado
+  // dentro do bloco do Clerk (aqui) para rodar ANTES dos handlers de rota —
+  // caso contrário a interceptação de `res.json` chega tarde demais.
+  routes.use(guestScrub());
   // Handshake explícito de convidado: não cria sessão nem token; as chamadas
   // seguintes continuam sem Authorization e são redigidas pelo scrub.
   routes.post('/auth/guest', guestLogin);
@@ -59,11 +65,25 @@ if (authDeps) {
   routes.post('/notifications/broadcast', broadcastPush);
 }
 
-// O scrub de convidado Ǹ montado sempre (mesmo fora do bloco do Clerk): no modo
-// legado `req.auth` fica `undefined` e o middleware Ǹ no-op, preservando o
-// comportamento antigo. Em modo autenticado, ele redige contato/c��digo antes
-// de responder para quem Ǹ convidado.
-routes.use(guestScrub());
+// Middleware de autorização para mutações: quando o Clerk está configurado,
+// POST/PUT/DELETE exigem sessão (401 sem identidade). Em modo legado, o
+// middleware é no-op e a autorização fica a cargo dos services (assertOwner/
+// assertAdmin), que também permitem o modo legado. Evita repetir a mesma
+// checagem `if (CLERK_SECRET_KEY && !req.auth?.clerkId)` em todos os
+// controllers (DRY).
+// Só POST/PUT/DELETE exigem sessão; GET/HEAD/OPTIONS (e /auth/guest) passam.
+const requireAuthForMutations: RequestHandler = (req, res, next) => {
+  if (req.method === 'GET' || req.method === 'HEAD' || req.method === 'OPTIONS') {
+    next();
+    return;
+  }
+  if (req.path === '/auth/guest' || req.path === '/push-tokens') {
+    next();
+    return;
+  }
+  return requireAuthIfConfigured(req, res, next);
+};
+routes.use(requireAuthForMutations);
 
 // -----------------------------------------------------------------------------
 // Categories

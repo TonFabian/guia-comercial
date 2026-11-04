@@ -9,10 +9,7 @@ export async function registerPushToken(req: Request, res: Response): Promise<vo
     res.status(400).json({ error: 'token é obrigatório' });
     return;
   }
-  if (process.env.CLERK_SECRET_KEY && !req.auth) {
-    res.status(401).json({ error: 'Não autenticado' });
-    return;
-  }
+  // A identidade (quando existir) vem da sessão do Clerk — nunca do body.
   await upsertPushToken(token, req.auth?.clerkId);
   res.json({ ok: true });
 }

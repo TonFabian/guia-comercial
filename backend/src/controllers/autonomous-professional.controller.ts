@@ -19,19 +19,11 @@ export const getById = asyncHandler(async (req: Request, res: Response): Promise
 });
 
 export const create = asyncHandler(async (req: Request, res: Response): Promise<void> => {
-  if (process.env.CLERK_SECRET_KEY && !req.auth?.clerkId) {
-    res.status(401).json({ error: 'Não autenticado' });
-    return;
-  }
   const doc = await service.createProfessional(req.body, req.auth?.clerkId);
   res.status(201).json(doc);
 });
 
 export const update = asyncHandler(async (req: Request, res: Response): Promise<void> => {
-  if (process.env.CLERK_SECRET_KEY && !req.auth?.clerkId) {
-    res.status(401).json({ error: 'Não autenticado' });
-    return;
-  }
   const doc = await service.updateProfessional(String(req.params.id), req.body, req.auth?.clerkId);
   if (!doc) {
     res.status(404).json({ error: 'não encontrado' });
@@ -41,10 +33,6 @@ export const update = asyncHandler(async (req: Request, res: Response): Promise<
 });
 
 export const remove = asyncHandler(async (req: Request, res: Response): Promise<void> => {
-  if (process.env.CLERK_SECRET_KEY && !req.auth?.clerkId) {
-    res.status(401).json({ error: 'Não autenticado' });
-    return;
-  }
   await service.deleteProfessional(String(req.params.id), req.auth?.clerkId);
   res.status(204).end();
 });

@@ -100,14 +100,7 @@ export const me: RequestHandler = makeMeController();
  */
 export const listUsers = asyncHandler(
   async (req: Request, res: Response): Promise<void> => {
-    const clerkId = req.auth?.clerkId;
-
-    if (!clerkId) {
-      res.status(401).json({ error: 'Não autenticado' });
-      return;
-    }
-
-    await assertAdmin(clerkId, 'listar usuários');
+    await assertAdmin(req.auth?.clerkId, 'listar usuários');
 
     const pagination = parsePagination(req.query.page, req.query.pageSize);
     const { items, total } = await listUsersService(pagination);
