@@ -9,6 +9,7 @@ import { getAutonomousProfessionals } from '@/services/api';
 import type { AutonomousProfessional } from '@/types/domain';
 import { useThemeColors } from '@/hooks/use-theme-colors';
 import { openWhatsApp, callPhone } from '@/utils/links';
+import { cityName } from '@/utils/city';
 
 export default function AutonomousDetailScreen() {
   const colors = useThemeColors();
@@ -67,7 +68,7 @@ export default function AutonomousDetailScreen() {
           <Text style={styles.title}>{pro.name}</Text>
           <Text style={styles.specialty}>{pro.specialty}</Text>
           {pro.description ? <Text style={styles.desc}>{pro.description}</Text> : null}
-          {pro.city ? <Text style={styles.meta}>📍 {pro.city}</Text> : null}
+          {pro.city ? <Text style={styles.meta}>📍 {cityName(pro.city)}</Text> : null}
           {pro.whatsapp ? (
             <TouchableOpacity style={styles.whatsappBtn} onPress={() => void openWhatsApp(pro.whatsapp as string)}>
               <Text style={styles.whatsappBtnText}>Contatar via WhatsApp</Text>

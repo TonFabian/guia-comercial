@@ -51,13 +51,10 @@ export default function SearchScreen() {
   const [nearMeLoading, setNearMeLoading] = useState(false);
   const [openNowOnly, setOpenNowOnly] = useState(false);
 
-  function normalizeCity(value: string | null | undefined): string {
-    if (!value) return '';
-    return value
-      .toLowerCase()
-      .normalize('NFD')
-      .replace(/[\u0300-\u036f]/g, '')
-      .trim();
+  function normalizeCity(value: string | { name?: string } | null | undefined): string {
+    const name = typeof value === 'string' ? value : (value?.name ?? '');
+    if (!name) return '';
+    return name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
   }
 
   async function toggleNearMe() {

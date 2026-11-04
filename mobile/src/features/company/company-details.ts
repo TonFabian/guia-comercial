@@ -1,4 +1,5 @@
 import { categoryLabel } from '@/types/domain';
+import { cityName } from '@/utils/city';
 import type { Company } from '@/types/domain';
 
 export type WorkingHours = {
@@ -139,7 +140,7 @@ export function buildCompanyDetails(company: Company): CompanyDetails {
     logoUrl: company.logo,
     coverUrl: company.cover,
     media: buildMedia(company),
-    city: company.city,
+    city: cityName(company.city),
     address: company.address ?? undefined,
     mapLink: company.address
       ? `https://maps.google.com/?q=${encodeURIComponent(company.address)}`

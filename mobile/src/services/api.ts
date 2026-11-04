@@ -56,9 +56,10 @@ export type CompanyPage = {
   pageSize: number;
 };
 
-function normalizeCity(value: string | null | undefined): string {
-  if (!value) return '';
-  return value.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+function normalizeCity(value: string | { name?: string } | null | undefined): string {
+  const name = typeof value === 'string' ? value : (value?.name ?? '');
+  if (!name) return '';
+  return name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
 }
 
 export async function getCompanies(page = 1, pageSize = 20, city?: string): Promise<CompanyPage> {
@@ -279,6 +280,17 @@ export async function getCities(): Promise<City[]> {
     return Array.isArray(payload) ? payload : [payload as City];
   } catch {
     return [];
+  }
+}
+
+export async function updateCompany(id: string, body: Partial<Company>): Promise<Company | null> {
+  if (!isApiConfigured()) return null;
+  try {
+    const payload = await request<Company>(`/companies/${encodeURIComponent(id)}`, { method: 'PUT', body });
+    if (!payload) return null;
+    return Array.isArray(payload) ? (payload[0] ?? null) : (payload as Company);
+  } catch {
+    return null;
   }
 }
 

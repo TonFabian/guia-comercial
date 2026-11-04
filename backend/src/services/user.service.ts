@@ -1,3 +1,4 @@
+import { CityModel } from '../models/city.model.js';
 import { UserModel } from '../models/user.model.js';
 import type { User } from '../../../shared/domain.js';
 
@@ -23,6 +24,12 @@ export async function upsertUserFromMirror(
     .filter(Boolean);
   if (mirror.email && adminEmails.includes(mirror.email.toLowerCase())) {
     update.role = 'admin';
+  }
+
+  // Default cidade = Castelo do Piauí (primeira cidade do MVP).
+  if (!update.city) {
+    const city = await CityModel.findOne({ slug: 'castelo-do-piaui' }).lean();
+    if (city) (update as Record<string, unknown>).city = String(city._id);
   }
 
   const user = await UserModel.findOneAndUpdate(
