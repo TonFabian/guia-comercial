@@ -17,6 +17,8 @@ import { CategoryModel } from '../models/category.model.js';
 import { CompanyModel } from '../models/company.model.js';
 import { CouponModel } from '../models/coupon.model.js';
 import { JobModel } from '../models/job.model.js';
+import { AutonomousProfessionalModel } from '../models/autonomous-professional.model.js';
+import { NoticeModel } from '../models/notice.model.js';
 
 const shouldReset = process.argv.includes('--reset');
 
@@ -45,6 +47,8 @@ async function seed(): Promise<void> {
       BannerModel.deleteMany({}),
       CouponModel.deleteMany({}),
       JobModel.deleteMany({}),
+      AutonomousProfessionalModel.deleteMany({}),
+      NoticeModel.deleteMany({}),
     ]);
     console.log('Coleções limpas (--reset)');
   }
@@ -347,6 +351,67 @@ async function seed(): Promise<void> {
 
   const inseridasVagas = await insertIfMissing(JobModel, vagas, 'title');
   console.log(`Vagas inseridas: ${inseridasVagas}`);
+
+  const profissionais = [
+    {
+      name: 'João Eletricista',
+      slug: 'joao-eletricista',
+      specialty: 'Eletricista residencial e comercial',
+      description: 'Instalações, reparos e manutenção elétrica.',
+      phone: '+55 85 99999-1001',
+      whatsapp: '+55 85 99999-1001',
+      city: 'Fortaleza',
+      rating: 4.6,
+      ratingCount: 32,
+    },
+    {
+      name: 'Maria Pintora',
+      slug: 'maria-pintora',
+      specialty: 'Pintura residencial e comercial',
+      description: 'Pintura interna e externa, texturas e grafiato.',
+      phone: '+55 85 99999-1002',
+      whatsapp: '+55 85 99999-1002',
+      city: 'Fortaleza',
+      rating: 4.8,
+      ratingCount: 18,
+    },
+    {
+      name: 'Carlos Pedreiro',
+      slug: 'carlos-pedreiro',
+      specialty: 'Pedreiro e reformas',
+      description: 'Construção, reforma e acabamento.',
+      phone: '+55 85 99999-1003',
+      whatsapp: '+55 85 99999-1003',
+      city: 'Fortaleza',
+      rating: 4.4,
+      ratingCount: 27,
+    },
+  ];
+  const inseridosProfissionais = await insertIfMissing(AutonomousProfessionalModel, profissionais, 'slug');
+  console.log(`Profissionais inseridos: ${inseridosProfissionais}`);
+
+  const avisos = [
+    {
+      title: 'Campanha de vacinação contra a gripe',
+      body: 'A vacinação contra a gripe está disponível no Hospital Nilo Lima e nas UBSs do município. Leve seu cartão de vacinas e documento com foto.',
+      type: 'health',
+      active: true,
+    },
+    {
+      title: 'Manutenção na rede elétrica',
+      body: 'A Equatorial realizará manutenção programada no bairro Centro no dia 10/11, das 08h às 12h. Haverá interrupção no fornecimento.',
+      type: 'alert',
+      active: true,
+    },
+    {
+      title: 'Coleta de lixo — feriado',
+      body: 'No feriado do dia 15, a coleta de lixo será antecipada para o dia 14. Deixe o lixo na calçada até as 07h.',
+      type: 'general',
+      active: true,
+    },
+  ];
+  const inseridosAvisos = await insertIfMissing(NoticeModel, avisos, 'title');
+  console.log(`Avisos inseridos: ${inseridosAvisos}`);
 }
 
 async function main(): Promise<void> {
