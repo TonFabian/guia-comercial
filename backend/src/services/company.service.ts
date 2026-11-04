@@ -14,6 +14,7 @@ type CompanyQuery = {
   $or?: Array<Record<string, unknown>>;
   isFeatured?: boolean;
   ownerClerkId?: string;
+  city?: string | RegExp;
 };
 
 export interface CompanyListFilters {
@@ -24,6 +25,8 @@ export interface CompanyListFilters {
   featured?: unknown;
   /** clerkId do dono (filtro "minhas empresas") */
   owner?: unknown;
+  /** cidade (slug ou nome) */
+  city?: unknown;
 }
 
 /** Regras de dados para empresas. */
@@ -52,6 +55,10 @@ export async function listCompanies(
 
   if (typeof filters.owner === 'string' && filters.owner.length > 0) {
     query.ownerClerkId = filters.owner;
+  }
+
+  if (typeof filters.city === 'string' && filters.city.length > 0) {
+    query.city = new RegExp(`^${escapeRegex(filters.city)}$`, 'i');
   }
 
   const [items, total] = await Promise.all([

@@ -15,6 +15,7 @@ import { connectDatabase } from '../config/db.js';
 import { BannerModel } from '../models/banner.model.js';
 import { CategoryModel } from '../models/category.model.js';
 import { CompanyModel } from '../models/company.model.js';
+import { CityModel } from '../models/city.model.js';
 import { CouponModel } from '../models/coupon.model.js';
 import { JobModel } from '../models/job.model.js';
 import { AutonomousProfessionalModel } from '../models/autonomous-professional.model.js';
@@ -43,6 +44,7 @@ async function seed(): Promise<void> {
   if (shouldReset) {
     await Promise.all([
       CategoryModel.deleteMany({}),
+      CityModel.deleteMany({}),
       CompanyModel.deleteMany({}),
       BannerModel.deleteMany({}),
       CouponModel.deleteMany({}),
@@ -65,6 +67,14 @@ async function seed(): Promise<void> {
 
   const inseridas = await insertIfMissing(CategoryModel, categorias, 'slug');
   console.log(`Categorias inseridas: ${inseridas}`);
+
+  const cidades = [
+    { name: 'Castelo do Piauí', slug: 'castelo-do-piaui', state: 'PI' },
+    { name: 'Fortaleza', slug: 'fortaleza', state: 'CE' },
+    { name: 'Teresina', slug: 'teresina', state: 'PI' },
+  ];
+  const inseridasCidades = await insertIfMissing(CityModel, cidades, 'slug');
+  console.log(`Cidades inseridas: ${inseridasCidades}`);
 
   const categoriaPorSlug = new Map(
     (await CategoryModel.find().lean()).map((categoria) => [categoria.slug, categoria._id]),

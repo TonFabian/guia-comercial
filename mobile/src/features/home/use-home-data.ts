@@ -43,7 +43,7 @@ const INITIAL: HomeData = {
  * Em caso de 401/403 (token expirado/inválido), exibe mensagem e redireciona
  * para a página de login. Não quebra a aplicação.
  */
-export function useHomeData() {
+export function useHomeData(city?: string) {
   const router = useRouter();
   const authState = useAuthState();
 
@@ -63,8 +63,8 @@ export function useHomeData() {
               getBanners(),
               getCoupons(),
               getJobs(),
-              getFeaturedCompany(),
-              getPharmacyOnDuty(),
+              getFeaturedCompany(city),
+              getPharmacyOnDuty(city),
             ],
           );
 
@@ -121,7 +121,7 @@ export function useHomeData() {
     }
     // Se authState.state for 'loading' ou 'signedOut', mantém o estado inicial
     // e não chama load(), evitando requisições sem token.
-  }, [authState.state, router]);
+  }, [authState.state, router, city]);
 
   return state;
 }
