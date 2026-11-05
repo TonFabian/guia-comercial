@@ -16,6 +16,22 @@ export interface Pagination {
   limit: number;
 }
 
+/** Teto de `page`: `skip` = (page-1) * pageSize, e uma página muito alta
+ * produziria um `skip` gigante (varredura da coleção). Com o teto de 10 000 e
+ * pageSize ≤ 100, `skip` fica ≤ ~1 000 000. Uma página além do teto é
+ * clampada (comportamento previsível), não rejeitada. */
+const LIMITE_PAGINA = 10_000;
+
+function lerParametroDePagina(valor: unknown, padrao: number, minimo: number, maximo: number): number {
+  // Só string numérica: array (`?page=a&page=b`) e objeto são tratados como
+  // ausentes (default) — nunca convertidos silenciosamente.
+  if (typeof valor !== 'string') return padrao;
+  const texto = valor.trim();
+  if (texto === '' || !/^-?\d+$/.test(texto)) return padrao;
+  const numero = Math.min(Math.max(Number(texto), minimo), maximo);
+  return Math.floor(numero);
+}
+
 /** Lê `page`/`pageSize` da query com valores padrão seguros. */
 export function parsePagination(
   pageParam: unknown,
@@ -23,11 +39,8 @@ export function parsePagination(
   defaultPageSize = 20,
   maxPageSize = 100,
 ): Pagination {
-  const parsedPage = Number(pageParam);
-  const page = Math.max(1, Math.floor(Number.isFinite(parsedPage) ? parsedPage : 1) || 1);
-  const parsedSize = Number(pageSizeParam);
-  const rawSize = Number.isFinite(parsedSize) ? Math.floor(parsedSize) : defaultPageSize;
-  const pageSize = Math.min(maxPageSize, Math.max(1, rawSize));
+  const page = lerParametroDePagina(pageParam, 1, 1, LIMITE_PAGINA);
+  const pageSize = lerParametroDePagina(pageSizeParam, defaultPageSize, 1, maxPageSize);
 
   return { page, pageSize, skip: (page - 1) * pageSize, limit: pageSize };
 }
