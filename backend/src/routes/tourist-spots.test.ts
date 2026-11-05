@@ -512,3 +512,40 @@ describe('DELETE /api/tourist-spots', () => {
     expect(modeloPontos.documents).toHaveLength(2);
   });
 });
+
+describe('GET /api/tourist-spots com parâmetro malformado', () => {
+  it('parâmetro repetido (?category=nature&category=museum) → 400 em vez de filtrar menos', async () => {
+    const response = await request(app).get('/api/tourist-spots?category=nature&category=museum');
+
+    expect(response.status).toBe(400);
+    expect(response.body.error).toContain("'category'");
+  });
+
+  it('categoria fora do enum → 400 (antes era lista vazia)', async () => {
+    const response = await request(app).get('/api/tourist-spots?category=NATURE');
+
+    expect(response.status).toBe(400);
+    expect(response.body.error).toContain("'category'");
+  });
+
+  it('active fora de true/false → 400', async () => {
+    const response = await request(app).get('/api/tourist-spots?active=1');
+
+    expect(response.status).toBe(400);
+    expect(response.body.error).toContain("'active'");
+  });
+
+  it('city repetido → 400', async () => {
+    const response = await request(app).get('/api/tourist-spots?city=a&city=b');
+
+    expect(response.status).toBe(400);
+    expect(response.body.error).toContain("'city'");
+  });
+
+  it('q repetido → 400', async () => {
+    const response = await request(app).get('/api/tourist-spots?q=a&q=b');
+
+    expect(response.status).toBe(400);
+    expect(response.body.error).toContain("'q'");
+  });
+});

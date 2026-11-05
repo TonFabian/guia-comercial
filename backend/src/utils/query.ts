@@ -28,9 +28,14 @@ function textoLimpo(valor: string): string {
   return valor.replace(CARACTERES_DE_CONTROLE, '').trim();
 }
 
+/** Nome genérico quando o chamador não informa o campo — preserva as mensagens antigas. */
+const NOME_GENERICO = 'valor';
+
 interface OpcoesDeTexto {
   maxLength?: number;
   minLength?: number;
+  /** Nome do parâmetro de query, para a mensagem do 400 (ex.: 'q'). */
+  nome?: string;
 }
 
 /**
@@ -38,19 +43,20 @@ interface OpcoesDeTexto {
  * String que fica vazia após a limpeza → undefined (sem filtro).
  */
 export function lerTexto(valor: unknown, opcoes?: OpcoesDeTexto): string | undefined {
+  const nome = opcoes?.nome ?? NOME_GENERICO;
   if (valor === undefined || valor === null) return undefined;
-  if (typeof valor !== 'string') return falha('valor', 'esperado texto, recebido tipo não texto');
+  if (typeof valor !== 'string') return falha(nome, 'esperado texto, recebido tipo não texto');
 
   const texto = textoLimpo(valor);
   if (texto === '') return undefined;
 
   const maxLength = opcoes?.maxLength ?? LIMITE_TEXTO_PADRAO;
   if (texto.length > maxLength) {
-    return falha('valor', `texto acima do limite de ${maxLength} caracteres`);
+    return falha(nome, `texto acima do limite de ${maxLength} caracteres`);
   }
   const minLength = opcoes?.minLength ?? 0;
   if (texto.length < minLength) {
-    return falha('valor', `texto abaixo do mínimo de ${minLength} caracteres`);
+    return falha(nome, `texto abaixo do mínimo de ${minLength} caracteres`);
   }
   return texto;
 }
@@ -59,20 +65,22 @@ export function lerTexto(valor: unknown, opcoes?: OpcoesDeTexto): string | undef
  * Booleano de query: apenas as strings 'true'/'false'. Qualquer outro valor
  * presente é um 400 — '1'/'0'/'yes' virariam ambiguidade de contrato.
  */
-export function lerBooleano(valor: unknown): boolean | undefined {
+export function lerBooleano(valor: unknown, nome = NOME_GENERICO): boolean | undefined {
   if (valor === undefined || valor === null) return undefined;
-  if (typeof valor !== 'string') return falha('valor', 'esperado booleano, recebido tipo não texto');
+  if (typeof valor !== 'string') return falha(nome, 'esperado booleano, recebido tipo não texto');
 
   const texto = textoLimpo(valor);
   if (texto === '') return undefined;
   if (texto === 'true') return true;
   if (texto === 'false') return false;
-  return falha('valor', "booleanos aceitos: 'true' ou 'false'");
+  return falha(nome, "booleanos aceitos: 'true' ou 'false'");
 }
 
 interface OpcoesDeInteiro {
   min?: number;
   max?: number;
+  /** Nome do parâmetro de query, para a mensagem do 400 (ex.: 'page'). */
+  nome?: string;
 }
 
 /**
@@ -82,12 +90,13 @@ interface OpcoesDeInteiro {
  * em [min, max] quando as bordas são informadas (min padrão 0).
  */
 export function lerInteiro(valor: unknown, opcoes?: OpcoesDeInteiro): number | undefined {
+  const nome = opcoes?.nome ?? NOME_GENERICO;
   if (valor === undefined || valor === null) return undefined;
-  if (typeof valor !== 'string') return falha('valor', 'esperado número, recebido tipo não texto');
+  if (typeof valor !== 'string') return falha(nome, 'esperado número, recebido tipo não texto');
 
   const texto = textoLimpo(valor);
   if (texto === '') return undefined;
-  if (!/^-?\d+$/.test(texto)) return falha('valor', 'esperado número inteiro');
+  if (!/^-?\d+$/.test(texto)) return falha(nome, 'esperado número inteiro');
 
   let numero = Number(texto);
   const min = opcoes?.min ?? 0;
@@ -101,6 +110,9 @@ const LIMITE_ITENS_PADRAO = 20;
 
 /** Teto padrão de caracteres por slug. */
 const LIMITE_SLUG_PADRAO = 64;
+
+/** Teto padrão da string CRUA informada (antes da normalização). */
+const LIMITE_CRUA_PADRAO = 120;
 
 /**
  * Normaliza um candidato a slug: minúsculo, sem acento (NFD), espaços → hífen,
@@ -120,32 +132,44 @@ function normalizarSlug(item: string): string {
 interface OpcoesDeLista {
   maxItens?: number;
   maxLength?: number;
+  /** Teto da string crua (padrão 120). */
+  maxBruto?: number;
+  /** Nome do parâmetro de query, para a mensagem do 400 (ex.: 'category'). */
+  nome?: string;
 }
 
 /**
  * Lista de slugs: aceita 'a,b' (parser `simple` do Express 5); cada item é
- * normalizado, vazios e sem-sentido são descartados. Teto de itens e de
- * tamanho por item; acima de qualquer um dos dois → 400.
+ * normalizado, vazios e sem-sentido são descartados e duplicatas deduplicadas
+ * ('a,A' → ['a']). Teto da string CRUA (antes de normalizar — evita entrada
+ * gigante que normaliza para vazio), de itens e de tamanho por item; acima de
+ * qualquer um dos três → 400.
  */
 export function lerListaDeSlugs(valor: unknown, opcoes?: OpcoesDeLista): string[] | undefined {
+  const nome = opcoes?.nome ?? NOME_GENERICO;
   if (valor === undefined || valor === null) return undefined;
-  if (typeof valor !== 'string') return falha('valor', 'esperado lista de slugs, recebido tipo não texto');
+  if (typeof valor !== 'string') return falha(nome, 'esperado lista de slugs, recebido tipo não texto');
 
   const texto = textoLimpo(valor);
   if (texto === '') return undefined;
+
+  const maxBruto = opcoes?.maxBruto ?? LIMITE_CRUA_PADRAO;
+  if (texto.length > maxBruto) {
+    return falha(nome, `texto acima do limite de ${maxBruto} caracteres`);
+  }
 
   const maxLength = opcoes?.maxLength ?? LIMITE_SLUG_PADRAO;
   const slugs = texto.split(',').map((item) => normalizarSlug(item));
   for (const slug of slugs) {
     if (slug.length > maxLength) {
-      return falha('valor', `slug acima do limite de ${maxLength} caracteres`);
+      return falha(nome, `slug acima do limite de ${maxLength} caracteres`);
     }
   }
 
-  const itensValidos = slugs.filter((slug) => slug !== '');
+  const itensValidos = [...new Set(slugs.filter((slug) => slug !== ''))];
   const maxItens = opcoes?.maxItens ?? LIMITE_ITENS_PADRAO;
   if (itensValidos.length > maxItens) {
-    return falha('valor', `lista acima do limite de ${maxItens} itens`);
+    return falha(nome, `lista acima do limite de ${maxItens} itens`);
   }
   if (itensValidos.length === 0) return undefined;
   return itensValidos;
@@ -155,13 +179,17 @@ export function lerListaDeSlugs(valor: unknown, opcoes?: OpcoesDeLista): string[
  * Enum de query: o valor precisa estar na lista informada; valor presente e
  * fora dela → 400 com os valores aceitos na mensagem.
  */
-export function lerEnum<T extends string>(valor: unknown, valores: readonly T[]): T | undefined {
+export function lerEnum<T extends string>(
+  valor: unknown,
+  valores: readonly T[],
+  nome = NOME_GENERICO,
+): T | undefined {
   if (valor === undefined || valor === null) return undefined;
-  if (typeof valor !== 'string') return falha('valor', 'esperado texto, recebido tipo não texto');
+  if (typeof valor !== 'string') return falha(nome, 'esperado texto, recebido tipo não texto');
 
   const texto = textoLimpo(valor);
   if (texto === '') return undefined;
   const aceito = valores.find((valorEnumerado) => valorEnumerado === texto);
   if (aceito !== undefined) return aceito;
-  return falha('valor', `valor não aceito; aceitos: ${valores.join(', ')}`);
+  return falha(nome, `valor não aceito; aceitos: ${valores.join(', ')}`);
 }

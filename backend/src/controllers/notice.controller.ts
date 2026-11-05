@@ -2,11 +2,16 @@ import type { Request, Response } from 'express';
 
 import * as service from '../services/notice.service.js';
 import { asyncHandler, parsePagination } from '../utils/http.js';
+import { lerBooleano } from '../utils/query.js';
 
 export const list = asyncHandler(async (req: Request, res: Response): Promise<void> => {
   const pagination = parsePagination(req.query.page, req.query.pageSize);
-  const activeOnly = req.query.active === 'true';
-  const { items, total } = await service.listNotices(activeOnly, pagination);
+  // Sanitização aqui no controller (e não no service): o service já recebe o
+  // booleano pronto (assinatura `listNotices(activeOnly, pagination)`) e o
+  // `req.query.active` é lido ÚNICAMENTE neste ponto — a borda de parse é o
+  // momento certo de validar e o 400 nasce com o nome do parâmetro.
+  const active = lerBooleano(req.query.active, 'active');
+  const { items, total } = await service.listNotices(active === true, pagination);
   res.json({ items, total, page: pagination.page, pageSize: pagination.pageSize });
 });
 

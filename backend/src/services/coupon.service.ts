@@ -3,6 +3,7 @@ import { isValidObjectId, Types } from 'mongoose';
 import { CouponModel } from '../models/coupon.model.js';
 import type { CreateCouponDto, UpdateCouponDto } from '../types/dto.js';
 import type { Pagination } from '../utils/http.js';
+import { lerTexto } from '../utils/query.js';
 import { assertAdmin } from './user.service.js';
 
 /** Filtros aceitos na listagem de cupons. */
@@ -12,13 +13,14 @@ export interface CouponListFilters {
 }
 
 /**
- * Monta a query de cupons a partir dos filtros da URL.
- * Id de empresa inválido vira um ObjectId aleatório: a lista volta vazia em
- * vez de erro, seguindo o mesmo padrão do filtro de categoria por slug.
+ * Monta a query de cupons a partir dos filtros da URL. O parâmetro cru é
+ * sanitizado (array/objeto → 400) e id não ObjectId vira um ObjectId
+ * aleatório: a lista volta vazia em vez de erro, seguindo o mesmo padrão do
+ * filtro de categoria por slug.
  */
 export function buildCouponQuery(filters: CouponListFilters): { company?: string } {
-  const company = filters.company;
-  if (typeof company !== 'string' || company.length === 0) return {};
+  const company = lerTexto(filters.company, { nome: 'company' });
+  if (company === undefined) return {};
   if (!isValidObjectId(company)) return { company: new Types.ObjectId().toString() };
   return { company };
 }

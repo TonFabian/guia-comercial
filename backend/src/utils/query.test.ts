@@ -181,6 +181,11 @@ describe('lerListaDeSlugs', () => {
     expect(lerListaDeSlugs('a,,b')).toEqual(['a', 'b']);
   });
 
+  it("deduplica após a normalização ('a,A' → ['a'])", () => {
+    expect(lerListaDeSlugs('a,A')).toEqual(['a']);
+    expect(lerListaDeSlugs('cafe,da-vila,Cafe Da Vila')).toEqual(['cafe', 'da-vila', 'cafe-da-vila']);
+  });
+
   it("item que não normaliza para nada ('---') é descartado", () => {
     expect(lerListaDeSlugs('a,---,b')).toEqual(['a', 'b']);
     expect(lerListaDeSlugs('---')).toBeUndefined();
@@ -195,13 +200,24 @@ describe('lerListaDeSlugs', () => {
   });
 
   it('mais de 20 itens → 400', () => {
-    const trinta = Array.from({ length: 30 }, (_, i) => `slug-${i}`).join(',');
+    const trinta = Array.from({ length: 30 }, (_, i) => `a${i}`).join(',');
     falha400(() => lerListaDeSlugs(trinta));
   });
 
   it('exatamente 20 itens passa', () => {
-    const vinte = Array.from({ length: 20 }, (_, i) => `slug-${i}`).join(',');
+    const vinte = Array.from({ length: 20 }, (_, i) => `a${i}`).join(',');
     expect(lerListaDeSlugs(vinte)).toHaveLength(20);
+  });
+
+  it('string crua acima de 120 caracteres → 400, mesmo que normalize curto', () => {
+    const erro = falha400(() => lerListaDeSlugs('x'.repeat(121)));
+    expect(erro.message).toContain('120');
+  });
+
+  it('string crua de exatamente 120 caracteres passa (232 separadores vazios são descartados)', () => {
+    const cruaNoLimite = 'a' + ','.repeat(118) + 'b';
+    expect(cruaNoLimite.length).toBe(120);
+    expect(lerListaDeSlugs(cruaNoLimite)).toEqual(['a', 'b']);
   });
 
   it('item acima de 64 caracteres → 400 com o limite na mensagem', () => {
@@ -242,6 +258,44 @@ describe('lerEnum', () => {
 
   it('não-string → 400', () => {
     falha400(() => lerEnum(['admin'], PAPEIS));
+  });
+});
+
+describe('nome do parâmetro na mensagem do 400', () => {
+  it('lerTexto propaga o nome do campo', () => {
+    const erro = falha400(() => lerTexto(['a'], { nome: 'q' }));
+    expect(erro.message).toContain("'q'");
+  });
+
+  it('lerBooleano propaga o nome do campo', () => {
+    const erro = falha400(() => lerBooleano('1', 'featured'));
+    expect(erro.message).toContain("'featured'");
+  });
+
+  it('lerInteiro propaga o nome do campo', () => {
+    const erro = falha400(() => lerInteiro('abc', { nome: 'page' }));
+    expect(erro.message).toContain("'page'");
+  });
+
+  it('lerListaDeSlugs propaga o nome do campo em todas as falhas', () => {
+    const porTipo = falha400(() => lerListaDeSlugs(['a'], { nome: 'category' }));
+    expect(porTipo.message).toContain("'category'");
+
+    const porLimite = falha400(() => lerListaDeSlugs('x'.repeat(121), { nome: 'category' }));
+    expect(porLimite.message).toContain("'category'");
+
+    const porItem = falha400(() => lerListaDeSlugs('a'.repeat(65), { nome: 'category' }));
+    expect(porItem.message).toContain("'category'");
+  });
+
+  it('lerEnum propaga o nome do campo', () => {
+    const erro = falha400(() => lerEnum('roque', ['admin', 'editor'] as const, 'category'));
+    expect(erro.message).toContain("'category'");
+  });
+
+  it('sem nome informado, a mensagem usa o nome genérico "valor"', () => {
+    const erro = falha400(() => lerTexto(['a']));
+    expect(erro.message).toContain("'valor'");
   });
 });
 

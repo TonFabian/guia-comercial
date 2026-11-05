@@ -225,7 +225,9 @@ export const createAutonomousProfessionalSchema = z.object({
   city: z.string().optional(),
   rating: z.number().min(0).max(5).optional(),
   ratingCount: z.number().int().nonnegative().optional(),
-  ownerClerkId: z.string().optional(),
+  // `ownerClerkId` NÃO faz parte do contrato público: o dono é sempre o
+  // clerk da sessão, injetado no service — nunca o valor enviado no payload
+  // (mass assignment trocaria a titularidade do cadastro).
 });
 
 export type CreateAutonomousProfessionalDto = z.infer<typeof createAutonomousProfessionalSchema>;

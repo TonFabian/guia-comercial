@@ -7,6 +7,7 @@ import { assertAdmin } from './user.service.js';
 import { listAllPushTokens } from './push-token.service.js';
 import { todayInFortaleza } from '../utils/event-date.js';
 import { escapeRegex } from '../utils/regex.js';
+import { lerBooleano, lerEnum, lerTexto } from '../utils/query.js';
 import type { TourEvent, TourEventCategory } from '../../../shared/domain.js';
 import type { CreateTourEventDto, UpdateTourEventDto } from '../types/dto.js';
 import type { Pagination } from '../utils/http.js';
@@ -53,35 +54,39 @@ export async function listTourEvents(
 ): Promise<{ items: TourEvent[]; total: number }> {
   const query: TourEventQuery = {};
 
-  if (typeof filters.category === 'string' && filters.category.trim().length > 0) {
-    const categoria = filters.category.trim();
-    // Categoria fora da lista não traz evento nenhum, como no Mongo, que só
-    // casa valores do enum.
-    query.category = ehCategoria(categoria) ? categoria : { $in: [] };
+  const categoriaEnumerada = lerEnum(filters.category, CATEGORIAS, 'category');
+  if (categoriaEnumerada !== undefined) {
+    // Segunda barreira (defesa em profundidade): o valor que chega aqui já foi
+    // validado pelo `lerEnum`; categoria fora do enum não traz evento nenhum,
+    // como no Mongo, que só casa valores do enum.
+    query.category = ehCategoria(categoriaEnumerada) ? categoriaEnumerada : { $in: [] };
   }
 
-  if (filters.active === 'true' || filters.active === true) {
-    query.active = true;
-  } else if (filters.active === 'false' || filters.active === false) {
-    query.active = false;
+  const ativo = lerBooleano(filters.active, 'active');
+  if (ativo !== undefined) {
+    query.active = ativo;
   }
 
-  if (typeof filters.city === 'string' && filters.city.trim().length > 0) {
-    const found = await CityModel.findOne({ slug: normalizarSlug(filters.city) }).lean();
+  const cidadeInformada = lerTexto(filters.city, { nome: 'city' });
+  if (cidadeInformada !== undefined) {
+    const found = await CityModel.findOne({ slug: normalizarSlug(cidadeInformada) }).lean();
     // Slug sem cidade correspondente não derruba a consulta: filtra por um id
     // inexistente, o que devolve uma lista vazia.
     query.city = found ? String(found._id) : new Types.ObjectId().toString();
   }
 
-  if (filters.includePast !== 'true') {
+  // Só exibe os vencidos quando o chamador pede explicitamente `includePast=true`
+  // (painel admin); qualquer outro valor é rejeitado pelo `lerBooleano`.
+  const incluirPassados = lerBooleano(filters.includePast, 'includePast');
+  if (incluirPassados !== true) {
     // Vigência por DATA (spec D9): endDate é string YYYY-MM-DD e compara com
     // o dia de Fortaleza também como string — $gte de strings é seguro no
     // formato fixo, e NUNCA se mistura data pura com datetime ISO.
     query.endDate = { $gte: todayInFortaleza() };
   }
 
-  const termo = typeof filters.q === 'string' ? filters.q.trim() : '';
-  if (termo.length > 0) {
+  const termo = lerTexto(filters.q, { nome: 'q' });
+  if (termo !== undefined) {
     // Busca textual em name, description E location ($or): ficou no nível
     // raiz da query, convive com endDate ($and implícito) sem misturar $or
     // com o filtro de vigência. Regex sempre escapada (entrada não confiável).

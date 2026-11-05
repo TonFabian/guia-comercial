@@ -9,6 +9,7 @@ export const list = asyncHandler(async (req: Request, res: Response): Promise<vo
   const { items, total } = await companyService.listCompanies(
     { category: req.query.category, q: req.query.q, featured: req.query.featured, owner: req.query.owner, city: req.query.city },
     pagination,
+    req.auth?.clerkId,
   );
   res.json({ items, total, page: pagination.page, pageSize: pagination.pageSize });
 });

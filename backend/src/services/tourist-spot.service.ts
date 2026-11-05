@@ -8,6 +8,7 @@ import type { TouristSpot, TouristSpotCategory } from '../../../shared/domain.js
 import type { CreateTouristSpotDto, UpdateTouristSpotDto } from '../types/dto.js';
 import type { Pagination } from '../utils/http.js';
 import { escapeRegex } from '../utils/regex.js';
+import { lerBooleano, lerEnum, lerTexto } from '../utils/query.js';
 
 /** Critério de busca compatível com o filtro aceito pelo model. */
 type TouristSpotQuery = {
@@ -49,28 +50,29 @@ export async function listTouristSpots(
 ): Promise<{ items: TouristSpot[]; total: number }> {
   const query: TouristSpotQuery = {};
 
-  if (typeof filters.category === 'string' && filters.category.trim().length > 0) {
-    const categoria = filters.category.trim();
-    // Categoria fora da lista não traz ponto nenhum, como no Mongo, que só
-    // casa valores do enum.
-    query.category = ehCategoria(categoria) ? categoria : { $in: [] };
+  const categoriaEnumerada = lerEnum(filters.category, CATEGORIAS, 'category');
+  if (categoriaEnumerada !== undefined) {
+    // Segunda barreira (defesa em profundidade): o valor que chega aqui já foi
+    // validado pelo `lerEnum`; categoria fora do enum não traz ponto nenhum,
+    // como no Mongo, que só casa valores do enum.
+    query.category = ehCategoria(categoriaEnumerada) ? categoriaEnumerada : { $in: [] };
   }
 
-  if (filters.active === 'true' || filters.active === true) {
-    query.active = true;
-  } else if (filters.active === 'false' || filters.active === false) {
-    query.active = false;
+  const ativo = lerBooleano(filters.active, 'active');
+  if (ativo !== undefined) {
+    query.active = ativo;
   }
 
-  if (typeof filters.city === 'string' && filters.city.trim().length > 0) {
-    const found = await CityModel.findOne({ slug: normalizarSlug(filters.city) }).lean();
+  const cidadeInformada = lerTexto(filters.city, { nome: 'city' });
+  if (cidadeInformada !== undefined) {
+    const found = await CityModel.findOne({ slug: normalizarSlug(cidadeInformada) }).lean();
     // Slug sem cidade correspondente não derruba a consulta: filtra por um id
     // inexistente, o que devolve uma lista vazia.
     query.city = found ? String(found._id) : new Types.ObjectId().toString();
   }
 
-  const termo = typeof filters.q === 'string' ? filters.q.trim() : '';
-  if (termo.length > 0) {
+  const termo = lerTexto(filters.q, { nome: 'q' });
+  if (termo !== undefined) {
     // Busca textual em name E description ($or): mesmo padrão de
     // company.service, com a regex sempre escapada (entrada não confiável).
     const regex = new RegExp(escapeRegex(termo), 'i');

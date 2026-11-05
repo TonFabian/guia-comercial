@@ -5,6 +5,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vites
 import { CategoryModel } from '../models/category.model.js';
 import { CityModel } from '../models/city.model.js';
 import { CompanyModel } from '../models/company.model.js';
+import { UserModel } from '../models/user.model.js';
 import type { MemoryDocument, MemoryModel } from '../test-support/memory-model.js';
 
 vi.stubEnv('CLERK_SECRET_KEY', 'sk_test_placeholder');
@@ -52,11 +53,17 @@ vi.mock('../models/city.model.js', async () => {
   return { CityModel: criarModeloEmMemoria() };
 });
 
+vi.mock('../models/user.model.js', async () => {
+  const { criarModeloEmMemoria } = await import('../test-support/memory-model.js');
+  return { UserModel: criarModeloEmMemoria() };
+});
+
 let app: Express;
 
 const modeloCategorias = CategoryModel as unknown as MemoryModel;
 const modeloEmpresas = CompanyModel as unknown as MemoryModel;
 const modeloCidades = CityModel as unknown as MemoryModel;
+const modeloUsuarios = UserModel as unknown as MemoryModel;
 
 const categoriasFake: MemoryDocument[] = [
   { _id: '000000000000000000000030', name: 'Beleza', slug: 'beleza' },
@@ -115,6 +122,8 @@ beforeEach(() => {
   modeloEmpresas.documents.push(...empresasFake.map((empresa) => ({ ...empresa })));
 
   modeloCidades.documents.length = 0;
+
+  modeloUsuarios.documents.length = 0;
 });
 
 describe('GET /api/companies com várias categorias', () => {
@@ -151,5 +160,100 @@ describe('GET /api/companies com várias categorias', () => {
     expect(response.status).toBe(200);
     expect(response.body.total).toBe(0);
     expect(response.body.items).toHaveLength(0);
+  });
+});
+
+describe('GET /api/companies com parâmetro malformado', () => {
+  it("parâmetro repetido (?)category=a&category=b) → 400 em vez de filtrar menos", async () => {
+    const response = await request(app).get('/api/companies?category=beleza&category=restaurantes');
+
+    expect(response.status).toBe(400);
+    expect(response.body.error).toContain("'category'");
+  });
+
+  it('featured repetido → 400', async () => {
+    const response = await request(app).get('/api/companies?featured=true&featured=false');
+
+    expect(response.status).toBe(400);
+    expect(response.body.error).toContain("'featured'");
+  });
+
+  it('q repetido → 400', async () => {
+    const response = await request(app).get('/api/companies?q=barbearia&q=salao');
+
+    expect(response.status).toBe(400);
+    expect(response.body.error).toContain("'q'");
+  });
+
+  it('city repetido → 400', async () => {
+    const response = await request(app).get('/api/companies?city=castelo-do-piaui&city=regeneracao');
+
+    expect(response.status).toBe(400);
+    expect(response.body.error).toContain("'city'");
+  });
+
+  it('owner não é string → 400', async () => {
+    const response = await request(app).get('/api/companies?owner=um&owner=dois');
+
+    expect(response.status).toBe(400);
+    expect(response.body.error).toContain("'owner'");
+  });
+});
+
+describe('GET /api/companies?owner', () => {
+  const minhaEmpresa = {
+    _id: '000000000000000000000050',
+    name: 'Minha Padaria',
+    slug: 'minha-padaria',
+    description: 'Pão quente',
+    category: '000000000000000000000031',
+    ownerClerkId: 'user_admin',
+  };
+  const empresaDoOutro = {
+    _id: '000000000000000000000051',
+    name: 'Loja do Outro',
+    slug: 'loja-do-outro',
+    description: 'Outlet',
+    category: '000000000000000000000030',
+    ownerClerkId: 'user_outro',
+  };
+
+  beforeEach(() => {
+    modeloEmpresas.documents.push({ ...minhaEmpresa }, { ...empresaDoOutro });
+  });
+
+  it('filtra apenas as empresas do próprio usuário autenticado', async () => {
+    const response = await request(app)
+      .get('/api/companies?owner=user_admin')
+      .set('Authorization', 'Bearer token_admin');
+
+    expect(response.status).toBe(200);
+    expect(response.body.total).toBe(1);
+    expect(response.body.items[0].name).toBe('Minha Padaria');
+  });
+
+  it('owner de outro usuário → 403', async () => {
+    const response = await request(app)
+      .get('/api/companies?owner=user_outro')
+      .set('Authorization', 'Bearer token_admin');
+
+    expect(response.status).toBe(403);
+    expect(response.body.error).toContain('outro usuário');
+  });
+
+  it('convidado (sem sessão) informando owner → 403 (fail-closed)', async () => {
+    const response = await request(app).get('/api/companies?owner=user_admin');
+
+    expect(response.status).toBe(403);
+    expect(response.body.error).toContain('outro usuário');
+  });
+
+  it('owner vazio → sem filtro (comportamento preservado)', async () => {
+    const response = await request(app)
+      .get('/api/companies')
+      .set('Authorization', 'Bearer token_admin');
+
+    expect(response.status).toBe(200);
+    expect(response.body.total).toBe(6);
   });
 });
