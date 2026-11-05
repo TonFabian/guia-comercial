@@ -34,6 +34,8 @@ import {
   createReviewSchema,
   createTourEventSchema,
   createTouristSpotSchema,
+  broadcastSchema,
+  pushTokenSchema,
   updateUserSchema,
   updateTourEventSchema,
   updateTouristSpotSchema,
@@ -67,8 +69,8 @@ if (authDeps) {
   // ligado — em modo legado o app não a consome.
   routes.get('/me', auth.requireAuth, me);
   routes.put('/me', auth.requireAuth, validateBody(updateUserSchema.partial()), updateMe);
-  routes.post('/push-tokens', registerPushToken);
-  routes.post('/notifications/broadcast', broadcastPush);
+  routes.post('/push-tokens', validateBody(pushTokenSchema), registerPushToken);
+  routes.post('/notifications/broadcast', validateBody(broadcastSchema), broadcastPush);
 }
 
 // Middleware de autorização para mutações: quando o Clerk está configurado,

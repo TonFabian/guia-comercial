@@ -417,6 +417,40 @@ export type CreateTourEventDto = z.infer<typeof createTourEventSchema>;
 
 export type UpdateTourEventDto = Partial<CreateTourEventDto>;
 
+// ---------------------------------------------------------------------------
+// Push token (registro do dispositivo)
+// ---------------------------------------------------------------------------
+
+/**
+ * Token de push do dispositivo (Expo).
+ *
+ * `clerkId` NÃO faz parte do contrato: a identidade vem da sessão (injetada no
+ * service) — o anti-sequestro depende de nunca aceitar o dono pelo body.
+ */
+export const pushTokenSchema = z.object({
+  token: z
+    .string()
+    .trim()
+    .min(1, 'token é obrigatório')
+    .max(500, 'token excede o tamanho máximo')
+    // eslint-disable-next-line no-control-regex -- rejeitar controles É o objetivo aqui (mesmo padrão de utils/query.ts)
+    .refine((valor) => !/[\s\u0000-\u001f\u007f]/.test(valor), 'token contém caracteres inválidos'),
+});
+
+export type PushTokenDto = z.infer<typeof pushTokenSchema>;
+
+// ---------------------------------------------------------------------------
+// Notification (broadcast)
+// ---------------------------------------------------------------------------
+
+/** Payload de notificação em massa: limites impedem a sobrecarga do Expo. */
+export const broadcastSchema = z.object({
+  title: z.string().trim().min(1, 'title é obrigatório').max(120, 'title excede o tamanho máximo'),
+  body: z.string().trim().max(500, 'body excede o tamanho máximo').optional(),
+});
+
+export type BroadcastDto = z.infer<typeof broadcastSchema>;
+
 // Em atualização parcial, os campos ausentes presumem os valores já salvos: as
 // regras cruzadas (endDate x startDate, ticket paid x ticketPrice) são
 // revalidadas sobre o estado RESULTANTE no service.

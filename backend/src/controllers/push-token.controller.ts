@@ -1,14 +1,13 @@
 import type { Request, Response } from 'express';
 
 import { assertAdmin } from '../services/user.service.js';
-import { upsertPushToken, listAllPushTokens } from '../services/push-token.service.js';
+import { listAllPushTokens, upsertPushToken } from '../services/push-token.service.js';
+import type { BroadcastDto, PushTokenDto } from '../types/dto.js';
 
 export async function registerPushToken(req: Request, res: Response): Promise<void> {
-  const { token } = req.body as { token?: string };
-  if (!token) {
-    res.status(400).json({ error: 'token é obrigatório' });
-    return;
-  }
+  // O `validateBody` (zod) garantiu `token` string simples e descartou chaves
+  // desconhecidas — um `clerkId` forjado no body jamais chega aqui.
+  const { token } = req.body as PushTokenDto;
   // A identidade (quando existir) vem da sessão do Clerk — nunca do body.
   await upsertPushToken(token, req.auth?.clerkId);
   res.json({ ok: true });
@@ -16,6 +15,7 @@ export async function registerPushToken(req: Request, res: Response): Promise<vo
 
 export async function broadcastPush(req: Request, res: Response): Promise<void> {
   // Fail-closed: sem nenhum mecanismo de proteção configurado, não transmitir.
+  // As checagens de admin/secret precedem qualquer uso de title/body.
   if (!process.env.CLERK_SECRET_KEY && !process.env.NOTIFY_SECRET) {
     res.status(401).json({ error: 'Não autenticado' });
     return;
@@ -35,11 +35,8 @@ export async function broadcastPush(req: Request, res: Response): Promise<void> 
     return;
   }
 
-  const { title, body } = req.body as { title?: string; body?: string };
-  if (!title) {
-    res.status(400).json({ error: 'title é obrigatório' });
-    return;
-  }
+  // title/body já validados e limitados pelo `broadcastSchema` (zod).
+  const { title, body } = req.body as BroadcastDto;
   const tokens = await listAllPushTokens();
   if (tokens.length === 0) {
     res.json({ sent: 0 });
