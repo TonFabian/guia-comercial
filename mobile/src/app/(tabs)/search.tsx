@@ -3,7 +3,7 @@ import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import {
   ActivityIndicator,
-  FlatList,
+  SectionList,
   ScrollView,
   StyleSheet,
   Text,
@@ -28,13 +28,34 @@ import type {
   SearchState,
 } from '@/features/search/search-pagination';
 import { useVoiceSearch } from '@/features/search/use-voice-search';
+import { buildSearchSections, TURISMO_PAGE_SIZE } from '@/features/search/tourism-search';
+import type { SearchItem, SearchSection } from '@/features/search/tourism-search';
+import {
+  classificarEvento,
+  formatarPeriodoEvento,
+  hojeISO,
+  labelCategoriaAtracao,
+} from '@/features/tourism/event-meta';
+import type { EstadoEvento } from '@/features/tourism/event-meta';
 import { useThemeColors } from '@/hooks/use-theme-colors';
-import { getCategories, searchCompanies } from '@/services/api';
-import type { Category, Company } from '@/types/domain';
+import {
+  getCategories,
+  getEvents,
+  getTouristSpots,
+  searchCompanies,
+} from '@/services/api';
+import type { Category, Company, TourEvent, TouristSpot } from '@/types/domain';
 import { categoryLabel } from '@/types/domain';
 
 /** Tempo de espera antes de consultar a API a cada tecla digitada. */
 const DEBOUNCE_MS = 250;
+
+/** Badge de estado do evento para exibição. */
+const BADGE_EVENTO: Record<EstadoEvento, string> = {
+  'em-breve': 'Em breve',
+  agora: 'Hoje',
+  encerrado: 'Encerrado',
+};
 
 export default function SearchScreen() {
   const params = useLocalSearchParams<{ q?: string; category?: string }>();
@@ -57,6 +78,14 @@ export default function SearchScreen() {
   const [nearMeCity, setNearMeCity] = useState<string | null>(null);
   const [nearMeLoading, setNearMeLoading] = useState(false);
   const [openNowOnly, setOpenNowOnly] = useState(false);
+
+  // Chips fixos de turismo ("Atrações" / "Eventos"): não vêm de /categories.
+  const [showSpots, setShowSpots] = useState(false);
+  const [showEvents, setShowEvents] = useState(false);
+  const [spots, setSpots] = useState<TouristSpot[]>([]);
+  const [events, setEvents] = useState<TourEvent[]>([]);
+  const [loadingTurismo, setLoadingTurismo] = useState(false);
+  const [turismoError, setTurismoError] = useState<string | null>(null);
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [loaded, setLoaded] = useState<Company[]>([]);
@@ -100,6 +129,44 @@ export default function SearchScreen() {
       cancelled = true;
     };
   }, []);
+
+  // Turismo: buscado em paralelo com as empresas quando algum chip está
+  // ativo. Erro de turismo tem try/catch próprio — não pode derrubar as
+  // empresas, que seguem visíveis.
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (!showSpots && !showEvents) {
+        setTurismoError(null);
+        return;
+      }
+      setLoadingTurismo(true);
+      setTurismoError(null);
+      try {
+        const [listaSpots, listaEvents] = await Promise.all([
+          showSpots
+            ? getTouristSpots({ active: true, pageSize: TURISMO_PAGE_SIZE })
+            : Promise.resolve<TouristSpot[]>([]),
+          showEvents
+            ? getEvents({ active: true, pageSize: TURISMO_PAGE_SIZE })
+            : Promise.resolve<TourEvent[]>([]),
+        ]);
+        if (cancelled) return;
+        setSpots(listaSpots);
+        setEvents(listaEvents);
+      } catch {
+        if (cancelled) return;
+        setSpots([]);
+        setEvents([]);
+        setTurismoError('Não foi possível carregar atrações e eventos.');
+      } finally {
+        if (!cancelled) setLoadingTurismo(false);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [showSpots, showEvents, reloadToken]);
 
   // Busca: recomeça do zero quando qualquer filtro muda.
   useEffect(() => {
@@ -196,6 +263,39 @@ export default function SearchScreen() {
     [categories, selectedSlugs],
   );
 
+  const hoje = hojeISO();
+
+  // Seções mescladas: empresas (vindas do deriveSearchView) + turismo.
+  const rawSections = useMemo(
+    () =>
+      buildSearchSections({
+        companies: view.items,
+        spots,
+        events,
+        showSpots,
+        showEvents,
+        term,
+      }),
+    [view, spots, events, showSpots, showEvents, term],
+  );
+
+  // O SectionList espera `data`; `items` é o contrato do helper puro.
+  const sections = useMemo<(SearchSection & { data: SearchItem[] })[]>(
+    () => rawSections.map((section) => ({ ...section, data: section.items })),
+    [rawSections],
+  );
+
+  const listaVazia = sections.length === 0 && !loading && !loadingTurismo && !error;
+  const mensagemVazio = showSpots || showEvents
+    ? 'Nada encontrado para os filtros selecionados.'
+    : nearMeCity
+    ? `Nenhuma empresa encontrada perto de ${nearMeCity}.`
+    : openNowOnly
+    ? 'Nenhuma empresa aberta agora.'
+    : term
+    ? `Nada encontrado para "${term}".`
+    : 'Pesquise por empresas, produtos ou serviços da cidade.';
+
   const filteredCategories = useMemo(() => {
     let result = categories;
     if (term) {
@@ -217,11 +317,89 @@ export default function SearchScreen() {
     setManualCategories([]);
     setNearMeCity(null);
     setOpenNowOnly(false);
+    setShowSpots(false);
+    setShowEvents(false);
   };
 
   const retry = () => {
     setReloadToken((token) => token + 1);
   };
+
+  /** Linha por item: empresa, atração ou evento (navegação tipada por kind). */
+  function renderRow({ item }: { item: SearchItem }) {
+    if (item.kind === 'company') {
+      const { company } = item;
+      return (
+        <TouchableOpacity
+          style={styles.row}
+          activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel={`Ver detalhes de ${company.name}`}
+          onPress={() => openCompanyDetails(company._id)}
+        >
+          <View style={styles.rowBody}>
+            <Text style={styles.rowTitle}>{company.name}</Text>
+            <Text style={styles.rowSubtitle}>
+              {categoryLabel(company.category)}
+              {company.address ? ` — ${company.address}` : ''}
+            </Text>
+          </View>
+          <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
+        </TouchableOpacity>
+      );
+    }
+
+    if (item.kind === 'spot') {
+      const { spot } = item;
+      return (
+        <TouchableOpacity
+          style={styles.row}
+          activeOpacity={0.7}
+          accessibilityRole="button"
+          accessibilityLabel={`Ver atração: ${spot.name}`}
+          onPress={() =>
+            router.push({ pathname: '/tourist-spot/[id]', params: { id: spot._id } })
+          }
+        >
+          <View style={styles.rowIcon}>
+            <Ionicons name="location-outline" size={18} color={colors.primary} />
+          </View>
+          <View style={styles.rowBody}>
+            <Text style={styles.rowTitle}>{spot.name}</Text>
+            <Text style={styles.rowSubtitle}>
+              {`${labelCategoriaAtracao(spot.category)}${spot.address ? ` — ${spot.address}` : ''}`}
+            </Text>
+          </View>
+          <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
+        </TouchableOpacity>
+      );
+    }
+
+    const { event } = item;
+    const estado = classificarEvento(event.startDate, event.endDate, hoje);
+    return (
+      <TouchableOpacity
+        style={styles.row}
+        activeOpacity={0.7}
+        accessibilityRole="button"
+        accessibilityLabel={`Ver evento: ${event.name}`}
+        onPress={() => router.push({ pathname: '/event/[id]', params: { id: event._id } })}
+      >
+        <View style={styles.rowIcon}>
+          <Ionicons name="calendar-outline" size={18} color={colors.primary} />
+        </View>
+        <View style={styles.rowBody}>
+          <Text style={styles.rowTitle}>{event.name}</Text>
+          <Text style={styles.rowSubtitle}>
+            {`${BADGE_EVENTO[estado]} · ${formatarPeriodoEvento(event.startDate, event.endDate)}${
+              event.location ? ` — ${event.location}` : ''
+            }`}
+          </Text>
+        </View>
+        <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
+      </TouchableOpacity>
+    );
+  }
 
   return (
     <View style={styles.root}>
@@ -283,10 +461,22 @@ export default function SearchScreen() {
         {loading ? (
           <ActivityIndicator style={styles.spinner} color={colors.primary} />
         ) : (
-          <FlatList
-            data={view.items}
-            keyExtractor={(item) => item._id}
+          <SectionList
+            sections={sections}
+            keyExtractor={(item) => item.id}
+            renderItem={renderRow}
+            renderSectionHeader={({ section }) => (
+              <View style={styles.groupHeader}>
+                <Text style={styles.groupTitle}>{section.title}</Text>
+                <Text style={styles.groupCount}>
+                  {section.key === 'empresas' && view.total > view.items.length
+                    ? `${view.items.length} de ${view.total}`
+                    : `${section.data.length}`}
+                </Text>
+              </View>
+            )}
             showsVerticalScrollIndicator={false}
+            stickySectionHeadersEnabled={false}
             onEndReached={() => {
               void loadMore();
             }}
@@ -360,6 +550,40 @@ export default function SearchScreen() {
                     </Text>
                   </TouchableOpacity>
 
+                  <TouchableOpacity
+                    style={[styles.categoryChip, showSpots && styles.categoryChipSelected]}
+                    activeOpacity={0.7}
+                    onPress={() => setShowSpots((value) => !value)}
+                    accessibilityRole="button"
+                    accessibilityLabel="Filtrar por atrações"
+                  >
+                    <Ionicons
+                      name="location-outline"
+                      size={14}
+                      color={showSpots ? colors.background : colors.primary}
+                    />
+                    <Text style={[styles.categoryChipText, showSpots && styles.categoryChipTextSelected]}>
+                      Atrações
+                    </Text>
+                  </TouchableOpacity>
+
+                  <TouchableOpacity
+                    style={[styles.categoryChip, showEvents && styles.categoryChipSelected]}
+                    activeOpacity={0.7}
+                    onPress={() => setShowEvents((value) => !value)}
+                    accessibilityRole="button"
+                    accessibilityLabel="Filtrar por eventos"
+                  >
+                    <Ionicons
+                      name="calendar-outline"
+                      size={14}
+                      color={showEvents ? colors.background : colors.primary}
+                    />
+                    <Text style={[styles.categoryChipText, showEvents && styles.categoryChipTextSelected]}>
+                      Eventos
+                    </Text>
+                  </TouchableOpacity>
+
                   {filteredCategories.map((category) => {
                     const selected = selectedSlugs.includes(category.slug);
                     return (
@@ -385,43 +609,14 @@ export default function SearchScreen() {
                   })}
                 </ScrollView>
 
-                {(nearMeCity || openNowOnly) && selectedCategories.length === 0 && (
+                {(nearMeCity || openNowOnly || showSpots || showEvents) && selectedCategories.length === 0 && (
                   <TouchableOpacity style={styles.clearAllButton} onPress={clearAllFilters}>
                     <Ionicons name="trash-outline" size={14} color={colors.textSecondary} />
                     <Text style={styles.clearAllText}>Limpar todos os filtros</Text>
                   </TouchableOpacity>
                 )}
-
-                {view.items.length > 0 && (
-                  <View style={styles.groupHeader}>
-                    <Text style={styles.groupTitle}>Empresas</Text>
-                    <Text style={styles.groupCount}>
-                      {view.total > view.items.length
-                        ? `${view.items.length} de ${view.total}`
-                        : `${view.items.length}`}
-                    </Text>
-                  </View>
-                )}
               </>
             }
-            renderItem={({ item: company }) => (
-              <TouchableOpacity
-                style={styles.row}
-                activeOpacity={0.7}
-                accessibilityRole="button"
-                accessibilityLabel={`Ver detalhes de ${company.name}`}
-                onPress={() => openCompanyDetails(company._id)}
-              >
-                <View style={styles.rowBody}>
-                  <Text style={styles.rowTitle}>{company.name}</Text>
-                  <Text style={styles.rowSubtitle}>
-                    {categoryLabel(company.category)}
-                    {company.address ? ` — ${company.address}` : ''}
-                  </Text>
-                </View>
-                <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
-              </TouchableOpacity>
-            )}
             ListFooterComponent={
               <>
                 {view.hasMore && (
@@ -437,16 +632,22 @@ export default function SearchScreen() {
                     </Text>
                   </TouchableOpacity>
                 )}
-                {view.items.length === 0 && !loading && !error && (
-                  <Text style={styles.emptyText}>
-                    {nearMeCity
-                      ? `Nenhuma empresa encontrada perto de ${nearMeCity}.`
-                      : openNowOnly
-                      ? 'Nenhuma empresa aberta agora.'
-                      : term
-                      ? `Nada encontrado para "${term}".`
-                      : 'Pesquise por empresas, produtos ou serviços da cidade.'}
-                  </Text>
+                {listaVazia && <Text style={styles.emptyText}>{mensagemVazio}</Text>}
+                {loadingTurismo && !loading && (
+                  <Text style={styles.emptyText}>Carregando atrações e eventos…</Text>
+                )}
+                {turismoError && !loadingTurismo && (
+                  <View style={styles.feedbackTurismo}>
+                    <Text style={styles.emptyText}>{turismoError}</Text>
+                    <TouchableOpacity
+                      style={styles.retryButton}
+                      onPress={retry}
+                      accessibilityRole="button"
+                      accessibilityLabel="Tentar carregar atrações e eventos novamente"
+                    >
+                      <Text style={styles.retryText}>Tentar novamente</Text>
+                    </TouchableOpacity>
+                  </View>
                 )}
               </>
             }
@@ -628,6 +829,14 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
       flex: 1,
       gap: 2,
     },
+    rowIcon: {
+      width: 34,
+      height: 34,
+      alignItems: 'center',
+      justifyContent: 'center',
+      borderRadius: Radius.chip,
+      backgroundColor: colors.surfaceAlt,
+    },
     rowTitle: {
       color: colors.text,
       fontSize: Type.subtitle,
@@ -672,5 +881,10 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
       textAlign: 'center',
       marginTop: Spacing.four,
     },
-  });
+    feedbackTurismo: {
+      alignItems: 'center',
+      gap: Spacing.two,
+      marginTop: Spacing.two,
+      paddingBottom: Spacing.three,
+    },  });
 }
