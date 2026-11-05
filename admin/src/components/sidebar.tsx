@@ -9,6 +9,8 @@ export const SECTIONS = [
   'Vagas',
   'Avisos',
   'Utilidade Pública',
+  'Atrações',
+  'Eventos',
   'Usuários',
 ] as const;
 

@@ -12,6 +12,10 @@ import type {
   Paginated,
   PublicUtility,
   PublicUtilityCategory,
+  TourEvent,
+  TourEventCategory,
+  TouristSpot,
+  TouristSpotCategory,
   User,
 } from '../types/domain';
 
@@ -206,6 +210,77 @@ export interface PublicUtilityInput {
 
 export type UpdatePublicUtilityInput = Partial<PublicUtilityInput>;
 
+/** Campos aceitos na criação/edição de um ponto turístico. `city` é o slug da cidade. */
+export interface TouristSpotInput {
+  name: string;
+  slug: string;
+  description: string;
+  category: TouristSpotCategory;
+  photos?: string[];
+  /** `null` limpa o endereço já salvo. */
+  address?: string | null;
+  /** Slug da cidade (mesma convenção usada pela API de empresas). `null` = todas. */
+  city?: string | null;
+  latitude?: number;
+  longitude?: number;
+  openingHours?: string[];
+  entryFee?: 'free' | 'paid' | 'donation';
+  /** Texto livre ("R$ 10,00"); obrigatório quando `entryFee` é "paid". */
+  entryPrice?: string;
+  /** `null` limpa o telefone já salvo. */
+  phone?: string | null;
+  /** `null` limpa o WhatsApp já salvo. */
+  whatsapp?: string | null;
+  website?: string;
+  instagram?: string;
+  featured?: boolean;
+  active: boolean;
+  order?: number;
+  /** Empresa relacionada, por id ou slug. `null` limpa. */
+  relatedCompany?: string | null;
+}
+
+export type UpdateTouristSpotInput = Partial<TouristSpotInput>;
+
+/** Campos aceitos na criação/edição de um evento turístico. `city` é o slug da cidade. */
+export interface TourEventInput {
+  name: string;
+  slug: string;
+  description: string;
+  category: TourEventCategory;
+  /** Data de início, formato YYYY-MM-DD (SEM hora). */
+  startDate: string;
+  /** Data de fim (>= `startDate`), formato YYYY-MM-DD (SEM hora). */
+  endDate: string;
+  startTime?: string;
+  endTime?: string;
+  location?: string;
+  /** `null` limpa o endereço já salvo. */
+  address?: string | null;
+  /** Slug da cidade (mesma convenção usada pela API de empresas). `null` = todas. */
+  city?: string | null;
+  latitude?: number;
+  longitude?: number;
+  organizer?: string;
+  /** Empresa organizadora, por id ou slug. `null` limpa. */
+  organizerCompany?: string | null;
+  ticket?: 'free' | 'paid';
+  /** Texto livre ("R$ 40,00"); obrigatório quando `ticket` é "paid". */
+  ticketPrice?: string;
+  ticketUrl?: string;
+  photos?: string[];
+  /** `null` limpa o telefone já salvo. */
+  phone?: string | null;
+  /** `null` limpa o WhatsApp já salvo. */
+  whatsapp?: string | null;
+  website?: string;
+  instagram?: string;
+  featured?: boolean;
+  active: boolean;
+}
+
+export type UpdateTourEventInput = Partial<TourEventInput>;
+
 /**
  * Item devolvido por `GET /users`.
  *
@@ -256,6 +331,25 @@ export async function getUsers(page = 1, pageSize = DEFAULT_PAGE_SIZE): Promise<
 
 export async function getPublicUtilities(page = 1, pageSize = DEFAULT_PAGE_SIZE): Promise<Paginated<PublicUtility>> {
   return request<Paginated<PublicUtility>>(`/public-utilities?${paginationQuery(page, pageSize)}`);
+}
+
+export async function getTouristSpots(page = 1, pageSize = DEFAULT_PAGE_SIZE): Promise<Paginated<TouristSpot>> {
+  return request<Paginated<TouristSpot>>(`/tourist-spots?${paginationQuery(page, pageSize)}`);
+}
+
+/**
+ * Eventos turísticos.
+ *
+ * O painel precisa enxergar também os eventos já encerrados (para editar e
+ * desativar): sem `includePast=true` o backend esconde os vencidos.
+ */
+export async function getEvents(page = 1, pageSize = DEFAULT_PAGE_SIZE): Promise<Paginated<TourEvent>> {
+  const params = new URLSearchParams({
+    page: String(page),
+    pageSize: String(pageSize),
+    includePast: 'true',
+  });
+  return request<Paginated<TourEvent>>(`/events?${params.toString()}`);
 }
 
 /**
@@ -368,6 +462,30 @@ export async function updatePublicUtility(id: string, body: UpdatePublicUtilityI
 
 export async function deletePublicUtility(id: string): Promise<void> {
   await apiDelete<void>(`/public-utilities/${id}`);
+}
+
+export async function createTouristSpot(body: TouristSpotInput): Promise<TouristSpot> {
+  return apiPost<TouristSpot>('/tourist-spots', body);
+}
+
+export async function updateTouristSpot(id: string, body: UpdateTouristSpotInput): Promise<TouristSpot> {
+  return apiPut<TouristSpot>(`/tourist-spots/${id}`, body);
+}
+
+export async function deleteTouristSpot(id: string): Promise<void> {
+  await apiDelete<void>(`/tourist-spots/${id}`);
+}
+
+export async function createEvent(body: TourEventInput): Promise<TourEvent> {
+  return apiPost<TourEvent>('/events', body);
+}
+
+export async function updateEvent(id: string, body: UpdateTourEventInput): Promise<TourEvent> {
+  return apiPut<TourEvent>(`/events/${id}`, body);
+}
+
+export async function deleteEvent(id: string): Promise<void> {
+  await apiDelete<void>(`/events/${id}`);
 }
 
 // ---------------------------------------------------------------------------
