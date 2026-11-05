@@ -4,7 +4,6 @@ import { parsePagination } from './http.js';
 import {
   lerBooleano,
   lerEnum,
-  lerInteiro,
   lerListaDeSlugs,
   lerTexto,
   parametroInvalido,
@@ -114,47 +113,6 @@ describe('lerBooleano', () => {
 
   it('booleano cru → 400', () => {
     falha400(() => lerBooleano(true));
-  });
-});
-
-describe('lerInteiro', () => {
-  it('parâmetro ausente → undefined', () => {
-    expect(lerInteiro(undefined)).toBeUndefined();
-    expect(lerInteiro(null)).toBeUndefined();
-  });
-
-  it("'12' → 12", () => {
-    expect(lerInteiro('12')).toBe(12);
-  });
-
-  it('string vazia → undefined', () => {
-    expect(lerInteiro('')).toBeUndefined();
-  });
-
-  it("'abc' → 400", () => {
-    falha400(() => lerInteiro('abc'));
-  });
-
-  it("'-3' é numérico e respeita o clamp do min padrão (0)", () => {
-    expect(lerInteiro('-3')).toBe(0);
-  });
-
-  it('array → 400', () => {
-    falha400(() => lerInteiro(['12']));
-  });
-
-  it('objeto → 400', () => {
-    falha400(() => lerInteiro({}));
-  });
-
-  it("decimal '1.5' → 400 (só inteiro)", () => {
-    falha400(() => lerInteiro('1.5'));
-  });
-
-  it('clamp em [min, max]', () => {
-    expect(lerInteiro('0', { min: 1 })).toBe(1);
-    expect(lerInteiro('500', { max: 100 })).toBe(100);
-    expect(lerInteiro('50', { min: 1, max: 100 })).toBe(50);
   });
 });
 
@@ -270,11 +228,6 @@ describe('nome do parâmetro na mensagem do 400', () => {
   it('lerBooleano propaga o nome do campo', () => {
     const erro = falha400(() => lerBooleano('1', 'featured'));
     expect(erro.message).toContain("'featured'");
-  });
-
-  it('lerInteiro propaga o nome do campo', () => {
-    const erro = falha400(() => lerInteiro('abc', { nome: 'page' }));
-    expect(erro.message).toContain("'page'");
   });
 
   it('lerListaDeSlugs propaga o nome do campo em todas as falhas', () => {

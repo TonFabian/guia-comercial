@@ -76,35 +76,6 @@ export function lerBooleano(valor: unknown, nome = NOME_GENERICO): boolean | und
   return falha(nome, "booleanos aceitos: 'true' ou 'false'");
 }
 
-interface OpcoesDeInteiro {
-  min?: number;
-  max?: number;
-  /** Nome do parâmetro de query, para a mensagem do 400 (ex.: 'page'). */
-  nome?: string;
-}
-
-/**
- * Inteiro de query: apenas string numérica inteira. Número cru não é aceito:
- * parâmetros de query chegam sempre como string no Express; aceitar número
- * reabriria confusão de tipos (defesa em profundidade). O resultado é clampado
- * em [min, max] quando as bordas são informadas (min padrão 0).
- */
-export function lerInteiro(valor: unknown, opcoes?: OpcoesDeInteiro): number | undefined {
-  const nome = opcoes?.nome ?? NOME_GENERICO;
-  if (valor === undefined || valor === null) return undefined;
-  if (typeof valor !== 'string') return falha(nome, 'esperado número, recebido tipo não texto');
-
-  const texto = textoLimpo(valor);
-  if (texto === '') return undefined;
-  if (!/^-?\d+$/.test(texto)) return falha(nome, 'esperado número inteiro');
-
-  let numero = Number(texto);
-  const min = opcoes?.min ?? 0;
-  const max = opcoes?.max ?? Number.POSITIVE_INFINITY;
-  numero = Math.min(Math.max(numero, min), max);
-  return numero;
-}
-
 /** Teto padrão de itens numa lista de slugs. */
 const LIMITE_ITENS_PADRAO = 20;
 

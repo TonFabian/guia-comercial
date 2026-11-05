@@ -154,7 +154,7 @@ describe('POST /api/push-tokens — validação do body', () => {
     expect(response.status).toBe(422);
   });
 
-  it('chave desconhecida no body (clerkId forjado) → 422 e não grava campo', async () => {
+  it('chave desconhecida no body (clerkId forjado) é descartada → 200 com o dono da sessão', async () => {
     const response = await request(app)
       .post('/api/push-tokens')
       .set('Authorization', 'Bearer token_comum')
