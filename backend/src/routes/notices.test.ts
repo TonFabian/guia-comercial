@@ -9,15 +9,23 @@ import type { MemoryDocument, MemoryModel } from '../test-support/memory-model.j
 vi.stubEnv('CLERK_SECRET_KEY', 'sk_test_placeholder');
 vi.stubEnv('CLERK_PUBLISHABLE_KEY', 'pk_test_placeholder');
 
+/** Sessões fake do Clerk: token -> clerkId (usuário comum incluído para 403). */
+const { sessoes } = vi.hoisted(() => ({
+  sessoes: new Map<string, string>([
+    ['token_admin', 'user_admin'],
+    ['token_comum', 'user_comum'],
+  ]),
+}));
+
 vi.mock('@clerk/backend', () => ({
   createClerkClient: () => ({
     authenticateRequest: async (request: Request) => {
       const authorization = request.headers.get('authorization') ?? '';
-      const semSessao = !authorization;
-      return {
-        isAuthenticated: !semSessao,
-        toAuth: () => ({ userId: semSessao ? null : 'user_admin', sessionId: 'sess_1' }),
-      };
+      const userId = sessoes.get(authorization.replace('Bearer ', ''));
+      if (!userId) {
+        return { isAuthenticated: false, toAuth: () => ({ userId: null }) };
+      }
+      return { isAuthenticated: true, toAuth: () => ({ userId, sessionId: 'sess_1' }) };
     },
     users: {
       getUser: async (id: string) => ({
@@ -55,6 +63,9 @@ let app: Express;
 const modeloAvisos = NoticeModel as unknown as MemoryModel;
 const modeloUsuarios = UserModel as unknown as MemoryModel;
 
+/** Janelas relativas a agora: prova que o filtro vigente compara datas. */
+const expiresAtVencido = new Date(Date.now() - 24 * 60 * 60 * 1000).toISOString();
+
 const avisosFake: MemoryDocument[] = [
   {
     _id: '000000000000000000000060',
@@ -68,6 +79,13 @@ const avisosFake: MemoryDocument[] = [
     body: 'Aviso ainda não publicado.',
     active: false,
   },
+  {
+    _id: '000000000000000000000062',
+    title: 'Aviso vencido',
+    body: 'Publicou, ativo, mas a janela de datas já passou.',
+    active: true,
+    expiresAt: expiresAtVencido,
+  },
 ];
 
 const usuariosFake: MemoryDocument[] = [
@@ -78,6 +96,14 @@ const usuariosFake: MemoryDocument[] = [
     firstName: 'Ana',
     lastName: 'Admin',
     role: 'admin',
+  },
+  {
+    _id: '000000000000000000000011',
+    clerkId: 'user_comum',
+    email: 'maria@example.com',
+    firstName: 'Maria',
+    lastName: 'Silva',
+    role: 'user',
   },
 ];
 
@@ -98,25 +124,94 @@ beforeEach(() => {
 });
 
 describe('GET /api/notices', () => {
-  it('responde a página paginada no shape Paginated', async () => {
+  it('default fail-closed: sem `active` devolve só avisos ativos e vigentes', async () => {
     const response = await request(app).get('/api/notices');
 
     expect(response.status).toBe(200);
-    expect(response.body.total).toBe(2);
-    expect(response.body.page).toBe(1);
-    expect(response.body.pageSize).toBe(20);
-    expect(response.body.items).toHaveLength(2);
+    expect(response.body.total).toBe(1);
+    expect(response.body.items).toHaveLength(1);
+    expect(response.body.items[0].title).toBe('Feira seria adiada');
+
+    // Rascunho e vencido devolvem MAIS dados do que o público pode ver.
+    const corpo = JSON.stringify(response.body);
+    expect(corpo).not.toContain('Rascunho interno');
+    expect(corpo).not.toContain('Aviso vencido');
   });
 
-  it('?active=true traz apenas o aviso publicado', async () => {
+  it('responde no shape Paginated', async () => {
+    const response = await request(app).get('/api/notices?active=true');
+
+    expect(response.status).toBe(200);
+    expect(response.body.page).toBe(1);
+    expect(response.body.pageSize).toBe(20);
+    expect(response.body.total).toBe(1);
+  });
+
+  it('?active=true traz apenas avisos ativos e vigentes (vencido fora)', async () => {
     const response = await request(app).get('/api/notices?active=true');
 
     expect(response.status).toBe(200);
     expect(response.body.total).toBe(1);
     expect(response.body.items[0].title).toBe('Feira seria adiada');
+
+    const corpo = JSON.stringify(response.body);
+    expect(corpo).not.toContain('Aviso vencido');
   });
 
-  it('active fora de true/false → 400 (antes era ignorado silenciosamente)', async () => {
+  it('?active=false sem sessão → 401 e nenhum rascunho', async () => {
+    const response = await request(app).get('/api/notices?active=false');
+
+    expect(response.status).toBe(401);
+    expect(JSON.stringify(response.body)).not.toContain('Rascunho interno');
+  });
+
+  it('?active=false com usuário comum → 403', async () => {
+    const response = await request(app)
+      .get('/api/notices?active=false')
+      .set('Authorization', 'Bearer token_comum');
+
+    expect(response.status).toBe(403);
+  });
+
+  it('?active=false com admin → só os rascunhos', async () => {
+    const response = await request(app)
+      .get('/api/notices?active=false')
+      .set('Authorization', 'Bearer token_admin');
+
+    expect(response.status).toBe(200);
+    expect(response.body.total).toBe(1);
+    expect(response.body.items[0].title).toBe('Rascunho interno');
+    expect(JSON.stringify(response.body)).not.toContain('Feira seria adiada');
+  });
+
+  it('?active=all sem sessão → 401', async () => {
+    const response = await request(app).get('/api/notices?active=all');
+
+    expect(response.status).toBe(401);
+  });
+
+  it('?active=all com usuário comum → 403', async () => {
+    const response = await request(app)
+      .get('/api/notices?active=all')
+      .set('Authorization', 'Bearer token_comum');
+
+    expect(response.status).toBe(403);
+  });
+
+  it('?active=all com admin → todos (ativo, rascunho e vencido)', async () => {
+    const response = await request(app)
+      .get('/api/notices?active=all')
+      .set('Authorization', 'Bearer token_admin');
+
+    expect(response.status).toBe(200);
+    expect(response.body.total).toBe(3);
+    const titulos = response.body.items.map((aviso: { title: string }) => aviso.title);
+    expect(titulos).toContain('Feira seria adiada');
+    expect(titulos).toContain('Rascunho interno');
+    expect(titulos).toContain('Aviso vencido');
+  });
+
+  it('active fora de true/false/all → 400 (antes era ignorado silenciosamente)', async () => {
     const response = await request(app).get('/api/notices?active=banana');
 
     expect(response.status).toBe(400);

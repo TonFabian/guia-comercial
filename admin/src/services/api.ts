@@ -320,8 +320,21 @@ export async function getJobs(page = 1, pageSize = DEFAULT_PAGE_SIZE): Promise<P
   return request<Paginated<Job>>(`/jobs?${paginationQuery(page, pageSize)}`);
 }
 
+/**
+ * Avisos do guia, para gerenciar no painel.
+ *
+ * O painel vê também rascunhos e avisos vencidos (para editar, publicar e
+ * desativar). O default do backend agora é fail-closed — sem `active` ele
+ * devolve só avisos ativos e vigentes, e apenas `active=all` (admin) devolve
+ * a lista completa.
+ */
 export async function getNotices(page = 1, pageSize = DEFAULT_PAGE_SIZE): Promise<Paginated<Notice>> {
-  return request<Paginated<Notice>>(`/notices?${paginationQuery(page, pageSize)}`);
+  const params = new URLSearchParams({
+    page: String(page),
+    pageSize: String(pageSize),
+    active: 'all',
+  });
+  return request<Paginated<Notice>>(`/notices?${params.toString()}`);
 }
 
 /** Usuários do app (admin-only no backend). Somente leitura no painel. */

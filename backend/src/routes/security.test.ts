@@ -428,10 +428,12 @@ const CASOS_VARREDURA: Caso[] = [
   caso('/api/coupons?company=a&company=b', 400),
   caso('/api/coupons?page=abc', 200, { total: 2 }),
 
-  // GET /api/notices (active, page, pageSize) — active=false é a §2
+  // GET /api/notices (active: true/false/all, page, pageSize) — o default é
+  // fail-closed (ativos e vigentes); false/all são consultas administrativas.
   caso('/api/notices?active=xyz', 400),
   caso('/api/notices?active=true&active=false', 400),
-  caso('/api/notices?page=abc', 200, { total: 2 }),
+  caso('/api/notices?active=all', 401),
+  caso('/api/notices?page=abc', 200, { total: 1 }),
 
   // GET /api/public-utilities (category enum, active, city)
   caso('/api/public-utilities?category[$ne]=x', 200, { total: 3 }),
@@ -781,6 +783,14 @@ describe('1.5 Autorização', () => {
 // ---------------------------------------------------------------------------
 
 describe('2. GET /api/notices?active=false exige admin (rascunhos não são públicos)', () => {
+  it('convidado com ?active=all fica sem acesso (nunca recebe lista completa)', async () => {
+    const resposta = await request(app).get('/api/notices?active=all');
+    expect(resposta.status).toBe(401);
+
+    const textoResposta = JSON.stringify(resposta.body);
+    expect(textoResposta).not.toContain('Rascunho interno');
+  });
+
   it('convidado com ?active=false fica sem acesso (nunca recebe rascunho)', async () => {
     const resposta = await request(app).get('/api/notices?active=false');
     expect(resposta.status).toBe(401);
@@ -796,9 +806,18 @@ describe('2. GET /api/notices?active=false exige admin (rascunhos não são púb
     expect(resposta.status).toBe(403);
   });
 
-  it('admin com ?active=false lista os avisos (inclui o rascunho)', async () => {
+  it('admin com ?active=false lista só os rascunhos (ativos ficam de fora)', async () => {
     const resposta = await request(app)
       .get('/api/notices?active=false')
+      .set('Authorization', 'Bearer token_admin');
+    expect(resposta.status).toBe(200);
+    expect(resposta.body.total).toBe(1);
+    expect(resposta.body.items[0].title).toBe('Rascunho interno');
+  });
+
+  it('admin com ?active=all lista todos (ativo + rascunho)', async () => {
+    const resposta = await request(app)
+      .get('/api/notices?active=all')
       .set('Authorization', 'Bearer token_admin');
     expect(resposta.status).toBe(200);
     expect(resposta.body.total).toBe(2);

@@ -17,18 +17,29 @@ function assegurarIdValido(id: string): void {
   }
 }
 
+/**
+ * Modos de listagem de avisos:
+ * - 'ativos' — publicados (active) e dentro da janela de datas; é o que o app
+ *   (Mural) e o visitante veem;
+ * - 'inativos' — só rascunhos (consulta administrativa);
+ * - 'todos' — sem filtro nenhum (lista de gerenciamento do painel).
+ */
+export type FiltroAvisos = 'ativos' | 'inativos' | 'todos';
+
 export async function listNotices(
-  activeOnly = false,
+  filtro: FiltroAvisos = 'ativos',
   pagination?: Pagination,
 ): Promise<{ items: Notice[]; total: number }> {
   const now = new Date().toISOString();
   const query: Record<string, unknown> = {};
-  if (activeOnly) {
+  if (filtro === 'ativos') {
     query.active = true;
     query.$and = [
       { $or: [{ expiresAt: { $exists: false } }, { expiresAt: { $gte: now } }] },
       { $or: [{ startsAt: { $exists: false } }, { startsAt: { $lte: now } }] },
     ];
+  } else if (filtro === 'inativos') {
+    query.active = false;
   }
   const pg = pagination ?? { skip: 0, limit: 100, page: 1, pageSize: 100 };
   const [items, total] = await Promise.all([

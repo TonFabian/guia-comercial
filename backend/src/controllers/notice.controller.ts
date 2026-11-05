@@ -3,23 +3,35 @@ import type { Request, Response } from 'express';
 import * as service from '../services/notice.service.js';
 import { assertAdmin } from '../services/user.service.js';
 import { asyncHandler, parsePagination } from '../utils/http.js';
-import { lerBooleano } from '../utils/query.js';
+import { lerEnum } from '../utils/query.js';
+
+/** Valores aceitos no parâmetro `active` da listagem de avisos. */
+const VALORES_ACTIVE = ['true', 'false', 'all'] as const;
 
 export const list = asyncHandler(async (req: Request, res: Response): Promise<void> => {
   const pagination = parsePagination(req.query.page, req.query.pageSize);
   // Sanitização aqui no controller (e não no service): o service já recebe o
-  // booleano pronto (assinatura `listNotices(activeOnly, pagination)`) e o
+  // modo pronto (assinatura `listNotices(filtro, pagination)`) e o
   // `req.query.active` é lido ÚNICAMENTE neste ponto — a borda de parse é o
-  // momento certo de validar e o 400 nasce com o nome do parâmetro.
-  const active = lerBooleano(req.query.active, 'active');
-  // Rascunhos de aviso são conteúdo administrativo: pedir `active=false`
-  // explicitamente é tentar listar o que não foi publicado — exige admin.
-  // Sem a checagem, qualquer visitante lista os avisos inativos (achado da
-  // auditoria). `active=true` e ausente continuam públicos (Mural da Home).
-  if (active === false) {
-    await assertAdmin(req.auth?.clerkId, 'listar rascunhos de aviso');
+  // momento certo de validar e o 400 nasce com o nome do parâmetro. Não é
+  // `lerBooleano` porque o contrato agora aceita também 'all'.
+  const active = lerEnum(req.query.active, VALORES_ACTIVE, 'active');
+  // Default fail-closed: ausente é tratado como 'true' — a API pública só
+  // publicar aviso ativo E vigente; devolver sem filtro (comportamento antigo)
+  // expunha rascunhos e vencidos a qualquer visitante (achado da auditoria).
+  const filtro =
+    active === 'false' ? 'inativos' : active === 'all' ? 'todos' : 'ativos';
+  // Rascunhos e lista completa são conteúdo administrativo: pedir `active`
+  // diferente de 'true'/ausente é tentar listar o que não foi publicado —
+  // exige admin. Sem sessão o `assertAdmin` devolve 401; com sessão sem a
+  // role, 403 (mesmo padrão dos demais endpoints administrativos).
+  if (filtro !== 'ativos') {
+    await assertAdmin(
+      req.auth?.clerkId,
+      filtro === 'todos' ? 'listar todos os avisos' : 'listar rascunhos de aviso',
+    );
   }
-  const { items, total } = await service.listNotices(active === true, pagination);
+  const { items, total } = await service.listNotices(filtro, pagination);
   res.json({ items, total, page: pagination.page, pageSize: pagination.pageSize });
 });
 
