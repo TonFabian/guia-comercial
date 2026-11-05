@@ -90,6 +90,29 @@ export async function getCompanies(page = 1, pageSize = 20, city?: string, featu
   return { items: fallbackItems, total: fallbackTotal, page, pageSize };
 }
 
+/**
+ * Empresas cujo dono é o `ownerClerkId` informado.
+ *
+ * `null` quando a consulta não pôde ser feita — a UI distingue "sem empresa"
+ * (lista vazia) de "não sei" (falha), para não rotular o usuário errado.
+ */
+export async function getOwnedCompanies(ownerClerkId: string): Promise<Company[] | null> {
+  if (!ownerClerkId) return null;
+
+  if (!isApiConfigured()) {
+    return __DEV__ ? MOCK_COMPANIES.filter((c) => c.ownerClerkId === ownerClerkId) : null;
+  }
+
+  try {
+    const params = new URLSearchParams({ owner: ownerClerkId, page: '1', pageSize: '1' });
+    const payload = await request<Company>(`/companies?${params.toString()}`);
+    if (!payload) return null;
+    return fromPaginated(payload, []);
+  } catch {
+    return null;
+  }
+}
+
 export async function getCoupons(): Promise<Coupon[]> {
   const payload = await request<Coupon>('/coupons');
   return fromPaginated(payload, mockFallback(MOCK_COUPONS));

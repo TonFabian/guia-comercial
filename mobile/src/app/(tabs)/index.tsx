@@ -19,6 +19,7 @@ import { BannerCarousel } from '@/features/home/banner-carousel';
 import { CategoryList } from '@/features/home/category-list';
 import { FeaturedCompany } from '@/features/home/featured-company';
 import { Header } from '@/features/home/header';
+import { excludeFeaturedCompany } from '@/features/home/home-companies';
 import { JobList } from '@/features/home/job-list';
 import { NoticesCarousel } from '@/features/home/notices-carousel';
 import { OtherCompanies } from '@/features/home/other-companies';
@@ -73,6 +74,11 @@ export default function HomeScreen() {
   const [otherCompaniesError, setOtherCompaniesError] = useState<string | null>(null);
   const [utilitiesError, setUtilitiesError] = useState<string | null>(null);
   const [utilitiesToken, setUtilitiesToken] = useState(0);
+
+  const visibleOtherCompanies = useMemo(
+    () => excludeFeaturedCompany(otherCompanies, featuredCompany),
+    [otherCompanies, featuredCompany],
+  );
 
   useEffect(() => {
     let cancelled = false;
@@ -209,7 +215,11 @@ export default function HomeScreen() {
             <View style={{ flex: 1 }}>
               <CategoryList categories={categories} />
               <FeaturedCompany company={featuredCompany} />
-              <OtherCompanies companies={otherCompanies} loading={otherCompaniesLoading} error={otherCompaniesError} />
+              <OtherCompanies
+                companies={visibleOtherCompanies}
+                loading={otherCompaniesLoading}
+                error={otherCompaniesError}
+              />
               {banners.length > 0 ? (
                 <>
                   <SectionHeader title="Promoções da Semana" />

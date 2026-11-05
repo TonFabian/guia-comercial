@@ -1,7 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import Constants from 'expo-constants';
 import { router } from 'expo-router';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { ComponentProps } from 'react';
 import {
   ActivityIndicator,
@@ -14,12 +14,14 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { SUPPORT_WHATSAPP_MESSAGE, SUPPORT_WHATSAPP_PHONE, TERMS_URL } from '@/constants/support';
 import { Radius, Spacing, Type } from '@/constants/theme';
 import { useThemeColors } from '@/hooks/use-theme-colors';
 import { useAuthState } from '@/providers/auth-provider';
 import { useThemeMode } from '@/providers/theme-provider';
 import { getMe, updateMe } from '@/services/api';
 import { isApiConfigured } from '@/services/http';
+import { openExternalUrl, openWhatsApp } from '@/utils/links';
 
 const APP_NAME = Constants.expoConfig?.name ?? 'Guia Comercial';
 const APP_VERSION = Constants.expoConfig?.version ?? '1.0.0';
@@ -30,12 +32,18 @@ export function SettingsScreen() {
   const { mode, setMode } = useThemeMode();
   const { state, user } = useAuthState();
 
-  const [notifications, setNotifications] = useState(user?.preferences?.notifications ?? true);
-  const [loadingPreferences, setLoadingPreferences] = useState(false);
+  const [publicUtilityAlerts, setPublicUtilityAlerts] = useState(
+    user?.preferences?.publicUtilityAlerts ?? true,
+  );
+  const [jobPostingAlerts, setJobPostingAlerts] = useState(
+    user?.preferences?.jobPostingAlerts ?? true,
+  );
+  const [loadingPreferences, setLoadingPreferences] = useState(state === 'signedIn');
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const legacyNotifications = useRef<boolean | undefined>(undefined);
 
-  // A preferência fica no backend (/me); o espelho do Clerk não a traz.
+  // As preferências ficam no backend (/me); o espelho do Clerk não as traz.
   useEffect(() => {
     if (state !== 'signedIn') return;
 
@@ -44,11 +52,15 @@ export function SettingsScreen() {
       setLoadingPreferences(true);
       try {
         const me = await getMe();
-        const preference = me?.preferences?.notifications;
-        if (cancelled || preference === undefined) return;
-        setNotifications(preference);
+        if (cancelled) return;
+
+        const publicUtility = me?.preferences?.publicUtilityAlerts;
+        const jobPosting = me?.preferences?.jobPostingAlerts;
+        legacyNotifications.current = me?.preferences?.notifications;
+        if (publicUtility !== undefined) setPublicUtilityAlerts(publicUtility);
+        if (jobPosting !== undefined) setJobPostingAlerts(jobPosting);
       } catch {
-        // mantém a preferência exibida
+        // mantém os defaults exibidos
       } finally {
         if (!cancelled) setLoadingPreferences(false);
       }
@@ -59,22 +71,49 @@ export function SettingsScreen() {
     };
   }, [state]);
 
-  async function toggleNotifications(value: boolean) {
-    setNotifications(value);
+  async function savePreferences(next: {
+    publicUtilityAlerts: boolean;
+    jobPostingAlerts: boolean;
+  }): Promise<boolean> {
     setSaving(true);
     setError(null);
 
     try {
-      const updated = await updateMe({ preferences: { notifications: value } });
+      const preferences =
+        legacyNotifications.current === undefined
+          ? next
+          : { ...next, notifications: legacyNotifications.current };
+      const updated = await updateMe({ preferences });
       if (!updated && isApiConfigured()) {
-        setNotifications(!value);
         setError('Não foi possível salvar a preferência de notificações.');
+        return false;
       }
+      return true;
     } catch {
-      setNotifications(!value);
       setError('Não foi possível salvar a preferência de notificações.');
+      return false;
     } finally {
       setSaving(false);
+    }
+  }
+
+  async function togglePreference(
+    key: 'publicUtilityAlerts' | 'jobPostingAlerts',
+    value: boolean,
+  ) {
+    const anteriorPublicUtility = publicUtilityAlerts;
+    const anteriorJobPosting = jobPostingAlerts;
+    const next = {
+      publicUtilityAlerts: key === 'publicUtilityAlerts' ? value : publicUtilityAlerts,
+      jobPostingAlerts: key === 'jobPostingAlerts' ? value : jobPostingAlerts,
+    };
+
+    if (key === 'publicUtilityAlerts') setPublicUtilityAlerts(value);
+    else setJobPostingAlerts(value);
+
+    if (!(await savePreferences(next))) {
+      setPublicUtilityAlerts(anteriorPublicUtility);
+      setJobPostingAlerts(anteriorJobPosting);
     }
   }
 
@@ -114,28 +153,48 @@ export function SettingsScreen() {
 
           <Text style={styles.sectionTitle}>Notificações</Text>
           <View style={styles.card}>
-            <View style={styles.row}>
-              <View style={styles.rowIcon}>
-                <Ionicons name="notifications-outline" size={20} color={colors.primary} />
-              </View>
-              <View style={styles.rowBody}>
-                <Text style={styles.rowLabel}>Avisos e novidades</Text>
-                <Text style={styles.rowHint}>
-                  Receba lembretes de empresas e serviços do guia.
-                </Text>
-              </View>
-              {loadingPreferences ? (
+            {loadingPreferences ? (
+              <View style={styles.loadingRow}>
                 <ActivityIndicator color={colors.primary} />
-              ) : (
-                <Switch
-                  value={notifications}
-                  onValueChange={toggleNotifications}
-                  disabled={saving || state !== 'signedIn'}
-                  accessibilityLabel="Ativar notificações"
-                  trackColor={{ true: colors.primary, false: colors.border }}
-                />
-              )}
-            </View>
+                <Text style={styles.rowHint}>Carregando preferências…</Text>
+              </View>
+            ) : (
+              <>
+                <View style={styles.row}>
+                  <View style={styles.rowIcon}>
+                    <Ionicons name="megaphone-outline" size={20} color={colors.primary} />
+                  </View>
+                  <View style={styles.rowBody}>
+                    <Text style={styles.rowLabel}>Avisos de utilidade pública</Text>
+                    <Text style={styles.rowHint}>Saúde, coleta de lixo e comunicados.</Text>
+                  </View>
+                  <Switch
+                    value={publicUtilityAlerts}
+                    onValueChange={(value) => void togglePreference('publicUtilityAlerts', value)}
+                    disabled={saving || state !== 'signedIn'}
+                    accessibilityLabel="Ativar avisos de utilidade pública"
+                    trackColor={{ true: colors.primary, false: colors.border }}
+                  />
+                </View>
+                <View style={styles.divider} />
+                <View style={styles.row}>
+                  <View style={styles.rowIcon}>
+                    <Ionicons name="briefcase-outline" size={20} color={colors.primary} />
+                  </View>
+                  <View style={styles.rowBody}>
+                    <Text style={styles.rowLabel}>Novas vagas de emprego</Text>
+                    <Text style={styles.rowHint}>Receba vagas publicadas no guia.</Text>
+                  </View>
+                  <Switch
+                    value={jobPostingAlerts}
+                    onValueChange={(value) => void togglePreference('jobPostingAlerts', value)}
+                    disabled={saving || state !== 'signedIn'}
+                    accessibilityLabel="Ativar notificações de novas vagas"
+                    trackColor={{ true: colors.primary, false: colors.border }}
+                  />
+                </View>
+              </>
+            )}
             {state !== 'signedIn' ? (
               <TouchableOpacity
                 style={styles.linkButton}
@@ -149,20 +208,42 @@ export function SettingsScreen() {
             {error ? <Text style={styles.errorText}>{error}</Text> : null}
           </View>
 
-          <Text style={styles.sectionTitle}>Minha empresa</Text>
+          <Text style={styles.sectionTitle}>Suporte & Termos</Text>
           <View style={styles.card}>
             <TouchableOpacity
               style={styles.row}
-              onPress={() => router.push('/my-company')}
+              onPress={() =>
+                void openWhatsApp(SUPPORT_WHATSAPP_PHONE, SUPPORT_WHATSAPP_MESSAGE)
+              }
               accessibilityRole="button"
-              accessibilityLabel="Abrir minha empresa"
+              accessibilityLabel="Ajuda e suporte via WhatsApp"
             >
               <View style={styles.rowIcon}>
-                <Ionicons name="business-outline" size={20} color={colors.primary} />
+                <Ionicons name="logo-whatsapp" size={20} color={colors.whatsapp} />
               </View>
               <View style={styles.rowBody}>
-                <Text style={styles.rowLabel}>Minha empresa</Text>
-                <Text style={styles.rowHint}>Horários, descrição e dados do estabelecimento.</Text>
+                <Text style={styles.rowLabel}>Ajuda & Suporte via WhatsApp</Text>
+                <Text style={styles.rowHint}>Fale com a equipe do Guia Comercial.</Text>
+              </View>
+              <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
+            </TouchableOpacity>
+
+            <View style={styles.divider} />
+
+            <TouchableOpacity
+              style={styles.row}
+              onPress={() =>
+                void openExternalUrl(TERMS_URL, 'Termos de Uso e Privacidade')
+              }
+              accessibilityRole="button"
+              accessibilityLabel="Abrir termos de uso e privacidade"
+            >
+              <View style={styles.rowIcon}>
+                <Ionicons name="document-text-outline" size={20} color={colors.primary} />
+              </View>
+              <View style={styles.rowBody}>
+                <Text style={styles.rowLabel}>Termos de Uso e Privacidade</Text>
+                <Text style={styles.rowHint}>Consulte as regras e a política do app.</Text>
               </View>
               <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
             </TouchableOpacity>
@@ -176,7 +257,7 @@ export function SettingsScreen() {
               </View>
               <View style={styles.rowBody}>
                 <Text style={styles.rowLabel}>{APP_NAME}</Text>
-                <Text style={styles.rowHint}>Versão {APP_VERSION}</Text>
+                <Text style={styles.rowHint}>Versão v{APP_VERSION}</Text>
               </View>
             </View>
           </View>
@@ -267,6 +348,16 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
       borderColor: colors.border,
       padding: Spacing.three,
       gap: Spacing.two,
+    },
+    loadingRow: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: Spacing.two,
+      paddingVertical: Spacing.two,
+    },
+    divider: {
+      height: StyleSheet.hairlineWidth,
+      backgroundColor: colors.border,
     },
     row: {
       flexDirection: 'row',

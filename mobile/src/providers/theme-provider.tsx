@@ -1,8 +1,8 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 
-
-export type ThemeMode = 'light' | 'dark';
+import { resolveThemeMode } from './theme-mode';
+import type { ThemeMode } from './theme-mode';
 
 const STORAGE_KEY = 'guia.theme.mode';
 
@@ -21,12 +21,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     (async () => {
       const stored = await AsyncStorage.getItem(STORAGE_KEY);
-      if (stored === 'light' || stored === 'dark') {
-        setModeState(stored);
-      } else {
-        // default dark, ignoring system
-        setModeState('dark');
-      }
+      setModeState(resolveThemeMode(stored));
       setLoaded(true);
     })();
   }, []);

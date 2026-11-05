@@ -18,6 +18,9 @@ export interface AuthState {
   enterAsGuest: () => void;
   exitGuest: () => void;
   signOut: () => Promise<void>;
+  signOutToGuest: () => Promise<void>;
+  /** Atualiza nome/sobrenome no Clerk; no-op no modo dev sem Clerk. */
+  updateProfileName: (firstName: string, lastName: string) => Promise<void>;
 }
 
 const AuthContext = createContext<AuthState | null>(null);
@@ -41,6 +44,8 @@ const DEV_FALLBACK_STATE: AuthState = {
   enterAsGuest: () => undefined,
   exitGuest: () => undefined,
   signOut: async () => undefined,
+  signOutToGuest: async () => undefined,
+  updateProfileName: async () => undefined,
 };
 
 export function AuthProvider({ children }: { children: ReactNode }) {
@@ -118,6 +123,26 @@ function ClerkAuthProvider({ children }: { children: ReactNode }) {
         setGuest(false);
         AsyncStorage.removeItem(GUEST_KEY);
         await signOut();
+      },
+      signOutToGuest: async () => {
+        setGuest(true);
+        try {
+          await signOut();
+        } catch (error) {
+          setGuest(false);
+          throw error;
+        }
+        await AsyncStorage.setItem(GUEST_KEY, '1').catch(() => undefined);
+      },
+      updateProfileName: async (firstName, lastName) => {
+        if (!user) return;
+
+        const name: { firstName?: string; lastName?: string } = {};
+        if (firstName) name.firstName = firstName;
+        if (lastName) name.lastName = lastName;
+        if (!name.firstName && !name.lastName) return;
+
+        await user.update(name).catch(() => undefined);
       },
     }),
     [isLoaded, isSignedIn, guest, signOut, user],
