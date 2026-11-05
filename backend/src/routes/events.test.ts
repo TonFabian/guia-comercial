@@ -269,6 +269,100 @@ describe('GET /api/events', () => {
     expect(slugs).not.toContain('feira-da-colheita');
   });
 
+  it('filtra os eventos pela busca textual no nome (?q=)', async () => {
+    // Case-insensitive: o termo em caixa alta casa com "Festival do Peão".
+    const response = await request(app).get(`/api/events?q=${encodeURIComponent('FESTIVAL')}`);
+
+    expect(response.status).toBe(200);
+    expect(response.body.total).toBe(1);
+    expect(response.body.items[0].name).toBe('Festival do Peão');
+  });
+
+  it('filtra os eventos pela busca textual na descrição (?q=)', async () => {
+    const response = await request(app).get(`/api/events?q=${encodeURIComponent('início no futuro')}`);
+
+    expect(response.status).toBe(200);
+    expect(response.body.total).toBe(1);
+    expect(response.body.items[0].name).toBe('Show da Praça');
+  });
+
+  it('filtra os eventos pela busca textual no local (?q=)', async () => {
+    // Fixture extra (só neste teste): evento vigente com location salvo —
+    // nenhum doc do conjunto base tem esse campo.
+    modeloEventos.documents.push({
+      _id: '000000000000000000000005',
+      name: 'Feira de Artesanato',
+      slug: 'feira-de-artesanato',
+      description: 'Peças manuais e regionais',
+      category: 'fair',
+      startDate: '2026-11-07',
+      endDate: '2026-11-08',
+      location: 'Cânion do Poti',
+      active: true,
+    });
+
+    const response = await request(app).get(`/api/events?q=${encodeURIComponent('cânion do poti')}`);
+
+    expect(response.status).toBe(200);
+    expect(response.body.total).toBe(1);
+    expect(response.body.items[0].name).toBe('Feira de Artesanato');
+  });
+
+  it('devolve lista vazia quando a busca não casa nada (?q=)', async () => {
+    const response = await request(app).get(`/api/events?q=${encodeURIComponent('palavra-que-nao-existe')}`);
+
+    expect(response.status).toBe(200);
+    expect(response.body.total).toBe(0);
+    expect(response.body.items).toHaveLength(0);
+  });
+
+  it('não filtra quando a busca vem vazia (?q=)', async () => {
+    const response = await request(app).get('/api/events?q=');
+
+    expect(response.status).toBe(200);
+    expect(response.body.total).toBe(3);
+    expect(response.body.items).toHaveLength(3);
+  });
+
+  it('o total da busca (?q=) reflete o resultado filtrado, não a coleção', async () => {
+    // pageSize=1 limita a página, mas o total continua sendo 1: só um evento
+    // vigente casa o termo pela descrição ("festa já iniciada").
+    const response = await request(app)
+      .get(`/api/events?q=${encodeURIComponent('festa')}&page=1&pageSize=1`);
+
+    expect(response.status).toBe(200);
+    expect(response.body.total).toBe(1);
+    expect(response.body.items).toHaveLength(1);
+    expect(response.body.items[0].name).toBe('Festival do Peão');
+  });
+
+  it('não derruba a consulta quando a busca traz caractere especial (?q=)', async () => {
+    // `show(` sem escape estouraria SyntaxError em new RegExp (→ 500);
+    // a regex é escapada e o termo literal simplesmente não casa.
+    const response = await request(app).get(`/api/events?q=${encodeURIComponent('show(')}`);
+
+    expect(response.status).toBe(200);
+    expect(response.body.total).toBe(0);
+    expect(response.body.items).toHaveLength(0);
+  });
+
+  it('a busca (?q=) continua respeitando a vigência dos eventos', async () => {
+    // "Feira da Colheita" casa o termo, mas está vencida: sem includePast
+    // não aparece, e com includePast=true ela volta.
+    const semVencido = await request(app).get(`/api/events?q=${encodeURIComponent('colheita')}`);
+
+    expect(semVencido.status).toBe(200);
+    expect(semVencido.body.total).toBe(0);
+    expect(semVencido.body.items).toHaveLength(0);
+
+    const comVencido = await request(app)
+      .get(`/api/events?q=${encodeURIComponent('colheita')}&includePast=true`);
+
+    expect(comVencido.status).toBe(200);
+    expect(comVencido.body.total).toBe(1);
+    expect(comVencido.body.items[0].name).toBe('Feira da Colheita');
+  });
+
   it('?includePast=true traz o evento vencido', async () => {
     const response = await request(app).get('/api/events?active=true&includePast=true');
 

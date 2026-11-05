@@ -9,6 +9,7 @@ import type { Company } from '../../../shared/domain.js';
 import type { CreateCompanyDto, UpdateCompanyDto } from '../types/dto.js';
 import type { Pagination } from '../utils/http.js';
 import { geocodeAddress } from '../utils/geocode.js';
+import { escapeRegex } from '../utils/regex.js';
 
 /** Critério de busca compatível com FilterQuery<Company>. */
 type CompanyQuery = {
@@ -274,6 +275,3 @@ async function findCategoryIdBySlug(slug: string): Promise<string | null> {
   return category ? String(category._id) : null;
 }
 
-function escapeRegex(value: string): string {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}

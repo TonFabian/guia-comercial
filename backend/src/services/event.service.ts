@@ -6,6 +6,7 @@ import { TourEventModel } from '../models/event.model.js';
 import { assertAdmin } from './user.service.js';
 import { listAllPushTokens } from './push-token.service.js';
 import { todayInFortaleza } from '../utils/event-date.js';
+import { escapeRegex } from '../utils/regex.js';
 import type { TourEvent, TourEventCategory } from '../../../shared/domain.js';
 import type { CreateTourEventDto, UpdateTourEventDto } from '../types/dto.js';
 import type { Pagination } from '../utils/http.js';
@@ -16,6 +17,7 @@ type TourEventQuery = {
   active?: boolean;
   city?: string;
   endDate?: { $gte: string };
+  $or?: Array<Record<string, unknown>>;
 };
 
 const CATEGORIAS: TourEventCategory[] = [
@@ -33,6 +35,8 @@ const CATEGORIAS: TourEventCategory[] = [
 export interface TourEventListFilters {
   /** categoria do evento (festival, show, fair, ...) */
   category?: unknown;
+  /** busca textual em name/description/location */
+  q?: unknown;
   /** true/false para filtrar por evento ativo */
   active?: unknown;
   /** cidade (slug) */
@@ -74,6 +78,15 @@ export async function listTourEvents(
     // o dia de Fortaleza também como string — $gte de strings é seguro no
     // formato fixo, e NUNCA se mistura data pura com datetime ISO.
     query.endDate = { $gte: todayInFortaleza() };
+  }
+
+  const termo = typeof filters.q === 'string' ? filters.q.trim() : '';
+  if (termo.length > 0) {
+    // Busca textual em name, description E location ($or): ficou no nível
+    // raiz da query, convive com endDate ($and implícito) sem misturar $or
+    // com o filtro de vigência. Regex sempre escapada (entrada não confiável).
+    const regex = new RegExp(escapeRegex(termo), 'i');
+    query.$or = [{ name: regex }, { description: regex }, { location: regex }];
   }
 
   const [items, total] = await Promise.all([

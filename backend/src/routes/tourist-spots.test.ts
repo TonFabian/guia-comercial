@@ -209,6 +209,69 @@ describe('GET /api/tourist-spots', () => {
     expect(response.body.items[0].name).toBe('Mirante do Serra');
   });
 
+  it('filtra os pontos pela busca textual no nome (?q=)', async () => {
+    const response = await request(app).get(`/api/tourist-spots?q=${encodeURIComponent('MIRANTE')}`);
+
+    expect(response.status).toBe(200);
+    expect(response.body.total).toBe(1);
+    expect(response.body.items[0].name).toBe('Mirante do Serra');
+  });
+
+  it('filtra os pontos pela busca textual na descrição (?q=)', async () => {
+    const response = await request(app).get(`/api/tourist-spots?q=${encodeURIComponent('canindé')}`);
+
+    expect(response.status).toBe(200);
+    expect(response.body.total).toBe(1);
+    expect(response.body.items[0].name).toBe('Mirante do Serra');
+  });
+
+  it('devolve lista vazia quando a busca não casa nada (?q=)', async () => {
+    const response = await request(app).get(`/api/tourist-spots?q=${encodeURIComponent('palavra-que-nao-existe')}`);
+
+    expect(response.status).toBe(200);
+    expect(response.body.total).toBe(0);
+    expect(response.body.items).toHaveLength(0);
+  });
+
+  it('não filtra quando a busca vem vazia (?q=)', async () => {
+    const response = await request(app).get('/api/tourist-spots?q=');
+
+    expect(response.status).toBe(200);
+    expect(response.body.total).toBe(3);
+    expect(response.body.items).toHaveLength(3);
+  });
+
+  it('o total da busca (?q=) reflete o resultado filtrado, não a coleção', async () => {
+    // pageSize=1 limita a página, mas o total continua sendo 1: só um ponto
+    // casa o termo, mesmo que a coleção tenha 3 documentos.
+    const response = await request(app)
+      .get(`/api/tourist-spots?q=${encodeURIComponent('retiro')}&page=1&pageSize=1`);
+
+    expect(response.status).toBe(200);
+    expect(response.body.total).toBe(1);
+    expect(response.body.items).toHaveLength(1);
+    expect(response.body.items[0].name).toBe('Cachoeira do Retiro');
+  });
+
+  it('não derruba a consulta quando a busca traz caractere especial (?q=)', async () => {
+    // `cachoeira(` sem escape estouraria SyntaxError em new RegExp (→ 500);
+    // a regex é escapada e o termo literal simplesmente não casa.
+    const response = await request(app).get(`/api/tourist-spots?q=${encodeURIComponent('cachoeira(')}`);
+
+    expect(response.status).toBe(200);
+    expect(response.body.total).toBe(0);
+    expect(response.body.items).toHaveLength(0);
+  });
+
+  it('a busca textual convive com os demais filtros (?q= + city)', async () => {
+    const response = await request(app)
+      .get(`/api/tourist-spots?q=${encodeURIComponent('mirante')}&city=castelo-do-piaui`);
+
+    expect(response.status).toBe(200);
+    expect(response.body.total).toBe(1);
+    expect(response.body.items[0].name).toBe('Mirante do Serra');
+  });
+
   it('responde 404 para id malformado', async () => {
     const response = await request(app).get('/api/tourist-spots/nao-e-um-object-id');
 

@@ -7,12 +7,14 @@ import { assertAdmin } from './user.service.js';
 import type { TouristSpot, TouristSpotCategory } from '../../../shared/domain.js';
 import type { CreateTouristSpotDto, UpdateTouristSpotDto } from '../types/dto.js';
 import type { Pagination } from '../utils/http.js';
+import { escapeRegex } from '../utils/regex.js';
 
 /** Critério de busca compatível com o filtro aceito pelo model. */
 type TouristSpotQuery = {
   category?: TouristSpotCategory | { $in: TouristSpotCategory[] };
   active?: boolean;
   city?: string;
+  $or?: Array<Record<string, unknown>>;
 };
 
 const CATEGORIAS: TouristSpotCategory[] = [
@@ -31,6 +33,8 @@ const CATEGORIAS: TouristSpotCategory[] = [
 export interface TouristSpotListFilters {
   /** categoria do ponto (nature, park, waterfall, ...) */
   category?: unknown;
+  /** busca textual em name/description */
+  q?: unknown;
   /** true/false para filtrar por ponto ativo */
   active?: unknown;
   /** cidade (slug) */
@@ -63,6 +67,14 @@ export async function listTouristSpots(
     // Slug sem cidade correspondente não derruba a consulta: filtra por um id
     // inexistente, o que devolve uma lista vazia.
     query.city = found ? String(found._id) : new Types.ObjectId().toString();
+  }
+
+  const termo = typeof filters.q === 'string' ? filters.q.trim() : '';
+  if (termo.length > 0) {
+    // Busca textual em name E description ($or): mesmo padrão de
+    // company.service, com a regex sempre escapada (entrada não confiável).
+    const regex = new RegExp(escapeRegex(termo), 'i');
+    query.$or = [{ name: regex }, { description: regex }];
   }
 
   const [items, total] = await Promise.all([

@@ -9,6 +9,7 @@ export const list = asyncHandler(async (req: Request, res: Response): Promise<vo
   const { items, total } = await service.listTouristSpots(
     {
       category: req.query.category,
+      q: req.query.q,
       active: req.query.active,
       city: req.query.city,
     },
