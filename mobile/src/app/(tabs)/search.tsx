@@ -1,6 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router, useLocalSearchParams } from 'expo-router';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   SectionList,
@@ -28,7 +28,11 @@ import type {
   SearchState,
 } from '@/features/search/search-pagination';
 import { useVoiceSearch } from '@/features/search/use-voice-search';
-import { buildSearchSections, temMaisPagina } from '@/features/search/tourism-search';
+import {
+  buildSearchSections,
+  resultadoObsoleto,
+  temMaisPagina,
+} from '@/features/search/tourism-search';
 import type { SearchItem, SearchSection } from '@/features/search/tourism-search';
 import {
   classificarEvento,
@@ -96,6 +100,10 @@ export default function SearchScreen() {
   const [eventsTotal, setEventsTotal] = useState(0);
   const [loadingTurismo, setLoadingTurismo] = useState(false);
   const [turismoError, setTurismoError] = useState<string | null>(null);
+  // Geração da busca de turismo: incrementa a cada reset (termo, chip ou
+  // reload). Um `loadMore` em voo compara sua geração capturada com esta
+  // ref e descarta a resposta quando ela divergiu (race do termo antigo).
+  const geracaoTurismo = useRef(0);
 
   const [categories, setCategories] = useState<Category[]>([]);
   const [loaded, setLoaded] = useState<Company[]>([]);
@@ -147,6 +155,9 @@ export default function SearchScreen() {
   // permanece no helper puro para cobrir o fallback mock (sem backend).
   useEffect(() => {
     let cancelled = false;
+    // Qualquer mudança de termo/chip/reload reinicia a paginação: antes de
+    // recomeçar as páginas, invalida respostas de `loadMore` ainda em voo.
+    geracaoTurismo.current += 1;
     const timer = setTimeout(() => {
       void (async () => {
         if (!showSpots && !showEvents) {
@@ -262,13 +273,10 @@ export default function SearchScreen() {
           setServerTotal(next.serverTotal);
           setPage(next.page);
           setExhausted(next.exhausted);
-        } catch (caught) {
+        } catch {
           // Falha de empresas não vira erro de turismo nem apaga o carregado.
-          setError(
-            caught instanceof Error
-              ? caught.message
-              : 'Não foi possível carregar mais empresas.',
-          );
+          // Mensagem fixa: o `caught.message` é cru e não vai ao usuário.
+          setError('Não foi possível carregar mais empresas.');
         }
       }
 
@@ -277,6 +285,7 @@ export default function SearchScreen() {
       // Falha anexa erro de turismo sem tocar empresas nem itens carregados.
       let turismoFalhou = false;
       if (!loadingTurismo) {
+        const geracaoTurismoDoFetch = geracaoTurismo.current;
         if (showSpots && spotsTemMais) {
           try {
             const pagina = await getTouristSpots({
@@ -285,6 +294,7 @@ export default function SearchScreen() {
               page: spotsPage + 1,
               pageSize: TURISMO_PAGE_SIZE,
             });
+            if (resultadoObsoleto(geracaoTurismoDoFetch, geracaoTurismo.current)) return;
             setSpots((carregados) => [...carregados, ...pagina.items]);
             setSpotsTotal(pagina.total);
             setSpotsPage(spotsPage + 1);
@@ -300,6 +310,7 @@ export default function SearchScreen() {
               page: eventsPage + 1,
               pageSize: TURISMO_PAGE_SIZE,
             });
+            if (resultadoObsoleto(geracaoTurismoDoFetch, geracaoTurismo.current)) return;
             setEvents((carregados) => [...carregados, ...pagina.items]);
             setEventsTotal(pagina.total);
             setEventsPage(eventsPage + 1);

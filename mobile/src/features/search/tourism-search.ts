@@ -32,6 +32,15 @@ export function temMaisPagina(itensCarregados: number, total: number): boolean {
   return itensCarregados < total;
 }
 
+/**
+ * `true` quando a resposta chegou depois de a busca ter reiniciado (novo
+ * termo, chip ou reload): a geração do fetch divergiu da corrente e o
+ * resultado de um termo antigo é descartado em favor do reset do efeito.
+ */
+export function resultadoObsoleto(geracaoDoFetch: number, geracaoCorrente: number): boolean {
+  return geracaoDoFetch !== geracaoCorrente;
+}
+
 /** Aplica o termo apenas a atrações/eventos; termo vazio devolve tudo. */
 function filtraTurismoPorTermo<T>(
   itens: T[],
@@ -86,9 +95,13 @@ export function buildSearchSections(params: {
   }
 
   if (showEvents) {
+    // `location` também entra: o backend casa o termo em name, description E
+    // location — sem o campo aqui, o filtro local descartaria um evento que
+    // o servidor devolveu casando só pela location.
     const eventos = filtraTurismoPorTermo(events, term, (event) => [
       event.name,
       event.description,
+      event.location,
     ]);
     if (eventos.length > 0) {
       secoes.push({

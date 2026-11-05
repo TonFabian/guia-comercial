@@ -36,6 +36,9 @@ export function TourismSection({ city }: { city?: string }) {
       setLoading(true);
       setError(null);
       try {
+        // Com API real o `city` vai ao servidor (buildTourismQuery). O
+        // fallback mock (modo dev, sem backend configurado) ignora `city`
+        // e devolve itens de qualquer cidade — limitação só do modo dev.
         const [paginaSpots, paginaEvents] = await Promise.all([
           getTouristSpots({ active: true, city, pageSize: 6 }),
           getEvents({ active: true, city, pageSize: 6 }),

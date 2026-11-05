@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import type { Company, TourEvent, TouristSpot } from '@/types/domain';
 
-import { buildSearchSections, temMaisPagina } from './tourism-search';
+import { buildSearchSections, resultadoObsoleto, temMaisPagina } from './tourism-search';
 
 function empresa(overrides: Partial<Company> = {}): Company {
   return {
@@ -190,6 +190,23 @@ describe('buildSearchSections', () => {
     expect(sections[0].items).toHaveLength(1);
   });
 
+  it('mantém evento que casa apenas pela location (o servidor casa por ela)', () => {
+    const sections = buildSearchSections({
+      companies: [],
+      spots: [],
+      events: [
+        evento({ name: 'Festival do Pequi', description: 'Três dias de festa.', location: 'Cânion do Poti' }),
+      ],
+      showSpots: true,
+      showEvents: true,
+      term: 'cânion',
+    });
+
+    const eventos = sections.find((section) => section.key === 'eventos');
+    expect(eventos?.items).toHaveLength(1);
+    expect(eventos?.items[0]?.id).toBe('event-1');
+  });
+
   it('filtra por descrição quando o nome não casa', () => {
     const sections = buildSearchSections({
       companies: [],
@@ -213,6 +230,18 @@ describe('buildSearchSections', () => {
     });
 
     expect(sections).toEqual([]);
+  });
+});
+
+describe('resultadoObsoleto', () => {
+  it('descarta a resposta quando a geração mudou durante o fetch (race do loadMore)', () => {
+    // O efeito de busca reiniciou (novo termo/chip/reload) com o loadMore
+    // em voo: a resposta do termo antigo não pode ancorar na lista nova.
+    expect(resultadoObsoleto(3, 4)).toBe(true);
+  });
+
+  it('mantém a resposta quando a geração não mudou', () => {
+    expect(resultadoObsoleto(4, 4)).toBe(false);
   });
 });
 
