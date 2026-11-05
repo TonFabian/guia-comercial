@@ -134,6 +134,12 @@ tela mostra estado vazio/erro.
 | `admin/`   | `VITE_CLERK_PUBLISHABLE_KEY` | —                              | chave pública do Clerk                                    |
 
 > `.env` nunca é versionado — só `.env.example`. Nenhuma credencial no código.
+>
+> ⚠️ **Modo legado:** sem `CLERK_SECRET_KEY` o backend roda **sem
+> verificação de identidade e de role** — `assertAdmin` libera qualquer
+> requisição (`ehAdmin` devolve true sem sessão). É modo de
+> desenvolvimento apenas: nenhum ambiente exposto publicamente deve rodar
+> assim.
 
 ---
 
@@ -182,13 +188,17 @@ Base: `http://localhost:4000/api`
 Todo parâmetro de entrada (query string e body) é validado no servidor.
 
 - **Query string** — todo parâmetro de query é sanitizado no servidor
-  (`backend/src/utils/query.ts`). Parâmetro **ausente** = sem filtro;
-  parâmetro **malformado** (repetido/virando array, objeto, tipo errado ou
-  valor acima do limite) → **400** com o nome do parâmetro na mensagem.
-  Limites: `q` ≤ 120 caracteres, `page` ≤ 10 000, `pageSize` 1–100 e
-  listas de slug com ≤ 20 itens × 64 caracteres. A busca textual (`q`) é
-  sempre escapada (`escapeRegex`) — o usuário nunca escreve a query do
-  MongoDB.
+  (`backend/src/utils/query.ts`). Parâmetro **ausente** = sem filtro.
+  **Paginação é normalizada, não rejeitada**: `page`/`pageSize` ausentes,
+  vazios ou não numéricos voltam ao default (página 1, 20 itens), e fora
+  da faixa são **clampados** — `page=999999999` responde 200 na página
+  10 000 e `pageSize=1000` responde 200 com 100 itens; nunca disparam
+  erro. Os demais parâmetros sim são rejeitados: **malformado**
+  (repetido/virando array, objeto, tipo errado, texto acima do limite ou
+  fora do enum) → **400** com o nome do parâmetro na mensagem. Limites:
+  `q` ≤ 120 caracteres e listas de slug com ≤ 20 itens × 64 caracteres.
+  A busca textual (`q`) é sempre escapada (`escapeRegex`) — o usuário
+  nunca escreve a query do MongoDB.
 - **Body** — validado por zod na borda (`backend/src/types/dto.ts`), com
   allowlist de campos (chaves desconhecidas são descartadas) → **422**
   com o campo inválido.
@@ -299,14 +309,14 @@ cd admin   && npm run lint && npm run typecheck && npm run build
 | App     | Lint          | Typecheck      | Testes             | Build         |
 | ------- | ------------- | -------------- | ------------------ | ------------- |
 | backend | ESLint (flat) | `tsc --noEmit` | vitest + supertest  | `tsc`         |
-| mobile  | `expo lint`   | `tsc --noEmit` | vitest (165 testes) | `expo export` |
+| mobile  | `expo lint`   | `tsc --noEmit` | vitest (169 testes) | `expo export` |
 | admin   | ESLint (flat) | `tsc --noEmit` | —                  | `vite build`  |
 
 - **TDD** no backend: todo endpoint novo nasce com o teste do supertest
   falhando, depois o código, depois o refactor.
-- Cobertura de teste hoje: **426 testes no backend** (29 arquivos, incluindo
+- Cobertura de teste hoje: **417 testes no backend** (29 arquivos, incluindo
   a varredura de segurança de 107 testes em `src/routes/security.test.ts`) e
-  **165 testes no mobile** (16 arquivos).
+  **169 testes no mobile** (17 arquivos).
 - Formatação: `.prettierrc` na raiz (printWidth 100, aspas simples, trailing
   comma, ponto e vírgula).
 

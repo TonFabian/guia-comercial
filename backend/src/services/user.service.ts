@@ -12,11 +12,12 @@ export function findUserByClerkId(clerkId: string): Promise<User | null> {
 /**
  * true quando o clerk tem a role admin.
  *
- * Modo legado (sem CLERK_SECRET_KEY): true — não há sessão e a autoria é
- * tratada como administrativa, consistente com o comportamento atual do
- * `assertAdmin`. Nunca lança: quem precisa bloquear (401/403) usa
- * `assertAdmin`; quem só precisa de uma decisão (ex.: exibir rascunho por id)
- * usa este helper.
+ * Modo legado (sem CLERK_SECRET_KEY): SEMPRE true — não há sessão com a qual
+ * checar e toda consulta devolve "sim". Neste modo nenhum controle de acesso
+ * é aplicado; garante o funcionamento local sem Clerk, mas nenhum ambiente
+ * exposto publicamente deve rodar assim. Nunca lança: quem precisa bloquear
+ * (401/403) usa `assertAdmin`; quem só precisa de uma decisão (ex.: exibir
+ * rascunho por id) usa este helper.
  */
 export async function ehAdmin(clerkId?: string): Promise<boolean> {
   if (!process.env.CLERK_SECRET_KEY) {
@@ -34,8 +35,11 @@ export async function ehAdmin(clerkId?: string): Promise<boolean> {
  *
  * 401 sem identidade; 403 quando o espelho existe mas não é admin.
  *
- * Modo legado (sem CLERK_SECRET_KEY): não há sessão, portanto mutações
- * administrativas são bloqueadas (fail-closed).
+ * Modo legado (sem CLERK_SECRET_KEY): TODA verificação de admin é liberada
+ * (`ehAdmin` devolve true mesmo sem sessão) — no modo legado não há
+ * verificação de identidade nem de role, as "mutações administrativas" são
+ * tratadas como legítimas. É o modo de desenvolvimento; nenhum ambiente
+ * exposto publicamente deve rodar sem a CLERK_SECRET_KEY.
  */
 export async function assertAdmin(
   clerkId: string | undefined,
