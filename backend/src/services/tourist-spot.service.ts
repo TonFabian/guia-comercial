@@ -80,7 +80,10 @@ export async function listTouristSpots(
   const [items, total] = await Promise.all([
     TouristSpotModel.find(query)
       .populate('city')
-      .sort({ order: 1, name: 1 })
+      // Desempate por _id: order/name podem repetir e, com paginação visível
+      // ao usuário, sem desempate o paginador fica indeterminístico
+      // (itens pulam ou duplicam entre páginas).
+      .sort({ order: 1, name: 1, _id: 1 })
       .skip(pagination.skip)
       .limit(pagination.limit)
       .lean<TouristSpot[]>(),

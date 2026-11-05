@@ -92,7 +92,10 @@ export async function listTourEvents(
   const [items, total] = await Promise.all([
     TourEventModel.find(query)
       .populate('city')
-      .sort({ startDate: 1, name: 1 })
+      // Desempate por _id: startDate/name podem repetir e, com paginação
+      // visível ao usuário, sem desempate o paginador fica indeterminístico
+      // (itens pulam ou duplicam entre páginas).
+      .sort({ startDate: 1, name: 1, _id: 1 })
       .skip(pagination.skip)
       .limit(pagination.limit)
       .lean<TourEvent[]>(),
