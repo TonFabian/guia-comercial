@@ -311,6 +311,31 @@ describe('PUT /api/tourist-spots', () => {
     expect(modeloPontos.documents[0]?.name).toBe('Mirante do Serra');
   });
 
+  it('responde 422 quando o PUT deixa a entrada paga sem preço', async () => {
+    // Doc anterior tem entryFee 'free' e o payload só troca para 'paid':
+    // a invariante deve ser reforçada sobre o estado resultante.
+    const response = await request(app)
+      .put('/api/tourist-spots/000000000000000000000001')
+      .set('Authorization', 'Bearer token_admin')
+      .send({ entryFee: 'paid' });
+
+    expect(response.status).toBe(422);
+    expect(modeloPontos.documents[0]?.entryFee).toBe('free');
+  });
+
+  it('mantém a entrada paga com preço já salvo quando o PUT não manda entryFee', async () => {
+    // Doc 2 já tem entryFee 'paid' + entryPrice salvos: um PUT que só troca o
+    // nome não pode ser barrado pela invariante.
+    const response = await request(app)
+      .put('/api/tourist-spots/000000000000000000000002')
+      .set('Authorization', 'Bearer token_admin')
+      .send({ name: 'Cachoeira do Retiro Atualizada' });
+
+    expect(response.status).toBe(200);
+    expect(modeloPontos.documents[1]?.name).toBe('Cachoeira do Retiro Atualizada');
+    expect(modeloPontos.documents[1]?.entryPrice).toBe('R$ 10,00');
+  });
+
   it('atualiza o ponto turístico quando a sessão é de admin', async () => {
     const response = await request(app)
       .put('/api/tourist-spots/000000000000000000000001')

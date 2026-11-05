@@ -121,9 +121,25 @@ export async function updateTouristSpot(
 ) {
   await assertAdmin(clerkId, 'gerenciar pontos turísticos');
 
+  const atual = await TouristSpotModel.findById(id).lean();
+  if (!atual) {
+    throw Object.assign(new Error('ponto turístico não encontrado'), { statusCode: 404 });
+  }
+
   const update: UpdateTouristSpotDto & { city?: string | null; relatedCompany?: string | null } = {
     ...dto,
   };
+
+  // Invariante reforçada sobre o estado resultante (payload sobrescreve o
+  // documento salvo): entrada paga exige preço, mesmo quando o PUT não traz
+  // entryPrice porque o doc antigo também não tinha.
+  const entryFeeResultante = update.entryFee ?? atual.entryFee;
+  const entryPriceResultante = update.entryPrice ?? atual.entryPrice;
+  if (entryFeeResultante === 'paid' && !(entryPriceResultante ?? '').trim()) {
+    throw Object.assign(new Error('entrada paga exige o preço de entrada (entryPrice)'), {
+      statusCode: 422,
+    });
+  }
 
   if (typeof update.city === 'string') {
     const city = await resolverCidade(update.city);
