@@ -221,7 +221,7 @@ export default function HomeScreen() {
                 loading={otherCompaniesLoading}
                 error={otherCompaniesError}
               />
-              <TourismSection />
+              <TourismSection city={selectedCity} />
               {banners.length > 0 ? (
                 <>
                   <SectionHeader title="Promoções da Semana" />

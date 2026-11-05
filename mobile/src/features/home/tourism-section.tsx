@@ -15,10 +15,11 @@ import { toTourismCards } from './tourism-view';
 
 /**
  * Seção "Turismo & Eventos" da Home: carrega atrações e eventos (em paralelo),
- * mostra indicador durante o carregamento, mensagem curta em erro e some
- * inteira quando não há nada para exibir.
+ * respeitando o filtro de cidade da Home, mostra indicador durante o
+ * carregamento, mensagem curta em erro e some inteira quando não há nada
+ * para exibir.
  */
-export function TourismSection() {
+export function TourismSection({ city }: { city?: string }) {
   const colors = useThemeColors();
   const styles = makeStyles(colors);
   const [spots, setSpots] = useState<TouristSpot[]>([]);
@@ -35,12 +36,9 @@ export function TourismSection() {
       setLoading(true);
       setError(null);
       try {
-        // Limitação conhecida: a seção ignora o filtro de cidade da Home —
-        // os chips de turismo buscam sem `city` (a seção some quando o
-        // resultado é vazio, mas pode exibir atração de outra cidade).
         const [listaSpots, listaEvents] = await Promise.all([
-          getTouristSpots({ active: true, pageSize: 6 }),
-          getEvents({ active: true, pageSize: 6 }),
+          getTouristSpots({ active: true, city, pageSize: 6 }),
+          getEvents({ active: true, city, pageSize: 6 }),
         ]);
         if (!cancelled) {
           setSpots(listaSpots);
@@ -61,7 +59,7 @@ export function TourismSection() {
     return () => {
       cancelled = true;
     };
-  }, [token]);
+  }, [token, city]);
 
   const cards = useMemo(
     () => toTourismCards(spots, events, hojeISO()),
