@@ -6,7 +6,7 @@
  * sessão do Clerk e o comportamento de fallback (mock quando a env não está
  * definida ou a API está fora do ar; 401/403 reais estouram `ApiError`).
  */
-import type { AutonomousProfessional, Banner, Category, City, Company, Coupon, Job, Notice, Paginated, PublicUtility, Review, User } from '@/types/domain';
+import type { AutonomousProfessional, Banner, Category, City, Company, Coupon, Job, Notice, Paginated, PublicUtility, Review, TourEvent, TouristSpot, User } from '@/types/domain';
 
 import { isApiConfigured, request } from './http';
 import type { RequestPayload } from './http';
@@ -16,9 +16,11 @@ import {
   MOCK_CATEGORIES,
   MOCK_COUPONS,
   MOCK_COMPANIES,
+  MOCK_EVENTS,
   MOCK_FEATURED_COMPANY,
   MOCK_JOBS,
   MOCK_PHARMACY,
+  MOCK_TOURIST_SPOTS,
 } from '@/data/mock';
 import { MOCK_PUBLIC_UTILITIES } from '@/data/public-utilities';
 
@@ -336,6 +338,34 @@ export async function getCities(): Promise<City[]> {
   } catch {
     return [];
   }
+}
+
+/** Parâmetros aceitos pela listagem de pontos turísticos e eventos. */
+export type TourismParams = {
+  active?: boolean;
+  city?: string;
+  pageSize?: number;
+};
+
+function montarQueryTurismo(params: TourismParams): string {
+  const search = new URLSearchParams({ pageSize: String(params.pageSize ?? 6) });
+  if (params.active !== undefined) search.set('active', String(params.active));
+  if (params.city) search.set('city', params.city);
+  return search.toString();
+}
+
+/** Pontos turísticos ativos (parque, cachoeira, mirante...). */
+export async function getTouristSpots(params: TourismParams = {}): Promise<TouristSpot[]> {
+  if (!isApiConfigured()) return mockFallback(MOCK_TOURIST_SPOTS);
+  const payload = await request<TouristSpot>(`/tourist-spots?${montarQueryTurismo(params)}`);
+  return fromPaginated(payload, mockFallback(MOCK_TOURIST_SPOTS));
+}
+
+/** Eventos turísticos (festival, feira, show...). */
+export async function getEvents(params: TourismParams = {}): Promise<TourEvent[]> {
+  if (!isApiConfigured()) return mockFallback(MOCK_EVENTS);
+  const payload = await request<TourEvent>(`/events?${montarQueryTurismo(params)}`);
+  return fromPaginated(payload, mockFallback(MOCK_EVENTS));
 }
 
 export async function updateCompany(id: string, body: Partial<Company>): Promise<Company | null> {
