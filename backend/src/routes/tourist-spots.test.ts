@@ -215,6 +215,81 @@ describe('GET /api/tourist-spots', () => {
     expect(response.status).toBe(404);
     expect(response.body.error).toBe('id inválido');
   });
+
+  it('redige os contatos do ponto turístico para o convidado (sem Authorization)', async () => {
+    // Fixture extra (só neste teste): ponto com contato comercial e empresa
+    // relacionada JÁ POPULADA — as demais provas rodam após o reset do
+    // beforeEach, sem contar este documento.
+    modeloPontos.documents.push({
+      _id: '000000000000000000000004',
+      name: 'Aquário Natural',
+      slug: 'aquario-natural',
+      description: 'Piscinas naturais com peixes coloridos',
+      category: 'nature',
+      address: 'Praia do Retiro, s/n',
+      phone: '+5584991112222',
+      whatsapp: '+5584991112222',
+      website: 'https://aquario.example.com',
+      instagram: '@aquarionatural',
+      entryFee: 'paid',
+      entryPrice: 'R$ 10,00',
+      featured: true,
+      active: true,
+      relatedCompany: {
+        _id: '000000000000000000000030',
+        name: 'Parque Municipal',
+        slug: 'parque-municipal',
+        description: 'Empresa relacionada ao ponto turístico',
+        category: 'entretenimento',
+        phone: '+5584993334444',
+        whatsapp: '+5584993334444',
+        address: 'Av. Central, 500',
+      },
+    });
+
+    const response = await request(app).get('/api/tourist-spots?category=nature&active=true');
+
+    expect(response.status).toBe(200);
+    expect(response.body.total).toBe(1);
+    const ponto = response.body.items[0];
+    expect(ponto.slug).toBe('aquario-natural');
+    expect(ponto.phone).toBeNull();
+    expect(ponto.whatsapp).toBeNull();
+    // O endereço do atrativo é público (spec D14): preservado para o convidado.
+    expect(ponto.address).toBe('Praia do Retiro, s/n');
+    expect(ponto.entryPrice).toBe('R$ 10,00');
+    expect(ponto.website).toBe('https://aquario.example.com');
+    // A empresa aninhada NÃO pode burlar a redação com o contato comercial.
+    expect(ponto.relatedCompany.phone).toBeNull();
+    expect(ponto.relatedCompany.whatsapp).toBeNull();
+    expect(ponto.relatedCompany.address).toBeNull();
+    expect(ponto.relatedCompany.name).toBe('Parque Municipal');
+  });
+
+  it('mantém o ponto turístico completo para sessão autenticada', async () => {
+    modeloPontos.documents.push({
+      _id: '000000000000000000000004',
+      name: 'Aquário Natural',
+      slug: 'aquario-natural',
+      description: 'Piscinas naturais com peixes coloridos',
+      category: 'nature',
+      address: 'Praia do Retiro, s/n',
+      phone: '+5584991112222',
+      whatsapp: '+5584991112222',
+      active: true,
+    });
+
+    const response = await request(app)
+      .get('/api/tourist-spots?category=nature&active=true')
+      .set('Authorization', 'Bearer token_comum');
+
+    expect(response.status).toBe(200);
+    const ponto = response.body.items[0];
+    expect(ponto.slug).toBe('aquario-natural');
+    expect(ponto.phone).toBe('+5584991112222');
+    expect(ponto.whatsapp).toBe('+5584991112222');
+    expect(ponto.address).toBe('Praia do Retiro, s/n');
+  });
 });
 
 describe('POST /api/tourist-spots', () => {

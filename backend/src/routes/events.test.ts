@@ -293,6 +293,57 @@ describe('GET /api/events', () => {
     expect(response.body.name).toBe('Feira da Colheita');
     expect(response.body.endDate).toBe(ontem);
   });
+
+  it('redige os contatos do evento para o convidado (sem Authorization)', async () => {
+    // Fixture extra (só neste teste): evento com contato comercial e empresa
+    // organizadora JÁ POPULADA — os demais testes partem do reset do
+    // beforeEach, que restaura o conjunto base sem este documento.
+    modeloEventos.documents.push({
+      _id: '000000000000000000000005',
+      name: 'Expo Turismo',
+      slug: 'expo-turismo',
+      description: 'Feira regional de turismo',
+      category: 'exhibition',
+      startDate: '2026-11-06',
+      endDate: '2026-11-08',
+      address: 'Recinto de exposições, s/n',
+      phone: '+5584995556666',
+      whatsapp: '+5584995556666',
+      ticket: 'paid',
+      ticketPrice: 'R$ 30,00',
+      ticketUrl: 'https://ingressos.example.com/expo',
+      website: 'https://expoturismo.example.com',
+      active: true,
+      organizerCompany: {
+        _id: '000000000000000000000030',
+        name: 'Parque Municipal',
+        slug: 'parque-municipal',
+        description: 'Empresa organizadora do evento',
+        category: 'entretenimento',
+        phone: '+5584997778888',
+        whatsapp: '+5584997778888',
+        address: 'Av. Central, 500',
+      },
+    });
+
+    const response = await request(app).get('/api/events?category=exhibition');
+
+    expect(response.status).toBe(200);
+    expect(response.body.total).toBe(1);
+    const evento = response.body.items[0];
+    expect(evento.slug).toBe('expo-turismo');
+    expect(evento.phone).toBeNull();
+    expect(evento.whatsapp).toBeNull();
+    // O endereço do evento é público (spec D14): preservado para o convidado.
+    expect(evento.address).toBe('Recinto de exposições, s/n');
+    expect(evento.ticketUrl).toBe('https://ingressos.example.com/expo');
+    expect(evento.ticketPrice).toBe('R$ 30,00');
+    // A empresa organizadora NÃO pode burlar a redação com o contato comercial.
+    expect(evento.organizerCompany.phone).toBeNull();
+    expect(evento.organizerCompany.whatsapp).toBeNull();
+    expect(evento.organizerCompany.address).toBeNull();
+    expect(evento.organizerCompany.name).toBe('Parque Municipal');
+  });
 });
 
 describe('POST /api/events', () => {
