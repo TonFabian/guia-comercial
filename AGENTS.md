@@ -227,6 +227,61 @@ rápidos, alguns de integração (API), poucos e2e.
 - **Plataforma**: `Platform.select` para diferenças iOS/Android; variantes
   `.web.tsx` só quando a API web for realmente diferente.
 
+### 6.1 Padrão de composição de tela (route-as-screen)
+
+A rota em `src/app/` **é a tela**. Ela compõe os subcomponentes, hooks e
+utils de `src/features/<feature>/`, que são reutilizáveis e testáveis de
+forma isolada.
+
+```tsx
+// src/app/(tabs)/profile.tsx  ← a tela (rota)
+import { ProfileHeader } from '@/features/profile/profile-header';
+import { buildMenu } from '@/features/profile/profile-menu';
+import { SignOutModal } from '@/features/profile/sign-out-modal';
+import { useProfile } from '@/features/profile/use-profile';
+
+export default function ProfileScreen() {
+  const { profile, hasOwnedCompany, loading } = useProfile();
+  // ... compõe ProfileHeader, buildMenu, SignOutModal
+}
+```
+
+`features/<feature>/` guarda os **pedaços** (componentes, hooks, helpers
+puros, testes). A rota em `app/` é a **composição** (a tela).
+
+### 6.2 Proibição de shims/wrappers (anti-padrão, NÃO FAZER)
+
+**É proibido** criar arquivos de rota que apenas delegam para um único
+componente de feature, do tipo:
+
+```tsx
+// ❌ PROIBIDO — shim de uma linha
+import { ProfileScreen } from '@/features/profile/profile-screen';
+export default function ProfileRoute() {
+  return <ProfileScreen />;
+}
+```
+
+**Por quê (violações):**
+- **SRP/KISS:** o shim não compõe, não valida, não transforma dados — é
+  uma camada extra sem valor, duplicação de indireção.
+- **Regra do repo (`src/app/` = somente rotas, cada arquivo é uma tela):**
+  o arquivo de rota deve ser a tela (compondo features), não um proxy.
+- **Custo de manutenção:** renomear/mover a tela exige tocar dois arquivos;
+  o shim esconde a implementação real.
+- **Inconsistência:** outras rotas (`index.tsx`, `search.tsx`, `my-company.tsx`)
+  implementam a tela diretamente no arquivo de rota; shims quebram esse padrão.
+
+**Correto:** mover a implementação da tela para o arquivo de rota em
+`src/app/`, importando os subcomponentes de `src/features/<feature>/` via
+alias `@/`. Subcomponentes, hooks e helpers puros permanecem em
+`src/features/<feature>/` (reutilizáveis e testáveis).
+
+> Exceção única: re-export puro de um componente de feature quando a rota
+> não precisa de lógica própria — e mesmo assim, prefira compor na rota.
+> Se encontrar um shim existente, consolide (mova a implementação para a
+> rota) em vez de mantê-lo.
+
 ## 7. Regras do admin (Vite + React)
 
 - `src/services/api.ts` é a **única** porta de entrada HTTP; erros via
