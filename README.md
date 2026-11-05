@@ -148,7 +148,7 @@ Base: `http://localhost:4000/api`
 | POST/GET/PUT/DELETE | `/categories/:id`           | manipula categoria                                     |
 | GET            | `/cities`                        | lista de cidades                                       |
 | POST/DELETE    | `/cities/:id`                    | cria/remove cidade                                     |
-| GET            | `/companies`                     | lista paginada de empresas                             |
+| GET            | `/companies`                     | lista paginada de empresas (filtros: `category`, `q`, `featured`, `city`, `owner` — este só para o próprio usuário) |
 | POST           | `/companies`                     | cria empresa                                           |
 | GET            | `/companies/:id`                 | empresa por id                                         |
 | PUT/DELETE     | `/companies/:id`                 | atualiza/remove empresa (dono ou admin)                |
@@ -162,7 +162,7 @@ Base: `http://localhost:4000/api`
 | POST/GET/PUT/DELETE | `/jobs/:id`                 | manipula vaga                                          |
 | GET            | `/autonomous-professionals`      | profissionais autônomos                                |
 | POST/GET/PUT/DELETE | `/autonomous-professionals/:id` | manipula profissional (dono ou admin)               |
-| GET            | `/notices`                       | mural de avisos (`?active=true` filtra vencidos)       |
+| GET            | `/notices`                       | mural de avisos (`active`: `true` = ativos e vigentes; `false` = rascunhos, admin; `all` = tudo, admin; default = ativos e vigentes) |
 | POST/GET/PUT/DELETE | `/notices/:id`              | manipula aviso (admin)                                 |
 | GET            | `/public-utilities`              | telefones úteis (`?active=true`, `?category=`, `?city=`) |
 | POST/GET/PUT/DELETE | `/public-utilities/:id`     | manipula utilidade pública (admin)                     |
@@ -173,17 +173,44 @@ Base: `http://localhost:4000/api`
 | GET            | `/users`                         | usuários do app (admin, paginado)                      |
 | GET            | `/me`                            | perfil do usuário autenticado                           |
 | PUT            | `/me`                            | atualiza perfil (nome, sobrenome, telefone, foto, prefs) |
-| POST           | `/push-tokens`                   | registra token de push                                 |
-| POST           | `/notifications/broadcast`       | dispara notificação push (admin/segredo)               |
+| POST           | `/push-tokens`                   | registra token de push (body validado por zod; token de outra conta devolve **409**) |
+| POST           | `/notifications/broadcast`       | dispara notificação push (admin/segredo, body validado por zod) |
 | POST           | `/auth/guest`                    | handshake de convidado                                 |
 
-**Query de listagem** — `page` (≥1), `pageSize` (1–100, padrão 20). Em
-`/companies` também: `category` (slug ou vários separados por vírgula), `q`
-(busca em nome/descrição/endereço/serviços) e `featured` (`true`/`false`).
-Em `/tourist-spots` e `/events`: `city`, `category` e `active`; em
-`/events`, `includePast=true` inclui os eventos já encerrados (uso do painel).
-Em `/tourist-spots` e `/events` também: `q` (busca textual por nome, descrição
-e — nos eventos — local).
+### Parâmetros de entrada
+
+Todo parâmetro de entrada (query string e body) é validado no servidor.
+
+- **Query string** — todo parâmetro de query é sanitizado no servidor
+  (`backend/src/utils/query.ts`). Parâmetro **ausente** = sem filtro;
+  parâmetro **malformado** (repetido/virando array, objeto, tipo errado ou
+  valor acima do limite) → **400** com o nome do parâmetro na mensagem.
+  Limites: `q` ≤ 120 caracteres, `page` ≤ 10 000, `pageSize` 1–100 e
+  listas de slug com ≤ 20 itens × 64 caracteres. A busca textual (`q`) é
+  sempre escapada (`escapeRegex`) — o usuário nunca escreve a query do
+  MongoDB.
+- **Body** — validado por zod na borda (`backend/src/types/dto.ts`), com
+  allowlist de campos (chaves desconhecidas são descartadas) → **422**
+  com o campo inválido.
+- **Filtros com permissão** — `owner` em `/companies` só vale para o
+  clerk da própria sessão (**403** caso contrário); `active=false` e
+  `active=all` em `/notices` exigem admin (**401**/**403**).
+- **Push tokens** — `POST /push-tokens` responde **409** quando o token
+  já pertence a outra conta (impede o sequestro de notificações de outro
+  usuário).
+
+Filtros por rota de listagem (`page` ≥ 1 e `pageSize` 1–100 em todas):
+
+- `/companies`: `category` (id ou slug, vários separados por vírgula),
+  `q` (busca em nome/descrição/endereço/serviços), `featured`
+  (`true`/`false`), `city` e `owner` (só o próprio usuário autenticado).
+- `/notices`: `active` com os valores `true` (ativos e vigentes),
+  `false` (rascunhos, admin) ou `all` (tudo, admin); o **default** é
+  mostrar apenas os ativos e vigentes.
+- `/tourist-spots` e `/events`: `q` (busca textual em nome, descrição
+  e — nos eventos — local) além de `city`, `category` e `active`; em
+  `/events`, `includePast=true` inclui os eventos já encerrados (uso do
+  painel).
 
 **Formato de resposta**
 
@@ -199,12 +226,12 @@ e — nos eventos — local).
 
 | Código | Quando                                                                      |
 | ------ | --------------------------------------------------------------------------- |
-| `400`  | dados inválidos (Mongoose ValidationError ou ZodError não tratado na borda) |
-| `401`  | não autenticado (quando Clerk configurado)                                  |
-| `403`  | sem permissão (não-admin ou não-dono)                                       |
-| `404`  | recurso inexistente ou id malformado                                        |
-| `409`  | chave duplicada (slug já existe)                                            |
-| `422`  | payload inválido (detalhes em `details`)                                    |
+| `400`  | parâmetro de query inválido (o nome aparece na mensagem) ou dados inválidos (Mongoose ValidationError) |
+| `401`  | não autenticado (quando Clerk configurado, ou filtro restrito a admin sem sessão) |
+| `403`  | sem permissão (não-admin, não-dono ou filtro restrito usado por outra conta) |
+| `404`  | recurso inexistente, id malformado ou rascunho oculto para quem não é admin |
+| `409`  | chave duplicada (slug já existe) ou token de push já vinculado a outra conta |
+| `422`  | payload de body inválido (detalhes em `details`)                            |
 | `500`  | erro inesperado (mensagem detalhada só em dev)                              |
 
 Erros sempre em JSON: `{ "error": "mensagem" }` (+ `message` em dev).
@@ -272,13 +299,14 @@ cd admin   && npm run lint && npm run typecheck && npm run build
 | App     | Lint          | Typecheck      | Testes             | Build         |
 | ------- | ------------- | -------------- | ------------------ | ------------- |
 | backend | ESLint (flat) | `tsc --noEmit` | vitest + supertest  | `tsc`         |
-| mobile  | `expo lint`   | `tsc --noEmit` | vitest (143 testes) | `expo export` |
+| mobile  | `expo lint`   | `tsc --noEmit` | vitest (165 testes) | `expo export` |
 | admin   | ESLint (flat) | `tsc --noEmit` | —                  | `vite build`  |
 
 - **TDD** no backend: todo endpoint novo nasce com o teste do supertest
   falhando, depois o código, depois o refactor.
-- Cobertura de teste hoje: **158 testes no backend** (21 arquivos) e
-  **143 testes no mobile** (15 arquivos).
+- Cobertura de teste hoje: **426 testes no backend** (29 arquivos, incluindo
+  a varredura de segurança de 107 testes em `src/routes/security.test.ts`) e
+  **165 testes no mobile** (16 arquivos).
 - Formatação: `.prettierrc` na raiz (printWidth 100, aspas simples, trailing
   comma, ponto e vírgula).
 
