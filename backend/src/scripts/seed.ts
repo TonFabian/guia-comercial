@@ -21,6 +21,8 @@ import { JobModel } from '../models/job.model.js';
 import { AutonomousProfessionalModel } from '../models/autonomous-professional.model.js';
 import { NoticeModel } from '../models/notice.model.js';
 import { PublicUtilityModel } from '../models/public-utility.model.js';
+import { TouristSpotModel } from '../models/tourist-spot.model.js';
+import { TourEventModel } from '../models/event.model.js';
 
 const shouldReset = process.argv.includes('--reset');
 
@@ -47,6 +49,22 @@ async function insertIfMissing<T>(
   return inserted;
 }
 
+/** Formata uma Date local como `YYYY-MM-DD` (data pura, sem hora e sem fuso).
+ * O módulo de turismo compara datas como string, então o formato é obrigatório. */
+function formatarDataISO(data: Date): string {
+  const ano = data.getFullYear();
+  const mes = String(data.getMonth() + 1).padStart(2, '0');
+  const dia = String(data.getDate()).padStart(2, '0');
+  return `${ano}-${mes}-${dia}`;
+}
+
+/** Soma dias a uma Date mantendo o horário local (para datas puras). */
+function somarDias(data: Date, dias: number): Date {
+  const copia = new Date(data);
+  copia.setDate(copia.getDate() + dias);
+  return copia;
+}
+
 async function seed(): Promise<void> {
   if (shouldReset) {
     await Promise.all([
@@ -59,6 +77,8 @@ async function seed(): Promise<void> {
       AutonomousProfessionalModel.deleteMany({}),
       NoticeModel.deleteMany({}),
       PublicUtilityModel.deleteMany({}),
+      TouristSpotModel.deleteMany({}),
+      TourEventModel.deleteMany({}),
     ]);
     console.log('Coleções limpas (--reset)');
   }
@@ -493,6 +513,129 @@ async function seed(): Promise<void> {
     'name',
   );
   console.log(`Serviços públicos inseridos: ${inseridosServicos}`);
+
+  // Turismo: `touristspots` guarda atrativos permanentes (cachoeira, praça,
+  // monumento...) e `events` guarda eventos temporários (festival, feira...).
+  // Ambos dependem da cidade padrão; as coordenadas abaixo são APROXIMADAS de
+  // Castelo do Piauí (centro ≈ -7.2833, -43.0167), obtidas de referências
+  // públicas da região — não são medidas precisas de GPS.
+  const atracoes = [
+    {
+      name: 'Parque Natural Municipal Pedra do Castelo',
+      slug: 'parque-natural-pedra-do-castelo',
+      description:
+        'Unidade de conservação municipal em torno da Pedra do Castelo, com trilhas e mirantes. Principal cartão-postal de Castelo do Piauí.',
+      category: 'park',
+      address: 'Zona rural de Castelo do Piauí',
+      city: casteloId,
+      latitude: -7.31,
+      longitude: -43.04,
+      openingHours: ['Todos os dias: 08h às 17h'],
+      entryFee: 'free',
+      featured: true,
+      active: true,
+      order: 1,
+    },
+    {
+      name: 'Cânion do Rio Poti',
+      slug: 'canyon-do-rio-poti',
+      description:
+        'Paredões rochosos e águas do Rio Poti esculpindo um cânion no sertão, com banho de rio e paisagens para fotografia.',
+      category: 'nature',
+      address: 'Rio Poti, zona rural de Castelo do Piauí',
+      city: casteloId,
+      latitude: -7.32,
+      longitude: -43.06,
+      openingHours: ['Todos os dias: 08h às 17h'],
+      entryFee: 'free',
+      active: true,
+      order: 2,
+    },
+    {
+      name: 'Cachoeiras do rio Poti',
+      slug: 'cachoeiras-do-rio-poti',
+      description:
+        'Sequência de cachoeiras e poços do Rio Poti, procurada para banho e descanso nos fins de semana.',
+      category: 'waterfall',
+      address: 'Rio Poti, zona rural de Castelo do Piauí',
+      city: casteloId,
+      latitude: -7.25,
+      longitude: -43.05,
+      openingHours: ['Todos os dias: 08h às 17h'],
+      entryFee: 'free',
+      active: true,
+      order: 3,
+    },
+    {
+      name: 'Palácio dos Viscondes de Parnaíba',
+      slug: 'palacio-dos-viscondes-de-parnaiba',
+      description:
+        'Espaço cultural e monumento no centro da cidade, abrigando exposições e memórias da história de Castelo do Piauí.',
+      category: 'monument',
+      address: 'Centro, Castelo do Piauí',
+      city: casteloId,
+      latitude: -7.2833,
+      longitude: -43.0167,
+      openingHours: ['Ter a Sáb: 09h às 17h', 'Dom: 09h às 13h'],
+      entryFee: 'free',
+      active: true,
+      order: 4,
+    },
+  ];
+
+  // Eventos com datas dinâmicas: o festival fica no futuro (aparece como
+  // "em breve") e a feira fica hoje (aparece como "acontecendo"). O slug
+  // inclui o ano da data, então rodar o seed de novo no mesmo ano não duplica.
+  const hoje = new Date();
+  const inicioFestival = somarDias(hoje, 30);
+  const fimFestival = somarDias(inicioFestival, 2);
+  const inicioFeira = hoje;
+
+  const eventos = [
+    {
+      name: 'Cânyon Fest Poti',
+      slug: `canyon-fest-poti-${inicioFestival.getFullYear()}`,
+      description:
+        'Festival de três dias às margens do cânion, com exposição de animais, rodeio e corrida, além de shows à noite.',
+      category: 'festival',
+      startDate: formatarDataISO(inicioFestival),
+      endDate: formatarDataISO(fimFestival),
+      startTime: '10:00',
+      endTime: '23:00',
+      location: 'Cânion do Rio Poti',
+      city: casteloId,
+      latitude: -7.32,
+      longitude: -43.06,
+      organizer: 'Organização Cânyon Fest Poti',
+      ticket: 'free',
+      featured: true,
+      active: true,
+    },
+    {
+      name: 'Feira do Rio Poti',
+      slug: `feira-do-rio-poti-${inicioFeira.getFullYear()}`,
+      description:
+        'Feira de produtores e artesãos da região do Rio Poti, com comida típica e apresentações culturais na praça.',
+      category: 'fair',
+      startDate: formatarDataISO(inicioFeira),
+      endDate: formatarDataISO(inicioFeira),
+      location: 'Praça do Centro',
+      city: casteloId,
+      latitude: -7.2833,
+      longitude: -43.0167,
+      ticket: 'free',
+      active: true,
+    },
+  ];
+
+  if (!casteloId) {
+    console.log('Cidade padrao nao encontrada; pulando pontos turisticos e eventos');
+  } else {
+    const inseridasAtracoes = await insertIfMissing(TouristSpotModel, atracoes, 'slug');
+    console.log(`Pontos turísticos inseridos: ${inseridasAtracoes}`);
+    const inseridosEventos = await insertIfMissing(TourEventModel, eventos, 'slug');
+    console.log(`Eventos turísticos inseridos: ${inseridosEventos}`);
+  }
 }
 
 async function main(): Promise<void> {
