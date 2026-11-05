@@ -32,6 +32,22 @@ function mockFallback<T>(mock: T[]): T[] {
   return __DEV__ ? mock : [];
 }
 
+/**
+ * Teto do texto de busca no backend (`lerTexto` em backend/src/utils/query.ts,
+ * limite padrão de 120): acima dele a busca responde 400. O cliente trunca o
+ * termo para a tela de busca nunca disparar o 400 com texto copiado/colado
+ * longo — o backend ancora o teto, o app nunca o excede.
+ */
+export const LIMITE_DE_TERMO_DE_BUSCA = 120;
+
+/** Aparado e truncado ao teto que o backend aceita na query textual. */
+export function truncarTermoDeBusca(termo: string): string {
+  const aparado = termo.trim();
+  return aparado.length > LIMITE_DE_TERMO_DE_BUSCA
+    ? aparado.slice(0, LIMITE_DE_TERMO_DE_BUSCA)
+    : aparado;
+}
+
 function isPaginated<T>(payload: RequestPayload<T>): payload is Paginated<T> {
   return typeof payload === 'object' && payload !== null && 'items' in payload;
 }
@@ -198,7 +214,8 @@ export type CompanySearchParams = {
 };
 
 export async function searchCompanies(params: CompanySearchParams = {}): Promise<CompanyPage> {
-  const term = (params.q ?? '').trim().toLowerCase();
+  // Trunca depois do lowercase: o lowercase pode expandir o texto (ex.: 'İ').
+  const term = truncarTermoDeBusca((params.q ?? '').trim().toLowerCase());
   const categories = params.categories ?? [];
   const page = params.page ?? 1;
   const pageSize = params.pageSize ?? 20;
@@ -354,7 +371,8 @@ export async function getTouristSpots(params: TourismParams = {}): Promise<Touri
     const items = mockFallback(MOCK_TOURIST_SPOTS);
     return { items, total: items.length };
   }
-  const payload = await request<TouristSpot>(`/tourist-spots${buildTourismQuery(params)}`);
+  const query = buildTourismQuery({ ...params, q: truncarTermoDeBusca(params.q ?? '') });
+  const payload = await request<TouristSpot>(`/tourist-spots${query}`);
   const items = fromPaginated(payload, mockFallback(MOCK_TOURIST_SPOTS));
   const total = isPaginated(payload) ? (payload.total ?? items.length) : items.length;
   return { items, total };
@@ -366,7 +384,8 @@ export async function getEvents(params: TourismParams = {}): Promise<TourismPage
     const items = mockFallback(MOCK_EVENTS);
     return { items, total: items.length };
   }
-  const payload = await request<TourEvent>(`/events${buildTourismQuery(params)}`);
+  const query = buildTourismQuery({ ...params, q: truncarTermoDeBusca(params.q ?? '') });
+  const payload = await request<TourEvent>(`/events${query}`);
   const items = fromPaginated(payload, mockFallback(MOCK_EVENTS));
   const total = isPaginated(payload) ? (payload.total ?? items.length) : items.length;
   return { items, total };
