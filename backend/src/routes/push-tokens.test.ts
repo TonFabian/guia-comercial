@@ -4,7 +4,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vites
 
 import { PushTokenModel } from '../models/push-token.model.js';
 import { UserModel } from '../models/user.model.js';
-import type { MemoryDocument, MemoryModel } from '../test-support/memory-model.js';
+import type { MemoryDocument, MemoryFilter, MemoryModel, MemoryQuery } from '../test-support/memory-model.js';
 
 vi.stubEnv('CLERK_SECRET_KEY', 'sk_test_placeholder');
 vi.stubEnv('CLERK_PUBLISHABLE_KEY', 'pk_test_placeholder');
@@ -49,7 +49,10 @@ vi.mock('@clerk/backend', () => ({
 
 vi.mock('../models/push-token.model.js', async () => {
   const { criarModeloEmMemoria } = await import('../test-support/memory-model.js');
-  return { PushTokenModel: criarModeloEmMemoria() };
+  // `token` é unique no schema real: a condição de posse precisa ir no filtro
+  // da escrita, senão o upsert do atacante colide (11000) e o Mongo reaplica
+  // como update do documento da vítima.
+  return { PushTokenModel: criarModeloEmMemoria({ unicos: ['token'] }) };
 });
 
 vi.mock('../models/user.model.js', async () => {
@@ -239,6 +242,55 @@ describe('POST /api/push-tokens — vínculo e anti-sequestro', () => {
     expect(response.status).toBe(200);
     expect(modeloTokens.documents).toHaveLength(1);
     expect(modeloTokens.documents[0]?.clerkId).toBe('user_comum');
+  });
+
+  it('escrita concorrente: token que ganhou dono entre a leitura e a escrita não é rebindado', async () => {
+    // Estado da corrida (TOCTOU): o dono já está gravado, mas a leitura do
+    // service ainda vê o token "livre". A escrita, sim, acontece contra o
+    // documento atual — é exatamente entre a leitura e a escrita que o
+    // check-then-act perdona o sequestro; a condição de posse precisa estar
+    // no filtro da própria escrita.
+    modeloTokens.documents.push({
+      _id: '000000000000000000000041',
+      token: 'ExponentPushToken[um]',
+      clerkId: 'user_comum',
+    });
+
+    // Intercepta a leitura para devolver o snapshot defasado (sem dono).
+    const findOneReal = modeloTokens.findOne.bind(modeloTokens);
+    const espiarUmaLeituraDefasada = vi.spyOn(modeloTokens, 'findOne');
+    espiarUmaLeituraDefasada.mockImplementation((filtro?: MemoryFilter) => {
+      const consulta = findOneReal(filtro ?? {}) as MemoryQuery;
+      const execOriginal = consulta.exec.bind(consulta);
+      consulta.exec = async () => {
+        const donos = modeloTokens.documents.map((documento) => documento.clerkId);
+        for (const documento of modeloTokens.documents) delete documento.clerkId;
+        try {
+          return await execOriginal();
+        } finally {
+          // O documento volta a ter dono antes da escrita do service.
+          for (const [indice, documento] of modeloTokens.documents.entries()) {
+            if (donos[indice] !== undefined) documento.clerkId = donos[indice];
+          }
+        }
+      };
+      return consulta;
+    });
+
+    try {
+      const response = await request(app)
+        .post('/api/push-tokens')
+        .set('Authorization', 'Bearer token_b')
+        .send({ token: 'ExponentPushToken[um]' });
+
+      expect(response.status).toBe(409);
+      expect(response.body.error).toContain('token já registrado para outra conta');
+      // O dono original continua gravado — a vítima não perde o token.
+      expect(modeloTokens.documents).toHaveLength(1);
+      expect(modeloTokens.documents[0]?.clerkId).toBe('user_comum');
+    } finally {
+      espiarUmaLeituraDefasada.mockRestore();
+    }
   });
 });
 
