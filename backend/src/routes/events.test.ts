@@ -97,6 +97,7 @@ const eventosFake: MemoryDocument[] = [
     startDate: '2026-11-03',
     endDate: hoje, // encerra HOJE: ainda visível
     city: '000000000000000000000020',
+    ticket: 'free', // ingresso isento, sem preço — PUT para 'paid' deve falhar (422)
     active: true,
   },
   {
@@ -436,6 +437,19 @@ describe('PUT /api/events', () => {
 
     expect(response.status).toBe(403);
     expect(modeloEventos.documents[0]?.name).toBe('Festival do Peão');
+  });
+
+  it('responde 422 quando o PUT deixa o ingresso pago sem preço', async () => {
+    // Doc 1 tem ticket 'free' sem preço: o payload só troca para 'paid' — a
+    // invariante vale sobre o estado resultante (ticketPrice undefined).
+    const response = await request(app)
+      .put('/api/events/000000000000000000000001')
+      .set('Authorization', 'Bearer token_admin')
+      .send({ ticket: 'paid' });
+
+    expect(response.status).toBe(422);
+    expect(JSON.stringify(response.body)).toContain('ticketPrice');
+    expect(modeloEventos.documents[0]?.ticket).toBe('free');
   });
 
   it('responde 422 quando o PUT deixa endDate antes do startDate já salvo', async () => {
