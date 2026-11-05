@@ -29,7 +29,7 @@ seção dedicada na Home (aparece apenas quando há conteúdo ativo).
 | D10 | **Atração sempre ativa** | `active === true`, sem expiração. |
 | D11 | **Push apenas ao criar evento** | Notificação dispara uma única vez no `POST /api/events` ("Novo evento…"). Atualizações/ativações não notificam (evita spam). Reuso do padrão `notifyPromotion` de `company.service.ts`. |
 | D12 | **Coordenadas (lat/lng) com valores reais** | Para mapa e "Como chegar" (reuso de `openMapLink`). Seed de Castelo do Piauí usa coordenadas reais (não as de Fortaleza). |
-| D13 | **Interface renomeada `TourEvent`** | Evita shadowing do tipo global DOM `Event` no admin (Vite) e em código web. O **model Mongoose** continua `Event` e a rota continua `/api/events`. |
+| D13 | **Interface renomeada `TourEvent`** | Evita shadowing do tipo global DOM `Event` no admin (Vite) e em código web. Décisão REAL da implementação: o **model Mongoose chama-se `TourEvent`** (`backend/src/models/event.model.ts`), enquanto a **coleção Mongo é `events`** e a rota é `/api/events` — o nome explícito no código compensa a coleção genérica. |
 | D14 | **Guest scrub explícito para Turismo** | `phone`/`whatsapp` são redigidos para convidados. `website`, `instagram`, `ticketUrl`, `entryPrice` são públicos por natureza de evento/atração (não redigidos). O scrub atual detecta "Company" por shape (`slug+category+name`) — `TouristSpot`/`TourEvent` casariam POR ACIDENTO; é obrigatório criar `isTouristSpot`/`isTourEvent` explícitos e redigir também `relatedCompany`/`organizerCompany` **populadas** (hoje `readPopulatedCompany` só inspeciona o campo literal `company` → vazaria contato da empresa aninhada). |
 
 ## 3. Entidades
@@ -67,7 +67,7 @@ export interface TouristSpot {
 > Sem `rating`/`ratingCount` — avaliações estão fora do escopo (§11). Campo sem
 > produtor é dívida (YAGNI).
 
-### 3.2 `TourEvent` (evento temporário — interface; model/rota seguem `Event`)
+### 3.2 `TourEvent` (evento temporário — interface; model/coleção/rota seguem `events`)
 
 ```ts
 export interface TourEvent {

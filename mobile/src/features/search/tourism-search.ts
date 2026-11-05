@@ -21,7 +21,11 @@ export type SearchSection = {
   items: SearchItem[];
 };
 
-/** Quantidade de atrações/eventos buscada por vez (turismo não pagina no MVP). */
+/**
+ * Quantidade de atrações/eventos buscada por vez (turismo não pagina no MVP).
+ * Limitação conhecida: o termo da busca filtra esses 20 itens NO CLIENTE —
+ * além do 20º, nada aparece. Passar `q` ao backend encerraria essa cerca.
+ */
 export const TURISMO_PAGE_SIZE = 20;
 
 /** Indica se o texto casa o termo (case-insensitive). */

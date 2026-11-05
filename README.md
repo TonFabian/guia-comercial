@@ -335,7 +335,11 @@ avisos, 4 serviços de utilidade pública (polícia, hospital, coleta de lixo)
 e o turismo de Castelo do Piauí: 4 atrações (Parque Natural Municipal Pedra
 do Castelo, Cânion do Rio Poti, Cachoeiras do Rio Poti e Palácio dos
 Viscondes de Parnaíba) e 2 eventos (Cânyon Fest Poti — futuro — e Feira do
-Rio Poti — hoje, "acontecendo").
+Rio Poti). O seed é idempotente por upsert: a Feira do Rio Poti é criada
+com as datas do **primeiro** seed do ano (`$setOnInsert`) — reseedar no
+mesmo ano **não** renova as datas, então a feira "vence" e some da listagem.
+Para renovar: `npm run seed -- --reset` (recria com as datas de hoje) ou
+ajuste o documento do evento.
 
 Depois do seed, a home do app mobile exibe os mesmos dados que a master
 (mocks), porque os slugs e os títulos são os mesmos usados em

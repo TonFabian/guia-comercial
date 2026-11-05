@@ -35,6 +35,9 @@ export function TourismSection() {
       setLoading(true);
       setError(null);
       try {
+        // Limitação conhecida: a seção ignora o filtro de cidade da Home —
+        // os chips de turismo buscam sem `city` (a seção some quando o
+        // resultado é vazio, mas pode exibir atração de outra cidade).
         const [listaSpots, listaEvents] = await Promise.all([
           getTouristSpots({ active: true, pageSize: 6 }),
           getEvents({ active: true, pageSize: 6 }),

@@ -82,6 +82,9 @@ export default function TouristSpotDetailScreen() {
   }
 
   if (!spot) {
+    // Limitação conhecida: falha de rede chega como null (o serviço engole o
+    // erro para cair no mock) e a tela distingue 404 de rede apenas quando
+    // outro erro escapa — o comum é exibir "não encontrada".
     return (
       <View style={styles.centered}>
         <StatusBar style={mode === 'dark' ? 'light' : 'dark'} />
