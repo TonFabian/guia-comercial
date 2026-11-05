@@ -115,6 +115,7 @@ export interface User {
   lastName?: string;
   email: string;
   phone?: string;
+  neighborhood?: string;
   imageUrl?: string;
   role: 'user' | 'admin';
   city?: string | City;
@@ -123,7 +124,11 @@ export interface User {
   pushToken?: string;
   favorites?: string[];
   ownedCompanyIds?: string[];
-  preferences?: { notifications?: boolean };
+  preferences?: {
+    notifications?: boolean;
+    publicUtilityAlerts?: boolean;
+    jobPostingAlerts?: boolean;
+  };
   createdAt?: string;
   updatedAt?: string;
 }

@@ -148,11 +148,14 @@ export const updateUserSchema = z.object({
   firstName: z.string().trim().min(1).optional(),
   lastName: z.string().trim().min(1).optional(),
   phone: z.string().trim().optional(),
+  neighborhood: z.string().trim().max(120).optional(),
   imageUrl: z.string().url().optional(),
   favorites: z.array(z.string()).optional(),
   preferences: z
     .object({
       notifications: z.boolean().optional(),
+      publicUtilityAlerts: z.boolean().optional(),
+      jobPostingAlerts: z.boolean().optional(),
     })
     .optional(),
 });

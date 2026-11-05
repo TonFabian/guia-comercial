@@ -103,6 +103,55 @@ beforeEach(() => {
   });
 });
 
+describe('PUT /api/me', () => {
+  it('persiste o bairro de residência no espelho do usuário', async () => {
+    const response = await request(app)
+      .put('/api/me')
+      .set('Authorization', 'Bearer token_comum')
+      .send({ neighborhood: 'Centro' });
+
+    expect(response.status).toBe(200);
+    expect(response.body.neighborhood).toBe('Centro');
+
+    const usuario = modeloUsuarios.documents.find(
+      (documento) => documento.clerkId === 'user_comum',
+    );
+    expect(usuario?.neighborhood).toBe('Centro');
+  });
+
+  it('responde 422 para bairro acima do limite', async () => {
+    const response = await request(app)
+      .put('/api/me')
+      .set('Authorization', 'Bearer token_comum')
+      .send({ neighborhood: 'a'.repeat(121) });
+
+    expect(response.status).toBe(422);
+  });
+
+  it('persiste as duas preferências de notificação', async () => {
+    const response = await request(app)
+      .put('/api/me')
+      .set('Authorization', 'Bearer token_comum')
+      .send({
+        preferences: { publicUtilityAlerts: false, jobPostingAlerts: true },
+      });
+
+    expect(response.status).toBe(200);
+    expect(response.body.preferences).toEqual({
+      publicUtilityAlerts: false,
+      jobPostingAlerts: true,
+    });
+
+    const usuario = modeloUsuarios.documents.find(
+      (documento) => documento.clerkId === 'user_comum',
+    );
+    expect(usuario?.preferences).toEqual({
+      publicUtilityAlerts: false,
+      jobPostingAlerts: true,
+    });
+  });
+});
+
 describe('GET /api/users', () => {
   it('responde 401 sem sessão autenticada', async () => {
     const response = await request(app).get('/api/users');

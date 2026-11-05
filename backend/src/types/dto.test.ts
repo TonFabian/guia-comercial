@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { createCompanySchema, createPublicUtilitySchema } from './dto.js';
+import { createCompanySchema, createPublicUtilitySchema, updateUserSchema } from './dto.js';
 
 const EMPRESA_BASE = {
   name: 'Barbearia Central',
@@ -62,6 +62,43 @@ describe('createCompanySchema', () => {
 
     expect(parsed.isVerified).toBeUndefined();
     expect(parsed.products).toBeUndefined();
+  });
+});
+
+describe('updateUserSchema', () => {
+  it('aceita bairro de residência e remove espaços nas pontas', () => {
+    const parsed = updateUserSchema.parse({ neighborhood: '  Centro  ' });
+
+    expect(parsed.neighborhood).toBe('Centro');
+  });
+
+  it('aceita bairro vazio para limpar o campo', () => {
+    const parsed = updateUserSchema.parse({ neighborhood: '' });
+
+    expect(parsed.neighborhood).toBe('');
+  });
+
+  it('rejeita bairro com mais de 120 caracteres', () => {
+    const result = updateUserSchema.safeParse({ neighborhood: 'a'.repeat(121) });
+
+    expect(result.success).toBe(false);
+  });
+
+  it('aceita as preferências de utilidade pública e vagas', () => {
+    const parsed = updateUserSchema.parse({
+      preferences: { publicUtilityAlerts: true, jobPostingAlerts: false },
+    });
+
+    expect(parsed.preferences?.publicUtilityAlerts).toBe(true);
+    expect(parsed.preferences?.jobPostingAlerts).toBe(false);
+  });
+
+  it('rejeita preferência que não seja booleana', () => {
+    const result = updateUserSchema.safeParse({
+      preferences: { jobPostingAlerts: 'sim' },
+    });
+
+    expect(result.success).toBe(false);
   });
 });
 

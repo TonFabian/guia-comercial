@@ -13,6 +13,7 @@ const userSchema = new Schema<User>(
     lastName: { type: String, trim: true },
     email: { type: String, required: true, unique: true, lowercase: true, trim: true },
     phone: { type: String, trim: true },
+    neighborhood: { type: String, trim: true },
     imageUrl: { type: String, trim: true },
     role: { type: String, enum: ['user', 'admin'], default: 'user' },
     city: { type: Schema.Types.ObjectId, ref: 'City' },
@@ -23,6 +24,8 @@ const userSchema = new Schema<User>(
     ownedCompanyIds: { type: [String], default: [] },
     preferences: {
       notifications: { type: Boolean, default: true },
+      publicUtilityAlerts: { type: Boolean, default: true },
+      jobPostingAlerts: { type: Boolean, default: true },
     },
   },
   { timestamps: true },
