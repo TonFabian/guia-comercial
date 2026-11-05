@@ -345,18 +345,31 @@ export async function getCities(): Promise<City[]> {
 /** Parâmetros aceitos pela listagem de pontos turísticos e eventos. */
 export type TourismParams = TourismQueryParams;
 
+/** Página de turismo devolvida pelo backend (`total` permite paginar). */
+export type TourismPage<T> = { items: T[]; total: number };
+
 /** Pontos turísticos ativos (parque, cachoeira, mirante...). */
-export async function getTouristSpots(params: TourismParams = {}): Promise<TouristSpot[]> {
-  if (!isApiConfigured()) return mockFallback(MOCK_TOURIST_SPOTS);
+export async function getTouristSpots(params: TourismParams = {}): Promise<TourismPage<TouristSpot>> {
+  if (!isApiConfigured()) {
+    const items = mockFallback(MOCK_TOURIST_SPOTS);
+    return { items, total: items.length };
+  }
   const payload = await request<TouristSpot>(`/tourist-spots${buildTourismQuery(params)}`);
-  return fromPaginated(payload, mockFallback(MOCK_TOURIST_SPOTS));
+  const items = fromPaginated(payload, mockFallback(MOCK_TOURIST_SPOTS));
+  const total = isPaginated(payload) ? (payload.total ?? items.length) : items.length;
+  return { items, total };
 }
 
 /** Eventos turísticos (festival, feira, show...). */
-export async function getEvents(params: TourismParams = {}): Promise<TourEvent[]> {
-  if (!isApiConfigured()) return mockFallback(MOCK_EVENTS);
+export async function getEvents(params: TourismParams = {}): Promise<TourismPage<TourEvent>> {
+  if (!isApiConfigured()) {
+    const items = mockFallback(MOCK_EVENTS);
+    return { items, total: items.length };
+  }
   const payload = await request<TourEvent>(`/events${buildTourismQuery(params)}`);
-  return fromPaginated(payload, mockFallback(MOCK_EVENTS));
+  const items = fromPaginated(payload, mockFallback(MOCK_EVENTS));
+  const total = isPaginated(payload) ? (payload.total ?? items.length) : items.length;
+  return { items, total };
 }
 
 /** Atração turística mockada por `_id` ou `slug` (fallback quando a API está fora do ar). */

@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import type { Company, TourEvent, TouristSpot } from '@/types/domain';
 
-import { buildSearchSections } from './tourism-search';
+import { buildSearchSections, temMaisPagina } from './tourism-search';
 
 function empresa(overrides: Partial<Company> = {}): Company {
   return {
@@ -213,5 +213,27 @@ describe('buildSearchSections', () => {
     });
 
     expect(sections).toEqual([]);
+  });
+});
+
+describe('temMaisPagina', () => {
+  it('devolve false quando carregou tudo (20 de 20)', () => {
+    expect(temMaisPagina(20, 20)).toBe(false);
+  });
+
+  it('devolve true quando o total é maior que o carregado (20 de 50)', () => {
+    expect(temMaisPagina(20, 50)).toBe(true);
+  });
+
+  it('devolve false quando não existe nada (0 de 0)', () => {
+    expect(temMaisPagina(0, 0)).toBe(false);
+  });
+
+  it('devolve true quando nada foi carregado mas o servidor tem (0 de 10)', () => {
+    expect(temMaisPagina(0, 10)).toBe(true);
+  });
+
+  it('devolve false quando o carregado excede o total (defensivo)', () => {
+    expect(temMaisPagina(30, 20)).toBe(false);
   });
 });

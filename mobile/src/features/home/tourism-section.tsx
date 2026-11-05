@@ -36,13 +36,13 @@ export function TourismSection({ city }: { city?: string }) {
       setLoading(true);
       setError(null);
       try {
-        const [listaSpots, listaEvents] = await Promise.all([
+        const [paginaSpots, paginaEvents] = await Promise.all([
           getTouristSpots({ active: true, city, pageSize: 6 }),
           getEvents({ active: true, city, pageSize: 6 }),
         ]);
         if (!cancelled) {
-          setSpots(listaSpots);
-          setEvents(listaEvents);
+          setSpots(paginaSpots.items);
+          setEvents(paginaEvents.items);
         }
       } catch (erro) {
         if (!cancelled) {

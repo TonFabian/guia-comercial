@@ -3,10 +3,10 @@
  * busca combinando empresas, atrações e eventos.
  *
  * Sem React e sem I/O — a rede fica na tela (`api.ts`) e aqui entram apenas
- * dados prontos para derivar exibição. O termo digitado NÃO é aplicado às
- * empresas aqui (o termo delas já vai ao servidor); aplica-se somente ao
- * turismo (nome/descrição, case-insensitive), pois o backend de turismo não
- * expõe busca textual.
+ * dados prontos para derivar exibição. O termo das empresas vai ao servidor
+ * e nunca é aplicado aqui. O termo do turismo TAMBÉM vai ao servidor (`?q=`
+ * em `/tourist-spots` e `/events`, paginação de verdade); o filtro local por
+ * termo permanece apenas para cobrir o fallback mock, que roda sem backend.
  */
 import type { Company, TourEvent, TouristSpot } from '@/types/domain';
 
@@ -21,17 +21,15 @@ export type SearchSection = {
   items: SearchItem[];
 };
 
-/**
- * Quantidade de atrações/eventos buscada por vez (turismo não pagina no MVP).
- * Limitação conhecida: o termo da busca filtra esses 20 itens NO CLIENTE —
- * além do 20º, nada aparece. Passar `q` ao backend encerraria essa cerca.
- */
-export const TURISMO_PAGE_SIZE = 20;
-
 /** Indica se o texto casa o termo (case-insensitive). */
 function casaTermo(texto: string | undefined, termo: string): boolean {
   if (!texto) return false;
   return texto.toLowerCase().includes(termo);
+}
+
+/** Indica se ainda há itens para carregar na próxima página. */
+export function temMaisPagina(itensCarregados: number, total: number): boolean {
+  return itensCarregados < total;
 }
 
 /** Aplica o termo apenas a atrações/eventos; termo vazio devolve tudo. */

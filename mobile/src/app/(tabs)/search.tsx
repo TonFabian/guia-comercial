@@ -28,7 +28,7 @@ import type {
   SearchState,
 } from '@/features/search/search-pagination';
 import { useVoiceSearch } from '@/features/search/use-voice-search';
-import { buildSearchSections, TURISMO_PAGE_SIZE } from '@/features/search/tourism-search';
+import { buildSearchSections, temMaisPagina } from '@/features/search/tourism-search';
 import type { SearchItem, SearchSection } from '@/features/search/tourism-search';
 import {
   classificarEvento,
@@ -44,11 +44,15 @@ import {
   getTouristSpots,
   searchCompanies,
 } from '@/services/api';
+import type { TourismPage } from '@/services/api';
 import type { Category, Company, TourEvent, TouristSpot } from '@/types/domain';
 import { categoryLabel } from '@/types/domain';
 
 /** Tempo de espera antes de consultar a API a cada tecla digitada. */
 const DEBOUNCE_MS = 250;
+
+/** Quantidade de atrações/eventos pedida ao servidor por página na busca. */
+const TURISMO_PAGE_SIZE = 20;
 
 /** Badge de estado do evento para exibição. */
 const BADGE_EVENTO: Record<EstadoEvento, string> = {
@@ -84,6 +88,12 @@ export default function SearchScreen() {
   const [showEvents, setShowEvents] = useState(false);
   const [spots, setSpots] = useState<TouristSpot[]>([]);
   const [events, setEvents] = useState<TourEvent[]>([]);
+  // Estado de paginação por coleção: spots e events têm página/total
+  // independentes (o total do servidor decide se há mais páginas).
+  const [spotsPage, setSpotsPage] = useState(1);
+  const [spotsTotal, setSpotsTotal] = useState(0);
+  const [eventsPage, setEventsPage] = useState(1);
+  const [eventsTotal, setEventsTotal] = useState(0);
   const [loadingTurismo, setLoadingTurismo] = useState(false);
   const [turismoError, setTurismoError] = useState<string | null>(null);
 
@@ -130,43 +140,63 @@ export default function SearchScreen() {
     };
   }, []);
 
-  // Turismo: buscado em paralelo com as empresas quando algum chip está
-  // ativo. Erro de turismo tem try/catch próprio — não pode derrubar as
-  // empresas, que seguem visíveis.
+  // Turismo: buscado quando algum chip está ativo, com o mesmo debounce do
+  // termo. O termo vai ao servidor (`q`) e cada mudança de termo/chips
+  // recomeça em página 1. Erro de turismo tem try/catch próprio — não pode
+  // derrubar as empresas, que seguem visíveis. O filtro local por termo
+  // permanece no helper puro para cobrir o fallback mock (sem backend).
   useEffect(() => {
     let cancelled = false;
-    (async () => {
-      if (!showSpots && !showEvents) {
+    const timer = setTimeout(() => {
+      void (async () => {
+        if (!showSpots && !showEvents) {
+          setTurismoError(null);
+          setSpots([]);
+          setEvents([]);
+          setSpotsPage(1);
+          setSpotsTotal(0);
+          setEventsPage(1);
+          setEventsTotal(0);
+          return;
+        }
+        setLoadingTurismo(true);
         setTurismoError(null);
-        return;
-      }
-      setLoadingTurismo(true);
-      setTurismoError(null);
-      try {
-        const [listaSpots, listaEvents] = await Promise.all([
-          showSpots
-            ? getTouristSpots({ active: true, pageSize: TURISMO_PAGE_SIZE })
-            : Promise.resolve<TouristSpot[]>([]),
-          showEvents
-            ? getEvents({ active: true, pageSize: TURISMO_PAGE_SIZE })
-            : Promise.resolve<TourEvent[]>([]),
-        ]);
-        if (cancelled) return;
-        setSpots(listaSpots);
-        setEvents(listaEvents);
-      } catch {
-        if (cancelled) return;
-        setSpots([]);
-        setEvents([]);
-        setTurismoError('Não foi possível carregar atrações e eventos.');
-      } finally {
-        if (!cancelled) setLoadingTurismo(false);
-      }
-    })();
+        try {
+          const [spotsQueChegaram, eventsQueChegaram] = await Promise.all([
+            showSpots
+              ? getTouristSpots({ active: true, q: term, pageSize: TURISMO_PAGE_SIZE })
+              : Promise.resolve<TourismPage<TouristSpot>>({ items: [], total: 0 }),
+            showEvents
+              ? getEvents({ active: true, q: term, pageSize: TURISMO_PAGE_SIZE })
+              : Promise.resolve<TourismPage<TourEvent>>({ items: [], total: 0 }),
+          ]);
+          if (cancelled) return;
+          setSpots(spotsQueChegaram.items);
+          setEvents(eventsQueChegaram.items);
+          setSpotsPage(1);
+          setSpotsTotal(spotsQueChegaram.total);
+          setEventsPage(1);
+          setEventsTotal(eventsQueChegaram.total);
+        } catch {
+          if (cancelled) return;
+          setSpots([]);
+          setEvents([]);
+          setSpotsPage(1);
+          setSpotsTotal(0);
+          setEventsPage(1);
+          setEventsTotal(0);
+          setTurismoError('Não foi possível carregar atrações e eventos.');
+        } finally {
+          if (!cancelled) setLoadingTurismo(false);
+        }
+      })();
+    }, DEBOUNCE_MS);
+
     return () => {
       cancelled = true;
+      clearTimeout(timer);
     };
-  }, [showSpots, showEvents, reloadToken]);
+  }, [showSpots, showEvents, term, reloadToken]);
 
   // Busca: recomeça do zero quando qualquer filtro muda.
   useEffect(() => {
@@ -215,21 +245,90 @@ export default function SearchScreen() {
     [state, filters],
   );
 
+  // Cada coleção de turismo decide sozinha quando há mais páginas (o `total`
+  // do servidor é a fonte da verdade — helper puro `temMaisPagina`).
+  const spotsTemMais = temMaisPagina(spots.length, spotsTotal);
+  const eventsTemMais = temMaisPagina(events.length, eventsTotal);
+
   const loadMore = useCallback(async () => {
-    if (loadingMore || !view.hasMore) return;
+    if (loadingMore) return;
+    if (!view.hasMore && !spotsTemMais && !eventsTemMais) return;
     setLoadingMore(true);
     try {
-      const next = await loadNextPage(state, filters, fetcher, SEARCH_PAGE_SIZE);
-      setLoaded(next.loaded);
-      setServerTotal(next.serverTotal);
-      setPage(next.page);
-      setExhausted(next.exhausted);
-    } catch {
-      setError('Não foi possível carregar mais empresas.');
+      if (view.hasMore) {
+        try {
+          const next = await loadNextPage(state, filters, fetcher, SEARCH_PAGE_SIZE);
+          setLoaded(next.loaded);
+          setServerTotal(next.serverTotal);
+          setPage(next.page);
+          setExhausted(next.exhausted);
+        } catch (caught) {
+          // Falha de empresas não vira erro de turismo nem apaga o carregado.
+          setError(
+            caught instanceof Error
+              ? caught.message
+              : 'Não foi possível carregar mais empresas.',
+          );
+        }
+      }
+
+      // Turismo: cada coleção com chip ativo e páginas restantes recebe a
+      // própria requisição; sem requisição quando a coleção já esgotou.
+      // Falha anexa erro de turismo sem tocar empresas nem itens carregados.
+      let turismoFalhou = false;
+      if (!loadingTurismo) {
+        if (showSpots && spotsTemMais) {
+          try {
+            const pagina = await getTouristSpots({
+              active: true,
+              q: term,
+              page: spotsPage + 1,
+              pageSize: TURISMO_PAGE_SIZE,
+            });
+            setSpots((carregados) => [...carregados, ...pagina.items]);
+            setSpotsTotal(pagina.total);
+            setSpotsPage(spotsPage + 1);
+          } catch {
+            turismoFalhou = true;
+          }
+        }
+        if (showEvents && eventsTemMais) {
+          try {
+            const pagina = await getEvents({
+              active: true,
+              q: term,
+              page: eventsPage + 1,
+              pageSize: TURISMO_PAGE_SIZE,
+            });
+            setEvents((carregados) => [...carregados, ...pagina.items]);
+            setEventsTotal(pagina.total);
+            setEventsPage(eventsPage + 1);
+          } catch {
+            turismoFalhou = true;
+          }
+        }
+      }
+      if (turismoFalhou) {
+        setTurismoError('Não foi possível carregar atrações e eventos.');
+      }
     } finally {
       setLoadingMore(false);
     }
-  }, [loadingMore, view.hasMore, state, filters, fetcher]);
+  }, [
+    loadingMore,
+    loadingTurismo,
+    view,
+    state,
+    filters,
+    fetcher,
+    showSpots,
+    showEvents,
+    spotsTemMais,
+    eventsTemMais,
+    spotsPage,
+    eventsPage,
+    term,
+  ]);
 
   const { listening, error: voiceError, start: startVoice } = useVoiceSearch((transcript) => {
     setManualTerm(transcript);
@@ -619,13 +718,13 @@ export default function SearchScreen() {
             }
             ListFooterComponent={
               <>
-                {view.hasMore && (
+                {(view.hasMore || spotsTemMais || eventsTemMais) && (
                   <TouchableOpacity
                     style={styles.loadMoreButton}
                     onPress={loadMore}
                     disabled={loadingMore}
                     accessibilityRole="button"
-                    accessibilityLabel="Carregar mais empresas"
+                    accessibilityLabel="Carregar mais resultados"
                   >
                     <Text style={styles.loadMoreText}>
                       {loadingMore ? 'Carregando…' : 'Carregar mais'}
