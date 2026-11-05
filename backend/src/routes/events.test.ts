@@ -403,6 +403,45 @@ describe('POST /api/events', () => {
     expect(JSON.parse(init.body)).toHaveLength(1);
   });
 
+  it('não dispara push ao criar evento rascunho (active=false)', async () => {
+    // Rascunho é invisível no app: anunciar "novo evento" de algo encoberto
+    // seria push irrecuperável para toda a base de tokens.
+    const response = await request(app)
+      .post('/api/events')
+      .set('Authorization', 'Bearer token_admin')
+      .send({ ...payloadValido, active: false });
+
+    expect(response.status).toBe(201);
+    expect(modeloEventos.documents).toHaveLength(5);
+    // O disparo de push é async pós-create: alguns ciclos de microtarefas
+    // garantem que um disparo indevido já teria sido registrado.
+    await Promise.resolve();
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(fetchFake).not.toHaveBeenCalled();
+  });
+
+  it('não dispara push ao criar evento já vencido (backfill histórico)', async () => {
+    // Backfill de evento que já acabou: endDate/startDate no passado andam
+    // aceitos no cadastro, mas anunciar evento encerrado é ruído irreversível.
+    const response = await request(app)
+      .post('/api/events')
+      .set('Authorization', 'Bearer token_admin')
+      .send({
+        ...payloadValido,
+        startDate: '2026-11-01',
+        endDate: ontem, // vencido em relação ao relógio fixo (2026-11-05)
+      });
+
+    expect(response.status).toBe(201);
+    expect(modeloEventos.documents).toHaveLength(5);
+    // Espera um ciclo de microtarefas para pegar o disparo assíncrono, se houver.
+    await Promise.resolve();
+    await Promise.resolve();
+    await Promise.resolve();
+    expect(fetchFake).not.toHaveBeenCalled();
+  });
+
   it('cria o evento mesmo quando o push falha', async () => {
     fetchFake.mockRejectedValue(new Error('falha no push'));
 

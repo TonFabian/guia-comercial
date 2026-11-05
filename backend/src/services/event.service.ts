@@ -118,8 +118,12 @@ export async function createTourEvent(
       organizerCompany: organizerCompany as TourEvent['organizerCompany'],
     });
 
-    // Push apenas no CREATE (spec D11): falha de push não quebra o POST.
-    void notifyNewEvent(criado.name, dto.city).catch(() => undefined);
+    // Push apenas no CREATE (spec D11) e apenas de evento PUBLICADO E VIGENTE:
+    // anunciar rascunho (active=false) ou evento já vencido é push
+    // irreversível de conteúdo invisível. Falha de push não quebra o POST.
+    if (criado.active && criado.endDate >= todayInFortaleza()) {
+      void notifyNewEvent(criado.name, dto.city).catch(() => undefined);
+    }
 
     return criado;
   } catch (error) {
