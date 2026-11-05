@@ -40,12 +40,18 @@ export function formatarPeriodoEvento(startDate: string, endDate: string): strin
 /** Estado do evento no dia local: ainda vai acontecer, está rolando ou acabou. */
 export type EstadoEvento = 'em-breve' | 'agora' | 'encerrado';
 
-/** Data local de hoje em `YYYY-MM-DD` (usa `Date` só para FORMATAR). */
+/**
+ * "Hoje" no fuso do guia (America/Fortaleza, igual ao backend/admin) como
+ * `YYYY-MM-DD`. Usa `Intl` em vez do relógio do dispositivo: perto da
+ * meia-noite um app em fuso à frente/atrás desincronizaria do servidor.
+ */
 export function hojeISO(): string {
-  const agora = new Date();
-  const mes = String(agora.getMonth() + 1).padStart(2, '0');
-  const dia = String(agora.getDate()).padStart(2, '0');
-  return `${agora.getFullYear()}-${mes}-${dia}`;
+  return new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'America/Fortaleza',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  }).format(new Date());
 }
 
 /** Compara `YYYY-MM-DD` lexicograficamente; `hoje` é injetado pelo chamador. */

@@ -886,5 +886,6 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
       gap: Spacing.two,
       marginTop: Spacing.two,
       paddingBottom: Spacing.three,
-    },  });
+    },
+  });
 }

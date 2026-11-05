@@ -378,7 +378,10 @@ export function findMockEvent(id: string): TourEvent | null {
   return MOCK_EVENTS.find((event) => event._id === id || event.slug === id) ?? null;
 }
 
-/** Ponto turístico pelo id ou slug. `null` quando a API responde que não existe. */
+/**
+ * Ponto turístico pelo id (o backend não resolve slug — só o fallback mock
+ * aceita slug). `null` quando a API responde que não existe.
+ */
 export async function getTouristSpotById(id: string): Promise<TouristSpot | null> {
   if (!isApiConfigured()) return __DEV__ ? findMockTouristSpot(id) : null;
   try {
@@ -392,9 +395,10 @@ export async function getTouristSpotById(id: string): Promise<TouristSpot | null
 }
 
 /**
- * Evento turístico pelo id ou slug. `null` quando a API responde que não
- * existe — evento VENCIDO continua sendo recurso válido (200): quem decide
- * como mostrar o "Encerrado" é a tela.
+ * Evento turístico pelo id (o backend não resolve slug — só o fallback mock
+ * aceita slug). `null` quando a API responde que não existe — evento VENCIDO
+ * continua sendo recurso válido (200): quem decide como mostrar o "Encerrado"
+ * é a tela.
  */
 export async function getEventById(id: string): Promise<TourEvent | null> {
   if (!isApiConfigured()) return __DEV__ ? findMockEvent(id) : null;

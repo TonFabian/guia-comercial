@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import {
   classificarEvento,
@@ -7,6 +7,7 @@ import {
   formatarDataEvento,
   formatarHorario,
   formatarPeriodoEvento,
+  hojeISO,
   labelCategoriaAtracao,
   labelCategoriaEvento,
 } from './event-meta';
@@ -29,6 +30,20 @@ describe('formatarPeriodoEvento', () => {
 
   it('mostra as duas datas completas quando os meses são diferentes', () => {
     expect(formatarPeriodoEvento('2026-11-28', '2026-12-02')).toBe('28 de nov – 2 de dez');
+  });
+});
+
+describe('hojeISO', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
+  it('segue o fuso de Fortaleza, não o do dispositivo (en-CA → YYYY-MM-DD)', () => {
+    // 01:30Z de 06/11 = 22:30 de 05/11 em Fortaleza (UTC-3): o "hoje" do guia
+    // ainda é 05/11, mesmo que o relógio universal já esteja no dia seguinte.
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-11-06T01:30:00Z'));
+    expect(hojeISO()).toBe('2026-11-05');
   });
 });
 
