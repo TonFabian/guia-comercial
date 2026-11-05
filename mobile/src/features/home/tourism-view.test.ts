@@ -81,6 +81,16 @@ describe('toTourismCards', () => {
     expect(card.badge).toBe('Hoje');
   });
 
+  it('marca evento de um único dia no dia de hoje como Hoje', () => {
+    const [card] = toTourismCards(
+      [],
+      [evento({ startDate: HOJE, endDate: HOJE })],
+      HOJE,
+    );
+
+    expect(card.badge).toBe('Hoje');
+  });
+
   it('marca evento encerrado quando a data de fim passou', () => {
     const [card] = toTourismCards(
       [],

@@ -1,25 +1,17 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
-import type { Href } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
 import { Overlays, Radius, Spacing, Type } from '@/constants/theme';
 import { useThemeColors } from '@/hooks/use-theme-colors';
+import { hojeISO } from '@/features/tourism/event-meta';
 import { getEvents, getTouristSpots } from '@/services/api';
 import type { TourEvent, TouristSpot } from '@/types/domain';
 
 import { SectionHeader } from './section-header';
 import { toTourismCards } from './tourism-view';
-
-/** Data local de hoje em `YYYY-MM-DD` (injetável para o helper de cards). */
-function hojeISO(): string {
-  const agora = new Date();
-  const mes = String(agora.getMonth() + 1).padStart(2, '0');
-  const dia = String(agora.getDate()).padStart(2, '0');
-  return `${agora.getFullYear()}-${mes}-${dia}`;
-}
 
 /**
  * Seção "Turismo & Eventos" da Home: carrega atrações e eventos (em paralelo),
@@ -111,10 +103,17 @@ export function TourismSection() {
               <Pressable
                 key={card.id}
                 style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
-                onPress={() => router.push(card.href as Href)}
-                // TODO(rota): as telas /tourist-spot/[id] e /event/[id] ainda
-                // não existem; o `as Href` evita falha de typed routes até a
-                // task que criar os detalhes de turismo.
+                onPress={() =>
+                  router.push({
+                    pathname:
+                      card.kind === 'event'
+                        ? '/event/[id]'
+                        : '/tourist-spot/[id]',
+                    params: { id: card.id },
+                  })
+                }
+                // Rotas /tourist-spot/[id] e /event/[id] existem e o
+                // typed-routes cobre o push tipado (sem cast).
                 accessibilityRole="button"
                 accessibilityLabel={`Ver ${tipoCard}: ${card.title}`}
               >

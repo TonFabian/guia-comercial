@@ -368,6 +368,47 @@ export async function getEvents(params: TourismParams = {}): Promise<TourEvent[]
   return fromPaginated(payload, mockFallback(MOCK_EVENTS));
 }
 
+/** Atração turística mockada por `_id` ou `slug` (fallback quando a API está fora do ar). */
+export function findMockTouristSpot(id: string): TouristSpot | null {
+  return MOCK_TOURIST_SPOTS.find((spot) => spot._id === id || spot.slug === id) ?? null;
+}
+
+/** Evento turístico mockado por `_id` ou `slug` (fallback quando a API está fora do ar). */
+export function findMockEvent(id: string): TourEvent | null {
+  return MOCK_EVENTS.find((event) => event._id === id || event.slug === id) ?? null;
+}
+
+/** Ponto turístico pelo id ou slug. `null` quando a API responde que não existe. */
+export async function getTouristSpotById(id: string): Promise<TouristSpot | null> {
+  if (!isApiConfigured()) return __DEV__ ? findMockTouristSpot(id) : null;
+  try {
+    const payload = await request<TouristSpot>(`/tourist-spots/${encodeURIComponent(id)}`);
+    if (!payload) return __DEV__ ? findMockTouristSpot(id) : null;
+    const [spot] = fromPaginated(payload, []);
+    return spot ?? (__DEV__ ? findMockTouristSpot(id) : null);
+  } catch {
+    return __DEV__ ? findMockTouristSpot(id) : null;
+  }
+}
+
+/**
+ * Evento turístico pelo id ou slug. `null` quando a API responde que não
+ * existe — evento VENCIDO continua sendo recurso válido (200): quem decide
+ * como mostrar o "Encerrado" é a tela.
+ */
+export async function getEventById(id: string): Promise<TourEvent | null> {
+  if (!isApiConfigured()) return __DEV__ ? findMockEvent(id) : null;
+  try {
+    const payload = await request<TourEvent>(`/events/${encodeURIComponent(id)}`);
+    if (!payload) return __DEV__ ? findMockEvent(id) : null;
+    const [event] = fromPaginated(payload, []);
+    return event ?? (__DEV__ ? findMockEvent(id) : null);
+  } catch {
+    return __DEV__ ? findMockEvent(id) : null;
+  }
+}
+
+
 export async function updateCompany(id: string, body: Partial<Company>): Promise<Company | null> {
   if (!isApiConfigured()) return null;
   const payload = await request<Company>(`/companies/${encodeURIComponent(id)}`, { method: 'PUT', body });
