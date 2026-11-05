@@ -96,9 +96,6 @@ function extractErrorMessage(body: string): string {
   return body.slice(0, 300);
 }
 
-export function apiGet<T>(path: string): Promise<T> {
-  return request<T>(path);
-}
 
 export function apiPost<T>(path: string, body: unknown): Promise<T> {
   return request<T>(path, { method: 'POST', body: JSON.stringify(body) });

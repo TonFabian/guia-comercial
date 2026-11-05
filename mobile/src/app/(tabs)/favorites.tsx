@@ -52,6 +52,7 @@ export default function FavoritesScreen() {
                   activeOpacity={0.7}
                   accessibilityRole="button"
                   accessibilityLabel={`Remover ${company.name} dos favoritos`}
+                  accessibilityState={{ selected: true }}
                   onPress={() => toggleFavorite(company)}
                 >
                   <Ionicons name="heart" size={20} color={colors.primary} />

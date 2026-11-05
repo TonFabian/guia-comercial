@@ -63,50 +63,6 @@ const GALLERY_PLACEHOLDERS: GalleryMedia[] = [
   },
 ];
 
-// Imagens locais temporárias para validar distribuição e espaçamento da galeria.
-const TEST_GALLERY_MEDIA: GalleryMedia[] = [
-  {
-    key: 'teste-estrutura',
-    type: 'image',
-    url: '',
-    label: 'Estrutura',
-    icon: 'office-building',
-    source: require('@/assets/images/incorporador-1-ca.jpg'),
-  },
-  {
-    key: 'teste-atendimento',
-    type: 'image',
-    url: '',
-    label: 'Atendimento',
-    icon: 'account-group-outline',
-    source: require('@/assets/images/imagem2.png'),
-  },
-  {
-    key: 'teste-servicos',
-    type: 'image',
-    url: '',
-    label: 'Serviços',
-    icon: 'tools',
-    source: require('@/assets/images/imagem3.jpg'),
-  },
-  {
-    key: 'teste-projetos',
-    type: 'image',
-    url: '',
-    label: 'Projetos',
-    icon: 'clipboard-text-outline',
-    source: require('@/assets/images/images.jpeg'),
-  },
-  {
-    key: 'teste-equipe',
-    type: 'image',
-    url: '',
-    label: 'Equipe',
-    icon: 'account-hard-hat-outline',
-    source: require('@/assets/images/images (1).jpeg'),
-  },
-];
-
 function sourceFor(media: GalleryMedia): ImageSource | number | null {
   if (media.source) return media.source;
 
@@ -244,7 +200,7 @@ export function CompanyGallery({ media }: { media: CompanyMedia[] }) {
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
 
   const mediaItems = useMemo<GalleryMedia[]>(
-    () => (media.length > 0 ? media : __DEV__ ? TEST_GALLERY_MEDIA : GALLERY_PLACEHOLDERS),
+    () => (media.length > 0 ? media : GALLERY_PLACEHOLDERS),
     [media],
   );
   const previewMedia = useMemo(

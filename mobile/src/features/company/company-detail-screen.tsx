@@ -5,7 +5,7 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useEffect, useMemo, useState } from 'react';
+import { useMemo } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -58,12 +58,7 @@ const CLOSED_HOURS = 'Fechado';
 function WorkingHoursCard({ hours }: { hours: WorkingHours }) {
   const colors = useThemeColors();
   const styles = makeStyles(colors);
-  const [now, setNow] = useState(() => new Date());
-
-  useEffect(() => {
-    const timer = setInterval(() => setNow(new Date()), 60_000);
-    return () => clearInterval(timer);
-  }, []);
+  const now = new Date();
 
   const status = getOpeningStatus(hours, now);
   const statusConfig: Record<OpeningStatus, { label: string; badge: any; dot: any; text: any }> = {
