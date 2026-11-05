@@ -1,7 +1,7 @@
 import type { Request, Response } from 'express';
 
 import * as service from '../services/notice.service.js';
-import { assertAdmin } from '../services/user.service.js';
+import { assertAdmin, ehAdmin } from '../services/user.service.js';
 import { asyncHandler, parsePagination } from '../utils/http.js';
 import { lerEnum } from '../utils/query.js';
 
@@ -38,6 +38,14 @@ export const list = asyncHandler(async (req: Request, res: Response): Promise<vo
 export const getById = asyncHandler(async (req: Request, res: Response): Promise<void> => {
   const doc = await service.getNoticeById(String(req.params.id));
   if (!doc) {
+    res.status(404).json({ error: 'aviso não encontrado' });
+    return;
+  }
+  // Fail-closed: rascunho ou fora da janela é conteúdo administrativo. Para
+  // não revelar a existência do aviso não publicado, responde com o MESMO 404
+  // do id inexistente (não 403) — exceto para admin, que precisa abrir o
+  // documento no painel.
+  if (!service.avisoEhPublico(doc) && !(await ehAdmin(req.auth?.clerkId))) {
     res.status(404).json({ error: 'aviso não encontrado' });
     return;
   }

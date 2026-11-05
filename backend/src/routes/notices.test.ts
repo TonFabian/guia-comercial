@@ -233,6 +233,67 @@ describe('GET /api/notices', () => {
   });
 });
 
+describe('GET /api/notices/:id', () => {
+  it('aviso ativo e vigente sem sessão → 200 com o corpo completo', async () => {
+    const response = await request(app).get('/api/notices/000000000000000000000060');
+
+    expect(response.status).toBe(200);
+    expect(response.body.title).toBe('Feira seria adiada');
+    expect(response.body.body).toBe('A feira foi adiada para o próximo sábado.');
+  });
+
+  it('rascunho sem sessão → 404 (mesma mensagem de não encontrado)', async () => {
+    const rascunho = await request(app).get('/api/notices/000000000000000000000061');
+    const inexistente = await request(app).get('/api/notices/000000000000000000000099');
+
+    expect(rascunho.status).toBe(404);
+    // A mensagem igual à do id inexistente evita revelar que o rascunho existe.
+    expect(rascunho.body.error).toBe('aviso não encontrado');
+    expect(rascunho.body.error).toBe(inexistente.body.error);
+  });
+
+  it('rascunho com usuário comum → 404', async () => {
+    const response = await request(app)
+      .get('/api/notices/000000000000000000000061')
+      .set('Authorization', 'Bearer token_comum');
+
+    expect(response.status).toBe(404);
+    expect(response.body.error).toBe('aviso não encontrado');
+  });
+
+  it('rascunho com admin → 200 (o painel precisa abrir/editar)', async () => {
+    const response = await request(app)
+      .get('/api/notices/000000000000000000000061')
+      .set('Authorization', 'Bearer token_admin');
+
+    expect(response.status).toBe(200);
+    expect(response.body.title).toBe('Rascunho interno');
+  });
+
+  it('aviso vencido sem sessão → 404', async () => {
+    const response = await request(app).get('/api/notices/000000000000000000000062');
+
+    expect(response.status).toBe(404);
+    expect(response.body.error).toBe('aviso não encontrado');
+  });
+
+  it('aviso vencido com admin → 200', async () => {
+    const response = await request(app)
+      .get('/api/notices/000000000000000000000062')
+      .set('Authorization', 'Bearer token_admin');
+
+    expect(response.status).toBe(200);
+    expect(response.body.title).toBe('Aviso vencido');
+  });
+
+  it('id inexistente → 404', async () => {
+    const response = await request(app).get('/api/notices/000000000000000000000099');
+
+    expect(response.status).toBe(404);
+    expect(response.body.error).toBe('aviso não encontrado');
+  });
+});
+
 describe('PUT/DELETE /api/notices com id malformado', () => {
   it('PUT com id malformado → 404', async () => {
     const response = await request(app)

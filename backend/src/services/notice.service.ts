@@ -26,6 +26,44 @@ function assegurarIdValido(id: string): void {
  */
 export type FiltroAvisos = 'ativos' | 'inativos' | 'todos';
 
+/**
+ * Condição Mongo de "aviso público": publicado (active) e dentro da janela de
+ * datas — `startsAt` ausente ou ≤ agora; `expiresAt` ausente ou ≥ agora.
+ * Fonte única da regra de vigência da listagem em modo 'ativos'.
+ */
+function condicaoAvisoPublico(agora: string): Record<string, unknown> {
+  return {
+    active: true,
+    $and: [
+      { $or: [{ expiresAt: { $exists: false } }, { expiresAt: { $gte: agora } }] },
+      { $or: [{ startsAt: { $exists: false } }, { startsAt: { $lte: agora } }] },
+    ],
+  };
+}
+
+/**
+ * Espelho em documento (não em query) da mesma regra de vigência:
+ * `active === true` e dentro da janela de datas. Usado no detalhe por id para
+ * decidir se o aviso pode ser exibido a um visitante sem reavaliar a janela
+ * manualmente no controller.
+ */
+export function avisoEhPublico(
+  aviso: Pick<Notice, 'active' | 'startsAt' | 'expiresAt'>,
+  agora = new Date(),
+): boolean {
+  if (!aviso.active) {
+    return false;
+  }
+  const agoraIso = agora.toISOString();
+  if (aviso.startsAt !== undefined && aviso.startsAt > agoraIso) {
+    return false;
+  }
+  if (aviso.expiresAt !== undefined && aviso.expiresAt < agoraIso) {
+    return false;
+  }
+  return true;
+}
+
 export async function listNotices(
   filtro: FiltroAvisos = 'ativos',
   pagination?: Pagination,
@@ -33,11 +71,7 @@ export async function listNotices(
   const now = new Date().toISOString();
   const query: Record<string, unknown> = {};
   if (filtro === 'ativos') {
-    query.active = true;
-    query.$and = [
-      { $or: [{ expiresAt: { $exists: false } }, { expiresAt: { $gte: now } }] },
-      { $or: [{ startsAt: { $exists: false } }, { startsAt: { $lte: now } }] },
-    ];
+    Object.assign(query, condicaoAvisoPublico(now));
   } else if (filtro === 'inativos') {
     query.active = false;
   }
@@ -49,9 +83,9 @@ export async function listNotices(
   return { items, total };
 }
 
-export async function getNoticeById(id: string) {
+export async function getNoticeById(id: string): Promise<Notice | null> {
   assegurarIdValido(id);
-  return NoticeModel.findById(id).lean();
+  return NoticeModel.findById(id).lean<Notice | null>().exec();
 }
 
 export async function createNotice(dto: Partial<Notice>, clerkId?: string) {
