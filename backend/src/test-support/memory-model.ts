@@ -5,7 +5,7 @@
  * subconjunto de operações usado pelos services (`find`, `findOne`,
  * `findById`, `findByIdAndUpdate`, `findByIdAndDelete`, `findOneAndUpdate`,
  * `updateOne`, `create`, `countDocuments`, `exists`) com os operadores de
- * filtro `$in`, `$ne`, `$exists`, `$or` e `$and`.
+ * filtro `$in`, `$ne`, `$gte`, `$exists`, `$or` e `$and`.
  *
  * Semântica igual à do Mongoose: `find` resolve uma lista, `findOne` e
  * `findById` resolvem um documento (ou `null`) e `updateOne` resolve o
@@ -344,6 +344,14 @@ function casarValor(valor: unknown, condicao: unknown): boolean {
     }
     if ('$ne' in operadores) {
       return !valoresIguais(valor, operadores.$ne);
+    }
+    if ('$gte' in operadores) {
+      const limite = operadores.$gte;
+      // A regra de eventos compara strings YYYY-MM-DD: a ordem lexicográfica
+      // é correta no formato fixo (nunca misture data com datetime ISO).
+      if (typeof valor === 'string' && typeof limite === 'string') return valor >= limite;
+      if (typeof valor === 'number' && typeof limite === 'number') return valor >= limite;
+      return false;
     }
     if ('$exists' in operadores) {
       return (valor !== undefined) === Boolean(operadores.$exists);

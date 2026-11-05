@@ -325,3 +325,118 @@ export const updateTouristSpotSchema = touristSpotBaseSchema.partial().superRefi
     }
   },
 );
+
+// ---------------------------------------------------------------------------
+// Tour Event (módulo de turismo)
+// ---------------------------------------------------------------------------
+
+const tourEventCategorySchema = z.enum([
+  'festival',
+  'show',
+  'fair',
+  'exhibition',
+  'sport',
+  'religious',
+  'cultural',
+  'workshop',
+  'other',
+]);
+
+// Data pura no formato YYYY-MM-DD (o `isoDate` deste arquivo é datetime e não
+// serve para startDate/endDate: a comparação de vigência é de string).
+const dataDiaSchema = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, 'data deve estar no formato YYYY-MM-DD')
+  .refine((valor) => ehDataDeCalendario(valor), 'data inválida (ex.: 2026-11-05)');
+
+const horaSchema = z
+  .string()
+  .regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'horário deve estar no formato HH:mm');
+
+/** Confere se o YYYY-MM-DD existe no calendário (rejeita 2026-02-30, 2026-13-01...). */
+function ehDataDeCalendario(valor: string): boolean {
+  const data = new Date(`${valor}T12:00:00Z`);
+  return !Number.isNaN(data.getTime()) && data.toISOString().slice(0, 10) === valor;
+}
+
+const tourEventBaseSchema = z.object({
+  name: z.string().trim().min(1),
+  slug: slugSchema,
+  description: z.string().trim().min(1),
+  category: tourEventCategorySchema,
+  startDate: dataDiaSchema,
+  endDate: dataDiaSchema,
+  startTime: horaSchema.optional(),
+  endTime: horaSchema.optional(),
+  location: z.string().trim().min(1).optional(),
+  address: z.string().trim().min(1).nullish(),
+  // `null` limpa o campo já salvo (padrão do painel, como em touristSpot).
+  // `city` chega como slug e é resolvida para o id do documento City.
+  city: z.string().trim().min(1).nullish(),
+  latitude: z.number().optional(),
+  longitude: z.number().optional(),
+  organizer: z.string().trim().min(1).optional(),
+  // Empresa organizadora, por id ou slug (resolvida no service).
+  organizerCompany: z.string().trim().min(1).nullish(),
+  ticket: z.enum(['free', 'paid']).optional(),
+  ticketPrice: z.string().optional(),
+  ticketUrl: z.string().optional(),
+  photos: z.array(z.string()).optional(),
+  phone: z.string().trim().min(1).nullish(),
+  whatsapp: z.string().trim().min(1).nullish(),
+  website: z.string().optional(),
+  instagram: z.string().optional(),
+  featured: z.boolean().optional(),
+  active: z.boolean(),
+});
+
+export const createTourEventSchema = tourEventBaseSchema.superRefine(
+  (valor, ctx): void => {
+    // Formato fixo YYYY-MM-DD: a ordem lexicográfica é a ordem cronológica.
+    // Nunca misture data pura com datetime ISO nesta comparação.
+    if (valor.endDate < valor.startDate) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'endDate deve ser maior ou igual a startDate',
+        path: ['endDate'],
+      });
+    }
+    if (valor.ticket === 'paid' && !valor.ticketPrice?.trim()) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'ticketPrice é obrigatório quando ticket é "paid"',
+        path: ['ticketPrice'],
+      });
+    }
+  },
+);
+
+export type CreateTourEventDto = z.infer<typeof createTourEventSchema>;
+
+export type UpdateTourEventDto = Partial<CreateTourEventDto>;
+
+// Em atualização parcial, os campos ausentes presumem os valores já salvos: as
+// regras cruzadas (endDate x startDate, ticket paid x ticketPrice) são
+// revalidadas sobre o estado RESULTANTE no service.
+export const updateTourEventSchema = tourEventBaseSchema.partial().superRefine(
+  (valor, ctx): void => {
+    if (valor.startDate && valor.endDate && valor.endDate < valor.startDate) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'endDate deve ser maior ou igual a startDate',
+        path: ['endDate'],
+      });
+    }
+    if (
+      valor.ticket === 'paid' &&
+      valor.ticketPrice !== undefined &&
+      valor.ticketPrice.trim().length === 0
+    ) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'ticketPrice é obrigatório quando ticket é "paid"',
+        path: ['ticketPrice'],
+      });
+    }
+  },
+);
