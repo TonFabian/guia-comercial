@@ -166,9 +166,9 @@ Base: `http://localhost:4000/api`
 | POST/GET/PUT/DELETE | `/notices/:id`              | manipula aviso (admin)                                 |
 | GET            | `/public-utilities`              | telefones úteis (`?active=true`, `?category=`, `?city=`) |
 | POST/GET/PUT/DELETE | `/public-utilities/:id`     | manipula utilidade pública (admin)                     |
-| GET            | `/tourist-spots`                 | atrações turísticas (filtros: `city`, `category`, `active`) |
+| GET            | `/tourist-spots`                 | atrações turísticas (filtros: `city`, `category`, `active`, `q`) |
 | POST/GET/PUT/DELETE | `/tourist-spots/:id`        | manipula atração (admin)                               |
-| GET            | `/events`                        | eventos (filtros: `city`, `category`, `active`, `includePast`) |
+| GET            | `/events`                        | eventos (filtros: `city`, `category`, `active`, `includePast`, `q`) |
 | POST/GET/PUT/DELETE | `/events/:id`               | manipula evento (admin)                                |
 | GET            | `/users`                         | usuários do app (admin, paginado)                      |
 | GET            | `/me`                            | perfil do usuário autenticado                           |
@@ -182,6 +182,8 @@ Base: `http://localhost:4000/api`
 (busca em nome/descrição/endereço/serviços) e `featured` (`true`/`false`).
 Em `/tourist-spots` e `/events`: `city`, `category` e `active`; em
 `/events`, `includePast=true` inclui os eventos já encerrados (uso do painel).
+Em `/tourist-spots` e `/events` também: `q` (busca textual por nome, descrição
+e — nos eventos — local).
 
 **Formato de resposta**
 
