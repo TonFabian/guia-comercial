@@ -12,6 +12,7 @@ import { health } from '../controllers/health.controller.js';
 import * as jobController from '../controllers/job.controller.js';
 import * as noticeController from '../controllers/notice.controller.js';
 import * as publicUtilityController from '../controllers/public-utility.controller.js';
+import * as touristSpotController from '../controllers/tourist-spot.controller.js';
 import * as reviewController from '../controllers/review.controller.js';
 import {
   createAuthDeps,
@@ -30,7 +31,9 @@ import {
   createNoticeSchema,
   createPublicUtilitySchema,
   createReviewSchema,
+  createTouristSpotSchema,
   updateUserSchema,
+  updateTouristSpotSchema,
   validateBody,
 } from '../types/dto.js';
 import { listUsers, me, updateMe } from '../controllers/user.controller.js';
@@ -174,6 +177,15 @@ publicUtilities.put(
 );
 publicUtilities.delete('/:id', publicUtilityController.remove);
 
+// Pontos turísticos (atrações permanentes do módulo de turismo): leitura
+// aberta, escrita restrita ao admin — mesmo modelo das utilidades públicas.
+const touristSpots = Router();
+touristSpots.post('/', validateBody(createTouristSpotSchema), touristSpotController.create);
+touristSpots.get('/', touristSpotController.list);
+touristSpots.get('/:id', touristSpotController.getById);
+touristSpots.put('/:id', validateBody(updateTouristSpotSchema), touristSpotController.update);
+touristSpots.delete('/:id', touristSpotController.remove);
+
 routes.use('/categories', categories);
 routes.use('/cities', cities);
 routes.use('/companies', companies);
@@ -182,6 +194,7 @@ routes.use('/coupons', coupons);
 routes.use('/jobs', jobs);
 routes.use('/notices', notices);
 routes.use('/public-utilities', publicUtilities);
+routes.use('/tourist-spots', touristSpots);
 routes.use('/autonomous-professionals', autonomousProfessionals);
 
 // -----------------------------------------------------------------------------

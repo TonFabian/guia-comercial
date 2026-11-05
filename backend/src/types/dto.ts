@@ -245,3 +245,83 @@ export const createCitySchema = z.object({
 export type CreateCityDto = z.infer<typeof createCitySchema>;
 
 export type UpdateCityDto = Partial<CreateCityDto>;
+
+// ---------------------------------------------------------------------------
+// Tourist Spot (módulo de turismo)
+// ---------------------------------------------------------------------------
+
+const touristSpotCategorySchema = z.enum([
+  'nature',
+  'park',
+  'waterfall',
+  'viewpoint',
+  'museum',
+  'church',
+  'monument',
+  'square',
+  'adventure',
+  'other',
+]);
+
+const touristSpotBaseSchema = z.object({
+  name: z.string().trim().min(1),
+  slug: slugSchema,
+  description: z.string().trim().min(1),
+  category: touristSpotCategorySchema,
+  photos: z.array(z.string()).optional(),
+  // `null` limpa o campo já salvo (padrão createPublicUtilitySchema: o painel
+  // precisa remover dados antigos sem excluir e recriar o registro).
+  address: z.string().trim().min(1).nullish(),
+  // `city` chega como slug e é resolvida para o id do documento City.
+  city: z.string().trim().min(1).nullish(),
+  latitude: z.number().optional(),
+  longitude: z.number().optional(),
+  openingHours: z.array(z.string()).optional(),
+  entryFee: z.enum(['free', 'paid', 'donation']).optional(),
+  entryPrice: z.string().optional(),
+  phone: z.string().trim().min(1).nullish(),
+  whatsapp: z.string().trim().min(1).nullish(),
+  website: z.string().optional(),
+  instagram: z.string().optional(),
+  featured: z.boolean().optional(),
+  active: z.boolean(),
+  order: z.number().int().optional(),
+  // Empresa relacionada, por id ou slug (resolvida no service).
+  relatedCompany: z.string().trim().min(1).nullish(),
+});
+
+export const createTouristSpotSchema = touristSpotBaseSchema.superRefine(
+  (valor, ctx): void => {
+    // Regra de negócio: o preço é texto livre e fica obrigatório quando a
+    // entrada é cobrada.
+    if (valor.entryFee === 'paid' && !valor.entryPrice?.trim()) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'entryPrice é obrigatório quando entryFee é "paid"',
+        path: ['entryPrice'],
+      });
+    }
+  },
+);
+
+export type CreateTouristSpotDto = z.infer<typeof createTouristSpotSchema>;
+
+export type UpdateTouristSpotDto = Partial<CreateTouristSpotDto>;
+
+// Em atualização parcial, o preço só é validado quando vem no payload: um
+// PUT que muda apenas `entryFee` preserva o entryPrice já salvo no registro.
+export const updateTouristSpotSchema = touristSpotBaseSchema.partial().superRefine(
+  (valor, ctx): void => {
+    if (
+      valor.entryFee === 'paid' &&
+      valor.entryPrice !== undefined &&
+      valor.entryPrice.trim().length === 0
+    ) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'entryPrice é obrigatório quando entryFee é "paid"',
+        path: ['entryPrice'],
+      });
+    }
+  },
+);
