@@ -403,7 +403,12 @@ const tourEventScheduleItemSchema = z
     }
   });
 
-const tourEventScheduleItemArraySchema = z.array(tourEventScheduleItemSchema);
+const tourEventScheduleItemArraySchema = z
+  .array(tourEventScheduleItemSchema)
+  // A programação é lista curta por evento (spec: sem paginação). Um array
+  // sem teto aceitaria um payload de ~1MB (~10k itens) que travaria a tela
+  // do app (ScrollView + .map) e o formulário do painel.
+  .max(100, 'programação do evento não pode ter mais de 100 itens');
 
 const tourEventBaseSchema = z.object({
   name: z.string().trim().min(1),

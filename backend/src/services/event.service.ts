@@ -120,7 +120,11 @@ export async function listTourEvents(
 export async function getTourEventById(id: string) {
   // Evento vencido continua recuperável por id (200 normal): a tela exibe
   // "Encerrado"; 404 é apenas para id inexistente.
-  return TourEventModel.findById(id).populate('city').populate('schedule.relatedSpot').lean();
+  return TourEventModel.findById(id)
+    .populate('city')
+    .populate('organizerCompany')
+    .populate('schedule.relatedSpot')
+    .lean();
 }
 
 export async function createTourEvent(
@@ -254,6 +258,7 @@ export async function updateTourEvent(
       runValidators: true,
     })
       .populate('city')
+      .populate('organizerCompany')
       .populate('schedule.relatedSpot')
       .lean();
   } catch (error) {

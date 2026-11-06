@@ -781,6 +781,21 @@ describe('POST /api/events — programação (schedule)', () => {
     const item = response.body.schedule[0] as Record<string, unknown>;
     expect(item.relatedSpot).toBe('000000000000000000000099');
   });
+
+  it('responde 422 quando a programação tem mais de 100 itens', async () => {
+    const response = await publicar({
+      ...payloadBase,
+      schedule: Array.from({ length: 101 }, (_, indice) => ({
+        ...itemCompleto,
+        date: '2026-12-10',
+        title: `Item ${indice}`,
+      })),
+    });
+
+    expect(response.status).toBe(422);
+    expect(JSON.stringify(response.body.details)).toContain('schedule');
+    expect(modeloEventos.documents).toHaveLength(4);
+  });
 });
 
 describe('PUT /api/events — programação (schedule)', () => {
