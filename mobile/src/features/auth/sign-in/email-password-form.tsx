@@ -1,52 +1,65 @@
 import { useClerk, useSignIn, useSignUp } from '@clerk/expo';
+import Feather from '@expo/vector-icons/Feather';
 import { router } from 'expo-router';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useState } from 'react';
 import {
   ActivityIndicator,
   Platform,
   StyleSheet,
   Text,
-  TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
 
-import { Radius, Spacing, Type } from '@/constants/theme';
+import { LoginColors, LoginGradients, Type } from '@/constants/theme';
 import { clerkErrorToMessage, GenericAuthErrorMessage } from '@/features/auth/clerk-errors';
-import { useThemeColors } from '@/hooks/use-theme-colors';
+
+import { LoginField } from './login-field';
+import type { AuthMode } from './login-labels';
+import { loginSubmitLabel } from './login-labels';
+import { RememberRow } from './remember-row';
 
 /** Mínimo coerente com a configuração do Clerk Dashboard (senha). */
 export const PASSWORD_MIN = 8;
 
-type Mode = 'entrar' | 'criar';
-
 /**
  * Formulário e-mail/senha com alternância entrar/criar (custom flows).
  *
- * Cadastro usa verificação de e-mail por código de 6 dígitos inline, com
- * reenvio. O telefone informado é aplicado pós-sessão com
- * `user.createPhoneNumber`: na própria criação o Clerk exigiria verificação
- * por SMS também, duplicando o fluxo (número fica sem verificação).
+ * O modo é controlado pela tela (rodapé "Cadastre-se"/"Entrar"). O cadastro
+ * usa verificação de e-mail por código de 6 dígitos inline, com reenvio. O
+ * telefone informado é aplicado pós-sessão com `user.createPhoneNumber`: na
+ * própria criação o Clerk exigiria verificação por SMS também, duplicando o
+ * fluxo (número fica sem verificação).
  */
 const FormWrapper = Platform.OS === 'web' ? ('form' as any) : View;
 
-export function EmailPasswordForm() {
-  const colors = useThemeColors();
-  const styles = makeStyles(colors);
+export function EmailPasswordForm({ mode }: { mode: AuthMode }) {
   const { signIn } = useSignIn();
   const { signUp } = useSignUp();
   const clerk = useClerk();
 
-  const [mode, setMode] = useState<Mode>('entrar');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [phone, setPhone] = useState('');
   const [code, setCode] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [remember, setRemember] = useState(false);
   const [awaitVerification, setAwaitVerification] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  // Ao trocar de modo, descarta só o estado transitório do fluxo anterior
+  // (erro/verificação), preservando e-mail e senha já digitados.
+  const [previousMode, setPreviousMode] = useState<AuthMode>(mode);
+  if (previousMode !== mode) {
+    setPreviousMode(mode);
+    setError(null);
+    setAwaitVerification(false);
+    setCode('');
+  }
 
   const loaded = Boolean(signIn) && Boolean(signUp);
 
@@ -78,6 +91,10 @@ export function EmailPasswordForm() {
 
   /** Entrar: estratégia `password` na primeira tentativa. */
   async function signInWithPassword() {
+    if (!signIn) {
+      return;
+    }
+
     const { error: passwordError } = await signIn.password({
       identifier: email.trim(),
       password,
@@ -106,6 +123,10 @@ export function EmailPasswordForm() {
 
   /** Criar conta: passo 1 (dados + senha) e passo 2 (código por e-mail). */
   async function createAccount() {
+    if (!signUp) {
+      return;
+    }
+
     const { error: createError } = await signUp.password({
       emailAddress: email.trim(),
       password,
@@ -152,6 +173,10 @@ export function EmailPasswordForm() {
 
   /** Passo 2 do cadastro: confirmar o código de 6 dígitos do e-mail. */
   async function confirmCode() {
+    if (!signUp) {
+      return;
+    }
+
     const { error: verifyError } = await signUp.verifications.verifyEmailCode({ code });
 
     if (verifyError) {
@@ -221,29 +246,21 @@ export function EmailPasswordForm() {
     }
   }
 
-  function switchMode() {
-    setMode(mode === 'entrar' ? 'criar' : 'entrar');
-    setError(null);
-    setAwaitVerification(false);
-    setCode('');
-  }
-
   if (awaitVerification) {
     return (
       <View style={styles.container}>
         <Text style={styles.helper}>Digite o código de 6 dígitos enviado para {email}</Text>
-        <TextInput
-          style={styles.input}
+        <LoginField
+          icon="hash"
           value={code}
           onChangeText={(value) => setCode(value.replace(/\D/g, ''))}
           placeholder="000000"
-          placeholderTextColor={colors.textSecondary}
           keyboardType="number-pad"
           maxLength={6}
           textContentType="oneTimeCode"
         />
         <ErrorText error={error} />
-        <PrimaryButton label="Confirmar código" onPress={submit} loading={loading} />
+        <SubmitButton label="Confirmar código" onPress={submit} loading={loading} />
         <TouchableOpacity
           style={styles.link}
           onPress={resendCode}
@@ -257,101 +274,105 @@ export function EmailPasswordForm() {
   }
 
   return (
-    <FormWrapper style={styles.container} onSubmit={(e: any) => { e?.preventDefault?.(); void submit(); }}>
-      <ModeToggle mode={mode} onChange={switchMode} />
-
+    <FormWrapper
+      style={styles.container}
+      onSubmit={(e: any) => {
+        e?.preventDefault?.();
+        void submit();
+      }}
+    >
       {mode === 'criar' ? (
         <View style={styles.nameRow}>
-          <TextInput
-            style={[styles.input, styles.nameField]}
-            value={firstName}
-            onChangeText={setFirstName}
-            placeholder="Nome"
-            placeholderTextColor={colors.textSecondary}
-            textContentType="givenName"
-            autoCapitalize="words"
-          />
-          <TextInput
-            style={[styles.input, styles.nameField]}
-            value={lastName}
-            onChangeText={setLastName}
-            placeholder="Sobrenome"
-            placeholderTextColor={colors.textSecondary}
-            textContentType="familyName"
-            autoCapitalize="words"
-          />
+          <View style={styles.nameField}>
+            <LoginField
+              icon="user"
+              value={firstName}
+              onChangeText={setFirstName}
+              placeholder="Nome"
+              autoCapitalize="words"
+              textContentType="givenName"
+            />
+          </View>
+          <View style={styles.nameField}>
+            <LoginField
+              icon="user"
+              value={lastName}
+              onChangeText={setLastName}
+              placeholder="Sobrenome"
+              autoCapitalize="words"
+              textContentType="familyName"
+            />
+          </View>
         </View>
       ) : null}
 
-      <TextInput
-        style={styles.input}
+      <LoginField
+        icon={mode === 'entrar' ? 'user' : 'mail'}
         value={email}
         onChangeText={setEmail}
-        placeholder="E-mail"
-        placeholderTextColor={colors.textSecondary}
-        keyboardType="email-address"
+        placeholder={mode === 'entrar' ? 'E-mail ou telefone' : 'E-mail'}
+        keyboardType={mode === 'entrar' ? 'default' : 'email-address'}
         autoCapitalize="none"
-        autoComplete="email"
-        textContentType="emailAddress"
+        autoComplete="username"
+        textContentType="username"
       />
 
       {mode === 'criar' ? (
-        <TextInput
-          style={styles.input}
+        <LoginField
+          icon="phone"
           value={phone}
           onChangeText={setPhone}
           placeholder="Telefone (opcional)"
-          placeholderTextColor={colors.textSecondary}
           keyboardType="phone-pad"
           autoComplete="tel"
           textContentType="telephoneNumber"
         />
       ) : null}
 
-      <TextInput
-        style={styles.input}
+      <LoginField
+        icon="lock"
         value={password}
         onChangeText={setPassword}
-        placeholder={`Senha (mínimo ${PASSWORD_MIN} caracteres)`}
-        placeholderTextColor={colors.textSecondary}
-        secureTextEntry
+        placeholder={mode === 'entrar' ? 'Senha' : `Senha (mínimo ${PASSWORD_MIN} caracteres)`}
+        secureTextEntry={!showPassword}
         autoComplete={mode === 'entrar' ? 'password' : 'new-password'}
         textContentType={mode === 'entrar' ? 'password' : 'newPassword'}
+        right={
+          <TouchableOpacity
+            onPress={() => setShowPassword((visible) => !visible)}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel={showPassword ? 'Ocultar senha' : 'Mostrar senha'}
+          >
+            <Feather
+              name={showPassword ? 'eye' : 'eye-off'}
+              size={20}
+              color={LoginColors.muted}
+            />
+          </TouchableOpacity>
+        }
       />
+
+      {mode === 'entrar' ? (
+        <RememberRow
+          remember={remember}
+          onToggleRemember={() => setRemember((checked) => !checked)}
+        />
+      ) : null}
 
       <ErrorText error={error} />
 
-      <PrimaryButton
-        label={mode === 'entrar' ? 'Entrar' : 'Criar conta'}
+      <SubmitButton
+        label={loginSubmitLabel(mode)}
         onPress={submit}
         loading={loading}
+        showArrow={mode === 'entrar'}
       />
     </FormWrapper>
   );
 }
 
-function ModeToggle({ mode, onChange }: { mode: Mode; onChange: () => void }) {
-  const colors = useThemeColors();
-  const styles = makeStyles(colors);
-
-  return (
-    <TouchableOpacity
-      style={styles.modeToggle}
-      onPress={onChange}
-      role="button"
-      accessibilityLabel="Alternar entre entrar e criar conta"
-    >
-      <Text style={styles.modeToggleText}>
-        {mode === 'entrar' ? 'Não tem conta? Criar' : 'Já tem conta? Entrar'}
-      </Text>
-    </TouchableOpacity>
-  );
-}
-
 function ErrorText({ error }: { error: string | null }) {
-  const colors = useThemeColors();
-  const styles = makeStyles(colors);
-
   if (!error) {
     return null;
   }
@@ -359,94 +380,96 @@ function ErrorText({ error }: { error: string | null }) {
   return <Text style={styles.error}>{error}</Text>;
 }
 
-function PrimaryButton({
+function SubmitButton({
   label,
   onPress,
   loading,
+  showArrow = false,
 }: {
   label: string;
   onPress: () => void;
   loading: boolean;
+  showArrow?: boolean;
 }) {
-  const colors = useThemeColors();
-  const styles = makeStyles(colors);
-
   return (
     <TouchableOpacity
-      style={[styles.primary, loading && styles.disabled]}
+      style={styles.submitWrap}
       onPress={onPress}
       disabled={loading}
+      activeOpacity={0.85}
       role="button"
       accessibilityLabel={loading ? 'Aguarde' : label}
       accessibilityState={{ busy: loading }}
     >
-      {loading ? <ActivityIndicator size="small" color={colors.background} /> : null}
-      <Text style={styles.primaryText}>{label}</Text>
+      <LinearGradient
+        colors={LoginGradients.button}
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0 }}
+        style={styles.submitGradient}
+      >
+        {loading ? (
+          <ActivityIndicator size="small" color={LoginColors.primaryText} />
+        ) : (
+          <>
+            <Text style={styles.submitText}>{label}</Text>
+            {showArrow ? (
+              <Feather
+                name="arrow-right"
+                size={22}
+                color={LoginColors.primaryText}
+                style={styles.submitArrow}
+              />
+            ) : null}
+          </>
+        )}
+      </LinearGradient>
     </TouchableOpacity>
   );
 }
 
-function makeStyles(colors: ReturnType<typeof useThemeColors>) {
-  return StyleSheet.create({
-    container: {
-      gap: Spacing.three,
-    },
-    modeToggle: {
-      alignSelf: 'flex-end',
-    },
-    modeToggleText: {
-      color: colors.primary,
-      fontSize: Type.small,
-    },
-    helper: {
-      color: colors.textSecondary,
-      fontSize: Type.body,
-      textAlign: 'center',
-    },
-    nameRow: {
-      flexDirection: 'row',
-      gap: Spacing.two,
-    },
-    nameField: {
-      flex: 1,
-    },
-    input: {
-      backgroundColor: colors.surface,
-      borderColor: colors.border,
-      borderWidth: 1,
-      borderRadius: Radius.chip,
-      color: colors.text,
-      fontSize: Type.base,
-      paddingVertical: Spacing.three - 2,
-      paddingHorizontal: Spacing.three,
-    },
-    error: {
-      color: colors.error,
-      fontSize: Type.small,
-    },
-    primary: {
-      flexDirection: 'row',
-      alignItems: 'center',
-      justifyContent: 'center',
-      gap: Spacing.two,
-      backgroundColor: colors.primary,
-      borderRadius: Radius.chip,
-      paddingVertical: Spacing.three + 2,
-    },
-    disabled: {
-      opacity: 0.7,
-    },
-    primaryText: {
-      color: colors.background,
-      fontSize: Type.subtitle,
-      fontWeight: '700',
-    },
-    link: {
-      alignSelf: 'center',
-    },
-    linkText: {
-      color: colors.textSecondary,
-      fontSize: Type.small,
-    },
-  });
-}
+const styles = StyleSheet.create({
+  container: {
+    gap: 16,
+  },
+  nameRow: {
+    flexDirection: 'row',
+    gap: 8,
+  },
+  nameField: {
+    flex: 1,
+  },
+  helper: {
+    color: LoginColors.muted,
+    fontSize: Type.body,
+    textAlign: 'center',
+  },
+  error: {
+    color: LoginColors.error,
+    fontSize: Type.small,
+  },
+  submitWrap: {
+    marginTop: 8,
+  },
+  submitGradient: {
+    height: 54,
+    borderRadius: 27,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  submitText: {
+    color: LoginColors.primaryText,
+    fontSize: Type.title,
+    fontWeight: '700',
+  },
+  submitArrow: {
+    marginLeft: 8,
+  },
+  link: {
+    alignSelf: 'center',
+  },
+  linkText: {
+    color: LoginColors.muted,
+    fontSize: Type.small,
+  },
+});
