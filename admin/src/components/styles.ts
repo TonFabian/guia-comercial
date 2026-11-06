@@ -1,5 +1,7 @@
 import type { CSSProperties } from 'react';
 
+import { FontFamily, FontSize } from '../theme/typography';
+
 /** Estilo dos formulários de criação/edição (mantido do painel original). */
 export const formStyle: CSSProperties = {
   display: 'flex',
@@ -26,7 +28,8 @@ export const paginationStyle: CSSProperties = {
   alignItems: 'center',
   marginTop: 12,
   color: '#9ca3af',
-  fontSize: 13,
+  fontSize: FontSize.sm,
+  fontFamily: FontFamily.body,
 };
 
 /** Estilo das mensagens de erro. */
@@ -38,7 +41,8 @@ export const errorStyle: CSSProperties = {
 /** Estilo das observações auxiliares (dicas e avisos de escopo). */
 export const hintStyle: CSSProperties = {
   color: '#9ca3af',
-  fontSize: 12,
+  fontSize: FontSize.xs,
+  fontFamily: FontFamily.body,
   marginTop: 8,
 };
 

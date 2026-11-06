@@ -1,6 +1,18 @@
 :root {
   color-scheme: dark;
-  font-family: system-ui, -apple-system, sans-serif;
+  --font-family-heading: 'Rubik Variable', system-ui, sans-serif;
+  --font-family-body: 'Inter Variable', system-ui, sans-serif;
+  --font-size-xs: 0.75rem;
+  --font-size-sm: 0.875rem;
+  --font-size-md: 1rem;
+  --font-size-lg: 1.25rem;
+  --font-size-xg: 1.5rem;
+  --line-height-xs: 1rem;
+  --line-height-sm: 1.25rem;
+  --line-height-md: 1.5rem;
+  --line-height-lg: 1.75rem;
+  --line-height-xg: 2rem;
+  font-family: var(--font-family-body);
 }
 
 * {
@@ -26,12 +38,13 @@ body {
 }
 
 .brand {
-  font-size: 18px;
+  font-family: var(--font-family-heading);
+  font-size: clamp(1rem, 1.6vw + 0.875rem, 1.25rem);
   color: #ffc107;
 }
 
 .brand-sub {
-  font-size: 12px;
+  font-size: var(--font-size-xs);
   color: #9ca3af;
   margin: 4px 0 24px;
 }
@@ -52,11 +65,11 @@ body {
   background: #242424;
   border: 1px solid #2e2e2e;
   border-radius: 10px;
-  font-size: 14px;
+  font-size: var(--font-size-sm);
 }
 
 .badge {
-  font-size: 11px;
+  font-size: var(--font-size-xs);
   color: #ffc107;
   background: rgba(255, 193, 7, 0.15);
   border-radius: 6px;
@@ -69,6 +82,8 @@ body {
 }
 
 .content h2 {
+  font-family: var(--font-family-heading);
+  font-size: clamp(1.25rem, 2vw + 1rem, 1.75rem);
   margin-bottom: 12px;
 }
 
