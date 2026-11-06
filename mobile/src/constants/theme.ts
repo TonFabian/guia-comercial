@@ -1,46 +1,9 @@
 import '@/global.css';
 
+import { DarkTheme } from 'expo-router';
 import type { Theme } from 'expo-router';
-import { Dimensions } from 'react-native';
+import { Dimensions, Platform } from 'react-native';
 import { fluidWidthFactor } from '@/theme/fluid-width';
-
-const _expoRouterRequire = (
-  globalThis as { require?: (id: string) => unknown }
-).require;
-
-const _fallbackFonts = {
-  regular: { fontFamily: 'System', fontWeight: '400' as const },
-  medium: { fontFamily: 'System', fontWeight: '500' as const },
-  bold: { fontFamily: 'System', fontWeight: '600' as const },
-  heavy: { fontFamily: 'System', fontWeight: '700' as const },
-};
-
-let _resolvedDarkTheme: Theme = {
-  dark: true,
-  colors: {
-    primary: 'rgb(10, 132, 255)',
-    background: 'rgb(1, 1, 1)',
-    card: 'rgb(18, 18, 18)',
-    text: 'rgb(229, 229, 231)',
-    border: 'rgb(39, 39, 41)',
-    notification: 'rgb(255, 69, 58)',
-  },
-  fonts: _fallbackFonts,
-};
-
-try {
-  const _mod = _expoRouterRequire?.('expo-router') as
-    | { DarkTheme?: Theme }
-    | undefined;
-  if (_mod?.DarkTheme) {
-    _resolvedDarkTheme = _mod.DarkTheme;
-  }
-} catch {
-  // Ambiente de teste (vitest/node): expo-router não carrega (Flow).
-  // Mantém o fallback acima; em produção (Metro) o require tem sucesso.
-}
-
-const DarkTheme: Theme = _resolvedDarkTheme;
 
 export const GuiaColors = {
   background: '#121212',
@@ -230,11 +193,7 @@ export const CardShadow = {
   shadowOffset: { width: 0, height: 2 },
 } as const;
 
-const _rnPlatform = (
-  _expoRouterRequire?.('react-native') as { Platform?: { select?: (spec: { ios: number; android: number }) => number } } | undefined
-)?.Platform;
-
-export const BottomTabInset = (_rnPlatform?.select ? _rnPlatform.select({ ios: 50, android: 80 }) : 0) ?? 0;
+export const BottomTabInset = Platform.select({ ios: 50, android: 80 }) ?? 0;
 export const MaxContentWidth = 800;
 
 /** Tema de navegação (tabs/stack) alinhado aos tokens da GUIA. */

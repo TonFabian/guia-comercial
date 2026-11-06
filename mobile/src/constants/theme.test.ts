@@ -1,11 +1,31 @@
 import { describe, it, expect, vi } from 'vitest';
 
+import { FontFamily, Type, Typography } from './theme';
+
 const { width } = vi.hoisted(() => ({ width: 375 }));
 vi.mock('react-native', () => ({
   Dimensions: { get: () => ({ width, height: 812 }) },
+  Platform: { select: ({ ios }: { ios: number }) => ios },
 }));
-
-import { FontFamily, FontWeight, Type, Typography } from './theme';
+vi.mock('expo-router', () => ({
+  DarkTheme: {
+    dark: true,
+    colors: {
+      primary: 'rgb(10, 132, 255)',
+      background: 'rgb(1, 1, 1)',
+      card: 'rgb(18, 18, 18)',
+      text: 'rgb(229, 229, 231)',
+      border: 'rgb(39, 39, 41)',
+      notification: 'rgb(255, 69, 58)',
+    },
+    fonts: {
+      regular: { fontFamily: 'System', fontWeight: '400' },
+      medium: { fontFamily: 'System', fontWeight: '500' },
+      bold: { fontFamily: 'System', fontWeight: '700' },
+      heavy: { fontFamily: 'System', fontWeight: '800' },
+    },
+  },
+}));
 
 describe('tokens de tipografia', () => {
   it('FontFamily expõe uma família por peso carregado', () => {
@@ -30,7 +50,8 @@ describe('tokens de tipografia', () => {
     expect(Typography.label.fontFamily).toContain('Inter');
   });
   it('label tem uppercase e maxFontSizeMultiplier 1.4', () => {
-    expect((Typography.label as any).textTransform).toBe('uppercase');
-    expect((Typography.label as any).maxFontSizeMultiplier).toBe(1.4);
+    const label = Typography.label as { textTransform?: string; maxFontSizeMultiplier?: number };
+    expect(label.textTransform).toBe('uppercase');
+    expect(label.maxFontSizeMultiplier).toBe(1.4);
   });
 });
