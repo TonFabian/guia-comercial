@@ -1,6 +1,6 @@
 # Tipografia padronizada (Rubik + Inter) — Implementation Plan
 
-> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [x]`) syntax for tracking.
 
 **Goal:** Padronizar a tipografia mobile + admin (Rubik headings, Inter textos, escada xs/sm/md/lg/xg, escala fluida, E2E visual via Playwright).
 
@@ -9,6 +9,32 @@
 **Tech Stack:** Expo SDK 58, React Native 0.88, @expo-google-fonts/{inter,rubik}, @fontsource-variable/{inter,rubik}, @playwright/test, vitest.
 
 **Spec:** `docs/superpowers/specs/2026-11-06-tipografia-design.md`
+
+## Sintese de progresso (atualizado durante a execucao)
+
+Status geral: Tasks 1-6 concluidas e revisadas; Task 7 em andamento (background); Task 8 pendente.
+
+### Concluido e validado
+- Task 1 — fluid-width (commit da8b2a5): funcao pura clamp 0.9-1.2, 4/4 testes.
+- Task 2 — tokens/presets (commits da8b2a5..b0f2d3d + fix b0f2d3d): FontFamily, FontWeight, Type xs..xg, Typography h1-h5/body/caption/label; theme.test 5/5; fix do require defensivo (top-level imports + mocks completos) aprovado no re-review.
+- Task 3 — fontes (commit 8244ad7): @expo-google-fonts inter/rubik carregados em _layout.tsx, splash gate, global.css com cadeia real; typecheck/lint/export verdes.
+- Task 4 — pilot (commits 8244ad7..ba83a77): home + detalhe de empresa migrados; fix hoursClosed (ba83a77) aprovado.
+- Task 5 — migracao mecanica (commits ba83a77..f5e04f1): ~52 arquivos migrados; grep gate OK (fontSize/fontWeight/legacy Type fora de theme.ts = 0); typecheck/lint/test (207) + expo export verdes; app-tabs nativo corrigido (f5e04f1).
+- Task 6 — admin (commit 2503cf6): @fontsource-variable inter/rubik, CSS vars em rem, clamp nos headings, tokens TS, inline styles migrados; lint/typecheck/build verdes.
+- AGENTS.md: regras de tipografia permanentes (secao 6.3 mobile + bullet admin).
+- Spec revisada e ajustada (commits 37977b2/170b7d2/c08b2da/5eb97a0).
+
+### Em andamento
+- Task 7 — Playwright infra + E2E visual (background): instalacao do Chromium e execucao dos specs em 4 viewports (mobile) e 3 (admin). Pode levar varios minutos.
+
+### Pendente
+- Task 8 — gate de qualidade final (typecheck/lint/test/export, admin build, npm audit, revisao visual humana dos screenshots).
+
+### Riscos/observacoes
+- global.css sem trailing newline (minor, parked).
+- _layout fontError so captura o primeiro erro (minor, parked).
+- maxFontSizeMultiplier 1.4 nao aplicado em labels de botoes de fluxo em alguns arquivos (minor, parked para passada de a11y).
+- E2E selectors podem precisar de ajuste (data-testid) apos primeira execucao.
 
 ## Global Constraints
 
@@ -59,7 +85,7 @@
 - Create: `mobile/src/theme/fluid-width.ts`
 - Create: `mobile/src/theme/fluid-width.test.ts`
 
-- [ ] **Step 1: Write failing test**
+- [x] **Step 1: Write failing test**
 
 ```ts
 // mobile/src/theme/fluid-width.test.ts
@@ -84,12 +110,12 @@ describe('fluidWidthFactor', () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `cd mobile && npm test -- fluid-width`
 Expected: FAIL (module not found)
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 ```ts
 // mobile/src/theme/fluid-width.ts
@@ -99,12 +125,12 @@ export function fluidWidthFactor(reference: number, width: number): number {
 }
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `cd mobile && npm test -- fluid-width`
 Expected: PASS (4 tests)
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add mobile/src/theme/fluid-width.ts mobile/src/theme/fluid-width.test.ts
@@ -119,7 +145,7 @@ git commit -m "feat(mobile): adiciona fator de escala fluida por largura (clamp 
 - Modify: `mobile/src/constants/theme.ts`
 - Create: `mobile/src/constants/theme.test.ts`
 
-- [ ] **Step 1: Write failing test**
+- [x] **Step 1: Write failing test**
 
 // mobile/src/constants/theme.test.ts
 import { describe, it, expect, vi } from 'vitest';
@@ -160,12 +186,12 @@ describe('tokens de tipografia', () => {
 });
 ```
 
-- [ ] **Step 2: Run test to verify it fails**
+- [x] **Step 2: Run test to verify it fails**
 
 Run: `cd mobile && npm test -- theme.test`
 Expected: FAIL (FontFamily/FontWeight/Typography not defined)
 
-- [ ] **Step 3: Write minimal implementation**
+- [x] **Step 3: Write minimal implementation**
 
 Adicionar ao topo do arquivo (após os imports existentes) os imports de
 `Dimensions`/`fluidWidthFactor` e as definições de `_fontScale`/`_s`; **somente
@@ -229,12 +255,12 @@ export const Typography = {
 } as const;
 ```
 
-- [ ] **Step 4: Run test to verify it passes**
+- [x] **Step 4: Run test to verify it passes**
 
 Run: `cd mobile && npm test -- theme.test`
 Expected: PASS
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add mobile/src/constants/theme.ts mobile/src/constants/theme.test.ts
@@ -249,12 +275,12 @@ git commit -m "feat(mobile): adiciona tokens FontFamily/FontWeight/Type xs..xg/T
 - Modify: `mobile/src/app/_layout.tsx`
 - Modify: `mobile/src/global.css`
 
-- [ ] **Step 1: Install deps**
+- [x] **Step 1: Install deps**
 
 Run (dentro de `mobile/`): `npx expo install @expo-google-fonts/inter @expo-google-fonts/rubik`
 Expected: package.json atualizado, lockfile atualizado.
 
-- [ ] **Step 2: Modify `_layout.tsx`**
+- [x] **Step 2: Modify `_layout.tsx`**
 
 ```tsx
 import {
@@ -290,7 +316,7 @@ if (!fontsLoaded && !fontError) return null; // splash mantido
 
 Manter `SplashScreen.preventAutoHideAsync()` existente; chamar `SplashScreen.hideAsync()` quando `fontsLoaded`.
 
-- [ ] **Step 3: Update `global.css`**
+- [x] **Step 3: Update `global.css`**
 
 ```css
 :root {
@@ -305,12 +331,12 @@ Manter `SplashScreen.preventAutoHideAsync()` existente; chamar `SplashScreen.hid
 }
 ```
 
-- [ ] **Step 4: Typecheck + lint**
+- [x] **Step 4: Typecheck + lint**
 
 Run: `cd mobile && npm run typecheck && npx expo lint`
 Expected: sem erros.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add mobile/package.json mobile/package-lock.json mobile/src/app/_layout.tsx mobile/src/global.css
@@ -325,7 +351,7 @@ git commit -m "feat(mobile): carrega Rubik + Inter via expo-font e ajusta global
 - Modify: `mobile/src/app/(tabs)/index.tsx`
 - Modify: `mobile/src/features/company/company-detail-screen.tsx`
 
-- [ ] **Step 1: Migrar `index.tsx`**
+- [x] **Step 1: Migrar `index.tsx`**
 
 Substituir imports `Type` por `Typography, FontFamily, FontWeight, Type` (manter `Type` para escada size-only se necessário). Substituir estilos:
 
@@ -338,16 +364,16 @@ Substituir imports `Type` por `Typography, FontFamily, FontWeight, Type` (manter
 
 Aplicar `style={[Typography.h3, { color: colors.text }]}` nos `Text`. Manter `numberOfLines`/`ellipsizeMode`.
 
-- [ ] **Step 2: Migrar `company-detail-screen.tsx`**
+- [x] **Step 2: Migrar `company-detail-screen.tsx`**
 
 Título 20–22/700 → `Typography.h2`/`h3`; specialty 15/600 → `Typography.bodySemibold` com `fontFamily: FontFamily.heading600` se quiser Rubik; meta 13 → `Typography.caption`; botões 14–15/700 → `Typography.bodyBold`/`label`.
 
-- [ ] **Step 3: Typecheck + lint + test**
+- [x] **Step 3: Typecheck + lint + test**
 
 Run: `cd mobile && npm run typecheck && npx expo lint && npm test`
 Expected: verde.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add mobile/src/app/(tabs)/index.tsx mobile/src/features/company/company-detail-screen.tsx
@@ -366,7 +392,7 @@ cd mobile && grep -rlE "Type\.|fontSize:\s*[0-9]" src/ | grep -v "src/constants/
 
 Usar essa saída (excluir `index.tsx` e `company-detail-screen.tsx`, já migrados em Task 4) como a lista de arquivos a editar.
 
-- [ ] **Step 1: Aplicar mapeamento mecânico por arquivo**
+- [x] **Step 1: Aplicar mapeamento mecânico por arquivo**
 
 Tabela de substituição (aplicar em ordem; manter `numberOfLines`/`ellipsizeMode`/`textTransform`):
 
@@ -383,21 +409,21 @@ Tabela de substituição (aplicar em ordem; manter `numberOfLines`/`ellipsizeMod
 
 Cada arquivo: trocar `import { ..., Type }` por `import { ..., Typography, FontFamily, FontWeight, Type }` conforme uso; substituir estilos inline por spread de preset + cor.
 
-- [ ] **Step 2: Gate de grep**
+- [x] **Step 2: Gate de grep**
 
 Run: `cd mobile && $bad = (Get-ChildItem -Recurse -Include *.ts,*.tsx src | Select-String -Pattern "fontSize:\s*\d" | Where-Object { $_.Path -notmatch "theme\.ts" }) ; $legacy = (Get-ChildItem -Recurse -Include *.ts,*.tsx src | Select-String -Pattern "Type\.(caption|small|body|base|subtitle|cardTitle|section|title|headline)" | Where-Object { $_.Path -notmatch "theme\.ts" }) ; $weight = (Get-ChildItem -Recurse -Include *.ts,*.tsx src | Select-String -Pattern "fontWeight:\s*'[0-9]+'" | Where-Object { $_.Path -notmatch "theme\.ts" }) ; if ($bad -or $legacy -or $weight) { "FAIL"; $bad; $legacy; $weight; exit 1 } else { "OK" }`
 Expected: OK.
 
-- [ ] **Step 3: Remover legado de `Type`**
+- [x] **Step 3: Remover legado de `Type`**
 
 Em `theme.ts`, remover as chaves `caption/small/body/base/subtitle/cardTitle/section/title/headline` do objeto `Type`, mantendo apenas `xs/sm/md/lg/xg`. Atualizar `theme.test.ts` se referenciar legado (não referencia).
 
-- [ ] **Step 4: Typecheck + lint + test + expo export**
+- [x] **Step 4: Typecheck + lint + test + expo export**
 
 Run: `cd mobile && npm run typecheck && npx expo lint && npm test && npx expo export`
 Expected: verde e bundle gerado.
 
-- [ ] **Step 5: Commit (um commit por grupo de ~10 arquivos é aceitável; mínimo 1 commit da migração)**
+- [x] **Step 5: Commit (um commit por grupo de ~10 arquivos é aceitável; mínimo 1 commit da migração)**
 
 ```bash
 git add mobile/src
@@ -416,19 +442,19 @@ git commit -m "refactor(mobile): migra tipografia restante para presets + remove
 - Modify: `admin/src/components/styles.ts`
 - Modify: `admin/src/components/schedule-editor.tsx`
 
-- [ ] **Step 1: Install deps**
+- [x] **Step 1: Install deps**
 
 Run (dentro de `admin/`): `npm i @fontsource-variable/inter @fontsource-variable/rubik`
 Expected: deps em package.json.
 
-- [ ] **Step 2: Importar fontes em `main.tsx`**
+- [x] **Step 2: Importar fontes em `main.tsx`**
 
 ```ts
 import '@fontsource-variable/inter';
 import '@fontsource-variable/rubik';
 ```
 
-- [ ] **Step 3: `styles.css` — vars + clamp**
+- [x] **Step 3: `styles.css` — vars + clamp**
 
 ```css
 :root {
@@ -457,7 +483,7 @@ import '@fontsource-variable/rubik';
 
 Migrar `.content h2`/`.brand` para usar `var(--font-family-heading)`.
 
-- [ ] **Step 4: Criar `admin/src/theme/typography.ts`**
+- [x] **Step 4: Criar `admin/src/theme/typography.ts`**
 
 ```ts
 export const FontSize = {
@@ -471,18 +497,18 @@ export const LineHeight = {
 export const FontFamily = { heading: 'var(--font-family-heading)', body: 'var(--font-family-body)' } as const;
 ```
 
-- [ ] **Step 5: Migrar inline styles**
+- [x] **Step 5: Migrar inline styles**
 
 `components/styles.ts`: `fontSize: 13` → `fontSize: FontSize.sm`; `fontSize: 12` → `FontSize.xs`; adicionar `fontFamily: FontFamily.body` onde couber.
 
 `components/schedule-editor.tsx`: `fontSize: 12` → `FontSize.xs`.
 
-- [ ] **Step 6: Typecheck + lint + build**
+- [x] **Step 6: Typecheck + lint + build**
 
 Run: `cd admin && npm run lint && npm run typecheck && npm run build`
 Expected: verde.
 
-- [ ] **Step 7: Commit**
+- [x] **Step 7: Commit**
 
 ```bash
 git add admin
