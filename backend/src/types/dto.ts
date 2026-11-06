@@ -15,6 +15,33 @@ const objectIdSchema = z
   .string()
   .regex(/^[0-9a-fA-F]{24}$/, 'id inválido');
 
+/**
+ * URL segura para campos de link (website, ticketUrl, facebook).
+ *
+ * Defesa em profundidade no backend: o app abre esses valores com
+ * `Linking.openURL` (no web → `window.open`), então um esquema perigoso
+ * (javascript:, data:, vbscript:, file:, blob:, about:) pode virar XSS/abuso.
+ * A validação rejeita apenas esquemas perigosos conhecidos e exige http(s)
+ * quando há esquema explícito; domínios "bare" (sem esquema) são aceitos
+ * para não quebrar dados já gravados.
+ */
+const urlSeguraSchema = z
+  .string()
+  .trim()
+  .refine((valor) => {
+    const minusc = valor.toLowerCase();
+    // Esquemas perigosos conhecidos (mesmo com espaços antes do ':').
+    if (/^\s*(javascript|vbscript|data|file|blob|about):/i.test(valor)) {
+      return false;
+    }
+    const esquema = minusc.match(/^([a-z][a-z0-9+.-]*):/);
+    if (esquema) {
+      const proto = esquema[1];
+      return proto === 'http' || proto === 'https';
+    }
+    return true;
+  }, 'URL inválida ou esquema não permitido (use http:// ou https://)');
+
 const isoDate = z
   .string()
   .refine((value) => !Number.isNaN(Date.parse(value)), 'data inválida (use ISO 8601)');
@@ -78,9 +105,9 @@ export const createCompanySchema = z.object({
   rating: z.number().min(0).max(5).optional(),
   ratingCount: z.number().int().nonnegative().optional(),
   isVerified: z.boolean().optional(),
-  website: z.string().optional(),
+  website: urlSeguraSchema.optional(),
   instagram: z.string().optional(),
-  facebook: z.string().optional(),
+  facebook: urlSeguraSchema.optional(),
   openingHours: z.array(z.string()).optional(),
   services: z.array(z.string()).optional(),
   products: z.array(companyProductSchema).optional(),
@@ -283,7 +310,7 @@ const touristSpotBaseSchema = z.object({
   entryPrice: z.string().optional(),
   phone: z.string().trim().min(1).nullish(),
   whatsapp: z.string().trim().min(1).nullish(),
-  website: z.string().optional(),
+  website: urlSeguraSchema.optional(),
   instagram: z.string().optional(),
   featured: z.boolean().optional(),
   active: z.boolean(),
@@ -383,7 +410,7 @@ const tourEventScheduleItemSchema = z
     relatedSpot: z.string().trim().min(1).optional(),
     ticket: z.enum(['free', 'paid']).optional(),
     ticketPrice: z.string().optional(),
-    ticketUrl: z.string().optional(),
+    ticketUrl: urlSeguraSchema.optional(),
   })
   .superRefine((item, ctx): void => {
     // Formato fixo HH:mm (24h): a ordem lexicográfica é a cronológica.
@@ -431,11 +458,11 @@ const tourEventBaseSchema = z.object({
   organizerCompany: z.string().trim().min(1).nullish(),
   ticket: z.enum(['free', 'paid']).optional(),
   ticketPrice: z.string().optional(),
-  ticketUrl: z.string().optional(),
+  ticketUrl: urlSeguraSchema.optional(),
   photos: z.array(z.string()).optional(),
   phone: z.string().trim().min(1).nullish(),
   whatsapp: z.string().trim().min(1).nullish(),
-  website: z.string().optional(),
+  website: urlSeguraSchema.optional(),
   instagram: z.string().optional(),
   featured: z.boolean().optional(),
   active: z.boolean(),
