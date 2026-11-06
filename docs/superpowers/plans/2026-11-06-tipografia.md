@@ -13,6 +13,7 @@
 ## Global Constraints
 
 - Mobile deps: `npx expo install <pkg>` dentro de `mobile/` (nunca `npm install`). Admin/mobile dev deps: `npm i -D` dentro da pasta do app.
+- Ambiente Windows (sem bash/grep): gates usam PowerShell `Select-String`; diffs/reviews gerados via `git diff`/`git log` redirecionados a arquivo; scripts bash da skill replicados manualmente.
 - Nenhum segredo no código; `.env` não é tocado.
 - `ios/`/`android/` não são criados/editados.
 - TypeScript estrito: sem `any`; `import type` para tipos.
@@ -384,8 +385,8 @@ Cada arquivo: trocar `import { ..., Type }` por `import { ..., Typography, FontF
 
 - [ ] **Step 2: Gate de grep**
 
-Run: `cd mobile && grep -rn "fontSize:\s*[0-9]" src/ | grep -v "theme.ts" ; grep -rn "Type\.\(caption\|small\|body\|base\|subtitle\|cardTitle\|section\|title\|headline\)" src/ | grep -v "theme.ts" ; grep -rn "fontWeight:\s*'[0-9]'" src/ | grep -v "theme.ts"`
-Expected: sem resultados (exceto comentários).
+Run: `cd mobile && $bad = (Get-ChildItem -Recurse -Include *.ts,*.tsx src | Select-String -Pattern "fontSize:\s*\d" | Where-Object { $_.Path -notmatch "theme\.ts" }) ; $legacy = (Get-ChildItem -Recurse -Include *.ts,*.tsx src | Select-String -Pattern "Type\.(caption|small|body|base|subtitle|cardTitle|section|title|headline)" | Where-Object { $_.Path -notmatch "theme\.ts" }) ; $weight = (Get-ChildItem -Recurse -Include *.ts,*.tsx src | Select-String -Pattern "fontWeight:\s*'[0-9]'" | Where-Object { $_.Path -notmatch "theme\.ts" }) ; if ($bad -or $legacy -or $weight) { "FAIL"; $bad; $legacy; $weight; exit 1 } else { "OK" }`
+Expected: OK.
 
 - [ ] **Step 3: Remover legado de `Type`**
 
@@ -587,7 +588,7 @@ git commit -m "test(e2e): adiciona Playwright visual para tipografia (multi-view
 
 - [ ] **Step 1: Mobile gate**
 
-Run: `cd mobile && npm run typecheck && npx expo lint && npm test && npx expo export && echo "--- grep gate ---" && ! grep -rn "fontSize:\s*[0-9]" src/ | grep -v "theme.ts" && ! grep -rn "Type\.\(caption\|small\|body\|base\|subtitle\|cardTitle\|section\|title\|headline\)" src/ | grep -v "theme.ts" && ! grep -rn "fontWeight:\s*'[0-9]'" src/ | grep -v "theme.ts"`
+Run: `cd mobile && npm run typecheck && npx expo lint && npm test && npx expo export; $bad = (Get-ChildItem -Recurse -Include *.ts,*.tsx src | Select-String -Pattern "fontSize:\s*\d" | Where-Object { $_.Path -notmatch "theme\.ts" }); $legacy = (Get-ChildItem -Recurse -Include *.ts,*.tsx src | Select-String -Pattern "Type\.(caption|small|body|base|subtitle|cardTitle|section|title|headline)" | Where-Object { $_.Path -notmatch "theme\.ts" }); $weight = (Get-ChildItem -Recurse -Include *.ts,*.tsx src | Select-String -Pattern "fontWeight:\s*'[0-9]'" | Where-Object { $_.Path -notmatch "theme\.ts" }); if ($bad -or $legacy -or $weight) { "GATE FAIL"; $bad; $legacy; $weight; exit 1 } else { "GATE OK" }`
 Expected: verde (gate + grep limpos).
 
 - [ ] **Step 2: Admin gate**
