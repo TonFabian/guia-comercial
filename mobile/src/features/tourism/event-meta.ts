@@ -8,7 +8,11 @@
  * partes e a comparação de dias é lexicográfica (o formato é fixo e
  * zero-preenchido), o que dispensa converter para `Date`.
  */
-import type { TourEventCategory, TouristSpotCategory } from '@/types/domain';
+import type {
+  TourEventCategory,
+  TourEventScheduleItem,
+  TouristSpotCategory,
+} from '@/types/domain';
 
 const MESES_ABREV = [
   'jan', 'fev', 'mar', 'abr', 'mai', 'jun',
@@ -126,4 +130,44 @@ export function labelCategoriaAtracao(category: TouristSpotCategory): string {
 /** Label pt-BR da categoria de evento turístico. */
 export function labelCategoriaEvento(category: TourEventCategory): string {
   return LABEL_CATEGORIA_EVENTO[category];
+}
+
+/** Um dia da programação: os itens (ordenados) daquele `YYYY-MM-DD`. */
+export interface DiaProgramacao {
+  date: string;
+  items: TourEventScheduleItem[];
+}
+
+/** Compara strings de formato fixo zero-preenchido (YYYY-MM-DD, HH:mm); ordem == ordem cronológica. */
+function compararLexicografico(a: string, b: string): number {
+  return a.localeCompare(b, 'pt-BR');
+}
+
+/**
+ * Agrupa a programação do evento por dia (`YYYY-MM-DD`) e ordena os dias.
+ * Dentro do dia: itens com `startTime` vêm primeiro, em ordem de horário;
+ * itens sem `startTime` vão ao fim, em ordem alfabética de `title`.
+ */
+export function agruparProgramacaoPorDia(
+  schedule?: TourEventScheduleItem[],
+): DiaProgramacao[] {
+  if (!schedule?.length) return [];
+
+  const itensPorDia = new Map<string, TourEventScheduleItem[]>();
+  for (const item of schedule) {
+    itensPorDia.set(item.date, [...(itensPorDia.get(item.date) ?? []), item]);
+  }
+
+  return [...itensPorDia.entries()]
+    .sort(([dataA], [dataB]) => compararLexicografico(dataA, dataB))
+    .map(([date, itens]) => ({
+      date,
+      items: itens.sort((a, b) => {
+        // Sem startTime vai depois de com startTime; entre dois sem, alfabético.
+        if (a.startTime && b.startTime) return compararLexicografico(a.startTime, b.startTime);
+        if (a.startTime) return -1;
+        if (b.startTime) return 1;
+        return a.title.localeCompare(b.title, 'pt-BR');
+      }),
+    }));
 }
