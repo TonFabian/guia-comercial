@@ -252,6 +252,28 @@ export interface TouristSpot {
   updatedAt?: string;
 }
 
+/** Item da programação interna de um evento turístico (um dia/horário do evento). */
+export interface TourEventScheduleItem {
+  /** Data do item (YYYY-MM-DD), dentro de [startDate, endDate]. */
+  date: string;
+  /** Horário de início (HH:mm). */
+  startTime?: string;
+  /** Horário de fim (HH:mm), >= startTime quando ambos presentes. */
+  endTime?: string;
+  /** Título da atração/atividade. */
+  title: string;
+  /** Descrição curta. */
+  description?: string;
+  /** Palco/local (ex.: "Palco Principal", "Praça Central"). */
+  stage?: string;
+  /** Atrativo referenciado (por id ou slug). */
+  relatedSpot?: string | TouristSpot;
+  /** Ingresso específico do item; se ausente, vale o do evento. */
+  ticket?: 'free' | 'paid';
+  ticketPrice?: string;
+  ticketUrl?: string;
+}
+
 /** Evento turístico (temporário: festival, feira, show...) — NUNCA `Event` (shadowing do DOM). */
 export interface TourEvent {
   _id: string;
@@ -267,6 +289,8 @@ export interface TourEvent {
   startTime?: string;
   /** Horário de fim, formato HH:mm. */
   endTime?: string;
+  /** Programação interna do evento (atrações por dia/horário). */
+  schedule?: TourEventScheduleItem[];
   /** Nome do local do evento. */
   location?: string;
   address?: string | null;
