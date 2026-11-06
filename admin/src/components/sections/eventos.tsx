@@ -2,11 +2,14 @@ import { useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
 
 import { useResource } from '../../hooks/use-resource';
-import { createEvent, deleteEvent, getEvents, updateEvent } from '../../services/api';
+import { createEvent, deleteEvent, getEvents, getTouristSpots, updateEvent } from '../../services/api';
 import type { TourEventInput } from '../../services/api';
-import type { City, Company, TourEvent, TourEventCategory } from '../../types/domain';
+import type { City, Company, TourEvent, TourEventCategory, TourEventScheduleItem, TouristSpot } from '../../types/domain';
 import { filterByText } from '../../utils/filter';
 import { citySlug } from '../../utils/labels';
+import { ScheduleEditor } from '../schedule-editor';
+import type { TourEventScheduleItemForm } from '../schedule-editor';
+import { validarProgramacao } from '../schedule-editor';
 import { Pagination } from '../pagination';
 import { RowActions } from '../row-actions';
 import { SearchInput } from '../search-input';
@@ -50,6 +53,7 @@ interface TourEventForm {
   instagram: string;
   featured: boolean;
   active: boolean;
+  schedule: TourEventScheduleItemForm[];
 }
 
 const EMPTY_FORM: TourEventForm = {
@@ -78,6 +82,7 @@ const EMPTY_FORM: TourEventForm = {
   instagram: '',
   featured: false,
   active: true,
+  schedule: [],
 };
 
 const CATEGORY_LABELS: { value: TourEventCategory; label: string }[] = [
@@ -153,9 +158,47 @@ function companyOptionValue(valor: string | Company | undefined, companies: Comp
   return found ? found._id : '';
 }
 
+/**
+ * Valor do select de atrações para um item de programação.
+ *
+ * O backend pode ter salvo id ou slug — casa com ambos para pré-preencher
+ * (mesma regra do select de empresas).
+ */
+function spotOptionValue(valor: string | TouristSpot | undefined, spots: TouristSpot[]): string {
+  if (!valor) return '';
+  if (typeof valor !== 'string') return valor._id;
+  const found = spots.find((option) => option._id === valor || option.slug === valor);
+  return found ? found._id : '';
+}
+
+/** Item do backend → estado do formulário (campos opcionais viram texto). */
+function itemSalvoParaFormulario(
+  item: TourEventScheduleItem,
+  spots: TouristSpot[],
+): TourEventScheduleItemForm {
+  return {
+    date: item.date,
+    startTime: item.startTime ?? '',
+    endTime: item.endTime ?? '',
+    title: item.title,
+    description: item.description ?? '',
+    stage: item.stage ?? '',
+    relatedSpot: spotOptionValue(item.relatedSpot, spots),
+    ticket: item.ticket ?? '',
+    ticketPrice: item.ticketPrice ?? '',
+    ticketUrl: item.ticketUrl ?? '',
+  };
+}
+
 export function EventosSection({ cities, citiesError, companies, companiesTotal, companiesError }: EventosSectionProps) {
   const { items, total, page, pageSize, loading, error, setPage, reload } =
     useResource<TourEvent>(getEvents);
+  // Atrações para o select "relatedSpot" dos itens de programação.
+  const {
+    items: touristSpots,
+    total: touristSpotsTotal,
+    error: touristSpotsError,
+  } = useResource<TouristSpot>(getTouristSpots, 100);
   const [search, setSearch] = useState('');
   const [form, setForm] = useState<TourEventForm>(EMPTY_FORM);
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -207,6 +250,7 @@ export function EventosSection({ cities, citiesError, companies, companiesTotal,
       instagram: evento.instagram ?? '',
       featured: evento.featured ?? false,
       active: evento.active,
+      schedule: (evento.schedule ?? []).map((item) => itemSalvoParaFormulario(item, touristSpots)),
     });
   }
 
@@ -252,6 +296,12 @@ export function EventosSection({ cities, citiesError, companies, companiesTotal,
       return;
     }
 
+    const erroProgramacao = validarProgramacao(form.schedule, form.startDate, form.endDate);
+    if (erroProgramacao) {
+      setActionError(erroProgramacao);
+      return;
+    }
+
     setSaving(true);
 
     const payload: TourEventInput = {
@@ -277,6 +327,18 @@ export function EventosSection({ cities, citiesError, companies, companiesTotal,
       ticketPrice: form.ticket === 'paid' ? form.ticketPrice.trim() : undefined,
       ticketUrl: form.ticketUrl.trim() || undefined,
       photos: parseLines(form.photos),
+      schedule: form.schedule.map((item) => ({
+        date: item.date,
+        startTime: item.startTime.trim() || undefined,
+        endTime: item.endTime.trim() || undefined,
+        title: item.title.trim(),
+        description: item.description.trim() || undefined,
+        stage: item.stage.trim() || undefined,
+        relatedSpot: item.relatedSpot || undefined,
+        ticket: item.ticket || undefined,
+        ticketPrice: item.ticket === 'paid' ? item.ticketPrice.trim() : undefined,
+        ticketUrl: item.ticketUrl.trim() || undefined,
+      })),
       phone: form.phone.trim() || null,
       whatsapp: form.whatsapp.trim() || null,
       website: form.website.trim() || undefined,
@@ -315,6 +377,7 @@ export function EventosSection({ cities, citiesError, companies, companiesTotal,
     <>
       {citiesError && <p style={errorStyle}>Falha ao carregar cidades: {citiesError}</p>}
       {companiesError && <p style={errorStyle}>Falha ao carregar empresas: {companiesError}</p>}
+      {touristSpotsError && <p style={errorStyle}>Falha ao carregar atrações: {touristSpotsError}</p>}
       {error && <p style={errorStyle}>{error}</p>}
       {actionError && <p style={errorStyle}>{actionError}</p>}
 
@@ -484,11 +547,24 @@ export function EventosSection({ cities, citiesError, companies, companiesTotal,
           onChange={(event) => setForm({ ...form, photos: event.target.value })}
           style={{ minWidth: 300, minHeight: 60, width: '100%' }}
         />
+        <ScheduleEditor
+          items={form.schedule}
+          spots={touristSpots}
+          startDate={form.startDate}
+          endDate={form.endDate}
+          onChange={(schedule) => setForm({ ...form, schedule })}
+        />
       </form>
       {companiesTotal > companies.length && (
         <p style={hintStyle}>
           Exibindo {companies.length} de {companiesTotal} empresas — consulte a seção Empresas para o
           restante.
+        </p>
+      )}
+      {touristSpotsTotal > touristSpots.length && (
+        <p style={hintStyle}>
+          Exibindo {touristSpots.length} de {touristSpotsTotal} atrações — a lista do select está
+          limitada; use a seção Atrações se a atração desejada não aparecer.
         </p>
       )}
 
