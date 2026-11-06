@@ -21,12 +21,11 @@ export function OtherCompanies({ companies, loading = false, error = null }: Pro
 
   return (
     <View style={styles.section}>
-      <View style={styles.headerRow}>
-        <SectionHeader title="Outras Empresas & Serviços Locais" />
-        <TouchableOpacity onPress={() => router.push('/search')} accessibilityRole="button" accessibilityLabel="Ver todas as empresas">
-          <Text style={styles.seeAll}>Ver todas ›</Text>
-        </TouchableOpacity>
-      </View>
+      <SectionHeader
+        title="Outras Empresas & Serviços Locais"
+        actionLabel="Ver todas"
+        onAction={() => router.push('/search')}
+      />
 
       {loading ? (
         <View style={styles.center}>
@@ -48,7 +47,7 @@ export function OtherCompanies({ companies, loading = false, error = null }: Pro
                 onPress={() => router.push({ pathname: '/company/[id]', params: { id: c._id } })}
               >
                 <View style={styles.thumb}>
-                  <Ionicons name="storefront-outline" size={20} color={colors.primary} />
+                  <Ionicons name="storefront-outline" size={22} color={colors.primary} />
                 </View>
                 <View style={styles.body}>
                   <Text style={styles.name} numberOfLines={1}>{c.name}</Text>
@@ -57,7 +56,7 @@ export function OtherCompanies({ companies, loading = false, error = null }: Pro
                     {c.address ? ` · ${c.address}` : ''}
                   </Text>
                 </View>
-                <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
+                <Ionicons name="chevron-forward" size={22} color={colors.textSecondary} />
               </TouchableOpacity>
               {(c.whatsapp || c.phone) ? (
                 <TouchableOpacity
@@ -66,7 +65,7 @@ export function OtherCompanies({ companies, loading = false, error = null }: Pro
                   accessibilityLabel={`WhatsApp ${c.name}`}
                   onPress={() => openWhatsApp((c.whatsapp ?? c.phone) as string)}
                 >
-                  <Ionicons name="logo-whatsapp" size={18} color="#25D366" />
+                  <Ionicons name="logo-whatsapp" size={22} color="#25D366" />
                 </TouchableOpacity>
               ) : null}
             </View>
@@ -80,16 +79,14 @@ export function OtherCompanies({ companies, loading = false, error = null }: Pro
 function makeStyles(colors: ReturnType<typeof useThemeColors>) {
   return StyleSheet.create({
     section: { marginBottom: Spacing.four },
-    headerRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: 16, marginBottom: Spacing.two },
-    seeAll: { color: colors.primary, fontSize: Type.small, fontWeight: '700' },
     list: { marginHorizontal: 16, backgroundColor: colors.surface, borderRadius: Radius.card, borderWidth: 1, borderColor: colors.border, overflow: 'hidden' },
-    card: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 12, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: colors.border },
+    card: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: Spacing.three, paddingVertical: 14, borderBottomWidth: 1, borderBottomColor: colors.border },
     cardMain: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12 },
     thumb: { width: 40, height: 40, borderRadius: 8, backgroundColor: colors.surfaceAlt, alignItems: 'center', justifyContent: 'center' },
     body: { flex: 1, gap: 2 },
     whatsappBtn: { padding: 6, borderRadius: Radius.chip, backgroundColor: colors.surfaceAlt },
-    name: { color: colors.text, fontSize: 14, fontWeight: '700' },
-    meta: { color: colors.textSecondary, fontSize: 12 },
+    name: { color: colors.text, fontSize: Type.cardTitle, fontWeight: '600' },
+    meta: { color: colors.textSecondary, fontSize: Type.body },
     center: { paddingVertical: 20, alignItems: 'center' },
     empty: { color: colors.textSecondary, fontSize: Type.small, paddingHorizontal: 16, paddingVertical: 12 },
   });

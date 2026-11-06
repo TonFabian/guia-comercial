@@ -19,7 +19,9 @@ export function SectionHeader({
     <View style={styles.sectionHeader}>
       <View style={styles.titleGroup}>
         <View style={styles.accentBar} />
-        <Text style={styles.sectionTitle}>{title}</Text>
+        <Text style={styles.sectionTitle} numberOfLines={1} ellipsizeMode="tail">
+          {title}
+        </Text>
       </View>
 
       {actionLabel && onAction ? (
@@ -60,11 +62,13 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
       backgroundColor: colors.primary,
     },
     sectionTitle: {
+      flexShrink: 1,
       color: colors.text,
       fontSize: Type.title,
-      fontWeight: 'bold',
+      fontWeight: '700',
     },
     actionButton: {
+      flexShrink: 0,
       flexDirection: 'row',
       alignItems: 'center',
       gap: 2,
@@ -74,8 +78,8 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     actionText: {
       color: colors.primary,
-      fontSize: Type.small,
-      fontWeight: '700',
+      fontSize: Type.body,
+      fontWeight: '600',
     },
   });
 }

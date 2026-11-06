@@ -14,7 +14,6 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 import { Radius, Type } from '@/constants/theme';
 import { GuestBanner } from '@/features/auth/guest-banner';
 import { AnnounceCta } from '@/features/home/announce-cta';
-import { AutonomousProfessionals } from '@/features/home/autonomous-professionals';
 import { BannerCarousel } from '@/features/home/banner-carousel';
 import { CategoryList } from '@/features/home/category-list';
 import { FeaturedCompany } from '@/features/home/featured-company';
@@ -29,8 +28,8 @@ import { SectionHeader } from '@/features/home/section-header';
 import { TourismSection } from '@/features/home/tourism-section';
 import { useHomeData } from '@/features/home/use-home-data';
 import { useThemeColors } from '@/hooks/use-theme-colors';
-import { getAutonomousProfessionals, getCities, getCompanies, getNotices, getPublicUtilities } from '@/services/api';
-import type { AutonomousProfessional, Company, Notice, PublicUtility } from '@/types/domain';
+import { getCities, getCompanies, getNotices, getPublicUtilities } from '@/services/api';
+import type { Company, Notice, PublicUtility } from '@/types/domain';
 
 export default function HomeScreen() {
   const [retryKey, setRetryKey] = useState(0);
@@ -63,7 +62,6 @@ export default function HomeScreen() {
     };
   }, [retryKey]);
 
-  const [professionals, setProfessionals] = useState<AutonomousProfessional[]>([]);
   const [notices, setNotices] = useState<Notice[]>([]);
   const [otherCompanies, setOtherCompanies] = useState<Company[]>([]);
   const [utilities, setUtilities] = useState<PublicUtility[]>([]);
@@ -117,13 +115,11 @@ export default function HomeScreen() {
       setNoticesError(null);
       setOtherCompaniesError(null);
       try {
-        const [pros, nts, page] = await Promise.all([
-          getAutonomousProfessionals(),
+        const [nts, page] = await Promise.all([
           getNotices(),
           getCompanies(1, 50, undefined, false),
         ]);
         if (!cancelled) {
-          setProfessionals(pros);
           setNotices(nts);
           setOtherCompanies(page.items);
         }
@@ -216,11 +212,19 @@ export default function HomeScreen() {
             <View style={{ flex: 1 }}>
               <CategoryList categories={categories} />
               <FeaturedCompany company={featuredCompany} />
+              <PublicUtilities
+                utilities={utilities}
+                loading={utilitiesLoading}
+                error={utilitiesError}
+                onRetry={reloadUtilities}
+              />
               <OtherCompanies
                 companies={visibleOtherCompanies}
                 loading={otherCompaniesLoading}
                 error={otherCompaniesError}
               />
+              <NoticesCarousel notices={notices} loading={noticesLoading} error={noticesError} />
+              <JobList jobs={jobs} />
               <TourismSection city={selectedCity} />
               {banners.length > 0 ? (
                 <>
@@ -228,15 +232,6 @@ export default function HomeScreen() {
                   <BannerCarousel banners={banners} />
                 </>
               ) : null}
-              <PublicUtilities
-                utilities={utilities}
-                loading={utilitiesLoading}
-                error={utilitiesError}
-                onRetry={reloadUtilities}
-              />
-              <NoticesCarousel notices={notices} loading={noticesLoading} error={noticesError} />
-              <AutonomousProfessionals professionals={professionals} />
-              <JobList jobs={jobs} />
               <AnnounceCta />
             </View>
           )}
