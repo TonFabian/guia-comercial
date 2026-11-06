@@ -66,7 +66,7 @@ export interface ScheduleEditorProps {
 }
 
 /** Confere se o YYYY-MM-DD existe no calendário (rejeita 2026-02-30, 2026-13-01...). */
-function ehDataDeCalendario(valor: string): boolean {
+export function ehDataDeCalendario(valor: string): boolean {
   const data = new Date(`${valor}T12:00:00Z`);
   return !Number.isNaN(data.getTime()) && data.toISOString().slice(0, 10) === valor;
 }
@@ -119,6 +119,9 @@ export function validarProgramacao(
   startDate: string,
   endDate: string,
 ): string | null {
+  if (items.length > 100) {
+    return 'A programação não pode ter mais de 100 itens.';
+  }
   for (let indice = 0; indice < items.length; indice += 1) {
     const erros = validarItemProgramacao(items[indice], startDate, endDate);
     for (const mensagem of Object.values(erros)) {
@@ -286,6 +289,13 @@ export function ScheduleEditor({ items, spots, startDate, endDate, onChange }: S
                   {spot.name}
                 </option>
               ))}
+              {/* Atração referenciada que não consta na lista carregada (excluída
+                  ou além das 100 primeiras): mantém o id para não perder o link
+                  ao salvar. */}
+              {item.relatedSpot &&
+                !spots.some((spot) => spot._id === item.relatedSpot) && (
+                  <option value={item.relatedSpot}>Atração removida do catálogo</option>
+                )}
             </select>
             <select
               value={item.ticket}

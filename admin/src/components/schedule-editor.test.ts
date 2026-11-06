@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 
 import {
   EMPTY_SCHEDULE_ITEM,
+  ehDataDeCalendario,
   moverItemProgramacao,
   validarItemProgramacao,
   validarProgramacao,
@@ -100,6 +101,19 @@ describe('validarItemProgramacao', () => {
   });
 });
 
+describe('ehDataDeCalendario', () => {
+  it('aceita data real', () => {
+    expect(ehDataDeCalendario('2026-11-05')).toBe(true);
+    expect(ehDataDeCalendario('2026-02-28')).toBe(true);
+  });
+
+  it('rejeita dia impossível', () => {
+    expect(ehDataDeCalendario('2026-02-30')).toBe(false);
+    expect(ehDataDeCalendario('2026-13-01')).toBe(false);
+    expect(ehDataDeCalendario('2026-00-10')).toBe(false);
+  });
+});
+
 describe('validarProgramacao', () => {
   it('devolve a mensagem do primeiro erro, com o número do item', () => {
     const mensagem = validarProgramacao(
@@ -122,5 +136,14 @@ describe('validarProgramacao', () => {
     );
 
     expect(mensagem).toBeNull();
+  });
+
+  it('bloqueia mais de 100 itens', () => {
+    const muitos = Array.from({ length: 101 }, (_, indice) => ({
+      ...EMPTY_SCHEDULE_ITEM,
+      title: `Item ${indice}`,
+      date: '2026-11-08',
+    }));
+    expect(validarProgramacao(muitos, '2026-11-07', '2026-11-09')).toContain('100');
   });
 });

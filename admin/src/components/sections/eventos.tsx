@@ -9,7 +9,8 @@ import { filterByText } from '../../utils/filter';
 import { citySlug } from '../../utils/labels';
 import { ScheduleEditor } from '../schedule-editor';
 import type { TourEventScheduleItemForm } from '../schedule-editor';
-import { validarProgramacao } from '../schedule-editor';
+import { ehDataDeCalendario, validarProgramacao } from '../schedule-editor';
+import { spotOptionValue } from '../../utils/spot-option';
 import { Pagination } from '../pagination';
 import { RowActions } from '../row-actions';
 import { SearchInput } from '../search-input';
@@ -164,12 +165,7 @@ function companyOptionValue(valor: string | Company | undefined, companies: Comp
  * O backend pode ter salvo id ou slug — casa com ambos para pré-preencher
  * (mesma regra do select de empresas).
  */
-function spotOptionValue(valor: string | TouristSpot | undefined, spots: TouristSpot[]): string {
-  if (!valor) return '';
-  if (typeof valor !== 'string') return valor._id;
-  const found = spots.find((option) => option._id === valor || option.slug === valor);
-  return found ? found._id : '';
-}
+// spotOptionValue vive em src/utils/spot-option.ts (puro, testável).
 
 /** Item do backend → estado do formulário (campos opcionais viram texto). */
 function itemSalvoParaFormulario(
@@ -293,6 +289,15 @@ export function EventosSection({ cities, citiesError, companies, companiesTotal,
 
     if (form.ticket === 'paid' && !form.ticketPrice.trim()) {
       setActionError('Informe o preço do ingresso quando "Ingresso" é "Pago".');
+      return;
+    }
+
+    if (form.startDate && !ehDataDeCalendario(form.startDate)) {
+      setActionError('Data inicial do evento inválida — use o formato AAAA-MM-DD (ex.: 2026-11-05).');
+      return;
+    }
+    if (form.endDate && !ehDataDeCalendario(form.endDate)) {
+      setActionError('Data final do evento inválida — use o formato AAAA-MM-DD (ex.: 2026-11-05).');
       return;
     }
 
