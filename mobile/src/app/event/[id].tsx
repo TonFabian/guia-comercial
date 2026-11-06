@@ -25,6 +25,7 @@ import {
   descreverIngressoItem,
   formatarDataEvento,
   formatarHorario,
+  formatarHorarioItem,
   formatarPeriodoEvento,
   hojeISO,
   labelCategoriaEvento,
@@ -247,7 +248,7 @@ export default function EventDetailScreen() {
                 <View key={dia.date} style={styles.dayGroup}>
                   <Text style={styles.dayTitle}>{formatarDataEvento(dia.date)}</Text>
                   {dia.items.map((item, indice) => {
-                    const horario = formatarHorario(item.startTime, item.endTime);
+                    const horario = formatarHorarioItem(item);
                     const ingressoItem = descreverIngressoItem(
                       item,
                       evento.ticket,

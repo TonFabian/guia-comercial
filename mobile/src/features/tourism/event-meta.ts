@@ -98,6 +98,26 @@ export function descreverIngresso(
 }
 
 /**
+ * Horário de um item da programação.
+ *
+ * - início e fim → "09:00 às 12:30";
+ * - só fim → "até 18:00" (o item pode ter só o horário de encerramento);
+ * - só início → "09:00";
+ * - sem horário → `null`.
+ */
+export function formatarHorarioItem(
+  item: Pick<TourEventScheduleItem, 'startTime' | 'endTime'>,
+): string | null {
+  if (item.startTime) {
+    return formatarHorario(item.startTime, item.endTime);
+  }
+  if (item.endTime) {
+    return `até ${item.endTime}`;
+  }
+  return null;
+}
+
+/**
  * Ingresso de um item da programação.
  *
  * O item herda o ingresso do evento quando não define o seu; mas o preço

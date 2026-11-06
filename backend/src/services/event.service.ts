@@ -222,21 +222,28 @@ export async function updateTourEvent(
     }
   }
 
-  if (Array.isArray(update.schedule)) {
-    // Vigência dos itens sobre o estado RESULTANTE do evento: um PUT parcial
-    // não traz as datas, então vale o intervalo salvo (payload + documento).
-    // O DTO só checa a vigência quando as duas datas vêm no payload.
-    for (const [indice, item] of update.schedule.entries()) {
-      if (item.date < startDateResultante || item.date > endDateResultante) {
-        throw Object.assign(
-          new Error(
-            `schedule[${indice}]: date do item deve estar entre startDate e endDate do evento`,
-          ),
-          { statusCode: 422 },
-        );
-      }
-    }
+  // A programação vale sobre o estado RESULTANTE do evento: quando o payload
+  // não traz a programação, a que está salva continua valendo — e um PUT que
+  // só mexe nas datas do evento não pode deixá-la fora do novo período.
+  // (O DTO só checa a vigência quando as duas datas vêm no payload.)
+  const programacaoResultante: Array<{ date: string }> = Array.isArray(
+    update.schedule,
+  )
+    ? update.schedule
+    : (atual.schedule ?? []);
 
+  for (const [indice, item] of programacaoResultante.entries()) {
+    if (item.date < startDateResultante || item.date > endDateResultante) {
+      throw Object.assign(
+        new Error(
+          `schedule[${indice}]: date do item deve estar entre startDate e endDate do evento`,
+        ),
+        { statusCode: 422 },
+      );
+    }
+  }
+
+  if (Array.isArray(update.schedule)) {
     // Referências de atrativo da programação (id/slug) viram id de TouristSpot.
     update.schedule = await resolverProgramacao(update.schedule);
   }
@@ -321,8 +328,12 @@ async function resolverEmpresaOrganizadora(
 
 /**
  * Converte id ou slug do atrativo em id do documento TouristSpot (padrão
- * `resolverEmpresaOrganizadora`). Slug sem atrativo correspondente não vira
- * referência solta: `undefined` e o campo não entra no documento.
+ * `resolverEmpresaOrganizadora`).
+ *
+ * Id é opaco e é aceito como veio: a atração pode ter saído do catálogo e o
+ * item continua válido (o app só não desenha o link). Slug vem do banco —
+ * um slug que não resolve é erro de digitação e NÃO é descartado em
+ * silêncio: o item perderia o link sem o admin perceber.
  */
 async function resolverAtrativo(
   valor?: string | null,
@@ -338,7 +349,12 @@ async function resolverAtrativo(
   const found = await TouristSpotModel.findOne({ slug: normalizarSlug(valor) })
     .select({ _id: 1 })
     .lean();
-  return found ? String(found._id) : undefined;
+  if (!found) {
+    throw Object.assign(new Error(`atrativo "${valor}" não encontrado`), {
+      statusCode: 422,
+    });
+  }
+  return String(found._id);
 }
 
 /** Itens da programação como chegam no DTO (relatedSpot por id/slug). */

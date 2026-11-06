@@ -8,6 +8,7 @@ import {
   descreverIngressoItem,
   formatarDataEvento,
   formatarHorario,
+  formatarHorarioItem,
   formatarPeriodoEvento,
   hojeISO,
   labelCategoriaAtracao,
@@ -118,6 +119,26 @@ describe('descreverIngresso', () => {
 
   it('devolve null quando não há informação de ingresso', () => {
     expect(descreverIngresso()).toBeNull();
+  });
+});
+
+describe('formatarHorarioItem', () => {
+  it('junta início e fim quando os dois existem', () => {
+    expect(formatarHorarioItem({ startTime: '09:00', endTime: '12:30' })).toBe(
+      '09:00 às 12:30',
+    );
+  });
+
+  it('mostra "até" quando o item tem só o fim', () => {
+    expect(formatarHorarioItem({ endTime: '18:00' })).toBe('até 18:00');
+  });
+
+  it('mostra só o início quando não há fim', () => {
+    expect(formatarHorarioItem({ startTime: '09:00' })).toBe('09:00');
+  });
+
+  it('devolve null quando o item não tem horário', () => {
+    expect(formatarHorarioItem({})).toBeNull();
   });
 });
 

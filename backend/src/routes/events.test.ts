@@ -755,6 +755,32 @@ describe('POST /api/events — programação (schedule)', () => {
     expect(JSON.stringify(response.body.details)).toContain('schedule');
     expect(modeloEventos.documents).toHaveLength(4);
   });
+
+  it('responde 422 quando o item referencia uma atração que não existe', async () => {
+    // Slug vem do banco: um slug desconhecido é erro de digitação e não pode
+    // ser salvo em silêncio (o item perderia o link sem o admin perceber).
+    const response = await publicar({
+      ...payloadBase,
+      schedule: [{ ...itemCompleto, relatedSpot: 'atracao-que-nao-existe' }],
+    });
+
+    expect(response.status).toBe(422);
+    expect(JSON.stringify(response.body)).toContain('atrativo');
+    expect(modeloEventos.documents).toHaveLength(4);
+  });
+
+  it('mantém a referência por id quando a atração não existe mais', async () => {
+    // Id é opaco: a atração pode ter sido removida do catálogo e o item
+    // continua válido (o id fica, o app só não desenha o link).
+    const response = await publicar({
+      ...payloadBase,
+      schedule: [{ ...itemCompleto, relatedSpot: '000000000000000000000099' }],
+    });
+
+    expect(response.status).toBe(201);
+    const item = response.body.schedule[0] as Record<string, unknown>;
+    expect(item.relatedSpot).toBe('000000000000000000000099');
+  });
 });
 
 describe('PUT /api/events — programação (schedule)', () => {
@@ -854,6 +880,39 @@ describe('PUT /api/events — programação (schedule)', () => {
 
     expect(response.status).toBe(200);
     expect(response.body.schedule).toHaveLength(0);
+  });
+
+  it('responde 422 quando o PUT muda o período e a programação salva fica fora', async () => {
+    // A programação vale sobre o estado RESULTANTE: um PUT que só troca as
+    // datas do evento não pode deixar item de programação fora do período.
+    const primeira = await atualizar({
+      schedule: [{ date: '2026-11-08', startTime: '09:00', title: 'Roda de samba' }],
+    });
+    expect(primeira.status).toBe(200);
+
+    const response = await request(app)
+      .put('/api/events/000000000000000000000004')
+      .set('Authorization', 'Bearer token_admin')
+      .send({ startDate: '2026-11-10', endDate: '2026-11-12' });
+
+    expect(response.status).toBe(422);
+    expect(JSON.stringify(response.body)).toContain('schedule');
+    // O período do evento não mudou.
+    expect(modeloEventos.documents[3]?.startDate).toBe('2026-11-07');
+  });
+
+  it('aceita o PUT que muda o período mantendo a programação dentro', async () => {
+    await atualizar({
+      schedule: [{ date: '2026-11-08', startTime: '09:00', title: 'Roda de samba' }],
+    });
+
+    const response = await request(app)
+      .put('/api/events/000000000000000000000004')
+      .set('Authorization', 'Bearer token_admin')
+      .send({ endDate: '2026-11-10' });
+
+    expect(response.status).toBe(200);
+    expect(modeloEventos.documents[3]?.endDate).toBe('2026-11-10');
   });
 });
 
