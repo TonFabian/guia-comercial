@@ -3,7 +3,7 @@
  * abrir mapa). Silencia erros de Linking que podem ocorrer em ambientes sem
  * handler para a URL.
  */
-import { Alert, Linking } from 'react-native';
+import { Alert, Linking, Platform } from 'react-native';
 
 import { onlyDigits as toDigits } from './phone';
 
@@ -66,7 +66,13 @@ export async function openExternalUrl(url: string, title: string) {
     return;
   }
   try {
-    await Linking.openURL(segura);
+    if (Platform.OS === 'web' && typeof window !== 'undefined') {
+      // noopener: impede a página aberta de manipular esta janela (tabnabbing).
+      // noreferrer: não envia o Referer (privacidade; implica noopener).
+      window.open(segura, '_blank', 'noopener,noreferrer');
+    } else {
+      await Linking.openURL(segura);
+    }
   } catch {
     Alert.alert(title, `Não foi possível abrir o link (${url}).`);
   }

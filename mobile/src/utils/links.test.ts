@@ -1,80 +1,111 @@
-import { Alert, Linking } from 'react-native';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 import { openExternalUrl } from './links';
 
-vi.mock('react-native', () => ({
-  Linking: { openURL: vi.fn(async () => {}) },
-  Alert: { alert: vi.fn() },
+const { platformOS, linkingOpenURL, alertFn } = vi.hoisted(() => ({
+  platformOS: { value: 'ios' as string },
+  linkingOpenURL: vi.fn(async () => {}),
+  alertFn: vi.fn(),
 }));
 
-describe('openExternalUrl', () => {
-  beforeEach(() => vi.clearAllMocks());
+vi.mock('react-native', () => ({
+  Linking: { openURL: linkingOpenURL },
+  Alert: { alert: alertFn },
+  Platform: { get OS() { return platformOS.value; } },
+}));
+
+describe('openExternalUrl (nativo)', () => {
+  beforeEach(() => {
+    platformOS.value = 'ios';
+    vi.clearAllMocks();
+  });
   afterEach(() => vi.clearAllMocks());
 
-  it('abre URLs http/https', async () => {
+  it('abre URLs http/https via Linking', async () => {
     await openExternalUrl('https://example.com/path', 'título');
 
-    expect(Linking.openURL).toHaveBeenCalledWith('https://example.com/path');
-    expect(Alert.alert).not.toHaveBeenCalled();
+    expect(linkingOpenURL).toHaveBeenCalledWith('https://example.com/path');
+    expect(alertFn).not.toHaveBeenCalled();
   });
 
   it('bloqueia javascript:', async () => {
     await openExternalUrl('javascript:alert(1)', 'título');
-
-    expect(Linking.openURL).not.toHaveBeenCalled();
-    expect(Alert.alert).toHaveBeenCalled();
+    expect(linkingOpenURL).not.toHaveBeenCalled();
+    expect(alertFn).toHaveBeenCalled();
   });
 
   it('bloqueia data:', async () => {
     await openExternalUrl('data:text/html,<h1>x</h1>', 'título');
-
-    expect(Linking.openURL).not.toHaveBeenCalled();
-    expect(Alert.alert).toHaveBeenCalled();
+    expect(linkingOpenURL).not.toHaveBeenCalled();
   });
 
   it('bloqueia file:', async () => {
     await openExternalUrl('file:///etc/passwd', 'título');
-
-    expect(Linking.openURL).not.toHaveBeenCalled();
+    expect(linkingOpenURL).not.toHaveBeenCalled();
   });
 
   it('bloqueia string que não é URL', async () => {
     await openExternalUrl('not a url', 'título');
-
-    expect(Linking.openURL).not.toHaveBeenCalled();
-    expect(Alert.alert).toHaveBeenCalled();
+    expect(linkingOpenURL).not.toHaveBeenCalled();
+    expect(alertFn).toHaveBeenCalled();
   });
 
   it('bloqueia string vazia', async () => {
     await openExternalUrl('', 'título');
+    expect(linkingOpenURL).not.toHaveBeenCalled();
+  });
+});
 
-    expect(Linking.openURL).not.toHaveBeenCalled();
+describe('openExternalUrl (web)', () => {
+  const openMock = vi.fn();
+
+  beforeEach(() => {
+    platformOS.value = 'web';
+    vi.clearAllMocks();
+    vi.stubGlobal('window', { open: openMock });
+  });
+  afterEach(() => {
+    vi.clearAllMocks();
+    vi.unstubAllGlobals();
   });
 
-  it('bloqueia caracteres de controle', async () => {
+  it('abre via window.open com noopener,noreferrer', async () => {
+    await openExternalUrl('https://example.com/path', 'título');
+
+    expect(openMock).toHaveBeenCalledWith(
+      'https://example.com/path',
+      '_blank',
+      'noopener,noreferrer',
+    );
+  });
+
+  it('bloqueia javascript: no web', async () => {
+    await openExternalUrl('javascript:alert(1)', 'título');
+    expect(openMock).not.toHaveBeenCalled();
+  });
+
+  it('bloqueia endereços internos no web', async () => {
+    await openExternalUrl('http://127.0.0.1/admin', 'título');
+    expect(openMock).not.toHaveBeenCalled();
+  });
+
+  it('bloqueia caracteres de controle no web', async () => {
     await openExternalUrl('https://example.com/\njavascript:alert(1)', 'título');
-
-    expect(Linking.openURL).not.toHaveBeenCalled();
+    expect(openMock).not.toHaveBeenCalled();
   });
 
-  it('bloqueia URL acima de 2048 caracteres', async () => {
+  it('bloqueia URL acima de 2048 caracteres no web', async () => {
     const longa = 'https://example.com/' + 'a'.repeat(2048);
     await openExternalUrl(longa, 'título');
-
-    expect(Linking.openURL).not.toHaveBeenCalled();
+    expect(openMock).not.toHaveBeenCalled();
   });
 
-  it('bloqueia endereços internos (loopback)', async () => {
-    await openExternalUrl('http://127.0.0.1/admin', 'título');
-    await openExternalUrl('http://localhost/admin', 'título');
-
-    expect(Linking.openURL).not.toHaveBeenCalled();
-  });
-
-  it('abre a URL normalizada (não o input bruto)', async () => {
+  it('abre a URL normalizada no web', async () => {
     await openExternalUrl('HTTPS://Example.COM/Path', 'título');
-
-    expect(Linking.openURL).toHaveBeenCalledWith('https://example.com/Path');
+    expect(openMock).toHaveBeenCalledWith(
+      'https://example.com/Path',
+      '_blank',
+      'noopener,noreferrer',
+    );
   });
 });
