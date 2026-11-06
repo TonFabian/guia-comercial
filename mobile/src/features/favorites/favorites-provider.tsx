@@ -68,7 +68,7 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
           }
           return merged;
         });
-        lastPersistedRef.current = JSON.stringify(loaded.map((c) => c._id));
+        lastPersistedRef.current = JSON.stringify(loaded);
       } catch {
         // Sem acesso ao armazenamento: segue com a lista vazia.
       } finally {
@@ -121,7 +121,7 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
     if (!ready) return;
     if (loadedFor !== auth.user?.clerkId) return;
     const ids = favorites.map((c) => c._id);
-    const serialized = JSON.stringify(ids);
+    const serialized = JSON.stringify(favorites);
     if (serialized === lastPersistedRef.current) return;
     const key = favoritesStorageKey(auth.user?.clerkId);
     void AsyncStorage.setItem(key, serialized).catch(() => {
