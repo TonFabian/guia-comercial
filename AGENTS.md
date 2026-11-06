@@ -118,7 +118,9 @@ rápidos, alguns de integração (API), poucos e2e.
   um único uso. Abstraia na **terceira** ocorrência, e só se a regra for real.
 - **Sem números mágicos**: cores, espaçamentos, radii e tamanhos de fonte vão
   para `mobile/src/constants/theme.ts`; limites de paginação para
-  `parsePagination`.
+  `parsePagination`. Tipografia (família, peso, tamanho, line-height) obedece a
+  regra da **§6.3** — nunca valores cru (`fontSize: 14`, `fontWeight: '700'`,
+  `fontFamily: '...'`) fora dos tokens.
 - **Erros**: nunca engolir (`catch {}` vazio sem motivo explícito), sempre
   tipados, sempre com mensagem útil. No backend, erros de domínio carregam
   `statusCode`; no app, `Alert`/`Linking` com fallback.
@@ -207,8 +209,8 @@ rápidos, alguns de integração (API), poucos e2e.
 - **Dados só entram por `src/services/api.ts`.** Componente não faz `fetch`.
   O serviço sempre tem fallback (mock) para o app funcionar sem backend.
 - **Tokens centralizados** em `src/constants/theme.ts` (`GuiaColors`,
-  `CardColors`, `Overlays`, `Spacing`, `Radius`, `Type`). Cor/sombra/tamanho
-  literal fora do theme é dívida.
+  `CardColors`, `Overlays`, `Spacing`, `Radius`, `FontFamily`, `FontWeight`,
+  `Type`, `Typography`). Cor/sombra/tamanho literal fora do theme é dívida.
 - **Performance**:
   - Listas longas → `FlashList` (Shopify) ou `FlatList`; nunca `ScrollView`
     com `.map()` para volume alto.
@@ -282,6 +284,38 @@ alias `@/`. Subcomponentes, hooks e helpers puros permanecem em
 > Se encontrar um shim existente, consolide (mova a implementação para a
 > rota) em vez de mantê-lo.
 
+### 6.3 Tipografia (Rubik + Inter — regra permanente)
+
+Fontes padronizadas do app (**spec completa**:
+`docs/superpowers/specs/2026-11-06-tipografia-design.md`):
+
+| Uso | Fonte | Fonte no device |
+| --- | --- | --- |
+| Headings (títulos, h1–h5) | Rubik (`FontFamily.heading*`) | `Rubik_700Bold`, `Rubik_600SemiBold`, `Rubik_800ExtraBold` |
+| Textos (body, spans, parágrafos, labels) | Inter (`FontFamily.body*`) | `Inter_400Regular` … `Inter_800ExtraBold` |
+
+Regras **obrigatórias em toda alteração de UI no mobile**:
+
+- **Tamanho** só pelo token de escada (xs 12/16 · sm 14/20 · md 16/24 ·
+  lg 20/28 · xg 24/32, referência 375dp) — nunca `fontSize` cru.
+- **Preferir presets** de `Typography.*` (`h1`–`h5`, `body`, `bodySemibold`,
+  `bodyBold`, `caption`, `captionSemibold`, `label`): eles já trazem família +
+  tamanho + line-height + peso + fator fluido. O estilo do call site adiciona
+  só cor/espaçamento: `style={[Typography.h2, { color }]}`.
+- **Peso** só via `FontWeight` (`regular` 400 · `medium` 500 · `semibold`
+  600 · `bold` 700 · `heavy` 800) — nunca string numérica crua.
+- **Line-height** sempre pareado ao tamanho (vem do preset); `lineHeight` cru
+  fora do theme é dívida.
+- **Escala responsiva**: presets já multiplicam por
+  `fluidWidthFactor(375, largura)` com clamp 0,9–1,2 (`src/theme/fluid-width.ts`).
+  Não recriar cálculo de escala em componente.
+- **Acessibilidade**: `allowFontScaling` nativo permanece ativo; textos
+  críticos (tabs, labels de botões de fluxo) usam `maxFontSizeMultiplier: 1.4`.
+- **Gate de grep**: `fontSize:\s*\d` cru e `fontWeight: '[0-9]'` cru só podem
+  existir em `src/constants/theme.ts`; qualquer outra ocorrência no mobile src
+  é bug de padronização.
+
+
 ## 7. Regras do admin (Vite + React)
 
 - `src/services/api.ts` é a **única** porta de entrada HTTP; erros via
@@ -292,6 +326,13 @@ alias `@/`. Subcomponentes, hooks e helpers puros permanecem em
 - Componentes em `src/components/`; `App.tsx` fica fino.
 - Endpoint de recurso ainda não implementado **lança erro explícito** —
   nunca finja que funciona.
+- **Tipografia** (regra permanente, espelho da §6.3 mobile): headings em
+  `Rubik Variable` e body em `Inter Variable`, via CSS vars de
+  `src/styles.css` (`--font-family-heading/body`,
+  `--font-size-xs/sm/md/lg/xg` + `--line-height-*`, em rem) — nunca
+  `font-size` em px cru; estilos inline usam os espelhos string
+  `var(--font-size-*)` de `src/theme/typography.ts`. Fonte única dos valores
+  = `styles.css`.
 
 ---
 
