@@ -317,7 +317,7 @@ Regras **obrigatórias em toda alteração de UI no mobile**:
   Não recriar cálculo de escala em componente.
 - **Acessibilidade**: `allowFontScaling` nativo permanece ativo; textos
   críticos (tabs, labels de botões de fluxo) usam `maxFontSizeMultiplier: 1.4`.
-- **Gate de grep**: `fontSize:\s*\d` cru e `fontWeight: '[0-9]'` cru só podem
+- **Gate de grep**: `fontSize:\s*\d` cru e `fontWeight: '[0-9]+'` cru só podem
   existir em `src/constants/theme.ts`; qualquer outra ocorrência no mobile src
   é bug de padronização.
 
