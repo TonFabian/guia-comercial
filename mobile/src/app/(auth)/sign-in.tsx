@@ -1,18 +1,30 @@
 import { useClerk, useSSO } from '@clerk/expo';
 import * as AuthSession from 'expo-auth-session';
+import { LinearGradient } from 'expo-linear-gradient';
 import { useRouter } from 'expo-router';
 import { maybeCompleteAuthSession } from 'expo-web-browser';
 import { useEffect, useState } from 'react';
-import { Image, StyleSheet, Text, View } from 'react-native';
+import {
+  KeyboardAvoidingView,
+  Platform,
+  ScrollView,
+  StatusBar,
+  StyleSheet,
+  Text,
+  View,
+} from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Radius, Spacing, Type } from '@/constants/theme';
+import { LoginColors, LoginGradients, Type } from '@/constants/theme';
 import { clerkErrorToMessage } from '@/features/auth/clerk-errors';
 import { EmailPasswordForm } from '@/features/auth/sign-in/email-password-form';
 import { ForgotOrGuest } from '@/features/auth/sign-in/forgot-or-guest';
+import { LoginBackground } from '@/features/auth/sign-in/login-background';
+import { LoginFooter } from '@/features/auth/sign-in/login-footer';
+import { LoginHeader } from '@/features/auth/sign-in/login-header';
+import type { AuthMode } from '@/features/auth/sign-in/login-labels';
 import { SocialButtons } from '@/features/auth/sign-in/social-buttons';
 import { useWarmUpBrowser } from '@/features/auth/use-warm-up-browser';
-import { useThemeColors } from '@/hooks/use-theme-colors';
 import { useAuthState } from '@/providers/auth-provider';
 
 // Fecha a sessão do browser que abrir durante o fluxo SSO: precisa rodar no
@@ -20,18 +32,19 @@ import { useAuthState } from '@/providers/auth-provider';
 maybeCompleteAuthSession();
 
 /**
- * Tela de login do mock ("Acesse sua conta"): sociais (Google sempre, Apple
- * só iOS) + e-mail/senha + convidado. O fluxo em uso é o SSO web do Clerk
- * (expo-web-browser): funciona no Expo Go e no dev build.
+ * Tela de login ("Castelo Tem"): fundo escuro com ondas douradas, logo,
+ * formulário e-mail/telefone + senha, ações sociais e rodapé de cadastro.
+ * O fluxo em uso é o SSO web do Clerk (expo-web-browser): funciona no Expo Go
+ * e no dev build.
  */
 export default function SignInScreen() {
-  const colors = useThemeColors();
-  const styles = makeStyles(colors);
   useWarmUpBrowser();
   const { startSSOFlow } = useSSO();
   const clerk = useClerk();
   const router = useRouter();
   const { state } = useAuthState();
+
+  const [mode, setMode] = useState<AuthMode>('entrar');
 
   // Guarda de entrada: se já existe sessão ativa (ex.: app reiniciado com
   // sessão persistida), não exibe a tela de login — redireciona para as abas.
@@ -80,84 +93,97 @@ export default function SignInScreen() {
     };
   }
 
+  function toggleMode() {
+    setMode((current) => (current === 'entrar' ? 'criar' : 'entrar'));
+  }
+
   return (
     <View style={styles.root}>
+      <StatusBar barStyle="light-content" />
+      <LinearGradient
+        colors={LoginGradients.background}
+        style={StyleSheet.absoluteFill}
+      />
+      <LoginBackground />
+
       <SafeAreaView style={styles.safeArea}>
-        <View style={styles.card}>
-          <Image source={require('@/assets/images/icon.png')} style={styles.logo} />
-          <Text style={styles.title}>Acesse sua conta</Text>
+        <KeyboardAvoidingView
+          behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
+          style={styles.flex}
+        >
+          <ScrollView
+            contentContainerStyle={styles.scrollContent}
+            keyboardShouldPersistTaps="handled"
+            showsVerticalScrollIndicator={false}
+          >
+            <LoginHeader />
 
-          {error ? <Text style={styles.error}>{error}</Text> : null}
+            {error ? <Text style={styles.error}>{error}</Text> : null}
 
-          <SocialButtons
-            onGoogle={viewFor('oauth_google', setGoogleLoading)}
-            onApple={viewFor('oauth_apple', setAppleLoading)}
-            googleLoading={googleLoading}
-            appleLoading={appleLoading}
-          />
+            <EmailPasswordForm mode={mode} />
 
-          <View style={styles.divider}>
-            <View style={styles.dividerLine} />
-            <Text style={styles.dividerText}>ou</Text>
-            <View style={styles.dividerLine} />
-          </View>
+            <View style={styles.divider}>
+              <View style={styles.dividerLine} />
+              <Text style={styles.dividerText}>ou entre com</Text>
+              <View style={styles.dividerLine} />
+            </View>
 
-          <EmailPasswordForm />
+            <SocialButtons
+              onGoogle={viewFor('oauth_google', setGoogleLoading)}
+              onApple={viewFor('oauth_apple', setAppleLoading)}
+              googleLoading={googleLoading}
+              appleLoading={appleLoading}
+            />
 
-          <ForgotOrGuest />
-        </View>
+            <LoginFooter mode={mode} onSwitchMode={toggleMode} />
+
+            <ForgotOrGuest />
+          </ScrollView>
+        </KeyboardAvoidingView>
       </SafeAreaView>
     </View>
   );
 }
 
-function makeStyles(colors: ReturnType<typeof useThemeColors>) {
+function makeStyles() {
   return StyleSheet.create({
     root: {
       flex: 1,
-      backgroundColor: colors.background,
+      backgroundColor: LoginColors.backgroundTop,
     },
     safeArea: {
       flex: 1,
+    },
+    flex: {
+      flex: 1,
+    },
+    scrollContent: {
+      flexGrow: 1,
       justifyContent: 'center',
-      padding: Spacing.four,
-    },
-    card: {
-      backgroundColor: colors.surface,
-      borderRadius: Radius.card,
-      padding: Spacing.four,
-      gap: Spacing.three,
-    },
-    logo: {
-      width: 64,
-      height: 64,
-      alignSelf: 'center',
-      borderRadius: Radius.iconBox,
-    },
-    title: {
-      alignSelf: 'center',
-      color: colors.text,
-      fontSize: Type.headline,
-      fontWeight: '700',
+      paddingHorizontal: 24,
+      paddingVertical: 40,
+      gap: 24,
     },
     error: {
-      color: colors.error,
+      color: LoginColors.error,
       fontSize: Type.small,
       textAlign: 'center',
     },
     divider: {
       flexDirection: 'row',
       alignItems: 'center',
-      gap: Spacing.three,
     },
     dividerLine: {
       flex: 1,
       height: 1,
-      backgroundColor: colors.border,
+      backgroundColor: LoginColors.divider,
     },
     dividerText: {
-      color: colors.textSecondary,
-      fontSize: Type.small,
+      color: LoginColors.dividerText,
+      paddingHorizontal: 12,
+      fontSize: Type.body,
     },
   });
 }
+
+const styles = makeStyles();
