@@ -130,6 +130,31 @@ export function validarProgramacao(
   return null;
 }
 
+/**
+ * Move um item da programação na lista (para cima ou para baixo).
+ *
+ * Devolve uma lista NOVA — o estado do formulário é imutável. Nas bordas
+ * (primeiro item subindo, último descendo) a lista volta como está.
+ */
+export function moverItemProgramacao(
+  items: TourEventScheduleItemForm[],
+  indice: number,
+  direcao: -1 | 1,
+): TourEventScheduleItemForm[] {
+  const destino = indice + direcao;
+  if (indice < 0 || indice >= items.length || destino < 0 || destino >= items.length) {
+    return items;
+  }
+
+  const movidos = [...items];
+  const [removido] = movidos.splice(indice, 1);
+  if (!removido) {
+    return items;
+  }
+  movidos.splice(destino, 0, removido);
+  return movidos;
+}
+
 const fieldsetStyle: CSSProperties = {
   width: '100%',
   border: '1px solid #2e2e2e',
@@ -150,6 +175,13 @@ const itemHeaderStyle: CSSProperties = {
   justifyContent: 'space-between',
   gap: 12,
   width: '100%',
+};
+
+/** Botões de ação do item (reordenar e remover). */
+const itemAcoesStyle: CSSProperties = {
+  display: 'flex',
+  alignItems: 'center',
+  gap: 8,
 };
 
 /** Mensagem de erro inline do item (menor e sem a margem global de erro). */
@@ -185,9 +217,27 @@ export function ScheduleEditor({ items, spots, startDate, endDate, onChange }: S
           <div key={indice} style={itemStyle}>
             <div style={itemHeaderStyle}>
               <strong>Item {indice + 1}</strong>
-              <button type="button" onClick={() => remover(indice)}>
-                Remover
-              </button>
+              <div style={itemAcoesStyle}>
+                <button
+                  type="button"
+                  onClick={() => onChange(moverItemProgramacao(items, indice, -1))}
+                  disabled={indice === 0}
+                  aria-label={`Subir o item ${indice + 1} na programação`}
+                >
+                  Subir
+                </button>
+                <button
+                  type="button"
+                  onClick={() => onChange(moverItemProgramacao(items, indice, 1))}
+                  disabled={indice === items.length - 1}
+                  aria-label={`Descer o item ${indice + 1} na programação`}
+                >
+                  Descer
+                </button>
+                <button type="button" onClick={() => remover(indice)}>
+                  Remover
+                </button>
+              </div>
             </div>
             <input
               placeholder="Título da atração (obrigatório)"

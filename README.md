@@ -313,21 +313,22 @@ Cada app tem seus próprios gates:
 
 ```bash
 cd backend && npm run lint && npm run typecheck && npm test && npm run build
-cd mobile  && npm run lint && npm run typecheck && npx expo export
-cd admin   && npm run lint && npm run typecheck && npm run build
+cd mobile  && npm run lint && npm run typecheck && npm test && npx expo export
+cd admin   && npm run lint && npm run typecheck && npm test && npm run build
 ```
 
 | App     | Lint          | Typecheck      | Testes             | Build         |
 | ------- | ------------- | -------------- | ------------------ | ------------- |
 | backend | ESLint (flat) | `tsc --noEmit` | vitest + supertest  | `tsc`         |
-| mobile  | `expo lint`   | `tsc --noEmit` | vitest (169 testes) | `expo export` |
-| admin   | ESLint (flat) | `tsc --noEmit` | —                  | `vite build`  |
+| mobile  | `expo lint`   | `tsc --noEmit` | vitest (180 testes) | `expo export` |
+| admin   | ESLint (flat) | `tsc --noEmit` | vitest (11 testes)  | `vite build`  |
 
 - **TDD** no backend: todo endpoint novo nasce com o teste do supertest
   falhando, depois o código, depois o refactor.
-- Cobertura de teste hoje: **417 testes no backend** (29 arquivos, incluindo
-  a varredura de segurança de 107 testes em `src/routes/security.test.ts`) e
-  **169 testes no mobile** (17 arquivos).
+- Cobertura de teste hoje: **441 testes no backend** (30 arquivos, incluindo
+  a varredura de segurança de 107 testes em `src/routes/security.test.ts`),
+  **180 testes no mobile** (17 arquivos) e **11 testes no admin** (1 arquivo
+  com a validação e a reordenação da programação do evento).
 - Formatação: `.prettierrc` na raiz (printWidth 100, aspas simples, trailing
   comma, ponto e vírgula).
 
