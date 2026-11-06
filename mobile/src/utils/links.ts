@@ -52,10 +52,26 @@ export function comingSoon(title: string) {
 
 /** Abre um link externo (site, Instagram, Facebook). */
 export async function openExternalUrl(url: string, title: string) {
+  if (!ehUrlWeb(url)) {
+    // Só http(s) são seguros de abrir: bloqueia javascript:, data:, file: e
+    // qualquer coisa que não seja uma URL válida (evita XSS via link armazenado).
+    Alert.alert(title, `Não foi possível abrir o link (${url}).`);
+    return;
+  }
   try {
     await Linking.openURL(url);
   } catch {
     Alert.alert(title, `Não foi possível abrir o link (${url}).`);
+  }
+}
+
+/** Aceita apenas URLs http(s) — bloqueia javascript:, data:, file:, etc. */
+function ehUrlWeb(url: string): boolean {
+  try {
+    const parsed = new URL(url);
+    return parsed.protocol === 'http:' || parsed.protocol === 'https:';
+  } catch {
+    return false;
   }
 }
 
