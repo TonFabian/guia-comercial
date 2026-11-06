@@ -361,6 +361,50 @@ function ehDataDeCalendario(valor: string): boolean {
   return !Number.isNaN(data.getTime()) && data.toISOString().slice(0, 10) === valor;
 }
 
+/**
+ * Item da programação interna do evento (uma atração/atividade em um dia).
+ *
+ * As regras cruzadas LOCAIS do item (endTime >= startTime e preço do ingresso
+ * pago) valem por si só — um PUT que troca a programação inteira valida o item
+ * mesmo quando startDate/endDate não vêm no payload. Já a checagem da `date`
+ * contra o intervalo do evento precisa das datas do evento e fica no
+ * superRefine de cada schema (create/update), com guard.
+ */
+const tourEventScheduleItemSchema = z
+  .object({
+    date: dataDiaSchema,
+    startTime: horaSchema.optional(),
+    endTime: horaSchema.optional(),
+    title: z.string().trim().min(1),
+    description: z.string().trim().optional(),
+    stage: z.string().trim().optional(),
+    // Atrativo relacionado, por id ou slug (resolvido no service, como o
+    // `organizerCompany` do evento).
+    relatedSpot: z.string().trim().min(1).optional(),
+    ticket: z.enum(['free', 'paid']).optional(),
+    ticketPrice: z.string().optional(),
+    ticketUrl: z.string().optional(),
+  })
+  .superRefine((item, ctx): void => {
+    // Formato fixo HH:mm (24h): a ordem lexicográfica é a cronológica.
+    if (item.startTime && item.endTime && item.endTime < item.startTime) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'endTime do item deve ser maior ou igual a startTime',
+        path: ['endTime'],
+      });
+    }
+    if (item.ticket === 'paid' && !item.ticketPrice?.trim()) {
+      ctx.addIssue({
+        code: 'custom',
+        message: 'ticketPrice do item é obrigatório quando ticket é "paid"',
+        path: ['ticketPrice'],
+      });
+    }
+  });
+
+const tourEventScheduleItemArraySchema = z.array(tourEventScheduleItemSchema);
+
 const tourEventBaseSchema = z.object({
   name: z.string().trim().min(1),
   slug: slugSchema,
@@ -390,6 +434,8 @@ const tourEventBaseSchema = z.object({
   instagram: z.string().optional(),
   featured: z.boolean().optional(),
   active: z.boolean(),
+  // Programação interna do evento: itens embutidos, sem coleção própria.
+  schedule: tourEventScheduleItemArraySchema.optional(),
 });
 
 export const createTourEventSchema = tourEventBaseSchema.superRefine(
@@ -408,6 +454,21 @@ export const createTourEventSchema = tourEventBaseSchema.superRefine(
         code: 'custom',
         message: 'ticketPrice é obrigatório quando ticket é "paid"',
         path: ['ticketPrice'],
+      });
+    }
+    // Guard: o superRefine só roda com os campos base válidos, então
+    // startDate/endDate já são datas de calendário YYYY-MM-DD. Se o intervalo
+    // do evento estiver invertido, a issue acima já sinaliza o erro real —
+    // sem mascará-lo com a falha da checagem dos itens.
+    if (valor.endDate >= valor.startDate) {
+      valor.schedule?.forEach((item, indice) => {
+        if (item.date < valor.startDate || item.date > valor.endDate) {
+          ctx.addIssue({
+            code: 'custom',
+            message: `schedule[${indice}]: date do item deve estar entre startDate e endDate do evento`,
+            path: ['schedule', indice, 'date'],
+          });
+        }
       });
     }
   },
@@ -472,6 +533,25 @@ export const updateTourEventSchema = tourEventBaseSchema.partial().superRefine(
         code: 'custom',
         message: 'ticketPrice é obrigatório quando ticket é "paid"',
         path: ['ticketPrice'],
+      });
+    }
+    // Guard: PUT parcial pode vir sem startDate/endDate (presumem os valores
+    // já salvos). Só checa a vigência dos itens quando o intervalo completo
+    // vem no payload; quando não vem, o item tem as regras locais validadas e
+    // a vigência sobre o estado resultante é papel do service (padrão endDate
+    // x startDate e ticket x ticketPrice deste arquivo).
+    if (valor.schedule && valor.startDate && valor.endDate) {
+      // Desestruturação local: o narrowing de `valor` não atravessa o
+      // callback do forEach na análise do TS.
+      const { startDate, endDate } = valor;
+      valor.schedule.forEach((item, indice) => {
+        if (item.date < startDate || item.date > endDate) {
+          ctx.addIssue({
+            code: 'custom',
+            message: `schedule[${indice}]: date do item deve estar entre startDate e endDate do evento`,
+            path: ['schedule', indice, 'date'],
+          });
+        }
       });
     }
   },

@@ -604,6 +604,131 @@ describe('POST /api/events', () => {
   });
 });
 
+describe('POST /api/events — programação (schedule)', () => {
+  // Intervalo do evento: os itens da programação têm de caber nele (bordas
+  // inclusas). O `schedule` é array de itens embutidos no próprio evento.
+  const payloadBase = {
+    name: 'Canyon Fest Poti',
+    slug: 'canyon-fest-poti',
+    description: 'Três dias de festival no cânion do Poti',
+    category: 'festival',
+    startDate: '2026-12-10',
+    endDate: '2026-12-12',
+    active: true,
+  };
+
+  const itemCompleto = {
+    date: '2026-12-10',
+    startTime: '09:00',
+    endTime: '12:30',
+    title: 'Trilha guiada no cânion',
+    description: 'Caminhada guiada pelo cânion com guia local',
+    stage: 'Praça Central',
+    relatedSpot: 'parque-municipal',
+    ticket: 'paid',
+    ticketPrice: 'R$ 15,00',
+    ticketUrl: 'https://ingressos.example.com/canyon-fest',
+  };
+
+  const publicar = async (payload: Record<string, unknown>) =>
+    request(app)
+      .post('/api/events')
+      .set('Authorization', 'Bearer token_admin')
+      .send(payload);
+
+  it('aceita o evento com item completo de programação e devolve o item na resposta', async () => {
+    const response = await publicar({ ...payloadBase, schedule: [itemCompleto] });
+
+    expect(response.status).toBe(201);
+    expect(response.body.schedule).toHaveLength(1);
+    const item = response.body.schedule[0] as Record<string, unknown>;
+    expect(item.date).toBe('2026-12-10');
+    expect(item.startTime).toBe('09:00');
+    expect(item.endTime).toBe('12:30');
+    expect(item.title).toBe('Trilha guiada no cânion');
+    expect(item.stage).toBe('Praça Central');
+    expect(item.relatedSpot).toBe('parque-municipal');
+    expect(item.ticket).toBe('paid');
+    expect(item.ticketPrice).toBe('R$ 15,00');
+    expect(modeloEventos.documents).toHaveLength(5);
+  });
+
+  it('responde 422 quando a date do item sai do intervalo do evento', async () => {
+    // endDate é 2026-12-12: um item do dia 13 descarrila a programação.
+    const response = await publicar({
+      ...payloadBase,
+      schedule: [{ ...itemCompleto, date: '2026-12-13' }],
+    });
+
+    expect(response.status).toBe(422);
+    expect(response.body.error).toBe('Payload inválido');
+    expect(JSON.stringify(response.body.details)).toContain('schedule');
+    expect(modeloEventos.documents).toHaveLength(4);
+  });
+
+  it('aceita item na borda: date igual a startDate e date igual a endDate', async () => {
+    // As bordas são dias do evento: início (2026-12-10) e fechamento (2026-12-12)
+    // são programação válida.
+    const primeiroDia = await publicar({ ...payloadBase, schedule: [itemCompleto] });
+
+    expect(primeiroDia.status).toBe(201);
+    expect(primeiroDia.body.schedule[0].date).toBe('2026-12-10');
+
+    const ultimoDia = await publicar({
+      ...payloadBase,
+      slug: 'canyon-fest-poti-2',
+      schedule: [{ ...itemCompleto, date: '2026-12-12' }],
+    });
+
+    expect(ultimoDia.status).toBe(201);
+    expect(ultimoDia.body.schedule[0].date).toBe('2026-12-12');
+  });
+
+  it('responde 422 quando o endTime do item é anterior ao startTime', async () => {
+    const response = await publicar({
+      ...payloadBase,
+      schedule: [{ ...itemCompleto, endTime: '08:00' }],
+    });
+
+    expect(response.status).toBe(422);
+    expect(JSON.stringify(response.body.details)).toContain('endTime');
+    expect(modeloEventos.documents).toHaveLength(4);
+  });
+
+  it('responde 422 quando o item é pago e não informa o preço', async () => {
+    // Mesma programação, sem o ticketPrice: o preço é obrigatório no item pago.
+    const itemSemPreco = {
+      date: itemCompleto.date,
+      startTime: itemCompleto.startTime,
+      endTime: itemCompleto.endTime,
+      title: itemCompleto.title,
+      description: itemCompleto.description,
+      stage: itemCompleto.stage,
+      relatedSpot: itemCompleto.relatedSpot,
+      ticket: itemCompleto.ticket,
+      ticketUrl: itemCompleto.ticketUrl,
+    };
+    const response = await publicar({ ...payloadBase, schedule: [itemSemPreco] });
+
+    expect(response.status).toBe(422);
+    expect(JSON.stringify(response.body.details)).toContain('ticketPrice');
+    expect(modeloEventos.documents).toHaveLength(4);
+  });
+
+  it('responde 422 quando a date do item não é uma data válida', async () => {
+    // '12-31-2026' tem o formato invertido (MM-DD-YYYY): nem passa do formato
+    // YYYY-MM-DD, quanto menos da checagem do calendário.
+    const response = await publicar({
+      ...payloadBase,
+      schedule: [{ ...itemCompleto, date: '12-31-2026' }],
+    });
+
+    expect(response.status).toBe(422);
+    expect(JSON.stringify(response.body.details)).toContain('schedule');
+    expect(modeloEventos.documents).toHaveLength(4);
+  });
+});
+
 describe('PUT /api/events', () => {
   it('responde 401 sem sessão autenticada', async () => {
     const response = await request(app)
