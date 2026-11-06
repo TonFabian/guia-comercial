@@ -2,7 +2,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Radius, Spacing, Type } from '@/constants/theme';
+import { Radius, Spacing, Typography, FontFamily, FontWeight } from '@/constants/theme';
 import { CompanyRating } from '@/features/company/company-rating';
 import { openCompanyDetails } from '@/features/company/open-company';
 import { useFavorites } from '@/features/favorites/favorites-provider';
@@ -79,8 +79,7 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     title: {
       color: colors.text,
-      fontSize: 24,
-      fontWeight: '700',
+            ...Typography.h2,
       marginBottom: Spacing.three,
     },
     emptyBox: {
@@ -91,7 +90,7 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     emptyText: {
       color: colors.textSecondary,
-      fontSize: Type.base,
+      ...Typography.body,
       textAlign: 'center',
     },
     list: {
@@ -113,16 +112,17 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     name: {
       color: colors.text,
-      fontSize: Type.subtitle,
-      fontWeight: '700',
+            ...Typography.h5,
+      fontFamily: FontFamily.body700,
+      fontWeight: FontWeight.bold,
     },
     category: {
       color: colors.textSecondary,
-      fontSize: Type.body,
+      ...Typography.body,
     },
     address: {
       color: colors.textSecondary,
-      fontSize: Type.small,
+      ...Typography.caption,
     },
     removeButton: {
       width: 38,

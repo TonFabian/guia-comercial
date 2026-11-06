@@ -4,7 +4,7 @@ import { memo } from 'react';
 import { FlatList, Pressable, StyleSheet, Text } from 'react-native';
 import type { ListRenderItemInfo } from 'react-native';
 
-import { Overlays, Radius, Spacing, Type } from '@/constants/theme';
+import { Overlays, Radius, Spacing, Typography, FontFamily, FontWeight } from '@/constants/theme';
 import { useThemeColors } from '@/hooks/use-theme-colors';
 import type { Category } from '@/types/domain';
 
@@ -83,8 +83,9 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     label: {
       color: colors.text,
-      fontSize: Type.body,
-      fontWeight: '600',
+            ...Typography.body,
+      fontFamily: FontFamily.body600,
+      fontWeight: FontWeight.semibold,
     },
   });
 }

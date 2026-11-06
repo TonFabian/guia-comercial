@@ -2,7 +2,7 @@ import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Image } from 'expo-image';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { Overlays, Radius, Spacing, Type } from '@/constants/theme';
+import { Overlays, Radius, Spacing, Typography, FontFamily, FontWeight } from '@/constants/theme';
 import { useThemeColors } from '@/hooks/use-theme-colors';
 import type { Company } from '@/types/domain';
 import { categoryLabel } from '@/types/domain';
@@ -107,8 +107,9 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     name: {
       color: colors.text,
-      fontSize: Type.headline,
-      fontWeight: '800',
+            ...Typography.h2,
+      fontFamily: FontFamily.heading800,
+      fontWeight: FontWeight.heavy,
     },
     metaRow: {
       flexDirection: 'row',
@@ -118,7 +119,7 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     category: {
       color: colors.textSecondary,
-      fontSize: Type.body,
+      ...Typography.body,
     },
     verified: {
       flexDirection: 'row',
@@ -131,8 +132,9 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     verifiedText: {
       color: colors.primary,
-      fontSize: Type.small,
-      fontWeight: '700',
+            ...Typography.caption,
+      fontFamily: FontFamily.body700,
+      fontWeight: FontWeight.bold,
     },
   });
 }

@@ -15,7 +15,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { LoginColors, LoginGradients, Type } from '@/constants/theme';
+import { LoginColors, LoginGradients, Typography } from '@/constants/theme';
 import { clerkErrorToMessage } from '@/features/auth/clerk-errors';
 import { EmailPasswordForm } from '@/features/auth/sign-in/email-password-form';
 import { ForgotOrGuest } from '@/features/auth/sign-in/forgot-or-guest';
@@ -166,7 +166,7 @@ function makeStyles() {
     },
     error: {
       color: LoginColors.error,
-      fontSize: Type.small,
+      ...Typography.caption,
       textAlign: 'center',
     },
     divider: {
@@ -181,7 +181,7 @@ function makeStyles() {
     dividerText: {
       color: LoginColors.dividerText,
       paddingHorizontal: 12,
-      fontSize: Type.body,
+      ...Typography.body,
     },
   });
 }

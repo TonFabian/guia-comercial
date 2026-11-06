@@ -4,7 +4,7 @@ import { router } from 'expo-router';
 import { useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 
-import { Overlays, Radius, Spacing, Type } from '@/constants/theme';
+import { Overlays, Radius, Spacing, Typography, FontFamily, FontWeight } from '@/constants/theme';
 import { useThemeColors } from '@/hooks/use-theme-colors';
 import { hojeISO } from '@/features/tourism/event-meta';
 import { getEvents, getTouristSpots } from '@/services/api';
@@ -177,7 +177,7 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     feedback: {
       color: colors.textSecondary,
-      fontSize: Type.small,
+      ...Typography.caption,
       textAlign: 'center',
     },
     retryButton: {
@@ -192,8 +192,9 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     retryText: {
       color: colors.primary,
-      fontSize: Type.small,
-      fontWeight: '700',
+            ...Typography.caption,
+      fontFamily: FontFamily.body700,
+      fontWeight: FontWeight.bold,
     },
     carousel: {
       gap: Spacing.two + Spacing.half,
@@ -235,8 +236,9 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     badgeText: {
       color: colors.background,
-      fontSize: Type.caption,
-      fontWeight: '800',
+            ...Typography.caption,
+      fontFamily: FontFamily.body800,
+      fontWeight: FontWeight.heavy,
     },
     body: {
       gap: Spacing.half,
@@ -244,14 +246,12 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     title: {
       color: colors.text,
-      fontSize: Type.base,
-      fontWeight: '700',
-      lineHeight: 18,
-    },
+            ...Typography.body,
+      fontFamily: FontFamily.body700,
+      fontWeight: FontWeight.bold,    },
     subtitle: {
       color: colors.textSecondary,
-      fontSize: Type.small,
-      lineHeight: 16,
+            ...Typography.caption,
     },
   });
 }

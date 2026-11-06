@@ -3,7 +3,7 @@ import { useState } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SectionHeader } from './section-header';
 
-import { CardColors, CardShadow, Overlays, Radius, Spacing, Type } from '@/constants/theme';
+import { CardColors, CardShadow, Overlays, Radius, Spacing, Typography, FontFamily, FontWeight } from '@/constants/theme';
 import type { DisplayCoupon } from '@/data/mock';
 import { ContactHintRow } from '@/features/home/contact-hidden-hint';
 import { useThemeColors } from '@/hooks/use-theme-colors';
@@ -94,18 +94,20 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     couponTagText: {
       color: colors.primary,
-      fontSize: Type.caption,
-      fontWeight: '700',
+            ...Typography.caption,
+      fontFamily: FontFamily.body700,
+      fontWeight: FontWeight.bold,
     },
     couponTitle: {
       color: colors.text,
-      fontSize: Type.cardTitle,
-      fontWeight: '800',
+            ...Typography.h5,
+      fontFamily: FontFamily.body800,
+      fontWeight: FontWeight.heavy,
       marginTop: 4,
     },
     couponBusiness: {
       color: Overlays.whiteFaint,
-      fontSize: Type.body,
+      ...Typography.body,
     },
     couponFooter: {
       flexDirection: 'row',
@@ -118,8 +120,9 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     couponFooterText: {
       color: colors.primary,
-      fontSize: Type.body,
-      fontWeight: '600',
+            ...Typography.body,
+      fontFamily: FontFamily.body600,
+      fontWeight: FontWeight.semibold,
     },
   });
 }

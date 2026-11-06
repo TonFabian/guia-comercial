@@ -1,6 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native';
 
-import { Spacing, Type } from '@/constants/theme';
+import { Spacing, Typography, FontFamily, FontWeight } from '@/constants/theme';
 import { useThemeColors } from '@/hooks/use-theme-colors';
 
 import { formatOpeningRange, openingStatusLabel, parseOpeningHours, scheduleToOpeningHours } from './opening-hours';
@@ -60,8 +60,9 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
       backgroundColor: colors.textSecondary,
     },
     statusText: {
-      fontSize: Type.body,
-      fontWeight: '700',
+            ...Typography.body,
+      fontFamily: FontFamily.body700,
+      fontWeight: FontWeight.bold,
     },
     statusOpen: {
       color: colors.success,
@@ -80,11 +81,11 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     label: {
       color: colors.text,
-      fontSize: Type.body,
+      ...Typography.body,
     },
     range: {
       color: colors.textSecondary,
-      fontSize: Type.body,
+      ...Typography.body,
     },
   });
 }

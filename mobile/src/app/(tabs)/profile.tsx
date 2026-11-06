@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Radius, Spacing, Type } from '@/constants/theme';
+import { Radius, Spacing, Typography } from '@/constants/theme';
 import { useThemeColors } from '@/hooks/use-theme-colors';
 import { useAuthState } from '@/providers/auth-provider';
 import { useThemeMode } from '@/providers/theme-provider';
@@ -145,8 +145,7 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     title: {
       color: colors.text,
-      fontSize: Type.headline,
-      fontWeight: '700',
+            ...Typography.h2,
       marginBottom: Spacing.three,
     },
     loading: {
@@ -171,7 +170,7 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     menuLabel: {
       flex: 1,
       color: colors.text,
-      fontSize: Type.subtitle,
+      ...Typography.h5,
     },
     themeToggle: {
       flexDirection: 'row',
@@ -186,8 +185,7 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     themeToggleText: {
       color: colors.text,
-      fontSize: Type.subtitle,
-      fontWeight: '600',
+            ...Typography.h5,
     },
   });
 }

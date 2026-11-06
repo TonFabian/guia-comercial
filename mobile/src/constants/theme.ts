@@ -140,15 +140,6 @@ export const Type = {
   md: { size: _s(16), lineHeight: _s(24) },
   lg: { size: _s(20), lineHeight: _s(28) },
   xg: { size: _s(24), lineHeight: _s(32) },
-  caption: 11,
-  small: 12,
-  body: 13,
-  base: 14,
-  subtitle: 15,
-  cardTitle: 16,
-  section: 17,
-  title: 18,
-  headline: 24,
 } as const;
 
 export const FontFamily = {

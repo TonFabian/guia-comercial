@@ -5,7 +5,7 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Type } from '@/constants/theme';
+import { Typography, FontFamily, FontWeight } from '@/constants/theme';
 import { getCompanies } from '@/services/api';
 import type { Company } from '@/types/domain';
 import { useThemeColors } from '@/hooks/use-theme-colors';
@@ -108,9 +108,9 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     safeArea: { flex: 1 },
     topBar: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingVertical: 12 },
     topButton: { paddingVertical: 6, paddingHorizontal: 10 },
-    topButtonText: { color: colors.primary, fontSize: Type.base, fontWeight: '600' },
-    title: { color: colors.text, fontSize: Type.headline, fontWeight: '700' },
+    topButtonText: { color: colors.primary, ...Typography.body, fontFamily: FontFamily.body600, fontWeight: FontWeight.semibold },
+    title: { color: colors.text, ...Typography.h2 },
     center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 20 },
-    emptyText: { color: colors.textSecondary, fontSize: Type.base, textAlign: 'center' },
+    emptyText: { color: colors.textSecondary, ...Typography.body, textAlign: 'center' },
   });
 }

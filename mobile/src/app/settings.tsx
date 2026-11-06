@@ -15,7 +15,7 @@ import {
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { SUPPORT_WHATSAPP_MESSAGE, SUPPORT_WHATSAPP_PHONE, TERMS_URL } from '@/constants/support';
-import { Radius, Spacing, Type } from '@/constants/theme';
+import { Radius, Spacing, Typography, FontFamily, FontWeight } from '@/constants/theme';
 import { useThemeColors } from '@/hooks/use-theme-colors';
 import { useAuthState } from '@/providers/auth-provider';
 import { useThemeMode } from '@/providers/theme-provider';
@@ -321,13 +321,15 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     topButtonText: {
       color: colors.primary,
-      fontSize: Type.base,
-      fontWeight: '600',
+            ...Typography.body,
+      fontFamily: FontFamily.body600,
+      fontWeight: FontWeight.semibold,
     },
     title: {
       color: colors.text,
-      fontSize: Type.title,
-      fontWeight: '700',
+            ...Typography.h4,
+      fontFamily: FontFamily.heading700,
+      fontWeight: FontWeight.bold,
     },
     content: {
       paddingHorizontal: 16,
@@ -336,8 +338,9 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     sectionTitle: {
       color: colors.textSecondary,
-      fontSize: Type.small,
-      fontWeight: '700',
+            ...Typography.caption,
+      fontFamily: FontFamily.body700,
+      fontWeight: FontWeight.bold,
       textTransform: 'uppercase',
       marginTop: Spacing.three,
     },
@@ -378,13 +381,11 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     rowLabel: {
       color: colors.text,
-      fontSize: Type.subtitle,
-      fontWeight: '600',
+            ...Typography.h5,
     },
     rowHint: {
       color: colors.textSecondary,
-      fontSize: Type.small,
-      lineHeight: 17,
+            ...Typography.caption,
     },
     themeRow: {
       flexDirection: 'row',
@@ -407,8 +408,9 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     themeOptionText: {
       color: colors.textSecondary,
-      fontSize: Type.base,
-      fontWeight: '600',
+            ...Typography.body,
+      fontFamily: FontFamily.body600,
+      fontWeight: FontWeight.semibold,
     },
     themeOptionTextSelected: {
       color: colors.background,
@@ -422,12 +424,13 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     linkText: {
       color: colors.primary,
-      fontSize: Type.small,
-      fontWeight: '700',
+            ...Typography.caption,
+      fontFamily: FontFamily.body700,
+      fontWeight: FontWeight.bold,
     },
     errorText: {
       color: colors.error,
-      fontSize: Type.small,
+      ...Typography.caption,
     },
   });
 }

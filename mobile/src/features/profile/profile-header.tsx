@@ -1,7 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Image, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
-import { Overlays, Radius, Spacing, Type } from '@/constants/theme';
+import { Overlays, Radius, Spacing, Typography, FontFamily, FontWeight } from '@/constants/theme';
 import { useThemeColors } from '@/hooks/use-theme-colors';
 import type { AuthStatus } from '@/providers/auth-provider';
 import type { User } from '@/types/domain';
@@ -130,13 +130,14 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     userName: {
       color: colors.text,
-      fontSize: Type.title,
-      fontWeight: '700',
+            ...Typography.h4,
+      fontFamily: FontFamily.heading700,
+      fontWeight: FontWeight.bold,
       marginTop: Spacing.half,
     },
     userHint: {
       color: colors.textSecondary,
-      fontSize: Type.body,
+      ...Typography.body,
       textAlign: 'center',
     },
     tag: {
@@ -158,8 +159,9 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
       borderColor: colors.border,
     },
     tagText: {
-      fontSize: Type.caption,
-      fontWeight: '700',
+            ...Typography.caption,
+      fontFamily: FontFamily.body700,
+      fontWeight: FontWeight.bold,
       textTransform: 'uppercase',
     },
     tagTextPartner: {
@@ -178,8 +180,7 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     loginText: {
       color: colors.textSoft,
-      fontSize: Type.base,
-      lineHeight: 20,
+            ...Typography.body,
     },
     loginButton: {
       flexDirection: 'row',
@@ -194,8 +195,9 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     loginButtonText: {
       color: colors.background,
-      fontSize: Type.subtitle,
-      fontWeight: '700',
+            ...Typography.h5,
+      fontFamily: FontFamily.body700,
+      fontWeight: FontWeight.bold,
     },
   });
 }

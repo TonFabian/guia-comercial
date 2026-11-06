@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { StyleSheet, TextInput, View } from 'react-native';
 import type { TextInputProps } from 'react-native';
 
-import { LoginColors, Type } from '@/constants/theme';
+import { LoginColors, Typography } from '@/constants/theme';
 
 type FeatherName = ComponentProps<typeof Feather>['name'];
 
@@ -60,7 +60,7 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     color: LoginColors.text,
-    fontSize: Type.subtitle,
+    ...Typography.h5,
     paddingVertical: 0,
   },
 });

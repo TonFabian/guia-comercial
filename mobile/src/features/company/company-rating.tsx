@@ -1,7 +1,7 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { Type } from '@/constants/theme';
+import { Typography, FontFamily, FontWeight } from '@/constants/theme';
 import { useThemeColors } from '@/hooks/use-theme-colors';
 
 interface CompanyRatingProps {
@@ -46,18 +46,19 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     value: {
       color: colors.text,
-      fontSize: Type.body,
-      fontWeight: '700',
+            ...Typography.body,
+      fontFamily: FontFamily.body700,
+      fontWeight: FontWeight.bold,
     },
     valueTitle: {
-      fontSize: Type.section,
+      ...Typography.h5,
     },
     count: {
       color: colors.textSecondary,
-      fontSize: Type.small,
+      ...Typography.caption,
     },
     countTitle: {
-      fontSize: Type.body,
+      ...Typography.body,
     },
   });
 }

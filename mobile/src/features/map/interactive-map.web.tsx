@@ -1,6 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native';
 
-import { Type } from '@/constants/theme';
+import { Typography } from '@/constants/theme';
 import { useThemeColors } from '@/hooks/use-theme-colors';
 import type { InteractiveMapProps } from './interactive-map.types';
 
@@ -24,7 +24,7 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   message: {
-    fontSize: Type.base,
+    ...Typography.body,
     textAlign: 'center',
   },
 });

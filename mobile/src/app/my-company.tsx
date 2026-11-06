@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, Alert, ScrollView, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Radius, Spacing, Type } from '@/constants/theme';
+import { Typography, FontFamily, FontWeight } from '@/constants/theme';
 import { getCompanies, updateCompany } from '@/services/api';
 import type { Company } from '@/types/domain';
 import { useAuthState } from '@/providers/auth-provider';
@@ -252,34 +252,34 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     safeArea: { flex: 1 },
     topBar: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingVertical: 12 },
     topButton: { paddingVertical: 6, paddingHorizontal: 10 },
-    topButtonText: { color: colors.primary, fontSize: 14, fontWeight: '600' },
-    title: { color: colors.text, fontSize: 20, fontWeight: '700' },
+    topButtonText: { color: colors.primary, ...Typography.body, fontFamily: FontFamily.body600, fontWeight: FontWeight.semibold },
+    title: { color: colors.text, ...Typography.h3 },
     center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 20, gap: 12 },
-    empty: { color: colors.textSecondary, fontSize: 15, textAlign: 'center' },
+    empty: { color: colors.textSecondary, ...Typography.h5, textAlign: 'center' },
     cta: { backgroundColor: colors.primary, borderRadius: 10, paddingVertical: 10, paddingHorizontal: 20 },
-    ctaText: { color: colors.background, fontSize: 14, fontWeight: '700' },
+    ctaText: { color: colors.background, ...Typography.body, fontFamily: FontFamily.body700, fontWeight: FontWeight.bold },
     content: { padding: 16, gap: 12 },
     card: { backgroundColor: colors.surface, borderRadius: 14, borderWidth: 1, borderColor: colors.border, padding: 16, gap: 8 },
-    cardTitle: { color: colors.text, fontSize: 16, fontWeight: '700' },
-    cardMeta: { color: colors.textSecondary, fontSize: 13 },
-    label: { color: colors.textSecondary, fontSize: 12, fontWeight: '700', textTransform: 'uppercase', marginTop: 4 },
-    hourLine: { color: colors.text, fontSize: 14 },
-    promoLine: { color: colors.primary, fontSize: 14, fontWeight: '600' },
-    hourLineMuted: { color: colors.textSecondary, fontSize: 14, fontStyle: 'italic' },
-    input: { backgroundColor: colors.background, color: colors.text, borderRadius: 10, borderWidth: 1, borderColor: colors.border, paddingHorizontal: 12, paddingVertical: 10, fontSize: 14, minHeight: 80, textAlignVertical: 'top' },
+    cardTitle: { color: colors.text, ...Typography.h5, fontFamily: FontFamily.body700, fontWeight: FontWeight.bold },
+    cardMeta: { color: colors.textSecondary, ...Typography.body },
+    label: { color: colors.textSecondary, ...Typography.caption, fontFamily: FontFamily.body700, fontWeight: FontWeight.bold, textTransform: 'uppercase', marginTop: 4 },
+    hourLine: { color: colors.text, ...Typography.body },
+    promoLine: { color: colors.primary, ...Typography.body, fontFamily: FontFamily.body600, fontWeight: FontWeight.semibold },
+    hourLineMuted: { color: colors.textSecondary, ...Typography.body, fontStyle: 'italic' },
+    input: { backgroundColor: colors.background, color: colors.text, borderRadius: 10, borderWidth: 1, borderColor: colors.border, paddingHorizontal: 12, paddingVertical: 10, ...Typography.body, minHeight: 80, textAlignVertical: 'top' },
     phoneInput: { minHeight: 44 },
     inputDisabled: { opacity: 0.6 },
     checkboxRow: { flexDirection: 'row', alignItems: 'center', gap: 10, marginVertical: 4 },
     checkbox: { width: 22, height: 22, borderRadius: 6, borderWidth: 1, borderColor: colors.border, alignItems: 'center', justifyContent: 'center', backgroundColor: colors.background },
     checkboxChecked: { backgroundColor: colors.primary, borderColor: colors.primary },
-    checkboxMark: { color: colors.background, fontSize: 14, fontWeight: '700' },
-    checkboxLabel: { color: colors.text, fontSize: 14 },
+    checkboxMark: { color: colors.background, ...Typography.body, fontFamily: FontFamily.body700, fontWeight: FontWeight.bold },
+    checkboxLabel: { color: colors.text, ...Typography.body },
     actions: { flexDirection: 'row', justifyContent: 'flex-end', gap: 10, marginTop: 8 },
     btn: { paddingVertical: 8, paddingHorizontal: 16, borderRadius: 10, backgroundColor: colors.surfaceAlt },
-    btnText: { color: colors.text, fontSize: 14, fontWeight: '600' },
+    btnText: { color: colors.text, ...Typography.body, fontFamily: FontFamily.body600, fontWeight: FontWeight.semibold },
     btnPrimary: { backgroundColor: colors.primary },
     btnPrimaryText: { color: colors.background },
     editBtn: { alignSelf: 'flex-start', paddingVertical: 6, paddingHorizontal: 12, borderRadius: 8, backgroundColor: colors.surfaceAlt, borderWidth: 1, borderColor: colors.border, marginTop: 4 },
-    editBtnText: { color: colors.primary, fontSize: 13, fontWeight: '600' },
+    editBtnText: { color: colors.primary, ...Typography.body, fontFamily: FontFamily.body600, fontWeight: FontWeight.semibold },
   });
 }

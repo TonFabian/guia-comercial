@@ -2,7 +2,7 @@ import { useAuth, useSession } from '@clerk/expo';
 import { router } from 'expo-router';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
-import { Radius, Spacing, Type } from '@/constants/theme';
+import { Radius, Spacing, Typography, FontFamily, FontWeight } from '@/constants/theme';
 import { useThemeColors } from '@/hooks/use-theme-colors';
 
 const TASK_MESSAGES: Record<string, string> = {
@@ -58,12 +58,11 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     title: {
       color: colors.text,
-      fontSize: Type.headline,
-      fontWeight: '700',
+            ...Typography.h2,
     },
     text: {
       color: colors.textSecondary,
-      fontSize: Type.base,
+      ...Typography.body,
       textAlign: 'center',
     },
     button: {
@@ -74,8 +73,9 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     buttonText: {
       color: colors.background,
-      fontSize: Type.subtitle,
-      fontWeight: '700',
+            ...Typography.h5,
+      fontFamily: FontFamily.body700,
+      fontWeight: FontWeight.bold,
     },
   });
 }

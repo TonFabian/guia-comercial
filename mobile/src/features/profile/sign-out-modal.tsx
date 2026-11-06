@@ -8,7 +8,7 @@ import {
   View,
 } from 'react-native';
 
-import { GuiaColors, Overlays, Radius, Spacing, Type } from '@/constants/theme';
+import { GuiaColors, Overlays, Radius, Spacing, Typography, FontFamily, FontWeight } from '@/constants/theme';
 import { useThemeColors } from '@/hooks/use-theme-colors';
 
 interface SignOutModalProps {
@@ -88,13 +88,13 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     title: {
       color: colors.text,
-      fontSize: Type.title,
-      fontWeight: '700',
+            ...Typography.h4,
+      fontFamily: FontFamily.heading700,
+      fontWeight: FontWeight.bold,
     },
     message: {
       color: colors.textSecondary,
-      fontSize: Type.base,
-      lineHeight: 20,
+            ...Typography.body,
     },
     actions: {
       flexDirection: 'row',
@@ -113,8 +113,9 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     cancelText: {
       color: colors.text,
-      fontSize: Type.base,
-      fontWeight: '600',
+            ...Typography.body,
+      fontFamily: FontFamily.body600,
+      fontWeight: FontWeight.semibold,
     },
     confirmButton: {
       minWidth: 96,
@@ -130,8 +131,9 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     confirmText: {
       color: GuiaColors.text,
-      fontSize: Type.base,
-      fontWeight: '700',
+            ...Typography.body,
+      fontFamily: FontFamily.body700,
+      fontWeight: FontWeight.bold,
     },
   });
 }

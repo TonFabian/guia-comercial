@@ -7,7 +7,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { Radius, Spacing, Type } from '@/constants/theme';
+import { Radius, Spacing, Typography, FontFamily, FontWeight } from '@/constants/theme';
 import { ContactHintRow } from '@/features/home/contact-hidden-hint';
 import { useThemeColors } from '@/hooks/use-theme-colors';
 import type { City } from '@/types/domain';
@@ -114,8 +114,7 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     addressText: {
       flex: 1,
       color: colors.textSecondary,
-      fontSize: Type.body,
-      lineHeight: 18,
+            ...Typography.body,
     },
     mapButton: {
       backgroundColor: colors.primary,
@@ -125,8 +124,9 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     mapButtonText: {
       color: colors.background,
-      fontSize: Type.small,
-      fontWeight: '800',
+            ...Typography.caption,
+      fontFamily: FontFamily.body800,
+      fontWeight: FontWeight.heavy,
     },
     contactRow: {
       flexDirection: 'row',
@@ -144,8 +144,9 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     whatsappText: {
       color: colors.background,
-      fontSize: Type.base,
-      fontWeight: '800',
+            ...Typography.body,
+      fontFamily: FontFamily.body800,
+      fontWeight: FontWeight.heavy,
     },
     callButton: {
       flex: 1,
@@ -159,8 +160,9 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     callText: {
       color: colors.background,
-      fontSize: Type.base,
-      fontWeight: '800',
+            ...Typography.body,
+      fontFamily: FontFamily.body800,
+      fontWeight: FontWeight.heavy,
     },
     pressed: {
       opacity: 0.8,

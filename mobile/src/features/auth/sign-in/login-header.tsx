@@ -1,6 +1,6 @@
 import { Image, StyleSheet, Text, View } from 'react-native';
 
-import { LoginColors, Type } from '@/constants/theme';
+import { LoginColors, Typography, FontFamily, FontWeight } from '@/constants/theme';
 
 /**
  * Cabeçalho da tela de login: logotipo oficial, slogan e arco dourado sutil.
@@ -33,8 +33,9 @@ const styles = StyleSheet.create({
   slogan: {
     marginTop: 8,
     color: LoginColors.text,
-    fontSize: Type.cardTitle,
-    fontWeight: '500',
+        ...Typography.h5,
+    fontFamily: FontFamily.body500,
+    fontWeight: FontWeight.medium,
     textAlign: 'center',
   },
   arc: {

@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 
-import { FontFamily, Type, Typography } from './theme';
+import { Type, Typography, FontFamily } from './theme';
 
 const { width } = vi.hoisted(() => ({ width: 375 }));
 vi.mock('react-native', () => ({

@@ -3,7 +3,7 @@ import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SectionHeader } from './section-header';
 
-import { Overlays, Radius, Spacing, Type } from '@/constants/theme';
+import { Overlays, Radius, Spacing, Typography, FontFamily, FontWeight } from '@/constants/theme';
 import { ContactHintRow } from '@/features/home/contact-hidden-hint';
 import { useThemeColors } from '@/hooks/use-theme-colors';
 import type { Company } from '@/types/domain';
@@ -112,8 +112,9 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     highlightTagText: {
       color: colors.background,
-      fontSize: Type.small,
-      fontWeight: '800',
+            ...Typography.caption,
+      fontFamily: FontFamily.body800,
+      fontWeight: FontWeight.heavy,
     },
     companyBody: {
       padding: 16,
@@ -121,12 +122,13 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     companyName: {
       color: colors.text,
-      fontSize: Type.section,
-      fontWeight: '700',
+            ...Typography.h5,
+      fontFamily: FontFamily.body700,
+      fontWeight: FontWeight.bold,
     },
     companyCategory: {
       color: colors.textSecondary,
-      fontSize: Type.body,
+      ...Typography.body,
     },
     addressRow: {
       flexDirection: 'row',
@@ -136,7 +138,7 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     companyAddress: {
       color: colors.textSecondary,
-      fontSize: Type.body,
+      ...Typography.body,
     },
     companyActions: {
       flexDirection: 'row',
@@ -156,8 +158,9 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     actionPillText: {
       color: colors.primary,
-      fontSize: Type.body,
-      fontWeight: '600',
+            ...Typography.body,
+      fontFamily: FontFamily.body600,
+      fontWeight: FontWeight.semibold,
     },
     whatsappPill: {
       flexDirection: 'row',
@@ -171,8 +174,9 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     whatsappPillText: {
       color: colors.background,
-      fontSize: Type.body,
-      fontWeight: '700',
+            ...Typography.body,
+      fontFamily: FontFamily.body700,
+      fontWeight: FontWeight.bold,
     },
   });
 }
