@@ -51,4 +51,30 @@ describe('openExternalUrl', () => {
 
     expect(Linking.openURL).not.toHaveBeenCalled();
   });
+
+  it('bloqueia caracteres de controle', async () => {
+    await openExternalUrl('https://example.com/\njavascript:alert(1)', 'título');
+
+    expect(Linking.openURL).not.toHaveBeenCalled();
+  });
+
+  it('bloqueia URL acima de 2048 caracteres', async () => {
+    const longa = 'https://example.com/' + 'a'.repeat(2048);
+    await openExternalUrl(longa, 'título');
+
+    expect(Linking.openURL).not.toHaveBeenCalled();
+  });
+
+  it('bloqueia endereços internos (loopback)', async () => {
+    await openExternalUrl('http://127.0.0.1/admin', 'título');
+    await openExternalUrl('http://localhost/admin', 'título');
+
+    expect(Linking.openURL).not.toHaveBeenCalled();
+  });
+
+  it('abre a URL normalizada (não o input bruto)', async () => {
+    await openExternalUrl('HTTPS://Example.COM/Path', 'título');
+
+    expect(Linking.openURL).toHaveBeenCalledWith('https://example.com/Path');
+  });
 });
