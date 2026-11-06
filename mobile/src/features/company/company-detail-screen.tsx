@@ -725,6 +725,9 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     hoursClosed: {
       color: colors.textSecondary,
+      fontFamily: FontFamily.body500,
+      fontSize: Type.sm.size,
+      lineHeight: Type.sm.lineHeight,
       fontWeight: FontWeight.medium,
     },
     floatingNav: {
