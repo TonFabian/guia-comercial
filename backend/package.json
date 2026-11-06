@@ -11,7 +11,8 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
     "lint": "eslint .",
-    "seed": "tsx src/scripts/seed.ts"
+    "seed": "tsx src/scripts/seed.ts",
+    "grant:role": "tsx src/scripts/grant-test-role.ts"
   },
   "dependencies": {
     "@clerk/backend": "^3.26.1",
