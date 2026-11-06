@@ -19,7 +19,7 @@ Out of scope: mudar cores/spacing (já tokenizados), backend, componentes de age
 | Fonte de headings | Rubik (@expo-google-fonts/rubik / @fontsource-variable/rubik) |
 | Fonte de textos | Inter (@expo-google-fonts/inter / @fontsource-variable/inter) |
 | Escada de tamanho | 5 níveis xs/sm/md/lg/xg + rampa própria h1–h5 |
-| Line-height | Pareado nos tokens (Tabela 1); os `lineHeight` crus espalhados hoje (21×) são eliminados |
+| Line-height | Pareado nos tokens (Tabela 1); os `lineHeight` crus espalhados hoje (23×) são eliminados |
 | Escala mobile | `clamp(largura ÷ 375, 0,9, 1,2)` aplicada nos presets |
 | Escala admin | `rem` fixo para body; `clamp()` fluido para h1–h4 |
 | Peso | Pilha `FontWeight` regular/medium/semibold/bold/heavy; pesos crus migrados |
@@ -85,21 +85,21 @@ mobile/src/theme/fluid-width.test.ts:  320 → 0.9 · 375 → 1 · 500 → 1.2
 - `npx expo install @expo-google-fonts/rubik @expo-google-fonts/inter` (SDK 58; `expo-font` já presente).
 - Pesos: Inter 400/500/600/700/800 · Rubik 600/700/800 (todos os pesos hoje em uso).
 - `useFonts(Inter_400Regular, …, Rubik_700Bold, …)` em `_layout.tsx`, com gate no `SplashScreen` (padrão atual).
-- `global.css`: `--font-display` → `Rubik, Inter, ui-sans-serif, …` (consistência do web export).
+- `global.css`: `--font-display` passa a usar a **cadeia de nomes reais** carregados por peso (`Rubik_700Bold, Rubik_600SemiBold, Rubik_800ExtraBold, Inter_400Regular, …, sans-serif`) — `@expo-google-fonts` registra uma família por peso (ex.: `Rubik_700Bold`), então a família pura `'Rubik'` não resolve na web; a var cobre só DOM fora do `<Text>` do RN.
 
 ### Migração mobile (51 arquivos com `Type.*` + 6 com px hardcoded)
 
 | Valor atual | Novo |
 | --- | --- |
 | `Type.caption` (11) | `Type.xs` |
-| `Type.small` (12) · `Type.body` (13) · `Type.base` (14) · `Type.subtitle` (15) | preset/referência `Type.sm`, conforme papel do texto |
+| `Type.small` (12) · `Type.body` (13) · `Type.base` (14) · `Type.subtitle` (15) | preset que **carrega família** (`body`/`bodySemibold`/`bodyBold`/`caption`/`captionSemibold`/`label`), conforme papel do texto; a escada size-only `Type.xs..xg` fica reservada a contextos não-texto |
 | `Type.cardTitle` (16) · `Type.section` (17) | `Type.md` |
 | `Type.title` (18) | `Type.lg` |
 | `Type.headline` (24) | `Type.xg` |
 | `fontSize` cru (favorites, index, autonomous/[id], my-company, app-tabs.web, banner-carousel) | preset/primitivo |
 | títulos 20–22/700 | `h3` · 28/800 → `h1` |
 | `fontWeight` cru (163×) | `FontWeight.*` |
-| `lineHeight` cru (21×) | line do preset |
+| `lineHeight` cru (23×) | line do preset |
 
 Fases atômicas: (a) tokens + loader + teste RED→GREEN do fator; (b) pilot home + detalhe de empresa; (c) demais arquivos; (d) remoção do `Type` legado + gate de grep (`fontSize:\s*\d` só permitido em `theme.ts`); admin em commit separado.
 
@@ -128,13 +128,13 @@ Instalação: `npm i -D @playwright/test` em `mobile/` e `admin/` (ferramenta de
 
 - `mobile/e2e/typography.spec.ts`:
   1. **screenshots**: Home, Detalhe de empresa, Busca, Configurações em 4 viewports — 320×568, 375×667, 414×896, 768×1024 — salvas em `mobile/e2e-artifacts/` (gitignored), sem asserção de pixel-perfect (não travar CI por 1px) — verificação humana de “não quebrou / não ficou grande demais”.
-  2. **tamanho fluido**: `getComputedStyle` do body de um Texto conhecido = valor preset × fator do viewport (ex. 14 × 0.9 no 320).
+  2. **tamanho fluido**: `getComputedStyle` do body de um Texto conhecido = valor preset × fator do viewport (ex. 14 × 0.9 no 320). Cada viewport roda em **página própria (`page.goto` novo/per-project)** — o fator fluido é computado no load do módulo (`Dimensions.get('window').width`), sem reload não recalcula no resize.
   3. **família**: elemento de título computa `font-family` contendo `Rubik_700Bold`; body contém `Inter_400Regular`.
   4. **overflow**: `scrollWidth <= clientWidth` (ou sem truncado inesperado) nos cards de título/caption em 320px.
   5. **regressão**: as checagens rodando em cada commit da migração.
 
 **Admin** (`npm run dev`, base conforme `vite.config` — normalmente 5173):
-- `admin/e2e/typography.spec.ts`: viewports 320×568, 768×1024, 1366×900; screenshots + `getComputedStyle` conferindo `Rubik Variable` nos headings e `Inter Variable` no body, e `font-size` igual ao valor da escada em cada viewport.
+- `admin/e2e/typography.spec.ts`: viewports 320×568, 768×1024, 1366×900; screenshots + `getComputedStyle` conferindo `Rubik Variable` nos headings e `Inter Variable` no body; `font-size` **igual ao valor da escada** nos elementos de body (rem fixo) e **relação limitada (mín ≤ valor ≤ máx)** nos headings, que usam `clamp()` e por isso divergem da escada na maioria das larguras.
 
 ### Gate de qualidade (roda nos apps afetados; se o escopo cruzar backend, nos 3)
 - mobile: `npm run typecheck`, `npm run lint`, `npm test`, `npx expo export` (prova que o bundle builda).
@@ -145,7 +145,7 @@ Instalação: `npm i -D @playwright/test` em `mobile/` e `admin/` (ferramenta de
 ## Critérios de aceite
 
 1. Nenhuma ocorreência de `fontSize` cru fora de `theme.ts` no mobile src; nenhum `fontWeight` cru fora de `FontWeight`.
-2. Presets cobrem h1–h5 (Rubik) e body/caption/label (Inter) — nenhum `<Text>` de título sem `fontFamily`.
+2. Presets cobrem h1–h5 (Rubik) e body/caption/label (Inter); **todo `<Text>` migrado usa um preset `Typography.*` que carrega a família** — nenhum `<Text>` de título sem `fontFamily` e nenhum texto de body sem preset (migração size-only não pode deixar o texto na fonte do sistema).
 3. Mobile: tamanho computado do texto varia conforme a largura (verificado por Playwright em 4 viewports + screenshots).
 4. Admin: tamanhos em rem/vars CSS, Rubik/Inter visíveis nos computed styles, build verde.
 5. Testes E2E estáveis: asserções de estilo computado (não imagem exata), evitando flakiness por renderização.
