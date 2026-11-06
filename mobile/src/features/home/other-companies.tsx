@@ -39,24 +39,26 @@ export function OtherCompanies({ companies, loading = false, error = null }: Pro
       ) : (
         <View style={styles.list}>
           {companies.map((c) => (
-            <TouchableOpacity
-              key={c._id}
-              style={styles.card}
-              activeOpacity={0.7}
-              accessibilityRole="button"
-              accessibilityLabel={`Empresa ${c.name}, ${categoryLabel(c.category)}`}
-              onPress={() => router.push({ pathname: '/company/[id]', params: { id: c._id } })}
-            >
-              <View style={styles.thumb}>
-                <Ionicons name="storefront-outline" size={20} color={colors.primary} />
-              </View>
-              <View style={styles.body}>
-                <Text style={styles.name} numberOfLines={1}>{c.name}</Text>
-                <Text style={styles.meta} numberOfLines={1}>
-                  {categoryLabel(c.category)}
-                  {c.address ? ` · ${c.address}` : ''}
-                </Text>
-              </View>
+            <View key={c._id} style={styles.card}>
+              <TouchableOpacity
+                style={styles.cardMain}
+                activeOpacity={0.7}
+                accessibilityRole="button"
+                accessibilityLabel={`Empresa ${c.name}, ${categoryLabel(c.category)}`}
+                onPress={() => router.push({ pathname: '/company/[id]', params: { id: c._id } })}
+              >
+                <View style={styles.thumb}>
+                  <Ionicons name="storefront-outline" size={20} color={colors.primary} />
+                </View>
+                <View style={styles.body}>
+                  <Text style={styles.name} numberOfLines={1}>{c.name}</Text>
+                  <Text style={styles.meta} numberOfLines={1}>
+                    {categoryLabel(c.category)}
+                    {c.address ? ` · ${c.address}` : ''}
+                  </Text>
+                </View>
+                <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
+              </TouchableOpacity>
               {(c.whatsapp || c.phone) ? (
                 <TouchableOpacity
                   style={styles.whatsappBtn}
@@ -67,8 +69,7 @@ export function OtherCompanies({ companies, loading = false, error = null }: Pro
                   <Ionicons name="logo-whatsapp" size={18} color="#25D366" />
                 </TouchableOpacity>
               ) : null}
-              <Ionicons name="chevron-forward" size={16} color={colors.textSecondary} />
-            </TouchableOpacity>
+            </View>
           ))}
         </View>
       )}
@@ -83,6 +84,7 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     seeAll: { color: colors.primary, fontSize: Type.small, fontWeight: '700' },
     list: { marginHorizontal: 16, backgroundColor: colors.surface, borderRadius: Radius.card, borderWidth: 1, borderColor: colors.border, overflow: 'hidden' },
     card: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 12, paddingVertical: 10, borderBottomWidth: 1, borderBottomColor: colors.border },
+    cardMain: { flex: 1, flexDirection: 'row', alignItems: 'center', gap: 12 },
     thumb: { width: 40, height: 40, borderRadius: 8, backgroundColor: colors.surfaceAlt, alignItems: 'center', justifyContent: 'center' },
     body: { flex: 1, gap: 2 },
     whatsappBtn: { padding: 6, borderRadius: Radius.chip, backgroundColor: colors.surfaceAlt },
