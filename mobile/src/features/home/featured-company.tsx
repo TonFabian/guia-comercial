@@ -82,7 +82,7 @@ export function FeaturedCompany({ company }: { company: Company | null }) {
 function makeStyles(colors: ReturnType<typeof useThemeColors>) {
   return StyleSheet.create({
     section: {
-      marginBottom: 32,
+      marginBottom: Spacing.four,
     },
     companyCard: {
       marginHorizontal: 16,

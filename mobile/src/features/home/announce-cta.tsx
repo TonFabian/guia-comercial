@@ -22,9 +22,9 @@ export function AnnounceCta() {
 function makeStyles(colors: ReturnType<typeof useThemeColors>) {
   return StyleSheet.create({
     ctaContainer: {
-      marginHorizontal: 16,
+      marginHorizontal: Spacing.three,
       marginTop: 4,
-      marginBottom: Spacing.three,
+      marginBottom: Spacing.four,
       paddingVertical: 18,
       alignItems: 'center',
     },

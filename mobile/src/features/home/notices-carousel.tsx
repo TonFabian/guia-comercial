@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
-import { Radius, Type } from '@/constants/theme';
+import { Radius, Spacing, Type } from '@/constants/theme';
 import { useThemeColors } from '@/hooks/use-theme-colors';
 import type { Notice } from '@/types/domain';
 import { SectionHeader } from './section-header';
@@ -77,7 +77,7 @@ export function NoticesCarousel({ notices, loading = false, error = null }: Prop
 
 function makeStyles(colors: ReturnType<typeof useThemeColors>) {
   return StyleSheet.create({
-    section: { marginBottom: 20 },
+    section: { marginBottom: Spacing.four },
     carousel: { paddingHorizontal: 16, gap: 12 },
     card: {
       width: 220,
