@@ -57,8 +57,9 @@ agentes de código) estão em [`AGENTS.md`](./AGENTS.md).
 - **Mapa** — pins das empresas com "Como chegar".
 - **Turismo & Eventos** — seção na Home (aparece só quando há atração ou
   evento ativo na cidade), telas de detalhe de atração ("o que fazer") e de
-  evento (período, contato), e os chips "Atrações"/"Eventos" na busca: a
-  busca mesclada passa a listar empresas, atrações e eventos em seções.
+  evento (período, contato, **programação por dia**), e os chips
+  "Atrações"/"Eventos" na busca: a busca mesclada passa a listar empresas,
+  atrações e eventos em seções.
 - **Anuncie no Guia** — tela de contato comercial.
 
 ## O que o painel faz (admin)
@@ -66,7 +67,9 @@ agentes de código) estão em [`AGENTS.md`](./AGENTS.md).
 - CRUD de **empresas**, **categorias**, **banners**, **cupons**, **vagas**,
   **avisos** (mural), **cidades**, **utilidade pública** e do módulo
   **Turismo**: seções "Atrações" (pontos turísticos) e "Eventos" (rotina
-  temporária; a listagem exibe também eventos já encerrados).
+  temporária; a listagem exibe também eventos já encerrados). O formulário de
+  evento tem o editor de **programação** (itens por dia/horário, com palco,
+  atrativo relacionada e ingresso próprio).
 - Edição inline com busca e paginação server-side por seção.
 - **Usuários** em leitura (nome, e-mail, role, cidade).
 - Autenticação via Clerk com allowlist de admins (`ADMIN_EMAILS`).
@@ -83,6 +86,14 @@ agentes de código) estão em [`AGENTS.md`](./AGENTS.md).
   `endDate` (data pura `YYYY-MM-DD`); o painel usa `?includePast=true` na
   listagem para ver os eventos já encerrados. Os contatos (phone/whatsapp)
   de atração e evento entram na redação de convidado; o endereço é público.
+- **Programação interna do evento** (`schedule`) — itens embutidos no próprio
+  evento (data, horário, título, palco, descrição, atrativo relacionada e
+  ingresso próprio), sem coleção à parte. A data do item precisa estar
+  dentro de `[startDate, endDate]` do evento, `endTime` não pode ser anterior
+  ao `startTime` e ingresso pago exige preço — validações cruzadas no zod do
+  DTO (422). A referência a uma atração vai por id ou slug e é resolvida no
+  service; na leitura a atração vem populada e a redação de convidado apaga
+  também os contatos dela (e da empresa aninhada).
 - Redação de dados sensíveis para convidados (phone/whatsapp/address/code).
 - Seed idempotente de dados de exemplo (`npm run seed`, `--reset`).
 - Notificações push (Expo) disparadas ao publicar promoção e ao criar evento.
@@ -175,7 +186,7 @@ Base: `http://localhost:4000/api`
 | GET            | `/tourist-spots`                 | atrações turísticas (filtros: `city`, `category`, `active`, `q`) |
 | POST/GET/PUT/DELETE | `/tourist-spots/:id`        | manipula atração (admin)                               |
 | GET            | `/events`                        | eventos (filtros: `city`, `category`, `active`, `includePast`, `q`) |
-| POST/GET/PUT/DELETE | `/events/:id`               | manipula evento (admin)                                |
+| POST/GET/PUT/DELETE | `/events/:id`               | manipula evento (admin; `schedule` = programação interna por dia) |
 | GET            | `/users`                         | usuários do app (admin, paginado)                      |
 | GET            | `/me`                            | perfil do usuário autenticado                           |
 | PUT            | `/me`                            | atualiza perfil (nome, sobrenome, telefone, foto, prefs) |
@@ -332,6 +343,8 @@ cd admin   && npm run lint && npm run typecheck && npm run build
 - [x] Seed de dados de exemplo para desenvolvimento
 - [x] App para lojistas (atualizar horário/promoções em tempo real)
 - [x] Módulo Turismo (pontos turísticos e eventos: API, app, painel e seed)
+- [x] Programação interna dos eventos (`schedule`): exibida no app por dia,
+      editável no painel, validada na API e populada no seed
 - [ ] Multi-cidade (hoje hardcoded "Castelo do Piauí")
 - [ ] Integração WhatsApp Business — descartada por enquanto (hoje apenas deep link `wa.me`)
 
@@ -374,12 +387,12 @@ farmácia de plantão "Drogaria Popular"), 3 banners, 3 cupons, 4 vagas, 3
 avisos, 4 serviços de utilidade pública (polícia, hospital, coleta de lixo)
 e o turismo de Castelo do Piauí: 4 atrações (Parque Natural Municipal Pedra
 do Castelo, Cânion do Rio Poti, Cachoeiras do Rio Poti e Palácio dos
-Viscondes de Parnaíba) e 2 eventos (Cânyon Fest Poti — futuro — e Feira do
-Rio Poti). O seed é idempotente por upsert: a Feira do Rio Poti é criada
-com as datas do **primeiro** seed do ano (`$setOnInsert`) — reseedar no
-mesmo ano **não** renova as datas, então a feira "vence" e some da listagem.
-Para renovar: `npm run seed -- --reset` (recria com as datas de hoje) ou
-ajuste o documento do evento.
+Viscondes de Parnaíba) e 2 eventos (Cânyon Fest Poti — futuro, com a
+programação interna de 3 dias — e Feira do Rio Poti). O seed é idempotente
+por upsert: a Feira do Rio Poti é criada com as datas do **primeiro** seed do
+ano (`$setOnInsert`) — reseedar no mesmo ano **não** renova as datas, então a
+feira "vence" e some da listagem. Para renovar: `npm run seed -- --reset`
+(recria com as datas de hoje) ou ajuste o documento do evento.
 
 Depois do seed, a home do app mobile exibe os mesmos dados que a master
 (mocks), porque os slugs e os títulos são os mesmos usados em
