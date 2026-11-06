@@ -2,7 +2,7 @@
  * Dados mockados enquanto o backend não está no ar ou env EXPO_PUBLIC_API_URL
  * não está configurada. Tipados pelos tipos de domínio (src/types/domain.ts).
  */
-import type { Banner, Category, Company, Coupon, Job } from '@/types/domain';
+import type { Banner, Category, Company, Coupon, Job, TourEvent, TouristSpot } from '@/types/domain';
 
 /** Banner com apresentação extra usada só no app (emoji/cor do card). */
 export type DisplayBanner = Banner & { emoji?: string; color?: string };
@@ -238,3 +238,115 @@ export const MOCK_PHARMACY: Company =
 
 export const MOCK_FEATURED_COMPANY: Company =
   MOCK_COMPANIES.find((company) => company.isFeatured) ?? MOCK_COMPANIES[0];
+
+/** `Date` → `YYYY-MM-DD` (horário local). O mock usa Date só para FORMATAR a
+ * data; a comparação de dias é lexicográfica e mora em tourism-view. */
+function dataISO(unidade: Date): string {
+  const ano = String(unidade.getFullYear());
+  const mes = String(unidade.getMonth() + 1).padStart(2, '0');
+  return `${ano}-${mes}-${String(unidade.getDate()).padStart(2, '0')}`;
+}
+
+function somarDias(base: Date, dias: number): Date {
+  const resultado = new Date(base);
+  resultado.setDate(resultado.getDate() + dias);
+  return resultado;
+}
+
+/** Eventos do mock com datas dinâmicas: festival no futuro ("Em breve") e feira hoje ("Hoje"). */
+const hojeMock = new Date();
+const inicioFestival = somarDias(hojeMock, 30);
+const fimFestival = somarDias(inicioFestival, 2);
+
+/** Mesmos nomes/slugs do seed do backend (seed.ts), para a Home bater com o banco real. */
+export const MOCK_TOURIST_SPOTS: TouristSpot[] = [
+  {
+    _id: 'tur-1',
+    name: 'Parque Natural Municipal Pedra do Castelo',
+    slug: 'parque-natural-pedra-do-castelo',
+    description:
+      'Unidade de conservação municipal em torno da Pedra do Castelo, com trilhas e mirantes. Principal cartão-postal de Castelo do Piauí.',
+    category: 'park',
+    city: 'Castelo do Piauí',
+    openingHours: ['Todos os dias: 08h às 17h'],
+    entryFee: 'free',
+    featured: true,
+    active: true,
+    order: 1,
+  },
+  {
+    _id: 'tur-2',
+    name: 'Cânion do Rio Poti',
+    slug: 'canyon-do-rio-poti',
+    description:
+      'Paredões rochosos e águas do Rio Poti esculpindo um cânion no sertão, com banho de rio e paisagens para fotografia.',
+    category: 'nature',
+    city: 'Castelo do Piauí',
+    openingHours: ['Todos os dias: 08h às 17h'],
+    entryFee: 'free',
+    active: true,
+    order: 2,
+  },
+  {
+    _id: 'tur-3',
+    name: 'Cachoeiras do Rio Poti',
+    slug: 'cachoeiras-do-rio-poti',
+    description:
+      'Sequência de cachoeiras e poços do Rio Poti, procurada para banho e descanso nos fins de semana.',
+    category: 'waterfall',
+    city: 'Castelo do Piauí',
+    openingHours: ['Todos os dias: 08h às 17h'],
+    entryFee: 'free',
+    active: true,
+    order: 3,
+  },
+  {
+    _id: 'tur-4',
+    name: 'Palácio dos Viscondes de Parnaíba',
+    slug: 'palacio-dos-viscondes-de-parnaiba',
+    description:
+      'Espaço cultural e monumento no centro da cidade, abrigando exposições e memórias da história de Castelo do Piauí.',
+    category: 'monument',
+    city: 'Castelo do Piauí',
+    openingHours: ['Ter a Sáb: 09h às 17h', 'Dom: 09h às 13h'],
+    entryFee: 'free',
+    active: true,
+    order: 4,
+  },
+];
+
+/** Slugs fixos coerentes (sem ano); datas relativas a hoje para o badge fizer sentido. */
+export const MOCK_EVENTS: TourEvent[] = [
+  {
+    _id: 'eve-1',
+    name: 'Cânyon Fest Poti',
+    slug: 'canyon-fest-poti',
+    description:
+      'Festival de três dias às margens do cânion, com exposição de animais, rodeio e corrida, além de shows à noite.',
+    category: 'festival',
+    startDate: dataISO(inicioFestival),
+    endDate: dataISO(fimFestival),
+    startTime: '10:00',
+    endTime: '23:00',
+    location: 'Cânion do Rio Poti',
+    city: 'Castelo do Piauí',
+    organizer: 'Organização Cânyon Fest Poti',
+    ticket: 'free',
+    featured: true,
+    active: true,
+  },
+  {
+    _id: 'eve-2',
+    name: 'Feira do Rio Poti',
+    slug: 'feira-do-rio-poti',
+    description:
+      'Feira de produtores e artesãos da região do Rio Poti, com comida típica e apresentações culturais na praça.',
+    category: 'fair',
+    startDate: dataISO(hojeMock),
+    endDate: dataISO(hojeMock),
+    location: 'Praça do Centro',
+    city: 'Castelo do Piauí',
+    ticket: 'free',
+    active: true,
+  },
+];

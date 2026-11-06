@@ -8,10 +8,12 @@ import * as cityController from '../controllers/city.controller.js';
 import * as categoryController from '../controllers/category.controller.js';
 import * as companyController from '../controllers/company.controller.js';
 import * as couponController from '../controllers/coupon.controller.js';
+import * as eventController from '../controllers/event.controller.js';
 import { health } from '../controllers/health.controller.js';
 import * as jobController from '../controllers/job.controller.js';
 import * as noticeController from '../controllers/notice.controller.js';
 import * as publicUtilityController from '../controllers/public-utility.controller.js';
+import * as touristSpotController from '../controllers/tourist-spot.controller.js';
 import * as reviewController from '../controllers/review.controller.js';
 import {
   createAuthDeps,
@@ -30,7 +32,13 @@ import {
   createNoticeSchema,
   createPublicUtilitySchema,
   createReviewSchema,
+  createTourEventSchema,
+  createTouristSpotSchema,
+  broadcastSchema,
+  pushTokenSchema,
   updateUserSchema,
+  updateTourEventSchema,
+  updateTouristSpotSchema,
   validateBody,
 } from '../types/dto.js';
 import { listUsers, me, updateMe } from '../controllers/user.controller.js';
@@ -61,8 +69,8 @@ if (authDeps) {
   // ligado — em modo legado o app não a consome.
   routes.get('/me', auth.requireAuth, me);
   routes.put('/me', auth.requireAuth, validateBody(updateUserSchema.partial()), updateMe);
-  routes.post('/push-tokens', registerPushToken);
-  routes.post('/notifications/broadcast', broadcastPush);
+  routes.post('/push-tokens', validateBody(pushTokenSchema), registerPushToken);
+  routes.post('/notifications/broadcast', validateBody(broadcastSchema), broadcastPush);
 }
 
 // Middleware de autorização para mutações: quando o Clerk está configurado,
@@ -174,6 +182,25 @@ publicUtilities.put(
 );
 publicUtilities.delete('/:id', publicUtilityController.remove);
 
+// Pontos turísticos (atrações permanentes do módulo de turismo): leitura
+// aberta, escrita restrita ao admin — mesmo modelo das utilidades públicas.
+const touristSpots = Router();
+touristSpots.post('/', validateBody(createTouristSpotSchema), touristSpotController.create);
+touristSpots.get('/', touristSpotController.list);
+touristSpots.get('/:id', touristSpotController.getById);
+touristSpots.put('/:id', validateBody(updateTouristSpotSchema), touristSpotController.update);
+touristSpots.delete('/:id', touristSpotController.remove);
+
+// Eventos turísticos (agenda temporária do módulo de turismo): leitura aberta,
+// escrita restrita ao admin — mesmo modelo dos pontos turísticos. O push de
+// "novo evento" mora no service e acontece apenas na criação.
+const events = Router();
+events.post('/', validateBody(createTourEventSchema), eventController.create);
+events.get('/', eventController.list);
+events.get('/:id', eventController.getById);
+events.put('/:id', validateBody(updateTourEventSchema), eventController.update);
+events.delete('/:id', eventController.remove);
+
 routes.use('/categories', categories);
 routes.use('/cities', cities);
 routes.use('/companies', companies);
@@ -182,6 +209,8 @@ routes.use('/coupons', coupons);
 routes.use('/jobs', jobs);
 routes.use('/notices', notices);
 routes.use('/public-utilities', publicUtilities);
+routes.use('/tourist-spots', touristSpots);
+routes.use('/events', events);
 routes.use('/autonomous-professionals', autonomousProfessionals);
 
 // -----------------------------------------------------------------------------

@@ -55,12 +55,18 @@ agentes de código) estão em [`AGENTS.md`](./AGENTS.md).
 - **Autenticação** — Clerk (Google/e-mail) + modo convidado persistido
   (AsyncStorage). Convidados não veem contatos comerciais nem códigos de cupom.
 - **Mapa** — pins das empresas com "Como chegar".
+- **Turismo & Eventos** — seção na Home (aparece só quando há atração ou
+  evento ativo na cidade), telas de detalhe de atração ("o que fazer") e de
+  evento (período, contato), e os chips "Atrações"/"Eventos" na busca: a
+  busca mesclada passa a listar empresas, atrações e eventos em seções.
 - **Anuncie no Guia** — tela de contato comercial.
 
 ## O que o painel faz (admin)
 
 - CRUD de **empresas**, **categorias**, **banners**, **cupons**, **vagas**,
-  **avisos** (mural), **cidades** e **utilidade pública**.
+  **avisos** (mural), **cidades**, **utilidade pública** e do módulo
+  **Turismo**: seções "Atrações" (pontos turísticos) e "Eventos" (rotina
+  temporária; a listagem exibe também eventos já encerrados).
 - Edição inline com busca e paginação server-side por seção.
 - **Usuários** em leitura (nome, e-mail, role, cidade).
 - Autenticação via Clerk com allowlist de admins (`ADMIN_EMAILS`).
@@ -72,9 +78,14 @@ agentes de código) estão em [`AGENTS.md`](./AGENTS.md).
   zod na borda.
 - Autenticação/autorização por recurso: dono ou admin para empresas e
   profissionais autônomos; admin para o restante.
+- **Turismo** — entidades `TouristSpot` (atração permanente) e `TourEvent`
+  (festival, feira, show...). O evento fica visível do cadastro até o fim de
+  `endDate` (data pura `YYYY-MM-DD`); o painel usa `?includePast=true` na
+  listagem para ver os eventos já encerrados. Os contatos (phone/whatsapp)
+  de atração e evento entram na redação de convidado; o endereço é público.
 - Redação de dados sensíveis para convidados (phone/whatsapp/address/code).
 - Seed idempotente de dados de exemplo (`npm run seed`, `--reset`).
-- Notificações push (Expo) disparadas ao publicar promoção.
+- Notificações push (Expo) disparadas ao publicar promoção e ao criar evento.
 
 ---
 
@@ -123,6 +134,12 @@ tela mostra estado vazio/erro.
 | `admin/`   | `VITE_CLERK_PUBLISHABLE_KEY` | —                              | chave pública do Clerk                                    |
 
 > `.env` nunca é versionado — só `.env.example`. Nenhuma credencial no código.
+>
+> ⚠️ **Modo legado:** sem `CLERK_SECRET_KEY` o backend roda **sem
+> verificação de identidade e de role** — `assertAdmin` libera qualquer
+> requisição (`ehAdmin` devolve true sem sessão). É modo de
+> desenvolvimento apenas: nenhum ambiente exposto publicamente deve rodar
+> assim.
 
 ---
 
@@ -137,7 +154,7 @@ Base: `http://localhost:4000/api`
 | POST/GET/PUT/DELETE | `/categories/:id`           | manipula categoria                                     |
 | GET            | `/cities`                        | lista de cidades                                       |
 | POST/DELETE    | `/cities/:id`                    | cria/remove cidade                                     |
-| GET            | `/companies`                     | lista paginada de empresas                             |
+| GET            | `/companies`                     | lista paginada de empresas (filtros: `category`, `q`, `featured`, `city`, `owner` — este só para o próprio usuário) |
 | POST           | `/companies`                     | cria empresa                                           |
 | GET            | `/companies/:id`                 | empresa por id                                         |
 | PUT/DELETE     | `/companies/:id`                 | atualiza/remove empresa (dono ou admin)                |
@@ -151,20 +168,59 @@ Base: `http://localhost:4000/api`
 | POST/GET/PUT/DELETE | `/jobs/:id`                 | manipula vaga                                          |
 | GET            | `/autonomous-professionals`      | profissionais autônomos                                |
 | POST/GET/PUT/DELETE | `/autonomous-professionals/:id` | manipula profissional (dono ou admin)               |
-| GET            | `/notices`                       | mural de avisos (`?active=true` filtra vencidos)       |
+| GET            | `/notices`                       | mural de avisos (`active`: `true` = ativos e vigentes; `false` = rascunhos, admin; `all` = tudo, admin; default = ativos e vigentes) |
 | POST/GET/PUT/DELETE | `/notices/:id`              | manipula aviso (admin)                                 |
 | GET            | `/public-utilities`              | telefones úteis (`?active=true`, `?category=`, `?city=`) |
 | POST/GET/PUT/DELETE | `/public-utilities/:id`     | manipula utilidade pública (admin)                     |
+| GET            | `/tourist-spots`                 | atrações turísticas (filtros: `city`, `category`, `active`, `q`) |
+| POST/GET/PUT/DELETE | `/tourist-spots/:id`        | manipula atração (admin)                               |
+| GET            | `/events`                        | eventos (filtros: `city`, `category`, `active`, `includePast`, `q`) |
+| POST/GET/PUT/DELETE | `/events/:id`               | manipula evento (admin)                                |
 | GET            | `/users`                         | usuários do app (admin, paginado)                      |
 | GET            | `/me`                            | perfil do usuário autenticado                           |
 | PUT            | `/me`                            | atualiza perfil (nome, sobrenome, telefone, foto, prefs) |
-| POST           | `/push-tokens`                   | registra token de push                                 |
-| POST           | `/notifications/broadcast`       | dispara notificação push (admin/segredo)               |
+| POST           | `/push-tokens`                   | registra token de push (body validado por zod; token de outra conta devolve **409**) |
+| POST           | `/notifications/broadcast`       | dispara notificação push (admin/segredo, body validado por zod) |
 | POST           | `/auth/guest`                    | handshake de convidado                                 |
 
-**Query de listagem** — `page` (≥1), `pageSize` (1–100, padrão 20). Em
-`/companies` também: `category` (slug ou vários separados por vírgula), `q`
-(busca em nome/descrição/endereço/serviços) e `featured` (`true`/`false`).
+### Parâmetros de entrada
+
+Todo parâmetro de entrada (query string e body) é validado no servidor.
+
+- **Query string** — todo parâmetro de query é sanitizado no servidor
+  (`backend/src/utils/query.ts`). Parâmetro **ausente** = sem filtro.
+  **Paginação é normalizada, não rejeitada**: `page`/`pageSize` ausentes,
+  vazios ou não numéricos voltam ao default (página 1, 20 itens), e fora
+  da faixa são **clampados** — `page=999999999` responde 200 na página
+  10 000 e `pageSize=1000` responde 200 com 100 itens; nunca disparam
+  erro. Os demais parâmetros sim são rejeitados: **malformado**
+  (repetido/virando array, objeto, tipo errado, texto acima do limite ou
+  fora do enum) → **400** com o nome do parâmetro na mensagem. Limites:
+  `q` ≤ 120 caracteres e listas de slug com ≤ 20 itens × 64 caracteres.
+  A busca textual (`q`) é sempre escapada (`escapeRegex`) — o usuário
+  nunca escreve a query do MongoDB.
+- **Body** — validado por zod na borda (`backend/src/types/dto.ts`), com
+  allowlist de campos (chaves desconhecidas são descartadas) → **422**
+  com o campo inválido.
+- **Filtros com permissão** — `owner` em `/companies` só vale para o
+  clerk da própria sessão (**403** caso contrário); `active=false` e
+  `active=all` em `/notices` exigem admin (**401**/**403**).
+- **Push tokens** — `POST /push-tokens` responde **409** quando o token
+  já pertence a outra conta (impede o sequestro de notificações de outro
+  usuário).
+
+Filtros por rota de listagem (`page` ≥ 1 e `pageSize` 1–100 em todas):
+
+- `/companies`: `category` (id ou slug, vários separados por vírgula),
+  `q` (busca em nome/descrição/endereço/serviços), `featured`
+  (`true`/`false`), `city` e `owner` (só o próprio usuário autenticado).
+- `/notices`: `active` com os valores `true` (ativos e vigentes),
+  `false` (rascunhos, admin) ou `all` (tudo, admin); o **default** é
+  mostrar apenas os ativos e vigentes.
+- `/tourist-spots` e `/events`: `q` (busca textual em nome, descrição
+  e — nos eventos — local) além de `city`, `category` e `active`; em
+  `/events`, `includePast=true` inclui os eventos já encerrados (uso do
+  painel).
 
 **Formato de resposta**
 
@@ -180,12 +236,12 @@ Base: `http://localhost:4000/api`
 
 | Código | Quando                                                                      |
 | ------ | --------------------------------------------------------------------------- |
-| `400`  | dados inválidos (Mongoose ValidationError ou ZodError não tratado na borda) |
-| `401`  | não autenticado (quando Clerk configurado)                                  |
-| `403`  | sem permissão (não-admin ou não-dono)                                       |
-| `404`  | recurso inexistente ou id malformado                                        |
-| `409`  | chave duplicada (slug já existe)                                            |
-| `422`  | payload inválido (detalhes em `details`)                                    |
+| `400`  | parâmetro de query inválido (o nome aparece na mensagem) ou dados inválidos (Mongoose ValidationError) |
+| `401`  | não autenticado (quando Clerk configurado, ou filtro restrito a admin sem sessão) |
+| `403`  | sem permissão (não-admin, não-dono ou filtro restrito usado por outra conta) |
+| `404`  | recurso inexistente, id malformado ou rascunho oculto para quem não é admin |
+| `409`  | chave duplicada (slug já existe) ou token de push já vinculado a outra conta |
+| `422`  | payload de body inválido (detalhes em `details`)                            |
 | `500`  | erro inesperado (mensagem detalhada só em dev)                              |
 
 Erros sempre em JSON: `{ "error": "mensagem" }` (+ `message` em dev).
@@ -233,9 +289,10 @@ route → controller (HTTP) → service (regra de negócio) → model (Mongoose)
 
 `shared/domain.ts` é a fonte da verdade (`Category`, `Company`, `Banner`,
 `Coupon`, `Job`, `User`, `Notice`, `PublicUtility`, `City`,
-`AutonomousProfessional`, `Paginated<T>`, …). O backend importa esse arquivo
-diretamente; mobile e admin mantêm uma cópia local idêntica em
-`src/types/domain.ts`. **Ao alterar os tipos, reflita nas cópias.**
+`AutonomousProfessional`, `TouristSpot`, `TourEvent`, `Paginated<T>`, …). O
+backend importa esse arquivo diretamente; mobile e admin mantêm uma cópia
+local idêntica em `src/types/domain.ts`. **Ao alterar os tipos, reflita nas
+cópias.**
 
 ---
 
@@ -252,13 +309,14 @@ cd admin   && npm run lint && npm run typecheck && npm run build
 | App     | Lint          | Typecheck      | Testes             | Build         |
 | ------- | ------------- | -------------- | ------------------ | ------------- |
 | backend | ESLint (flat) | `tsc --noEmit` | vitest + supertest  | `tsc`         |
-| mobile  | `expo lint`   | `tsc --noEmit` | vitest (77 testes) | `expo export` |
+| mobile  | `expo lint`   | `tsc --noEmit` | vitest (169 testes) | `expo export` |
 | admin   | ESLint (flat) | `tsc --noEmit` | —                  | `vite build`  |
 
 - **TDD** no backend: todo endpoint novo nasce com o teste do supertest
   falhando, depois o código, depois o refactor.
-- Cobertura de teste hoje: **94 testes no backend** (18 arquivos) e
-  **95 testes no mobile** (12 arquivos).
+- Cobertura de teste hoje: **417 testes no backend** (29 arquivos, incluindo
+  a varredura de segurança de 107 testes em `src/routes/security.test.ts`) e
+  **169 testes no mobile** (17 arquivos).
 - Formatação: `.prettierrc` na raiz (printWidth 100, aspas simples, trailing
   comma, ponto e vírgula).
 
@@ -273,9 +331,9 @@ cd admin   && npm run lint && npm run typecheck && npm run build
 - [x] CI local com lint + typecheck + testes nos três apps
 - [x] Seed de dados de exemplo para desenvolvimento
 - [x] App para lojistas (atualizar horário/promoções em tempo real)
+- [x] Módulo Turismo (pontos turísticos e eventos: API, app, painel e seed)
 - [ ] Multi-cidade (hoje hardcoded "Castelo do Piauí")
-- [ ] Módulo Turismo (pontos turísticos, eventos, hospedagem)
-- [ ] Integração WhatsApp Business (hoje apenas deep link `wa.me`)
+- [ ] Integração WhatsApp Business — descartada por enquanto (hoje apenas deep link `wa.me`)
 
 ---
 
@@ -296,7 +354,7 @@ cd admin   && npm run lint && npm run typecheck && npm run build
 
 O banco de dados fica vazio de primeira. Para popular todas as coleções
 (`categories`, `companies`, `banners`, `coupons`, `jobs`, `notices`,
-`public_utilities`, `cities`), rode:
+`public_utilities`, `cities`, `touristspots`, `events`), rode:
 
 ```bash
 cd backend
@@ -313,7 +371,15 @@ npm run seed -- --reset
 
 **O que ele insere:** 6 categorias, 5 empresas em destaque (inclusive a
 farmácia de plantão "Drogaria Popular"), 3 banners, 3 cupons, 4 vagas, 3
-avisos e 4 serviços de utilidade pública (polícia, hospital, coleta de lixo).
+avisos, 4 serviços de utilidade pública (polícia, hospital, coleta de lixo)
+e o turismo de Castelo do Piauí: 4 atrações (Parque Natural Municipal Pedra
+do Castelo, Cânion do Rio Poti, Cachoeiras do Rio Poti e Palácio dos
+Viscondes de Parnaíba) e 2 eventos (Cânyon Fest Poti — futuro — e Feira do
+Rio Poti). O seed é idempotente por upsert: a Feira do Rio Poti é criada
+com as datas do **primeiro** seed do ano (`$setOnInsert`) — reseedar no
+mesmo ano **não** renova as datas, então a feira "vence" e some da listagem.
+Para renovar: `npm run seed -- --reset` (recria com as datas de hoje) ou
+ajuste o documento do evento.
 
 Depois do seed, a home do app mobile exibe os mesmos dados que a master
 (mocks), porque os slugs e os títulos são os mesmos usados em

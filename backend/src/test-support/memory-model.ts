@@ -5,7 +5,11 @@
  * subconjunto de operações usado pelos services (`find`, `findOne`,
  * `findById`, `findByIdAndUpdate`, `findByIdAndDelete`, `findOneAndUpdate`,
  * `updateOne`, `create`, `countDocuments`, `exists`) com os operadores de
- * filtro `$in`, `$ne`, `$exists`, `$or` e `$and`.
+ * filtro `$in`, `$ne`, `$gte`, `$exists`, `$or` e `$and`.
+ *
+ * Com `criarModeloEmMemoria({ unicos: [campo] })`, campos com índice único
+ * disparam erro de chave duplicada (code 11000, mesmo formato do Mongo) na
+ * inserção — inclusive no ramo de upsert do `findOneAndUpdate`.
  *
  * Semântica igual à do Mongoose: `find` resolve uma lista, `findOne` e
  * `findById` resolvem um documento (ou `null`) e `updateOne` resolve o
@@ -31,6 +35,12 @@ export interface MemoryQuery extends PromiseLike<unknown> {
   populate(campo: string): MemoryQuery;
   lean(): MemoryQuery;
   exec(): Promise<unknown>;
+}
+
+/** Opções de modelagem: `unicos` simula índices `unique` do Mongoose. */
+export interface MemoryModelOptions {
+  /** Campos com índice único: inserir valor repetido dispara erro 11000. */
+  unicos?: string[];
 }
 
 export interface MemoryModel {
@@ -108,13 +118,35 @@ class MemoryQueryImpl implements MemoryQuery {
 }
 
 /** Cria um modelo Mongoose falso, com a mesma interface usada pelos services. */
-export function criarModeloEmMemoria(): MemoryModel {
+export function criarModeloEmMemoria(opcoesDoModelo: MemoryModelOptions = {}): MemoryModel {
   const documents: MemoryDocument[] = [];
+  const unicidades = opcoesDoModelo.unicos ?? [];
   let sequencia = 0;
 
   function novoId(): string {
     sequencia += 1;
     return sequencia.toString().padStart(24, '0');
+  }
+
+  /**
+   * Simula a falha de chave duplicada do MongoDB: mesma forma consultada
+   * pelos services (`(erro as { code?: number }).code === 11000`).
+   */
+  function erroChaveDuplicada(campo: string): Error {
+    const erro = new Error(`E11000: valor duplicado em '${campo}'`);
+    Object.assign(erro, { name: 'MongoServerError', code: 11000 });
+    return erro;
+  }
+
+  /** Garante que um valor reservado a índice único não entra duplicado. */
+  function inserirComUnicidade(memoria: MemoryDocument): void {
+    for (const campo of unicidades) {
+      const valor = memoria[campo];
+      if (valor === undefined) continue;
+      const duplicado = documents.some((documento) => campo in documento && valoresIguais(documento[campo], valor));
+      if (duplicado) throw erroChaveDuplicada(campo);
+    }
+    documents.push(memoria);
   }
 
   function criarConsulta(
@@ -185,7 +217,10 @@ export function criarModeloEmMemoria(): MemoryModel {
         if (!alvo) {
           if (!opcoes?.upsert) return null;
           const criado: MemoryDocument = { _id: novoId(), ...(atualizacao.$set ?? {}) };
-          documents.push(criado);
+          // Upsert com violação do índice único dispara como no Mongo (11000):
+          // é por isso que um filtro de upsert precisa carregar a condição
+          // de posse — sem ela, o insert colide e o erro vira o resultado.
+          inserirComUnicidade(criado);
           return projetar(criado, estado.projecao);
         }
         aplicarAtualizacao(alvo, atualizacao);
@@ -206,13 +241,13 @@ export function criarModeloEmMemoria(): MemoryModel {
       if (Array.isArray(documento)) {
         const criados = documento.map((item) => {
           const criado = { _id: novoId(), ...item };
-          documents.push(criado);
+          inserirComUnicidade(criado);
           return criado;
         });
         return criados;
       }
       const criado = { _id: novoId(), ...documento };
-      documents.push(criado);
+      inserirComUnicidade(criado);
       return criado;
     },
 
@@ -344,6 +379,14 @@ function casarValor(valor: unknown, condicao: unknown): boolean {
     }
     if ('$ne' in operadores) {
       return !valoresIguais(valor, operadores.$ne);
+    }
+    if ('$gte' in operadores) {
+      const limite = operadores.$gte;
+      // A regra de eventos compara strings YYYY-MM-DD: a ordem lexicográfica
+      // é correta no formato fixo (nunca misture data com datetime ISO).
+      if (typeof valor === 'string' && typeof limite === 'string') return valor >= limite;
+      if (typeof valor === 'number' && typeof limite === 'number') return valor >= limite;
+      return false;
     }
     if ('$exists' in operadores) {
       return (valor !== undefined) === Boolean(operadores.$exists);

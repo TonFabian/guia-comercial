@@ -3,12 +3,14 @@ import { SignInButton, useAuth, useUser } from '@clerk/clerk-react';
 
 import { Sidebar } from './components/sidebar';
 import type { Section } from './components/sidebar';
+import { AtracoesSection } from './components/sections/atracoes';
 import { AvisosSection } from './components/sections/avisos';
 import { BannersSection } from './components/sections/banners';
 import { CategoriasSection } from './components/sections/categorias';
 import { CidadesSection } from './components/sections/cidades';
 import { CuponsSection } from './components/sections/cupons';
 import { EmpresasSection } from './components/sections/empresas';
+import { EventosSection } from './components/sections/eventos';
 import { UsuariosSection } from './components/sections/usuarios';
 import { UtilidadePublicaSection } from './components/sections/utilidade-publica';
 import { VagasSection } from './components/sections/vagas';
@@ -156,6 +158,24 @@ export default function App() {
           <UtilidadePublicaSection
             cities={catalog.cities}
             citiesError={catalogErrors.cities ?? null}
+          />
+        )}
+        {section === 'Atrações' && (
+          <AtracoesSection
+            cities={catalog.cities}
+            citiesError={catalogErrors.cities ?? null}
+            companies={catalog.companyOptions}
+            companiesTotal={catalog.companyOptionsTotal}
+            companiesError={catalogErrors.companyOptions ?? null}
+          />
+        )}
+        {section === 'Eventos' && (
+          <EventosSection
+            cities={catalog.cities}
+            citiesError={catalogErrors.cities ?? null}
+            companies={catalog.companyOptions}
+            companiesTotal={catalog.companyOptionsTotal}
+            companiesError={catalogErrors.companyOptions ?? null}
           />
         )}
         {section === 'Usuários' && <UsuariosSection />}

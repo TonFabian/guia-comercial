@@ -173,6 +173,34 @@ describe('GET /api/public-utilities', () => {
     expect(response.status).toBe(404);
     expect(response.body.error).toBe('id inválido');
   });
+
+  it('parâmetro repetido (?category=health&category=civil) → 400 em vez de filtrar menos', async () => {
+    const response = await request(app).get('/api/public-utilities?category=health&category=civil');
+
+    expect(response.status).toBe(400);
+    expect(response.body.error).toContain("'category'");
+  });
+
+  it('categoria fora do enum → 400 (antes era lista vazia)', async () => {
+    const response = await request(app).get('/api/public-utilities?category=police');
+
+    expect(response.status).toBe(400);
+    expect(response.body.error).toContain("'category'");
+  });
+
+  it('active fora de true/false → 400', async () => {
+    const response = await request(app).get('/api/public-utilities?active=0');
+
+    expect(response.status).toBe(400);
+    expect(response.body.error).toContain("'active'");
+  });
+
+  it('city repetido → 400', async () => {
+    const response = await request(app).get('/api/public-utilities?city=a&city=b');
+
+    expect(response.status).toBe(400);
+    expect(response.body.error).toContain("'city'");
+  });
 });
 
 describe('POST /api/public-utilities', () => {

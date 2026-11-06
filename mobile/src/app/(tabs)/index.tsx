@@ -26,6 +26,7 @@ import { OtherCompanies } from '@/features/home/other-companies';
 import { PublicUtilities } from '@/features/home/public-utilities';
 import { SearchBar } from '@/features/home/search-bar';
 import { SectionHeader } from '@/features/home/section-header';
+import { TourismSection } from '@/features/home/tourism-section';
 import { useHomeData } from '@/features/home/use-home-data';
 import { useThemeColors } from '@/hooks/use-theme-colors';
 import { getAutonomousProfessionals, getCities, getCompanies, getNotices, getPublicUtilities } from '@/services/api';
@@ -220,6 +221,7 @@ export default function HomeScreen() {
                 loading={otherCompaniesLoading}
                 error={otherCompaniesError}
               />
+              <TourismSection city={selectedCity} />
               {banners.length > 0 ? (
                 <>
                   <SectionHeader title="Promoções da Semana" />

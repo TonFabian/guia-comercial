@@ -203,6 +203,84 @@ export interface Paginated<T> {
   pageSize: number;
 }
 
+/** Categorias de ponto turístico. */
+export type TouristSpotCategory =
+  | 'nature' | 'park' | 'waterfall' | 'viewpoint'
+  | 'museum' | 'church' | 'monument' | 'square'
+  | 'adventure' | 'other';
+
+/** Categorias de evento turístico. */
+export type TourEventCategory =
+  | 'festival' | 'show' | 'fair' | 'exhibition'
+  | 'sport' | 'religious' | 'cultural' | 'workshop' | 'other';
+
+/** Ponto turístico (atrativo permanente: praça, cachoeira, museu...). */
+export interface TouristSpot {
+  _id: string;
+  name: string;
+  slug: string;
+  description: string;
+  category: TouristSpotCategory;
+  photos?: string[];
+  address?: string | null;
+  city?: string | City;
+  latitude?: number;
+  longitude?: number;
+  openingHours?: string[];
+  entryFee?: 'free' | 'paid' | 'donation';
+  entryPrice?: string; // texto livre ("R$ 10,00"); obrigatório se entryFee === 'paid'
+  phone?: string | null;
+  whatsapp?: string | null;
+  website?: string;
+  instagram?: string;
+  featured?: boolean;
+  active: boolean;
+  order?: number;
+  /** Empresa relacionada (ex.: parque municipal), por id ou slug. */
+  relatedCompany?: string | Company;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+/** Evento turístico (temporário: festival, feira, show...) — NUNCA `Event` (shadowing do DOM). */
+export interface TourEvent {
+  _id: string;
+  name: string;
+  slug: string;
+  description: string;
+  category: TourEventCategory;
+  /** Data de início, formato YYYY-MM-DD. */
+  startDate: string;
+  /** Data de fim (>= startDate), formato YYYY-MM-DD. */
+  endDate: string;
+  /** Horário de início, formato HH:mm. */
+  startTime?: string;
+  /** Horário de fim, formato HH:mm. */
+  endTime?: string;
+  /** Nome do local do evento. */
+  location?: string;
+  address?: string | null;
+  city?: string | City;
+  latitude?: number;
+  longitude?: number;
+  /** Nome do organizador. */
+  organizer?: string;
+  /** Empresa organizadora, por id ou slug. */
+  organizerCompany?: string | Company;
+  ticket?: 'free' | 'paid';
+  ticketPrice?: string;
+  ticketUrl?: string;
+  photos?: string[];
+  phone?: string | null;
+  whatsapp?: string | null;
+  website?: string;
+  instagram?: string;
+  active: boolean;
+  featured?: boolean;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
 export type CouponCompany = Coupon['company'];
 export type JobCompany = Job['company'];
 export type CompanyCategory = Company['category'];

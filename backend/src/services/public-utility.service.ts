@@ -6,6 +6,7 @@ import { assertAdmin } from './user.service.js';
 import type { PublicUtility, PublicUtilityCategory } from '../../../shared/domain.js';
 import type { CreatePublicUtilityDto, UpdatePublicUtilityDto } from '../types/dto.js';
 import type { Pagination } from '../utils/http.js';
+import { lerBooleano, lerEnum, lerTexto } from '../utils/query.js';
 
 /** Critério de busca compatível com o filtro aceito pelo model. */
 type PublicUtilityQuery = {
@@ -38,21 +39,22 @@ export async function listPublicUtilities(
 ): Promise<{ items: PublicUtility[]; total: number }> {
   const query: PublicUtilityQuery = {};
 
-  if (typeof filters.category === 'string' && filters.category.trim().length > 0) {
-    const categoria = filters.category.trim();
-    // Categoria fora da lista não traz serviço nenhum, como no Mongo, que só
-    // casa valores do enum.
-    query.category = ehCategoria(categoria) ? categoria : { $in: [] };
+  const categoriaEnumerada = lerEnum(filters.category, CATEGORIAS, 'category');
+  if (categoriaEnumerada !== undefined) {
+    // Segunda barreira (defesa em profundidade): o valor que chega aqui já foi
+    // validado pelo `lerEnum`; se um dia o filtro for montado por outro
+    // caminho, categoria fora do enum não traz serviço nenhum.
+    query.category = ehCategoria(categoriaEnumerada) ? categoriaEnumerada : { $in: [] };
   }
 
-  if (filters.active === 'true' || filters.active === true) {
-    query.active = true;
-  } else if (filters.active === 'false' || filters.active === false) {
-    query.active = false;
+  const ativo = lerBooleano(filters.active, 'active');
+  if (ativo !== undefined) {
+    query.active = ativo;
   }
 
-  if (typeof filters.city === 'string' && filters.city.trim().length > 0) {
-    const found = await CityModel.findOne({ slug: normalizarSlug(filters.city) }).lean();
+  const cidadeInformada = lerTexto(filters.city, { nome: 'city' });
+  if (cidadeInformada !== undefined) {
+    const found = await CityModel.findOne({ slug: normalizarSlug(cidadeInformada) }).lean();
     // Slug sem cidade correspondente não derruba a consulta: filtra por um id
     // inexistente, o que devolve uma lista vazia.
     query.city = found ? String(found._id) : new Types.ObjectId().toString();

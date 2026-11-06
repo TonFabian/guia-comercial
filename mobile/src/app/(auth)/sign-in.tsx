@@ -35,8 +35,9 @@ export default function SignInScreen() {
 
   // Guarda de entrada: se já existe sessão ativa (ex.: app reiniciado com
   // sessão persistida), não exibe a tela de login — redireciona para as abas.
+  // Convidado ainda pode acessar o login para autenticar.
   useEffect(() => {
-    if (state === 'signedIn' || state === 'guest') {
+    if (state === 'signedIn') {
       router.replace('/(tabs)');
     }
   }, [state, router]);

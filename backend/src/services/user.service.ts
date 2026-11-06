@@ -10,32 +10,53 @@ export function findUserByClerkId(clerkId: string): Promise<User | null> {
 }
 
 /**
+ * true quando o clerk tem a role admin.
+ *
+ * Modo legado (sem CLERK_SECRET_KEY): SEMPRE true — não há sessão com a qual
+ * checar e toda consulta devolve "sim". Neste modo nenhum controle de acesso
+ * é aplicado; garante o funcionamento local sem Clerk, mas nenhum ambiente
+ * exposto publicamente deve rodar assim. Nunca lança: quem precisa bloquear
+ * (401/403) usa `assertAdmin`; quem só precisa de uma decisão (ex.: exibir
+ * rascunho por id) usa este helper.
+ */
+export async function ehAdmin(clerkId?: string): Promise<boolean> {
+  if (!process.env.CLERK_SECRET_KEY) {
+    return true;
+  }
+  if (!clerkId) {
+    return false;
+  }
+  const user = await findUserByClerkId(clerkId);
+  return user?.role === 'admin';
+}
+
+/**
  * Garante que a sessão é de um administrador.
  *
  * 401 sem identidade; 403 quando o espelho existe mas não é admin.
  *
- * Modo legado (sem CLERK_SECRET_KEY): não há sessão, portanto mutações
- * administrativas são bloqueadas (fail-closed).
+ * Modo legado (sem CLERK_SECRET_KEY): TODA verificação de admin é liberada
+ * (`ehAdmin` devolve true mesmo sem sessão) — no modo legado não há
+ * verificação de identidade nem de role, as "mutações administrativas" são
+ * tratadas como legítimas. É o modo de desenvolvimento; nenhum ambiente
+ * exposto publicamente deve rodar sem a CLERK_SECRET_KEY.
  */
 export async function assertAdmin(
   clerkId: string | undefined,
   recurso: string,
 ): Promise<void> {
-  // Em modo legado (sem Clerk), a autorização fica desabilitada — consistente
-  // com assertOwner em company.service. Em modo autenticado, exige sessão e
-  // role `admin`.
-  if (!process.env.CLERK_SECRET_KEY) {
+  const admin = await ehAdmin(clerkId);
+  if (admin) {
     return;
   }
 
+  // Em modo autenticado a ausência de clerkId só acontece sem sessão; no
+  // modo legado `ehAdmin` é true e o fluxo já retornou acima.
   if (!clerkId) {
     throw Object.assign(new Error('Não autenticado'), { statusCode: 401 });
   }
 
-  const user = await findUserByClerkId(clerkId);
-  if (user?.role !== 'admin') {
-    throw Object.assign(new Error(`sem permissão para ${recurso}`), { statusCode: 403 });
-  }
+  throw Object.assign(new Error(`sem permissão para ${recurso}`), { statusCode: 403 });
 }
 
 /** Item da listagem de usuários do painel admin (sem dados sensíveis). */

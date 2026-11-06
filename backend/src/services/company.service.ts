@@ -9,6 +9,8 @@ import type { Company } from '../../../shared/domain.js';
 import type { CreateCompanyDto, UpdateCompanyDto } from '../types/dto.js';
 import type { Pagination } from '../utils/http.js';
 import { geocodeAddress } from '../utils/geocode.js';
+import { escapeRegex } from '../utils/regex.js';
+import { lerBooleano, lerListaDeSlugs, lerTexto } from '../utils/query.js';
 
 /** Critério de busca compatível com FilterQuery<Company>. */
 type CompanyQuery = {
@@ -36,17 +38,14 @@ export interface CompanyListFilters {
 export async function listCompanies(
   filters: CompanyListFilters,
   pagination: Pagination,
+  clerkId?: string,
 ): Promise<{ items: Company[]; total: number }> {
   const query: CompanyQuery = {};
 
-  if (typeof filters.category === 'string' && filters.category.length > 0) {
+  const slugs = lerListaDeSlugs(filters.category, { nome: 'category' });
+  if (slugs !== undefined) {
     // Uma ou mais categorias: slugs separados por vírgula. Slug inexistente é
     // ignorado — sem nenhum slug válido a consulta não traz empresa alguma.
-    const slugs = filters.category
-      .split(',')
-      .map((slug) => slug.trim())
-      .filter(Boolean);
-
     const ids = await Promise.all(slugs.map((slug) => findCategoryIdBySlug(slug)));
     const encontradas = ids.filter((id): id is string => id !== null);
 
@@ -56,23 +55,33 @@ export async function listCompanies(
         : new Types.ObjectId().toString();
   }
 
-  if (typeof filters.q === 'string' && filters.q.length > 0) {
-    const regex = new RegExp(escapeRegex(filters.q), 'i');
+  const termo = lerTexto(filters.q, { nome: 'q' });
+  if (termo !== undefined) {
+    const regex = new RegExp(escapeRegex(termo), 'i');
     query.$or = [{ name: regex }, { description: regex }, { address: regex }, { services: regex }];
   }
 
-  if (filters.featured === 'true' || filters.featured === true) {
-    query.isFeatured = true;
-  } else if (filters.featured === 'false' || filters.featured === false) {
-    query.isFeatured = false;
+  const destaque = lerBooleano(filters.featured, 'featured');
+  if (destaque !== undefined) {
+    query.isFeatured = destaque;
   }
 
-  if (typeof filters.owner === 'string' && filters.owner.length > 0) {
-    query.ownerClerkId = filters.owner;
+  const owner = lerTexto(filters.owner, { nome: 'owner' });
+  if (owner !== undefined) {
+    // Fail-closed: 'owner' só pode expressar o próprio filtro "minhas
+    // empresas" — listar de outro usuário é enumeração de conteúdo (403),
+    // incluindo sem sessão (modo legado), onde não há clerk para conferir.
+    if (owner !== clerkId) {
+      throw Object.assign(new Error('não é possível listar empresas de outro usuário'), {
+        statusCode: 403,
+      });
+    }
+    query.ownerClerkId = owner;
   }
 
-  if (typeof filters.city === 'string' && filters.city.length > 0) {
-    const slug = filters.city.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '-');
+  const cidade = lerTexto(filters.city, { nome: 'city' });
+  if (cidade !== undefined) {
+    const slug = cidade.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '-');
     const found = await CityModel.findOne({ slug }).lean();
     query.city = found ? found._id : new Types.ObjectId().toString();
   }
@@ -274,6 +283,3 @@ async function findCategoryIdBySlug(slug: string): Promise<string | null> {
   return category ? String(category._id) : null;
 }
 
-function escapeRegex(value: string): string {
-  return value.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-}

@@ -6,7 +6,9 @@
  * sessão do Clerk e o comportamento de fallback (mock quando a env não está
  * definida ou a API está fora do ar; 401/403 reais estouram `ApiError`).
  */
-import type { AutonomousProfessional, Banner, Category, City, Company, Coupon, Job, Notice, Paginated, PublicUtility, Review, User } from '@/types/domain';
+import type { AutonomousProfessional, Banner, Category, City, Company, Coupon, Job, Notice, Paginated, PublicUtility, Review, TourEvent, TouristSpot, User } from '@/types/domain';
+import { buildTourismQuery } from '@/features/tourism/tourism-query';
+import type { TourismQueryParams } from '@/features/tourism/tourism-query';
 
 import { isApiConfigured, request } from './http';
 import type { RequestPayload } from './http';
@@ -16,9 +18,11 @@ import {
   MOCK_CATEGORIES,
   MOCK_COUPONS,
   MOCK_COMPANIES,
+  MOCK_EVENTS,
   MOCK_FEATURED_COMPANY,
   MOCK_JOBS,
   MOCK_PHARMACY,
+  MOCK_TOURIST_SPOTS,
 } from '@/data/mock';
 import { MOCK_PUBLIC_UTILITIES } from '@/data/public-utilities';
 
@@ -26,6 +30,22 @@ import { MOCK_PUBLIC_UTILITIES } from '@/data/public-utilities';
 /** Mocks só em desenvolvimento: em produção, falha de rede/API vira lista vazia. */
 function mockFallback<T>(mock: T[]): T[] {
   return __DEV__ ? mock : [];
+}
+
+/**
+ * Teto do texto de busca no backend (`lerTexto` em backend/src/utils/query.ts,
+ * limite padrão de 120): acima dele a busca responde 400. O cliente trunca o
+ * termo para a tela de busca nunca disparar o 400 com texto copiado/colado
+ * longo — o backend ancora o teto, o app nunca o excede.
+ */
+export const LIMITE_DE_TERMO_DE_BUSCA = 120;
+
+/** Aparado e truncado ao teto que o backend aceita na query textual. */
+export function truncarTermoDeBusca(termo: string): string {
+  const aparado = termo.trim();
+  return aparado.length > LIMITE_DE_TERMO_DE_BUSCA
+    ? aparado.slice(0, LIMITE_DE_TERMO_DE_BUSCA)
+    : aparado;
 }
 
 function isPaginated<T>(payload: RequestPayload<T>): payload is Paginated<T> {
@@ -194,7 +214,8 @@ export type CompanySearchParams = {
 };
 
 export async function searchCompanies(params: CompanySearchParams = {}): Promise<CompanyPage> {
-  const term = (params.q ?? '').trim().toLowerCase();
+  // Trunca depois do lowercase: o lowercase pode expandir o texto (ex.: 'İ').
+  const term = truncarTermoDeBusca((params.q ?? '').trim().toLowerCase());
   const categories = params.categories ?? [];
   const page = params.page ?? 1;
   const pageSize = params.pageSize ?? 20;
@@ -337,6 +358,83 @@ export async function getCities(): Promise<City[]> {
     return [];
   }
 }
+
+/** Parâmetros aceitos pela listagem de pontos turísticos e eventos. */
+export type TourismParams = TourismQueryParams;
+
+/** Página de turismo devolvida pelo backend (`total` permite paginar). */
+export type TourismPage<T> = { items: T[]; total: number };
+
+/** Pontos turísticos ativos (parque, cachoeira, mirante...). */
+export async function getTouristSpots(params: TourismParams = {}): Promise<TourismPage<TouristSpot>> {
+  if (!isApiConfigured()) {
+    const items = mockFallback(MOCK_TOURIST_SPOTS);
+    return { items, total: items.length };
+  }
+  const query = buildTourismQuery({ ...params, q: truncarTermoDeBusca(params.q ?? '') });
+  const payload = await request<TouristSpot>(`/tourist-spots${query}`);
+  const items = fromPaginated(payload, mockFallback(MOCK_TOURIST_SPOTS));
+  const total = isPaginated(payload) ? (payload.total ?? items.length) : items.length;
+  return { items, total };
+}
+
+/** Eventos turísticos (festival, feira, show...). */
+export async function getEvents(params: TourismParams = {}): Promise<TourismPage<TourEvent>> {
+  if (!isApiConfigured()) {
+    const items = mockFallback(MOCK_EVENTS);
+    return { items, total: items.length };
+  }
+  const query = buildTourismQuery({ ...params, q: truncarTermoDeBusca(params.q ?? '') });
+  const payload = await request<TourEvent>(`/events${query}`);
+  const items = fromPaginated(payload, mockFallback(MOCK_EVENTS));
+  const total = isPaginated(payload) ? (payload.total ?? items.length) : items.length;
+  return { items, total };
+}
+
+/** Atração turística mockada por `_id` ou `slug` (fallback quando a API está fora do ar). */
+export function findMockTouristSpot(id: string): TouristSpot | null {
+  return MOCK_TOURIST_SPOTS.find((spot) => spot._id === id || spot.slug === id) ?? null;
+}
+
+/** Evento turístico mockado por `_id` ou `slug` (fallback quando a API está fora do ar). */
+export function findMockEvent(id: string): TourEvent | null {
+  return MOCK_EVENTS.find((event) => event._id === id || event.slug === id) ?? null;
+}
+
+/**
+ * Ponto turístico pelo id (o backend não resolve slug — só o fallback mock
+ * aceita slug). `null` quando a API responde que não existe.
+ */
+export async function getTouristSpotById(id: string): Promise<TouristSpot | null> {
+  if (!isApiConfigured()) return __DEV__ ? findMockTouristSpot(id) : null;
+  try {
+    const payload = await request<TouristSpot>(`/tourist-spots/${encodeURIComponent(id)}`);
+    if (!payload) return __DEV__ ? findMockTouristSpot(id) : null;
+    const [spot] = fromPaginated(payload, []);
+    return spot ?? (__DEV__ ? findMockTouristSpot(id) : null);
+  } catch {
+    return __DEV__ ? findMockTouristSpot(id) : null;
+  }
+}
+
+/**
+ * Evento turístico pelo id (o backend não resolve slug — só o fallback mock
+ * aceita slug). `null` quando a API responde que não existe — evento VENCIDO
+ * continua sendo recurso válido (200): quem decide como mostrar o "Encerrado"
+ * é a tela.
+ */
+export async function getEventById(id: string): Promise<TourEvent | null> {
+  if (!isApiConfigured()) return __DEV__ ? findMockEvent(id) : null;
+  try {
+    const payload = await request<TourEvent>(`/events/${encodeURIComponent(id)}`);
+    if (!payload) return __DEV__ ? findMockEvent(id) : null;
+    const [event] = fromPaginated(payload, []);
+    return event ?? (__DEV__ ? findMockEvent(id) : null);
+  } catch {
+    return __DEV__ ? findMockEvent(id) : null;
+  }
+}
+
 
 export async function updateCompany(id: string, body: Partial<Company>): Promise<Company | null> {
   if (!isApiConfigured()) return null;

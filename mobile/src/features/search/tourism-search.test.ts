@@ -1,0 +1,268 @@
+import { describe, expect, it } from 'vitest';
+
+import type { Company, TourEvent, TouristSpot } from '@/types/domain';
+
+import { buildSearchSections, resultadoObsoleto, temMaisPagina } from './tourism-search';
+
+function empresa(overrides: Partial<Company> = {}): Company {
+  return {
+    _id: 'emp-1',
+    name: 'Pousada Serra Verde',
+    slug: 'pousada-serra-verde',
+    category: 'lodging',
+    active: true,
+    ...overrides,
+  } as Company;
+}
+
+function atracao(overrides: Partial<TouristSpot> = {}): TouristSpot {
+  return {
+    _id: 'spot-1',
+    name: 'Parque Natural',
+    slug: 'parque-natural',
+    description: 'Trilha entre rochas.',
+    category: 'park',
+    active: true,
+    ...overrides,
+  };
+}
+
+function evento(overrides: Partial<TourEvent> = {}): TourEvent {
+  return {
+    _id: 'event-1',
+    name: 'Festival do Pequi',
+    slug: 'festival-do-pequi',
+    description: 'Três dias de festa.',
+    category: 'festival',
+    startDate: '2026-12-05',
+    endDate: '2026-12-07',
+    active: true,
+    ...overrides,
+  };
+}
+
+describe('buildSearchSections', () => {
+  it('devolve as seções na ordem Empresas, Atrações, Eventos', () => {
+    const sections = buildSearchSections({
+      companies: [empresa()],
+      spots: [atracao()],
+      events: [evento()],
+      showSpots: true,
+      showEvents: true,
+    });
+
+    expect(sections.map((section) => section.key)).toEqual([
+      'empresas',
+      'atracoes',
+      'eventos',
+    ]);
+    expect(sections.map((section) => section.title)).toEqual([
+      'Empresas',
+      'Atrações',
+      'Eventos',
+    ]);
+  });
+
+  it('omite seção sem itens', () => {
+    const sections = buildSearchSections({
+      companies: [empresa()],
+      spots: [],
+      events: [evento()],
+      showSpots: true,
+      showEvents: true,
+    });
+
+    expect(sections.map((section) => section.key)).toEqual(['empresas', 'eventos']);
+  });
+
+  it('omitem as seções de turismo com todos os chips desligados, mesmo com itens', () => {
+    const sections = buildSearchSections({
+      companies: [empresa()],
+      spots: [atracao()],
+      events: [evento()],
+      showSpots: false,
+      showEvents: false,
+    });
+
+    expect(sections.map((section) => section.key)).toEqual(['empresas']);
+  });
+
+  it('inclui só Atrações quando apenas o chip dela está ativo', () => {
+    const sections = buildSearchSections({
+      companies: [],
+      spots: [atracao()],
+      events: [evento()],
+      showSpots: true,
+      showEvents: false,
+    });
+
+    expect(sections.map((section) => section.key)).toEqual(['atracoes']);
+  });
+
+  it('inclui só Eventos quando apenas o chip dele está ativo', () => {
+    const sections = buildSearchSections({
+      companies: [],
+      spots: [atracao()],
+      events: [evento()],
+      showSpots: false,
+      showEvents: true,
+    });
+
+    expect(sections.map((section) => section.key)).toEqual(['eventos']);
+  });
+
+  it('envolve cada empresa em item kind company com id de Company', () => {
+    const [secao] = buildSearchSections({
+      companies: [empresa({ _id: 'emp-x' })],
+      spots: [],
+      events: [],
+      showSpots: true,
+      showEvents: true,
+    });
+
+    expect(secao.items).toEqual([
+      { kind: 'company', id: 'emp-x', company: expect.any(Object) },
+    ]);
+  });
+
+  it('envolve cada atração em item kind spot com id de TouristSpot', () => {
+    const [secaoAtracoes] = buildSearchSections({
+      companies: [],
+      spots: [atracao({ _id: 'spot-x' })],
+      events: [],
+      showSpots: true,
+      showEvents: true,
+    });
+
+    expect(secaoAtracoes.items).toEqual([
+      { kind: 'spot', id: 'spot-x', spot: expect.any(Object) },
+    ]);
+  });
+
+  it('envolve cada evento em item kind event com id de TourEvent', () => {
+    const [secaoEventos] = buildSearchSections({
+      companies: [],
+      spots: [],
+      events: [evento({ _id: 'event-x' })],
+      showSpots: true,
+      showEvents: true,
+    });
+
+    expect(secaoEventos.items).toEqual([
+      { kind: 'event', id: 'event-x', event: expect.any(Object) },
+    ]);
+  });
+
+  it('filtra turismo por termo comparando nome e descrição sem distinguir caixa', () => {
+    const secoes = buildSearchSections({
+      companies: [],
+      spots: [atracao({ name: 'Cachoeira do Funil', description: 'Vale o passeio' })],
+      events: [evento({ name: 'Festival de Inverno', description: 'Música e arte' })],
+      showSpots: true,
+      showEvents: true,
+      term: 'FUNIL',
+    });
+
+    expect(secoes.map((secao) => secao.key)).toEqual(['atracoes']);
+
+    const secoesPorDescricao = buildSearchSections({
+      companies: [],
+      spots: [atracao()],
+      events: [evento({ description: 'Trilha do Funil fechada' })],
+      showSpots: true,
+      showEvents: true,
+      term: 'funil',
+    });
+
+    expect(secoesPorDescricao.map((secao) => secao.key)).toEqual(['eventos']);
+  });
+
+  it('NÃO filtra empresas por termo (o termo delas vai ao servidor)', () => {
+    const sections = buildSearchSections({
+      companies: [empresa({ name: 'Pousada Serra' })],
+      spots: [],
+      events: [],
+      showSpots: true,
+      showEvents: true,
+      term: 'pousada',
+    });
+
+    expect(sections[0].items).toHaveLength(1);
+  });
+
+  it('mantém evento que casa apenas pela location (o servidor casa por ela)', () => {
+    const sections = buildSearchSections({
+      companies: [],
+      spots: [],
+      events: [
+        evento({ name: 'Festival do Pequi', description: 'Três dias de festa.', location: 'Cânion do Poti' }),
+      ],
+      showSpots: true,
+      showEvents: true,
+      term: 'cânion',
+    });
+
+    const eventos = sections.find((section) => section.key === 'eventos');
+    expect(eventos?.items).toHaveLength(1);
+    expect(eventos?.items[0]?.id).toBe('event-1');
+  });
+
+  it('filtra por descrição quando o nome não casa', () => {
+    const sections = buildSearchSections({
+      companies: [],
+      spots: [atracao({ name: 'Mirante da Serra', description: 'Vista do vale' })],
+      events: [],
+      showSpots: true,
+      showEvents: false,
+      term: 'VALE',
+    });
+
+    expect(sections.map((section) => section.key)).toEqual(['atracoes']);
+  });
+
+  it('devolve lista vazia sem empresas e sem chips de turismo', () => {
+    const sections = buildSearchSections({
+      companies: [],
+      spots: [atracao()],
+      events: [evento()],
+      showSpots: false,
+      showEvents: false,
+    });
+
+    expect(sections).toEqual([]);
+  });
+});
+
+describe('resultadoObsoleto', () => {
+  it('descarta a resposta quando a geração mudou durante o fetch (race do loadMore)', () => {
+    // O efeito de busca reiniciou (novo termo/chip/reload) com o loadMore
+    // em voo: a resposta do termo antigo não pode ancorar na lista nova.
+    expect(resultadoObsoleto(3, 4)).toBe(true);
+  });
+
+  it('mantém a resposta quando a geração não mudou', () => {
+    expect(resultadoObsoleto(4, 4)).toBe(false);
+  });
+});
+
+describe('temMaisPagina', () => {
+  it('devolve false quando carregou tudo (20 de 20)', () => {
+    expect(temMaisPagina(20, 20)).toBe(false);
+  });
+
+  it('devolve true quando o total é maior que o carregado (20 de 50)', () => {
+    expect(temMaisPagina(20, 50)).toBe(true);
+  });
+
+  it('devolve false quando não existe nada (0 de 0)', () => {
+    expect(temMaisPagina(0, 0)).toBe(false);
+  });
+
+  it('devolve true quando nada foi carregado mas o servidor tem (0 de 10)', () => {
+    expect(temMaisPagina(0, 10)).toBe(true);
+  });
+
+  it('devolve false quando o carregado excede o total (defensivo)', () => {
+    expect(temMaisPagina(30, 20)).toBe(false);
+  });
+});
