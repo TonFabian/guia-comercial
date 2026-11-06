@@ -1,7 +1,46 @@
 import '@/global.css';
 
-import { DarkTheme } from 'expo-router';
-import { Platform } from 'react-native';
+import type { Theme } from 'expo-router';
+import { Dimensions } from 'react-native';
+import { fluidWidthFactor } from '@/theme/fluid-width';
+
+const _expoRouterRequire = (
+  globalThis as { require?: (id: string) => unknown }
+).require;
+
+const _fallbackFonts = {
+  regular: { fontFamily: 'System', fontWeight: '400' as const },
+  medium: { fontFamily: 'System', fontWeight: '500' as const },
+  bold: { fontFamily: 'System', fontWeight: '600' as const },
+  heavy: { fontFamily: 'System', fontWeight: '700' as const },
+};
+
+let _resolvedDarkTheme: Theme = {
+  dark: true,
+  colors: {
+    primary: 'rgb(10, 132, 255)',
+    background: 'rgb(1, 1, 1)',
+    card: 'rgb(18, 18, 18)',
+    text: 'rgb(229, 229, 231)',
+    border: 'rgb(39, 39, 41)',
+    notification: 'rgb(255, 69, 58)',
+  },
+  fonts: _fallbackFonts,
+};
+
+try {
+  const _mod = _expoRouterRequire?.('expo-router') as
+    | { DarkTheme?: Theme }
+    | undefined;
+  if (_mod?.DarkTheme) {
+    _resolvedDarkTheme = _mod.DarkTheme;
+  }
+} catch {
+  // Ambiente de teste (vitest/node): expo-router não carrega (Flow).
+  // Mantém o fallback acima; em produção (Metro) o require tem sucesso.
+}
+
+const DarkTheme: Theme = _resolvedDarkTheme;
 
 export const GuiaColors = {
   background: '#121212',
@@ -129,7 +168,15 @@ export const LoginGradients = {
   waveBottom: ['rgba(229, 148, 0, 0)', 'rgba(241, 168, 10, 0.16)'],
 } as const;
 
+const _fontScale = fluidWidthFactor(375, Dimensions.get('window').width);
+const _s = (n: number) => Math.round(n * _fontScale);
+
 export const Type = {
+  xs: { size: _s(12), lineHeight: _s(16) },
+  sm: { size: _s(14), lineHeight: _s(20) },
+  md: { size: _s(16), lineHeight: _s(24) },
+  lg: { size: _s(20), lineHeight: _s(28) },
+  xg: { size: _s(24), lineHeight: _s(32) },
   caption: 11,
   small: 12,
   body: 13,
@@ -141,6 +188,39 @@ export const Type = {
   headline: 24,
 } as const;
 
+export const FontFamily = {
+  heading600: 'Rubik_600SemiBold',
+  heading700: 'Rubik_700Bold',
+  heading800: 'Rubik_800ExtraBold',
+  body400: 'Inter_400Regular',
+  body500: 'Inter_500Medium',
+  body600: 'Inter_600SemiBold',
+  body700: 'Inter_700Bold',
+  body800: 'Inter_800ExtraBold',
+} as const;
+
+export const FontWeight = {
+  regular: '400',
+  medium: '500',
+  semibold: '600',
+  bold: '700',
+  heavy: '800',
+} as const;
+
+export const Typography = {
+  h1: { fontFamily: FontFamily.heading700, fontSize: _s(28), lineHeight: _s(34), fontWeight: FontWeight.bold },
+  h2: { fontFamily: FontFamily.heading700, fontSize: _s(24), lineHeight: _s(32), fontWeight: FontWeight.bold },
+  h3: { fontFamily: FontFamily.heading700, fontSize: _s(20), lineHeight: _s(26), fontWeight: FontWeight.bold },
+  h4: { fontFamily: FontFamily.heading600, fontSize: _s(18), lineHeight: _s(24), fontWeight: FontWeight.semibold },
+  h5: { fontFamily: FontFamily.heading600, fontSize: _s(16), lineHeight: _s(22), fontWeight: FontWeight.semibold },
+  body: { fontFamily: FontFamily.body400, fontSize: _s(14), lineHeight: _s(20), fontWeight: FontWeight.regular },
+  bodySemibold: { fontFamily: FontFamily.body600, fontSize: _s(14), lineHeight: _s(20), fontWeight: FontWeight.semibold },
+  bodyBold: { fontFamily: FontFamily.body700, fontSize: _s(14), lineHeight: _s(20), fontWeight: FontWeight.bold },
+  caption: { fontFamily: FontFamily.body400, fontSize: _s(12), lineHeight: _s(16), fontWeight: FontWeight.regular, maxFontSizeMultiplier: 1.4 },
+  captionSemibold: { fontFamily: FontFamily.body600, fontSize: _s(12), lineHeight: _s(16), fontWeight: FontWeight.semibold, maxFontSizeMultiplier: 1.4 },
+  label: { fontFamily: FontFamily.body700, fontSize: _s(12), lineHeight: _s(16), fontWeight: FontWeight.bold, textTransform: 'uppercase' as const, maxFontSizeMultiplier: 1.4 },
+} as const;
+
 /** Sombra/elevação padrão dos cards em carrossel (banners e cupons). */
 export const CardShadow = {
   elevation: 3,
@@ -150,11 +230,15 @@ export const CardShadow = {
   shadowOffset: { width: 0, height: 2 },
 } as const;
 
-export const BottomTabInset = Platform.select({ ios: 50, android: 80 }) ?? 0;
+const _rnPlatform = (
+  _expoRouterRequire?.('react-native') as { Platform?: { select?: (spec: { ios: number; android: number }) => number } } | undefined
+)?.Platform;
+
+export const BottomTabInset = (_rnPlatform?.select ? _rnPlatform.select({ ios: 50, android: 80 }) : 0) ?? 0;
 export const MaxContentWidth = 800;
 
 /** Tema de navegação (tabs/stack) alinhado aos tokens da GUIA. */
-export const DarkGuiTheme = {
+export const DarkGuiTheme: Theme = {
   ...DarkTheme,
   colors: {
     ...DarkTheme.colors,
@@ -183,7 +267,7 @@ export const GuiaColorsLight = {
   coverPlaceholder: '#E5E7EB',
 } as const;
 
-export const LightGuiTheme = {
+export const LightGuiTheme: Theme = {
   ...DarkTheme,
   colors: {
     ...DarkTheme.colors,
