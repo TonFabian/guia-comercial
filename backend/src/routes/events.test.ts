@@ -757,6 +757,106 @@ describe('POST /api/events — programação (schedule)', () => {
   });
 });
 
+describe('PUT /api/events — programação (schedule)', () => {
+  // Doc 4 ("Encontro Cultural"): startDate 2026-11-07, endDate 2026-11-09.
+  // O PUT parcial NÃO traz as datas do evento — a vigência dos itens vale
+  // sobre o intervalo já salvo.
+  const itemCompleto = {
+    date: '2026-11-08',
+    startTime: '09:00',
+    endTime: '12:30',
+    title: 'Trilha guiada no cânion',
+    description: 'Caminhada guiada pelo cânion com guia local',
+    stage: 'Praça Central',
+    relatedSpot: 'parque-municipal',
+    ticket: 'paid',
+    ticketPrice: 'R$ 15,00',
+    ticketUrl: 'https://ingressos.example.com/canyon-fest',
+  };
+
+  const atualizar = async (payload: Record<string, unknown>) =>
+    request(app)
+      .put('/api/events/000000000000000000000004')
+      .set('Authorization', 'Bearer token_admin')
+      .send(payload);
+
+  it('atualiza a programação do evento e resolve a referência da atração', async () => {
+    const response = await atualizar({ schedule: [itemCompleto] });
+
+    expect(response.status).toBe(200);
+    expect(response.body.schedule).toHaveLength(1);
+    const item = response.body.schedule[0] as Record<string, unknown>;
+    expect(item.date).toBe('2026-11-08');
+    expect(item.stage).toBe('Praça Central');
+    // O service resolve `relatedSpot` (id/slug) para o id de TouristSpot.
+    expect(item.relatedSpot).toBe('000000000000000000000050');
+    const salvo = modeloEventos.documents[3]?.schedule as Record<string, unknown>[];
+    expect(salvo).toHaveLength(1);
+    expect(salvo[0]?.date).toBe('2026-11-08');
+  });
+
+  it('aceita item na borda do intervalo já salvo (startDate e endDate)', async () => {
+    const primeiroDia = await atualizar({
+      schedule: [{ ...itemCompleto, date: '2026-11-07' }],
+    });
+    expect(primeiroDia.status).toBe(200);
+
+    const ultimoDia = await atualizar({
+      schedule: [{ ...itemCompleto, date: '2026-11-09' }],
+    });
+    expect(ultimoDia.status).toBe(200);
+  });
+
+  it('responde 422 quando a data do item sai do intervalo do evento já salvo', async () => {
+    // O intervalo salvo é 2026-11-07 .. 2026-11-09: um item do dia 20 não
+    // cabe na programação do evento.
+    const response = await atualizar({
+      schedule: [{ ...itemCompleto, date: '2026-11-20' }],
+    });
+
+    expect(response.status).toBe(422);
+    expect(JSON.stringify(response.body)).toContain('schedule');
+    expect(modeloEventos.documents[3]?.schedule).toBeUndefined();
+  });
+
+  it('responde 422 quando o endTime do item é anterior ao startTime', async () => {
+    const response = await atualizar({
+      schedule: [{ ...itemCompleto, endTime: '08:00' }],
+    });
+
+    expect(response.status).toBe(422);
+    expect(JSON.stringify(response.body.details)).toContain('endTime');
+    expect(modeloEventos.documents[3]?.schedule).toBeUndefined();
+  });
+
+  it('responde 422 quando o item é pago e não informa o preço', async () => {
+    const itemSemPreco = {
+      date: itemCompleto.date,
+      startTime: itemCompleto.startTime,
+      endTime: itemCompleto.endTime,
+      title: itemCompleto.title,
+      description: itemCompleto.description,
+      stage: itemCompleto.stage,
+      relatedSpot: itemCompleto.relatedSpot,
+      ticket: itemCompleto.ticket,
+      ticketUrl: itemCompleto.ticketUrl,
+    };
+
+    const response = await atualizar({ schedule: [itemSemPreco] });
+
+    expect(response.status).toBe(422);
+    expect(JSON.stringify(response.body.details)).toContain('ticketPrice');
+    expect(modeloEventos.documents[3]?.schedule).toBeUndefined();
+  });
+
+  it('limpa a programação quando o PUT manda lista vazia', async () => {
+    const response = await atualizar({ schedule: [] });
+
+    expect(response.status).toBe(200);
+    expect(response.body.schedule).toHaveLength(0);
+  });
+});
+
 describe('PUT /api/events', () => {
   it('responde 401 sem sessão autenticada', async () => {
     const response = await request(app)

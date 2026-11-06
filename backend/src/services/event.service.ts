@@ -223,6 +223,20 @@ export async function updateTourEvent(
   }
 
   if (Array.isArray(update.schedule)) {
+    // Vigência dos itens sobre o estado RESULTANTE do evento: um PUT parcial
+    // não traz as datas, então vale o intervalo salvo (payload + documento).
+    // O DTO só checa a vigência quando as duas datas vêm no payload.
+    for (const [indice, item] of update.schedule.entries()) {
+      if (item.date < startDateResultante || item.date > endDateResultante) {
+        throw Object.assign(
+          new Error(
+            `schedule[${indice}]: date do item deve estar entre startDate e endDate do evento`,
+          ),
+          { statusCode: 422 },
+        );
+      }
+    }
+
     // Referências de atrativo da programação (id/slug) viram id de TouristSpot.
     update.schedule = await resolverProgramacao(update.schedule);
   }
