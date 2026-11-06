@@ -5,6 +5,7 @@ import { afterAll, beforeAll, beforeEach, describe, expect, it, vi } from 'vites
 import { TourEventModel } from '../models/event.model.js';
 import { CityModel } from '../models/city.model.js';
 import { CompanyModel } from '../models/company.model.js';
+import { TouristSpotModel } from '../models/tourist-spot.model.js';
 import { UserModel } from '../models/user.model.js';
 import { PushTokenModel } from '../models/push-token.model.js';
 import type { MemoryDocument, MemoryModel } from '../test-support/memory-model.js';
@@ -63,6 +64,15 @@ vi.mock('../models/company.model.js', async () => {
   return { CompanyModel: criarModeloEmMemoria() };
 });
 
+// Model de pontos turísticos entra no fluxo do service de eventos: a referência
+// de atrativo da programação (`schedule[].relatedSpot`) é resolvida por id/slug
+// contra a coleção de TouristSpot — sem o fake, a query real ficaria em
+// buffering sem conexão e travaria o teste.
+vi.mock('../models/tourist-spot.model.js', async () => {
+  const { criarModeloEmMemoria } = await import('../test-support/memory-model.js');
+  return { TouristSpotModel: criarModeloEmMemoria() };
+});
+
 vi.mock('../models/user.model.js', async () => {
   const { criarModeloEmMemoria } = await import('../test-support/memory-model.js');
   return { UserModel: criarModeloEmMemoria() };
@@ -78,6 +88,7 @@ let app: Express;
 const modeloEventos = TourEventModel as unknown as MemoryModel;
 const modeloCidades = CityModel as unknown as MemoryModel;
 const modeloEmpresas = CompanyModel as unknown as MemoryModel;
+const modeloPontos = TouristSpotModel as unknown as MemoryModel;
 const modeloUsuarios = UserModel as unknown as MemoryModel;
 const modeloTokens = PushTokenModel as unknown as MemoryModel;
 
@@ -161,6 +172,18 @@ const empresasFake: MemoryDocument[] = [
   },
 ];
 
+// Atrativo turístico referenciado pela programação (`schedule[].relatedSpot`
+// por slug): o service resolve para o id do documento TouristSpot.
+const atrativosFake: MemoryDocument[] = [
+  {
+    _id: '000000000000000000000050',
+    name: 'Cânion do Poti',
+    slug: 'parque-municipal',
+    category: 'other',
+    active: true,
+  },
+];
+
 const usuariosFake: MemoryDocument[] = [
   {
     _id: '000000000000000000000010',
@@ -203,6 +226,9 @@ beforeEach(() => {
 
   modeloEmpresas.documents.length = 0;
   modeloEmpresas.documents.push(...empresasFake.map((empresa) => ({ ...empresa })));
+
+  modeloPontos.documents.length = 0;
+  modeloPontos.documents.push(...atrativosFake.map((atrativo) => ({ ...atrativo })));
 
   modeloUsuarios.documents.length = 0;
   modeloUsuarios.documents.push(...usuariosFake.map((usuario) => ({ ...usuario })));
@@ -647,7 +673,9 @@ describe('POST /api/events — programação (schedule)', () => {
     expect(item.endTime).toBe('12:30');
     expect(item.title).toBe('Trilha guiada no cânion');
     expect(item.stage).toBe('Praça Central');
-    expect(item.relatedSpot).toBe('parque-municipal');
+    // O service resolve `relatedSpot` (id/slug) para o id de TouristSpot, como
+    // faz com `organizerCompany` — a resposta já carrega a referência resolvida.
+    expect(item.relatedSpot).toBe('000000000000000000000050');
     expect(item.ticket).toBe('paid');
     expect(item.ticketPrice).toBe('R$ 15,00');
     expect(modeloEventos.documents).toHaveLength(5);

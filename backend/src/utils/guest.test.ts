@@ -9,6 +9,7 @@ import type {
   Paginated,
   PublicUtility,
   TourEvent,
+  TourEventScheduleItem,
   TouristSpot,
 } from '../../../shared/domain.js';
 
@@ -293,6 +294,82 @@ describe('scrubGuestResponse', () => {
     expect(resposta.location).toBe(evento.location);
     expect(resposta.organizer).toBe(evento.organizer);
     expect(evento.phone).toBe('+5584999999999');
+  });
+
+  it('redige os contatos do atrativo populado na programação do evento (recursivo)', () => {
+    // O schedule do Canyon Fest referencia a Cachoeira do Retiro, cuja empresa
+    // relacionada também vem populada: o convidado não pode ver o contato
+    // comercial do spot NEM o da empresa aninhada nele. A programação em si
+    // (dia, horários, palco, ingresso) fica intacta e o endereço do atrativo
+    // segue público (spec D14).
+    const itemProgramacao: TourEventScheduleItem = {
+      date: '2026-11-05',
+      startTime: '18:00',
+      endTime: '20:00',
+      title: 'Trilha da cachoeira ao vivo',
+      stage: 'Palco Principal',
+      relatedSpot: ponto,
+    };
+
+    const resposta = scrubGuestResponse({ ...evento, schedule: [itemProgramacao] }, true);
+
+    expect(resposta.phone).toBeNull();
+    expect(resposta.whatsapp).toBeNull();
+    expect(resposta.ticketUrl).toBe(evento.ticketUrl);
+
+    const programacao = resposta.schedule;
+    if (!programacao) {
+      throw new Error('esperava programação no evento');
+    }
+
+    expect(programacao[0].date).toBe('2026-11-05');
+    expect(programacao[0].startTime).toBe('18:00');
+    expect(programacao[0].endTime).toBe('20:00');
+    expect(programacao[0].title).toBe('Trilha da cachoeira ao vivo');
+    expect(programacao[0].stage).toBe('Palco Principal');
+
+    const atrativoProgramado = programacao[0].relatedSpot;
+    if (typeof atrativoProgramado !== 'object') {
+      throw new Error('esperava atrativo populado no item da programação');
+    }
+
+    expect(atrativoProgramado.phone).toBeNull();
+    expect(atrativoProgramado.whatsapp).toBeNull();
+    expect(atrativoProgramado.address).toBe('Estrada da Cachoeira, s/n');
+    expect(atrativoProgramado.slug).toBe(ponto.slug);
+
+    const empresaAninhada = atrativoProgramado.relatedCompany;
+    if (typeof empresaAninhada !== 'object') {
+      throw new Error('esperava empresa populada dentro do atrativo da programação');
+    }
+
+    expect(empresaAninhada.phone).toBeNull();
+    expect(empresaAninhada.whatsapp).toBeNull();
+    expect(empresaAninhada.address).toBeNull();
+    expect(empresaAninhada.name).toBe(empresa.name);
+
+    // Puro: os fixtures originais permanecem intactos.
+    expect(ponto.phone).toBe('+5584999999999');
+    expect(empresa.phone).toBe('+5584999999999');
+  });
+
+  it('mantém a referência de atrativo por string na programação (não populado)', () => {
+    const itemProgramacao: TourEventScheduleItem = {
+      date: '2026-11-05',
+      title: 'Show de abertura',
+      relatedSpot: 'cachoeira-do-retiro',
+    };
+
+    const resposta = scrubGuestResponse({ ...evento, schedule: [itemProgramacao] }, true);
+
+    const programacao = resposta.schedule;
+    if (!programacao) {
+      throw new Error('esperava programação no evento');
+    }
+
+    // id/slug solto não tem objeto de onde vazar contato: volta intacto.
+    expect(programacao[0].relatedSpot).toBe('cachoeira-do-retiro');
+    expect(programacao[0].title).toBe('Show de abertura');
   });
 
   it('redige o autônomo sem tocar no restante', () => {

@@ -18,8 +18,9 @@ const CATEGORIAS: TourEventCategory[] = [
  * Evento turístico (temporário: festival, feira, show...).
  * `startDate`/`endDate` são strings `YYYY-MM-DD` (data pura, sem fuso) e a
  * lista de vigentes compara endDate com strings — nunca com datetime ISO.
- * `city` referencia 'City'; `organizerCompany` referencia 'Company'.
- * O nome do model nunca é `Event` (shadowing do DOM); a coleção é `events`.
+ * `city` referencia 'City'; `organizerCompany` referencia 'Company'; cada item
+ * da `schedule` referencia 'TouristSpot'. O nome do model nunca é `Event`
+ * (shadowing do DOM); a coleção é `events`.
  */
 const tourEventSchema = new Schema<TourEvent>(
   {
@@ -31,6 +32,23 @@ const tourEventSchema = new Schema<TourEvent>(
     endDate: { type: String, required: true },
     startTime: { type: String },
     endTime: { type: String },
+    // Programação interna (subdocumento embutido, sem coleção própria — spec
+    // do módulo de turismo). O atrativo referenciado é resolvido no service
+    // (id ou slug) e populado na leitura para o app montar o link do passeio.
+    schedule: [
+      {
+        date: { type: String, required: true },
+        startTime: { type: String },
+        endTime: { type: String },
+        title: { type: String, required: true, trim: true },
+        description: { type: String, trim: true },
+        stage: { type: String, trim: true },
+        relatedSpot: { type: Schema.Types.ObjectId, ref: 'TouristSpot' },
+        ticket: { type: String, enum: ['free', 'paid'] },
+        ticketPrice: { type: String, trim: true },
+        ticketUrl: { type: String },
+      },
+    ],
     location: { type: String, trim: true },
     address: { type: String, trim: true },
     city: { type: Schema.Types.ObjectId, ref: 'City' },

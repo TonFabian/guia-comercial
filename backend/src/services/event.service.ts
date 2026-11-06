@@ -3,12 +3,16 @@ import { isValidObjectId, Types } from 'mongoose';
 import { CityModel } from '../models/city.model.js';
 import { CompanyModel } from '../models/company.model.js';
 import { TourEventModel } from '../models/event.model.js';
+import { TouristSpotModel } from '../models/tourist-spot.model.js';
 import { assertAdmin } from './user.service.js';
 import { listAllPushTokens } from './push-token.service.js';
 import { todayInFortaleza } from '../utils/event-date.js';
 import { escapeRegex } from '../utils/regex.js';
 import { lerBooleano, lerEnum, lerTexto } from '../utils/query.js';
-import type { TourEvent, TourEventCategory } from '../../../shared/domain.js';
+import type {
+  TourEvent,
+  TourEventCategory,
+} from '../../../shared/domain.js';
 import type { CreateTourEventDto, UpdateTourEventDto } from '../types/dto.js';
 import type { Pagination } from '../utils/http.js';
 
@@ -97,6 +101,9 @@ export async function listTourEvents(
   const [items, total] = await Promise.all([
     TourEventModel.find(query)
       .populate('city')
+      // Atrativo de cada item da programação populado: a tela do evento linka
+      // o passeio referenciado (caminho interno do array, padrão Mongoose).
+      .populate('schedule.relatedSpot')
       // Desempate por _id: startDate/name podem repetir e, com paginação
       // visível ao usuário, sem desempate o paginador fica indeterminístico
       // (itens pulam ou duplicam entre páginas).
@@ -113,7 +120,7 @@ export async function listTourEvents(
 export async function getTourEventById(id: string) {
   // Evento vencido continua recuperável por id (200 normal): a tela exibe
   // "Encerrado"; 404 é apenas para id inexistente.
-  return TourEventModel.findById(id).populate('city').lean();
+  return TourEventModel.findById(id).populate('city').populate('schedule.relatedSpot').lean();
 }
 
 export async function createTourEvent(
@@ -131,12 +138,15 @@ export async function createTourEvent(
 
   const city = await resolverCidade(dto.city);
   const organizerCompany = await resolverEmpresaOrganizadora(dto.organizerCompany);
+  // Referências de atrativo da programação (id/slug) viram id de TouristSpot.
+  const schedule = await resolverProgramacao(dto.schedule);
 
   try {
     const criado = await TourEventModel.create({
       ...dto,
       city: city as TourEvent['city'],
       organizerCompany: organizerCompany as TourEvent['organizerCompany'],
+      schedule,
     });
 
     // Push apenas no CREATE (spec D11) e apenas de evento PUBLICADO E VIGENTE:
@@ -212,12 +222,18 @@ export async function updateTourEvent(
     }
   }
 
+  if (Array.isArray(update.schedule)) {
+    // Referências de atrativo da programação (id/slug) viram id de TouristSpot.
+    update.schedule = await resolverProgramacao(update.schedule);
+  }
+
   try {
     return await TourEventModel.findByIdAndUpdate(id, update, {
       returnDocument: 'after',
       runValidators: true,
     })
       .populate('city')
+      .populate('schedule.relatedSpot')
       .lean();
   } catch (error) {
     if ((error as { code?: number }).code === 11000) {
@@ -287,6 +303,51 @@ async function resolverEmpresaOrganizadora(
     .select({ _id: 1 })
     .lean();
   return found ? String(found._id) : undefined;
+}
+
+/**
+ * Converte id ou slug do atrativo em id do documento TouristSpot (padrão
+ * `resolverEmpresaOrganizadora`). Slug sem atrativo correspondente não vira
+ * referência solta: `undefined` e o campo não entra no documento.
+ */
+async function resolverAtrativo(
+  valor?: string | null,
+): Promise<string | undefined> {
+  if (typeof valor !== 'string' || valor.trim().length === 0) {
+    return undefined;
+  }
+
+  if (isValidObjectId(valor)) {
+    return valor;
+  }
+
+  const found = await TouristSpotModel.findOne({ slug: normalizarSlug(valor) })
+    .select({ _id: 1 })
+    .lean();
+  return found ? String(found._id) : undefined;
+}
+
+/** Itens da programação como chegam no DTO (relatedSpot por id/slug). */
+type ItensProgramacaoEntrada = NonNullable<CreateTourEventDto['schedule']>;
+
+/**
+ * Resolve a referência de atrativo em cada item da programação. Os demais
+ * campos do item passam intactos — a validação cruzada (date/horário/ingresso)
+ * acontece no DTO (zod), não aqui.
+ */
+async function resolverProgramacao(
+  itens: ItensProgramacaoEntrada | undefined,
+): Promise<ItensProgramacaoEntrada | undefined> {
+  if (itens === undefined) {
+    return undefined;
+  }
+
+  return Promise.all(
+    itens.map(async (item) => ({
+      ...item,
+      relatedSpot: await resolverAtrativo(item.relatedSpot),
+    })),
+  );
 }
 
 function normalizarSlug(valor: string): string {
