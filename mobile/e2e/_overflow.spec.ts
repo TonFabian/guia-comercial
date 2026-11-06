@@ -1,6 +1,6 @@
 import { test } from '@playwright/test';
 
-async function ensureGuest(page) {
+async function ensureGuest(page: any) {
   await page.goto('/', { timeout: 60000 });
   const guest = page.getByText('Entrar como convidado');
   const isGuestScreen = await guest.waitFor({ state: 'visible', timeout: 20000 }).then(() => true).catch(() => false);
