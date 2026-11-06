@@ -97,6 +97,23 @@ export function descreverIngresso(
   return null;
 }
 
+/**
+ * Ingresso de um item da programação.
+ *
+ * O item herda o ingresso do evento quando não define o seu; mas o preço
+ * NUNCA é herdado junto: um item gratuito não pode exibir o preço do
+ * ingresso do evento (que é de outro ingresso).
+ */
+export function descreverIngressoItem(
+  item: Pick<TourEventScheduleItem, 'ticket' | 'ticketPrice'>,
+  ticketEvento?: 'free' | 'paid',
+  ticketPriceEvento?: string,
+): string | null {
+  const ticket = item.ticket ?? ticketEvento;
+  const preco = item.ticket ? item.ticketPrice : ticketPriceEvento;
+  return descreverIngresso(ticket, preco);
+}
+
 const LABEL_CATEGORIA_ATRACAO: Record<TouristSpotCategory, string> = {
   nature: 'Natureza',
   park: 'Parque',

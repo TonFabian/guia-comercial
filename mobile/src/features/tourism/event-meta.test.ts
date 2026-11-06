@@ -5,6 +5,7 @@ import {
   classificarEvento,
   descreverEntrada,
   descreverIngresso,
+  descreverIngressoItem,
   formatarDataEvento,
   formatarHorario,
   formatarPeriodoEvento,
@@ -117,6 +118,27 @@ describe('descreverIngresso', () => {
 
   it('devolve null quando não há informação de ingresso', () => {
     expect(descreverIngresso()).toBeNull();
+  });
+});
+
+describe('descreverIngressoItem', () => {
+  it('herda o ingresso do evento quando o item não define o seu', () => {
+    expect(descreverIngressoItem({}, 'paid', 'R$ 30,00')).toBe('Ingresso: R$ 30,00');
+    expect(descreverIngressoItem({}, 'free')).toBe('Ingresso gratuito');
+  });
+
+  it('não herda o preço do evento quando o item define o próprio ingresso', () => {
+    // Item gratuito não pode exibir o preço do evento (que é de outro ingresso).
+    expect(descreverIngressoItem({ ticket: 'free' }, 'paid', 'R$ 30,00')).toBe('Ingresso gratuito');
+  });
+
+  it('não usa o preço do evento quando o item é pago sem preço próprio', () => {
+    expect(descreverIngressoItem({ ticket: 'paid' }, 'free', 'R$ 30,00')).toBe('Ingresso pago');
+    expect(descreverIngressoItem({ ticket: 'paid', ticketPrice: 'R$ 10,00' })).toBe('Ingresso: R$ 10,00');
+  });
+
+  it('devolve null quando nem o item nem o evento têm ingresso', () => {
+    expect(descreverIngressoItem({})).toBeNull();
   });
 });
 

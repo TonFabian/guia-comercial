@@ -256,6 +256,7 @@ function somarDias(base: Date, dias: number): Date {
 /** Eventos do mock com datas dinâmicas: festival no futuro ("Em breve") e feira hoje ("Hoje"). */
 const hojeMock = new Date();
 const inicioFestival = somarDias(hojeMock, 30);
+const segundoDiaFestival = somarDias(inicioFestival, 1);
 const fimFestival = somarDias(inicioFestival, 2);
 
 /** Mesmos nomes/slugs do seed do backend (seed.ts), para a Home bater com o banco real. */
@@ -316,6 +317,10 @@ export const MOCK_TOURIST_SPOTS: TouristSpot[] = [
 ];
 
 /** Slugs fixos coerentes (sem ano); datas relativas a hoje para o badge fizer sentido. */
+/** Atrações do mock referenciadas pela programação do festival (por slug). */
+const ATRACAO_CANION = MOCK_TOURIST_SPOTS.find((spot) => spot.slug === 'canyon-do-rio-poti');
+const ATRACAO_CACHOEIRAS = MOCK_TOURIST_SPOTS.find((spot) => spot.slug === 'cachoeiras-do-rio-poti');
+
 export const MOCK_EVENTS: TourEvent[] = [
   {
     _id: 'eve-1',
@@ -334,6 +339,78 @@ export const MOCK_EVENTS: TourEvent[] = [
     ticket: 'free',
     featured: true,
     active: true,
+    // Programação de 3 dias (mesma do seed do backend): 2+ itens por dia,
+    // palcos distintos, referência a atrações e um item com ingresso próprio.
+    schedule: [
+      {
+        date: dataISO(inicioFestival),
+        startTime: '10:00',
+        endTime: '12:00',
+        title: 'Abertura e exposição de animais',
+        description: 'Boas-vindas com fazenda experimental e venda de artesanato.',
+        stage: 'Praça de Entrada',
+      },
+      {
+        date: dataISO(inicioFestival),
+        startTime: '16:00',
+        endTime: '18:00',
+        title: 'Caminhada-ecológica pelo cânion',
+        description: 'Trilha guiada às margens do rio, com o guia do parque.',
+        stage: 'Trilha do Cânion',
+        relatedSpot: ATRACAO_CANION,
+      },
+      {
+        date: dataISO(inicioFestival),
+        startTime: '19:00',
+        endTime: '22:00',
+        title: 'Show de forró',
+        stage: 'Palco Principal',
+      },
+      {
+        date: dataISO(inicioFestival),
+        title: 'Praça de alimentação',
+        description: 'Barracas de comida típica e bebidas, sem horário fixo.',
+        stage: 'Praça de Entrada',
+      },
+      {
+        date: dataISO(segundoDiaFestival),
+        startTime: '09:00',
+        endTime: '12:00',
+        title: 'Rodeio',
+        stage: 'Pista do Cânion',
+      },
+      {
+        date: dataISO(segundoDiaFestival),
+        startTime: '14:00',
+        endTime: '17:00',
+        title: 'Banho de rio nas cachoeiras',
+        stage: 'Margem do Rio Poti',
+        relatedSpot: ATRACAO_CACHOEIRAS,
+      },
+      {
+        date: dataISO(segundoDiaFestival),
+        startTime: '20:00',
+        endTime: '23:00',
+        title: 'Show de quadrilha',
+        stage: 'Palco Principal',
+      },
+      {
+        date: dataISO(fimFestival),
+        startTime: '10:00',
+        endTime: '13:00',
+        title: 'Corrida de canoas',
+        stage: 'Rio Poti',
+        ticket: 'paid',
+        ticketPrice: 'R$ 25,00',
+      },
+      {
+        date: dataISO(fimFestival),
+        startTime: '16:00',
+        endTime: '18:00',
+        title: 'Encerramento e premiações',
+        stage: 'Praça do Cânion',
+      },
+    ],
   },
   {
     _id: 'eve-2',
