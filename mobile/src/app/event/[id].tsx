@@ -19,9 +19,13 @@ import {
   Type,
 } from '@/constants/theme';
 import {
+  agruparProgramacaoPorDia,
   classificarEvento,
   descreverIngresso,
+  descreverIngressoItem,
+  formatarDataEvento,
   formatarHorario,
+  formatarHorarioItem,
   formatarPeriodoEvento,
   hojeISO,
   labelCategoriaEvento,
@@ -130,6 +134,7 @@ export default function EventDetailScreen() {
   const horario = formatarHorario(evento.startTime, evento.endTime);
   const quando = [periodo, horario ?? ''].filter(Boolean).join(' · ');
   const ingresso = descreverIngresso(evento.ticket, evento.ticketPrice);
+  const diasProgramacao = agruparProgramacaoPorDia(evento.schedule);
   const organizador =
     evento.organizer ??
     (evento.organizerCompany && typeof evento.organizerCompany !== 'string'
@@ -236,6 +241,101 @@ export default function EventDetailScreen() {
             <Text style={styles.meta}>Organização: {organizador}</Text>
           ) : null}
 
+          {diasProgramacao.length > 0 ? (
+            <View style={styles.section}>
+              <Text style={styles.sectionTitle}>Programação</Text>
+              {diasProgramacao.map((dia) => (
+                <View key={dia.date} style={styles.dayGroup}>
+                  <Text style={styles.dayTitle}>{formatarDataEvento(dia.date)}</Text>
+                  {dia.items.map((item, indice) => {
+                    const horario = formatarHorarioItem(item);
+                    const ingressoItem = descreverIngressoItem(
+                      item,
+                      evento.ticket,
+                      evento.ticketPrice,
+                    );
+                    // Atrativo populado (o backend popula a referência na
+                    // leitura); string é só o id/slug e não dá link.
+                    const atracao =
+                      item.relatedSpot && typeof item.relatedSpot !== 'string'
+                        ? item.relatedSpot
+                        : undefined;
+                    return (
+                      <View
+                        key={`${dia.date}-${indice}-${item.title}`}
+                        style={styles.scheduleItem}
+                      >
+                        <View style={styles.scheduleHeader}>
+                          <Text style={styles.scheduleTitle}>{item.title}</Text>
+                          {horario ? (
+                            <Text style={styles.scheduleTime}>{horario}</Text>
+                          ) : null}
+                        </View>
+                        {item.stage ? (
+                          <Text style={styles.scheduleMeta}>🎪 {item.stage}</Text>
+                        ) : null}
+                        {item.description ? (
+                          <Text style={styles.scheduleDescription}>
+                            {item.description}
+                          </Text>
+                        ) : null}
+                        {ingressoItem ? (
+                          <Text style={styles.scheduleMeta}>🎟️ {ingressoItem}</Text>
+                        ) : null}
+                        {atracao ? (
+                          <Pressable
+                            style={({ pressed }) => [
+                              styles.linkButton,
+                              pressed && styles.pressed,
+                            ]}
+                            onPress={() =>
+                              router.push({
+                                pathname: '/tourist-spot/[id]',
+                                params: { id: atracao._id },
+                              })
+                            }
+                            accessibilityRole="button"
+                            accessibilityLabel={`Ver a atração ${atracao.name}`}
+                          >
+                            <MaterialCommunityIcons
+                              name="map-marker-outline"
+                              size={16}
+                              color={colors.primary}
+                            />
+                            <Text style={styles.linkText}>{atracao.name}</Text>
+                          </Pressable>
+                        ) : null}
+                        {item.ticketUrl ? (
+                          <Pressable
+                            style={({ pressed }) => [
+                              styles.linkButton,
+                              pressed && styles.pressed,
+                            ]}
+                            onPress={() =>
+                              void openExternalUrl(
+                                item.ticketUrl ?? '',
+                                'Ingresso da programação',
+                              )
+                            }
+                            accessibilityRole="button"
+                            accessibilityLabel={`Comprar ingresso de ${item.title}`}
+                          >
+                            <Ionicons
+                              name="ticket-outline"
+                              size={16}
+                              color={colors.primary}
+                            />
+                            <Text style={styles.linkText}>Ingresso do item</Text>
+                          </Pressable>
+                        ) : null}
+                      </View>
+                    );
+                  })}
+                </View>
+              ))}
+            </View>
+          ) : null}
+
           <TourismContactActions whatsapp={evento.whatsapp} phone={evento.phone} />
         </ScrollView>
       </SafeAreaView>
@@ -316,6 +416,67 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
       color: colors.textSoft,
       fontSize: Type.base,
       lineHeight: 20,
+    },
+    section: {
+      gap: Spacing.two,
+    },
+    sectionTitle: {
+      color: colors.text,
+      fontSize: Type.subtitle,
+      fontWeight: '700',
+    },
+    dayGroup: {
+      gap: Spacing.two,
+    },
+    dayTitle: {
+      color: colors.primary,
+      fontSize: Type.body,
+      fontWeight: '800',
+    },
+    scheduleItem: {
+      gap: Spacing.one,
+      backgroundColor: colors.surface,
+      borderRadius: Radius.detailCard,
+      borderWidth: 1,
+      borderColor: colors.border,
+      padding: Spacing.three,
+    },
+    scheduleHeader: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      gap: Spacing.two,
+    },
+    scheduleTitle: {
+      flexShrink: 1,
+      color: colors.text,
+      fontSize: Type.base,
+      fontWeight: '700',
+    },
+    scheduleTime: {
+      color: colors.textSecondary,
+      fontSize: Type.small,
+      fontWeight: '700',
+    },
+    scheduleMeta: {
+      color: colors.textSecondary,
+      fontSize: Type.body,
+    },
+    scheduleDescription: {
+      color: colors.textSoft,
+      fontSize: Type.body,
+      lineHeight: 18,
+    },
+    linkButton: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: Spacing.two,
+      paddingVertical: Spacing.one,
+    },
+    linkText: {
+      color: colors.primary,
+      fontSize: Type.body,
+      fontWeight: '700',
     },
     ticketButton: {
       backgroundColor: colors.primary,

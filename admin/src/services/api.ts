@@ -242,6 +242,26 @@ export interface TouristSpotInput {
 
 export type UpdateTouristSpotInput = Partial<TouristSpotInput>;
 
+/**
+ * Item da programação interna do evento no payload.
+ *
+ * `relatedSpot` é id ou slug do atrativo (o backend resolve no service,
+ * como faz com `organizerCompany`).
+ */
+export interface TourEventScheduleItemInput {
+  /** Data do item, formato YYYY-MM-DD, dentro de [startDate, endDate]. */
+  date: string;
+  startTime?: string;
+  endTime?: string;
+  title: string;
+  description?: string;
+  stage?: string;
+  relatedSpot?: string;
+  ticket?: 'free' | 'paid';
+  ticketPrice?: string;
+  ticketUrl?: string;
+}
+
 /** Campos aceitos na criação/edição de um evento turístico. `city` é o slug da cidade. */
 export interface TourEventInput {
   name: string;
@@ -269,6 +289,8 @@ export interface TourEventInput {
   ticketPrice?: string;
   ticketUrl?: string;
   photos?: string[];
+  /** Programação interna do evento (itens embutidos, sem coleção própria). */
+  schedule?: TourEventScheduleItemInput[];
   /** `null` limpa o telefone já salvo. */
   phone?: string | null;
   /** `null` limpa o WhatsApp já salvo. */

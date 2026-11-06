@@ -23,6 +23,7 @@ import { NoticeModel } from '../models/notice.model.js';
 import { PublicUtilityModel } from '../models/public-utility.model.js';
 import { TouristSpotModel } from '../models/tourist-spot.model.js';
 import { TourEventModel } from '../models/event.model.js';
+import { montarEventosTuristicos } from './seed-turismo.js';
 
 const shouldReset = process.argv.includes('--reset');
 
@@ -63,6 +64,20 @@ function somarDias(data: Date, dias: number): Date {
   const copia = new Date(data);
   copia.setDate(copia.getDate() + dias);
   return copia;
+}
+
+/**
+ * Ids das atrações por slug.
+ *
+ * A programação do evento referencia a atração pelo id (o schema do item
+ * guarda ObjectId, não slug): o seed resolve o slug depois de inserir as
+ * atrações.
+ */
+async function idsAtracoesPorSlug(slugs: string[]): Promise<Map<string, string>> {
+  const encontradas = await TouristSpotModel.find({ slug: { $in: slugs } })
+    .select({ _id: 1, slug: 1 })
+    .lean();
+  return new Map(encontradas.map((atracao) => [atracao.slug, String(atracao._id)]));
 }
 
 async function seed(): Promise<void> {
@@ -588,51 +603,34 @@ async function seed(): Promise<void> {
   // inclui o ano da data, então rodar o seed de novo no mesmo ano não duplica.
   const hoje = new Date();
   const inicioFestival = somarDias(hoje, 30);
+  const segundoDiaFestival = somarDias(inicioFestival, 1);
   const fimFestival = somarDias(inicioFestival, 2);
   const inicioFeira = hoje;
-
-  const eventos = [
-    {
-      name: 'Cânyon Fest Poti',
-      slug: `canyon-fest-poti-${inicioFestival.getFullYear()}`,
-      description:
-        'Festival de três dias às margens do cânion, com exposição de animais, rodeio e corrida, além de shows à noite.',
-      category: 'festival',
-      startDate: formatarDataISO(inicioFestival),
-      endDate: formatarDataISO(fimFestival),
-      startTime: '10:00',
-      endTime: '23:00',
-      location: 'Cânion do Rio Poti',
-      city: casteloId,
-      latitude: -7.32,
-      longitude: -43.06,
-      organizer: 'Organização Cânyon Fest Poti',
-      ticket: 'free',
-      featured: true,
-      active: true,
-    },
-    {
-      name: 'Feira do Rio Poti',
-      slug: `feira-do-rio-poti-${inicioFeira.getFullYear()}`,
-      description:
-        'Feira de produtores e artesãos da região do Rio Poti, com comida típica e apresentações culturais na praça.',
-      category: 'fair',
-      startDate: formatarDataISO(inicioFeira),
-      endDate: formatarDataISO(inicioFeira),
-      location: 'Praça do Centro',
-      city: casteloId,
-      latitude: -7.2833,
-      longitude: -43.0167,
-      ticket: 'free',
-      active: true,
-    },
-  ];
 
   if (!casteloId) {
     console.log('Cidade padrao nao encontrada; pulando pontos turisticos e eventos');
   } else {
     const inseridasAtracoes = await insertIfMissing(TouristSpotModel, atracoes, 'slug');
     console.log(`Pontos turísticos inseridos: ${inseridasAtracoes}`);
+
+    // A programação do festival referencia as atrações pelo id (o schema do
+    // item guarda ObjectId, não slug) — resolve os ids das atrações já
+    // inseridas acima.
+    const idsDasAtracoes = await idsAtracoesPorSlug(
+      atracoes.map((atracao) => atracao.slug),
+    );
+
+    const eventos = montarEventosTuristicos(
+      {
+        inicioFestival: formatarDataISO(inicioFestival),
+        segundoDiaFestival: formatarDataISO(segundoDiaFestival),
+        fimFestival: formatarDataISO(fimFestival),
+        inicioFeira: formatarDataISO(inicioFeira),
+      },
+      casteloId,
+      idsDasAtracoes,
+    );
+
     const inseridosEventos = await insertIfMissing(TourEventModel, eventos, 'slug');
     console.log(`Eventos turísticos inseridos: ${inseridosEventos}`);
   }

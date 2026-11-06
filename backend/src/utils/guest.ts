@@ -5,6 +5,7 @@ import type {
   Job,
   Paginated,
   TourEvent,
+  TourEventScheduleItem,
   TouristSpot,
 } from '../../../shared/domain.js';
 
@@ -35,6 +36,26 @@ export type ScrubbedCoupon<T extends Coupon = Coupon> = Omit<T, 'code'> & {
 /** Referência de empresa: populada é redigida, string (id) permanece. */
 type ScrubbedCompanyReference<C> = C extends Company ? ScrubbedCompany<C> : C;
 
+/** Referência de ponto turístico: populada é redigida, string (id/slug) permanece. */
+type ScrubbedSpotReference<S> = S extends TouristSpot ? ScrubbedTouristSpot<S> : S;
+
+/** Item da programação com o atrativo populado redigido. */
+type ScrubbedTourEventScheduleItem<T extends TourEventScheduleItem = TourEventScheduleItem> = Omit<
+  T,
+  'relatedSpot'
+> & {
+  relatedSpot: ScrubbedSpotReference<T['relatedSpot']>;
+};
+
+/**
+ * Programação do evento: itens com o atrativo populado redigido.
+ * Condicional nude distribui sobre o união `[] | undefined` (campo opcional):
+ * sem programação, o tipo original (undefined) permanece.
+ */
+type ScrubbedSchedule<S> = S extends TourEventScheduleItem[]
+  ? ScrubbedTourEventScheduleItem<S[number]>[]
+  : S;
+
 /**
  * Ponto turístico com os contatos redigidos e a empresa relacionada
  * tratada como referência redigida.
@@ -55,11 +76,12 @@ export type ScrubbedTouristSpot<T extends TouristSpot = TouristSpot> = Omit<
 /** Evento turístico com os contatos redigidos — mesmas razões do spot. */
 export type ScrubbedTourEvent<T extends TourEvent = TourEvent> = Omit<
   T,
-  'phone' | 'whatsapp' | 'organizerCompany'
+  'phone' | 'whatsapp' | 'organizerCompany' | 'schedule'
 > & {
   phone: string | null;
   whatsapp: string | null;
   organizerCompany: ScrubbedCompanyReference<T['organizerCompany']>;
+  schedule: ScrubbedSchedule<T['schedule']>;
 };
 
 /**
@@ -184,7 +206,8 @@ export function scrubTouristSpot<T extends TouristSpot>(
  * Remove os contatos do evento turístico para quem não está autenticado.
  *
  * Endereço preservado pelo mesmo motivo do spot (lugar público, spec D14);
- * a empresa organizadora populada segue o padrão do cupom/vaga.
+ * a empresa organizadora populada segue o padrão do cupom/vaga. E cada item
+ * da programação tem o atrativo populado redigido via `redigirProgramacao`.
  */
 export function scrubTourEvent<T extends TourEvent>(
   event: T,
@@ -196,7 +219,39 @@ export function scrubTourEvent<T extends TourEvent>(
     organizerCompany: redigirReferenciaEmpresa(
       event.organizerCompany,
     ) as ScrubbedTourEvent<T>['organizerCompany'],
+    schedule: redigirProgramacao(
+      event.schedule,
+    ) as ScrubbedTourEvent<T>['schedule'],
   };
+}
+
+/**
+ * Redige o atrativo populado de cada item da programação do evento.
+ *
+ * O `relatedSpot` populado passa pelo mesmo `scrubTouristSpot` da leitura
+ * direta — que, por dentro, também redige a empresa aninhada (a recursão
+ * mora no spot, não aqui). Referência por string (id/slug, não populado) e
+ * itens sem atrativo não têm objeto de onde vazar contato. Quando nenhum
+ * item tem atrativo populado, a lista original volta pela referência
+ * (zero alocação).
+ */
+function redigirProgramacao(
+  programacao: TourEventScheduleItem[] | undefined,
+): TourEventScheduleItem[] | undefined {
+  if (programacao === undefined) {
+    return undefined;
+  }
+
+  let temSpotRedigido = false;
+  const itensRedigidos = programacao.map((item) => {
+    if (!isTouristSpot(item.relatedSpot)) {
+      return item;
+    }
+    temSpotRedigido = true;
+    return { ...item, relatedSpot: scrubTouristSpot(item.relatedSpot) };
+  });
+
+  return temSpotRedigido ? itensRedigidos : programacao;
 }
 
 /**
