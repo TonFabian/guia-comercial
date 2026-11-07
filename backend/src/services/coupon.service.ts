@@ -1,10 +1,11 @@
 import { isValidObjectId, Types } from 'mongoose';
 
+import { CompanyModel } from '../models/company.model.js';
 import { CouponModel } from '../models/coupon.model.js';
 import type { CreateCouponDto, UpdateCouponDto } from '../types/dto.js';
 import type { Pagination } from '../utils/http.js';
 import { lerTexto } from '../utils/query.js';
-import { assertAdmin } from './user.service.js';
+import { assertOwnerOrAdmin } from './authorization.service.js';
 
 /** Filtros aceitos na listagem de cupons. */
 export interface CouponListFilters {
@@ -46,20 +47,59 @@ export async function getCouponById(id: string) {
 }
 
 export async function createCoupon(dto: CreateCouponDto, clerkId?: string) {
-  await assertAdmin(clerkId, 'gerenciar cupons');
+  const company = await CompanyModel.findById(dto.company).lean();
+  if (!company) {
+    throw Object.assign(new Error('empresa não encontrada'), { statusCode: 404 });
+  }
+  await assertOwnerOrAdmin({
+    resourceId: String(company._id),
+    clerkId,
+    findResource: async () => ({ exists: true, ownerClerkId: company.ownerClerkId }),
+    notFoundMessage: 'empresa não encontrada',
+    forbiddenMessage: 'sem permissão para gerenciar cupons desta empresa',
+  });
   // expiresAt já chega validado (ISO); o driver Mongo aceita string ISO.
   return CouponModel.create(dto);
 }
 
 export async function updateCoupon(id: string, dto: UpdateCouponDto, clerkId?: string) {
-  await assertAdmin(clerkId, 'gerenciar cupons');
-  return CouponModel.findByIdAndUpdate(id, dto, { returnDocument: "after", runValidators: true })
+  const coupon = await CouponModel.findById(id).lean();
+  if (!coupon) {
+    throw Object.assign(new Error('cupom não encontrado'), { statusCode: 404 });
+  }
+  const company = await CompanyModel.findById(coupon.company).lean();
+  if (!company) {
+    throw Object.assign(new Error('empresa não encontrada'), { statusCode: 404 });
+  }
+  await assertOwnerOrAdmin({
+    resourceId: String(coupon.company),
+    clerkId,
+    findResource: async () => ({ exists: !!company, ownerClerkId: company?.ownerClerkId }),
+    notFoundMessage: 'empresa não encontrada',
+    forbiddenMessage: 'sem permissão para editar este cupom',
+  });
+  const { company: _ignore, ...rest } = dto as UpdateCouponDto & { company?: unknown };
+  return CouponModel.findByIdAndUpdate(id, rest, { returnDocument: 'after', runValidators: true })
     .populate('company')
     .lean();
 }
 
 export async function deleteCoupon(id: string, clerkId?: string) {
-  await assertAdmin(clerkId, 'gerenciar cupons');
+  const coupon = await CouponModel.findById(id).lean();
+  if (!coupon) {
+    throw Object.assign(new Error('cupom não encontrado'), { statusCode: 404 });
+  }
+  const company = await CompanyModel.findById(coupon.company).lean();
+  if (!company) {
+    throw Object.assign(new Error('empresa não encontrada'), { statusCode: 404 });
+  }
+  await assertOwnerOrAdmin({
+    resourceId: String(coupon.company),
+    clerkId,
+    findResource: async () => ({ exists: !!company, ownerClerkId: company?.ownerClerkId }),
+    notFoundMessage: 'empresa não encontrada',
+    forbiddenMessage: 'sem permissão para excluir este cupom',
+  });
   const doc = await CouponModel.findByIdAndDelete(id).lean();
   if (!doc) {
     throw Object.assign(new Error('cupom não encontrado'), { statusCode: 404 });
@@ -69,3 +109,4 @@ export async function deleteCoupon(id: string, clerkId?: string) {
 export function isObjectId(value: string): boolean {
   return isValidObjectId(value);
 }
+

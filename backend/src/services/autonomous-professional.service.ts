@@ -2,7 +2,7 @@ import { isValidObjectId } from 'mongoose';
 
 import { CityModel } from '../models/city.model.js';
 import { AutonomousProfessionalModel } from '../models/autonomous-professional.model.js';
-import { findUserByClerkId } from './user.service.js';
+import { assertOwnerOrAdmin } from './authorization.service.js';
 import type { AutonomousProfessional } from '../../../shared/domain.js';
 import type { Pagination } from '../utils/http.js';
 
@@ -53,36 +53,17 @@ export async function createProfessional(dto: Partial<AutonomousProfessional>, o
 }
 
 async function assertOwner(id: string, clerkId?: string): Promise<void> {
-  const existing = await AutonomousProfessionalModel.findById(id).lean();
-  if (!existing) {
-    throw Object.assign(new Error('não encontrado'), { statusCode: 404 });
-  }
-
-  // Sem auth configurada (modo legado), a autorização fica desabilitada.
-  if (!process.env.CLERK_SECRET_KEY) {
-    return;
-  }
-
-  if (!clerkId) {
-    throw Object.assign(new Error('Não autenticado'), { statusCode: 401 });
-  }
-
-  if (existing.ownerClerkId) {
-    if (existing.ownerClerkId === clerkId) {
-      return;
-    }
-    const user = await findUserByClerkId(clerkId);
-    if (user?.role !== 'admin') {
-      throw Object.assign(new Error('sem permissão'), { statusCode: 403 });
-    }
-    return;
-  }
-
-  // Sem dono definido (legado): apenas admins.
-  const user = await findUserByClerkId(clerkId);
-  if (user?.role !== 'admin') {
-    throw Object.assign(new Error('sem permissão'), { statusCode: 403 });
-  }
+  await assertOwnerOrAdmin({
+    resourceId: id,
+    clerkId,
+    findResource: async (resourceId) => {
+      const existing = await AutonomousProfessionalModel.findById(resourceId).lean();
+      if (!existing) return { exists: false };
+      return { exists: true, ownerClerkId: existing.ownerClerkId };
+    },
+    notFoundMessage: 'profissional não encontrado',
+    forbiddenMessage: 'sem permissão',
+  });
 }
 
 export async function updateProfessional(id: string, dto: Partial<AutonomousProfessional>, clerkId?: string) {

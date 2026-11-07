@@ -3,7 +3,7 @@ import { isValidObjectId, Types } from 'mongoose';
 import { CategoryModel } from '../models/category.model.js';
 import { CityModel } from '../models/city.model.js';
 import { CompanyModel } from '../models/company.model.js';
-import { findUserByClerkId } from './user.service.js';
+import { assertOwnerOrAdmin } from './authorization.service.js';
 import { listAllPushTokens } from './push-token.service.js';
 import type { Company } from '../../../shared/domain.js';
 import type { CreateCompanyDto, UpdateCompanyDto } from '../types/dto.js';
@@ -153,37 +153,17 @@ export async function createCompany(dto: CreateCompanyDto, ownerClerkId?: string
 }
 
 async function assertOwner(companyId: string, clerkId?: string): Promise<void> {
-  const existing = await CompanyModel.findById(companyId).lean();
-  if (!existing) {
-    throw Object.assign(new Error('empresa não encontrada'), { statusCode: 404 });
-  }
-
-  // Sem auth configurada (modo legado), a autorização fica desabilitada.
-  if (!process.env.CLERK_SECRET_KEY) {
-    return;
-  }
-
-  if (!clerkId) {
-    throw Object.assign(new Error('não autenticado'), { statusCode: 401 });
-  }
-
-  // Empresa com dono definido: só o próprio dono ou um admin pode mutar.
-  if (existing.ownerClerkId) {
-    if (existing.ownerClerkId === clerkId) {
-      return;
-    }
-    const user = await findUserByClerkId(clerkId);
-    if (user?.role !== 'admin') {
-      throw Object.assign(new Error('sem permissão para editar esta empresa'), { statusCode: 403 });
-    }
-    return;
-  }
-
-  // Empresa sem dono (legado): apenas admins, evitando tomada de posse.
-  const user = await findUserByClerkId(clerkId);
-  if (user?.role !== 'admin') {
-    throw Object.assign(new Error('sem permissão para editar esta empresa'), { statusCode: 403 });
-  }
+  await assertOwnerOrAdmin({
+    resourceId: companyId,
+    clerkId,
+    findResource: async (id) => {
+      const existing = await CompanyModel.findById(id).lean();
+      if (!existing) return { exists: false };
+      return { exists: true, ownerClerkId: existing.ownerClerkId };
+    },
+    notFoundMessage: 'empresa não encontrada',
+    forbiddenMessage: 'sem permissão para editar esta empresa',
+  });
 }
 
 export async function updateCompany(id: string, dto: UpdateCompanyDto, clerkId?: string) {
