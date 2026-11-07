@@ -149,7 +149,7 @@ export const createCouponSchema = z.object({
 
 export type CreateCouponDto = z.infer<typeof createCouponSchema>;
 
-export type UpdateCouponDto = Partial<CreateCouponDto>;
+export type UpdateCouponDto = Omit<Partial<CreateCouponDto>, 'company'>;
 
 // ---------------------------------------------------------------------------
 // Job
@@ -165,7 +165,7 @@ export const createJobSchema = z.object({
 
 export type CreateJobDto = z.infer<typeof createJobSchema>;
 
-export type UpdateJobDto = Partial<CreateJobDto>;
+export type UpdateJobDto = Omit<Partial<CreateJobDto>, 'company'>;
 
 // ---------------------------------------------------------------------------
 // User (perfil)
