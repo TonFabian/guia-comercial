@@ -10,6 +10,8 @@ import type { CreateCompanyDto, UpdateCompanyDto } from '../types/dto.js';
 import type { Pagination } from '../utils/http.js';
 import { geocodeAddress } from '../utils/geocode.js';
 import { escapeRegex } from '../utils/regex.js';
+import { convertOpeningHoursToSchedule } from '../utils/opening-hours.js';
+import type { ScheduleItem } from '../utils/opening-hours.js';
 import { lerBooleano, lerListaDeSlugs, lerTexto } from '../utils/query.js';
 
 /** Critério de busca compatível com FilterQuery<Company>. */
@@ -34,6 +36,23 @@ export interface CompanyListFilters {
 }
 
 /** Regras de dados para empresas. */
+
+/**
+ * Deprecação em andamento: `schedule` estruturado é a fonte da verdade, mas o
+ * contrato ainda aceita `openingHours` (texto livre). Quando o payload não
+ * traz schedule (ou traz vazio) e traz openingHours, o schedule é derivado
+ * pelo conversor; quem envia schedule completo sempre prevalece. Linhas não
+ * parseáveis produzem schedule vazio — o openingHours original permanece
+ * salvo, então nada se perde antes da fase final da migração.
+ */
+function resolverSchedule(
+  schedule: CreateCompanyDto['schedule'],
+  openingHours: string[] | undefined,
+): ScheduleItem[] | undefined {
+  if (schedule !== undefined && schedule.length > 0) return schedule;
+  if (!openingHours || openingHours.length === 0) return schedule ?? undefined;
+  return convertOpeningHoursToSchedule(openingHours);
+}
 
 export async function listCompanies(
   filters: CompanyListFilters,
@@ -138,6 +157,7 @@ export async function createCompany(dto: CreateCompanyDto, ownerClerkId?: string
   try {
     return await CompanyModel.create({
       ...dto,
+      schedule: resolverSchedule(dto.schedule, dto.openingHours),
       category: resolvedCategory,
       ownerClerkId,
       city: city as unknown as Company['city'],
@@ -172,6 +192,14 @@ export async function updateCompany(id: string, dto: UpdateCompanyDto, clerkId?:
   const previous = await CompanyModel.findById(id).select({ promotion: 1, name: 1 }).lean();
 
   const update: UpdateCompanyDto & { latitude?: number; longitude?: number; city?: string | unknown } = { ...dto };
+
+  // PUT parcial: só escreve schedule quando há algo a derivar para não
+  // transformar a ausência de campos em limpeza (assinatura de undefined em
+  // update do Mongo viraria null).
+  const scheduleResolvido = resolverSchedule(update.schedule, update.openingHours);
+  if (scheduleResolvido !== undefined) {
+    update.schedule = scheduleResolvido;
+  }
 
   if (typeof update.category === 'string') {
     update.category = await resolveCategoryId(update.category);
