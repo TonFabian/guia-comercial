@@ -56,3 +56,9 @@ jobs:
       - run: npm ci
       - run: npx expo lint
       - run: npm run typecheck
+      - name: Typography gate (no raw fontSize/fontWeight outside theme.ts)
+        run: |
+          if grep -rnE 'fontSize:\s*[0-9]|fontWeight:\s*'"'"'[0-9]+'"'"'' src --include='*.ts' --include='*.tsx' | grep -v 'constants/theme.ts'; then
+            echo "Raw typography token found outside theme.ts"
+            exit 1
+          fi
