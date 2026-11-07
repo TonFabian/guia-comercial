@@ -240,6 +240,10 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
       gap: Spacing.two,
     },
     title: {
+      position: 'absolute',
+      left: 0,
+      right: 0,
+      textAlign: 'center',
       color: colors.text,
             ...Typography.h2,
     },

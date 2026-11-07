@@ -92,7 +92,7 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     topButton: { paddingVertical: 6, paddingHorizontal: 10 },
     topButtonText: { color: colors.primary, ...Typography.body, fontFamily: FontFamily.body600, fontWeight: FontWeight.semibold },
     content: { padding: 16, gap: 12 },
-    title: { color: colors.text, ...Typography.h3 },
+    title: { position: 'absolute', left: 0, right: 0, textAlign: 'center', color: colors.text, ...Typography.h3 },
     specialty: { color: colors.primary, ...Typography.h5 },
     desc: { color: colors.textSecondary, ...Typography.body, lineHeight: 20 },
     meta: { color: colors.textSecondary, ...Typography.body },

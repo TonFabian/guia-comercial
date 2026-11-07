@@ -135,11 +135,11 @@ const _fontScale = fluidWidthFactor(375, Dimensions.get('window').width);
 const _s = (n: number) => Math.round(n * _fontScale);
 
 export const Type = {
-  xs: { size: _s(12), lineHeight: _s(16) },
-  sm: { size: _s(14), lineHeight: _s(20) },
-  md: { size: _s(16), lineHeight: _s(24) },
-  lg: { size: _s(20), lineHeight: _s(28) },
-  xg: { size: _s(24), lineHeight: _s(32) },
+  xs: { size: _s(11), lineHeight: _s(15) },
+  sm: { size: _s(13), lineHeight: _s(18) },
+  md: { size: _s(15), lineHeight: _s(22) },
+  lg: { size: _s(18), lineHeight: _s(25) },
+  xg: { size: _s(22), lineHeight: _s(29) },
 } as const;
 
 export const FontFamily = {
@@ -162,17 +162,17 @@ export const FontWeight = {
 } as const;
 
 export const Typography = {
-  h1: { fontFamily: FontFamily.heading700, fontSize: _s(28), lineHeight: _s(34), fontWeight: FontWeight.bold },
-  h2: { fontFamily: FontFamily.heading700, fontSize: _s(24), lineHeight: _s(32), fontWeight: FontWeight.bold },
-  h3: { fontFamily: FontFamily.heading700, fontSize: _s(20), lineHeight: _s(26), fontWeight: FontWeight.bold },
-  h4: { fontFamily: FontFamily.heading600, fontSize: _s(18), lineHeight: _s(24), fontWeight: FontWeight.semibold },
-  h5: { fontFamily: FontFamily.heading600, fontSize: _s(16), lineHeight: _s(22), fontWeight: FontWeight.semibold },
-  body: { fontFamily: FontFamily.body400, fontSize: _s(14), lineHeight: _s(20), fontWeight: FontWeight.regular },
-  bodySemibold: { fontFamily: FontFamily.body600, fontSize: _s(14), lineHeight: _s(20), fontWeight: FontWeight.semibold },
-  bodyBold: { fontFamily: FontFamily.body700, fontSize: _s(14), lineHeight: _s(20), fontWeight: FontWeight.bold },
-  caption: { fontFamily: FontFamily.body400, fontSize: _s(12), lineHeight: _s(16), fontWeight: FontWeight.regular, maxFontSizeMultiplier: 1.4 },
-  captionSemibold: { fontFamily: FontFamily.body600, fontSize: _s(12), lineHeight: _s(16), fontWeight: FontWeight.semibold, maxFontSizeMultiplier: 1.4 },
-  label: { fontFamily: FontFamily.body700, fontSize: _s(12), lineHeight: _s(16), fontWeight: FontWeight.bold, textTransform: 'uppercase' as const, maxFontSizeMultiplier: 1.4 },
+  h1: { fontFamily: FontFamily.heading700, fontSize: _s(25), lineHeight: _s(31), fontWeight: FontWeight.bold },
+  h2: { fontFamily: FontFamily.heading700, fontSize: _s(22), lineHeight: _s(29), fontWeight: FontWeight.bold },
+  h3: { fontFamily: FontFamily.heading700, fontSize: _s(18), lineHeight: _s(24), fontWeight: FontWeight.bold },
+  h4: { fontFamily: FontFamily.heading600, fontSize: _s(16), lineHeight: _s(22), fontWeight: FontWeight.semibold },
+  h5: { fontFamily: FontFamily.heading600, fontSize: _s(15), lineHeight: _s(20), fontWeight: FontWeight.semibold },
+  body: { fontFamily: FontFamily.body400, fontSize: _s(13), lineHeight: _s(19), fontWeight: FontWeight.regular },
+  bodySemibold: { fontFamily: FontFamily.body600, fontSize: _s(13), lineHeight: _s(19), fontWeight: FontWeight.semibold },
+  bodyBold: { fontFamily: FontFamily.body700, fontSize: _s(13), lineHeight: _s(19), fontWeight: FontWeight.bold },
+  caption: { fontFamily: FontFamily.body400, fontSize: _s(11), lineHeight: _s(15), fontWeight: FontWeight.regular, maxFontSizeMultiplier: 1.4 },
+  captionSemibold: { fontFamily: FontFamily.body600, fontSize: _s(11), lineHeight: _s(15), fontWeight: FontWeight.semibold, maxFontSizeMultiplier: 1.4 },
+  label: { fontFamily: FontFamily.body700, fontSize: _s(11), lineHeight: _s(15), fontWeight: FontWeight.bold, textTransform: 'uppercase' as const, maxFontSizeMultiplier: 1.4 },
 } as const;
 
 /** Sombra/elevação padrão dos cards em carrossel (banners e cupons). */

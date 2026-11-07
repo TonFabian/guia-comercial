@@ -353,7 +353,7 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     backText: {
       color: colors.primary,
-            ...Typography.caption,
+            ...Typography.body,
       fontFamily: FontFamily.body700,
       fontWeight: FontWeight.bold,
     },
@@ -396,6 +396,7 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
             ...Typography.h2,
       fontFamily: FontFamily.heading800,
       fontWeight: FontWeight.heavy,
+      position: 'absolute', left: 0, right: 0, textAlign: 'center',
     },
     meta: {
       color: colors.textSecondary,

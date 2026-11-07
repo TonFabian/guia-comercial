@@ -147,6 +147,7 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
       color: colors.text,
             ...Typography.h2,
       marginBottom: Spacing.three,
+      position: 'absolute', left: 0, right: 0, textAlign: 'center',
     },
     loading: {
       marginBottom: Spacing.three,

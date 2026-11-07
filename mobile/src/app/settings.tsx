@@ -330,6 +330,7 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
             ...Typography.h4,
       fontFamily: FontFamily.heading700,
       fontWeight: FontWeight.bold,
+      position: 'absolute', left: 0, right: 0, textAlign: 'center',
     },
     content: {
       paddingHorizontal: 16,

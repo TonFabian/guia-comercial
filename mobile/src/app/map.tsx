@@ -109,7 +109,7 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     topBar: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingVertical: 12 },
     topButton: { paddingVertical: 6, paddingHorizontal: 10 },
     topButtonText: { color: colors.primary, ...Typography.body, fontFamily: FontFamily.body600, fontWeight: FontWeight.semibold },
-    title: { color: colors.text, ...Typography.h2 },
+    title: { position: 'absolute', left: 0, right: 0, textAlign: 'center', color: colors.text, ...Typography.h2 },
     center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 20 },
     emptyText: { color: colors.textSecondary, ...Typography.body, textAlign: 'center' },
   });

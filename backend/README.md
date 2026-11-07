@@ -1,6 +1,6 @@
 # Backend — API REST
 
-Servidor Express + TypeScript com conexão ao MongoDB (Mongoose).
+Servidor Express 5 + TypeScript com conexão ao MongoDB (Mongoose 9).
 
 ## Estrutura
 
@@ -9,11 +9,15 @@ backend/
 ├── src/
 │   ├── index.ts            # bootstrap do servidor
 │   ├── app.ts              # instância do Express (middlewares + rotas)
-│   ├── config/db.ts        # conexão com MongoDB
+│   ├── config/             # db, boot-check
 │   ├── controllers/        # handlers das rotas
-│   ├── middlewares/        # middlewares globais (ex.: errorHandler)
-│   ├── models/             # models Mongoose (a criar por recurso)
-│   └── routes/             # definição das rotas (/api/*)
+│   ├── middlewares/        # auth, guest, error, not-found
+│   ├── models/             # models Mongoose
+│   ├── routes/             # definição das rotas (/api/*)
+│   ├── services/           # regras de negócio
+│   ├── types/              # DTOs zod + tipos
+│   ├── utils/              # helpers puros
+│   └── scripts/            # seed, grant-test-role
 ├── .env.example
 └── package.json
 ```
@@ -29,12 +33,19 @@ npm run build          # gera dist/
 npm start              # produção (requer build)
 ```
 
+## Scripts
+
+- `npm run lint` — ESLint
+- `npm run typecheck` — tsc --noEmit
+- `npm test` — Vitest
+
 ## Endpoints
 
-| Método | Rota          | Descrição                |
-| ------ | ------------- | ------------------------ |
-| GET    | `/api/health` | Health check da API      |
+Rotas sob `/api/*` (health, auth, companies, categories, banners, coupons, events, jobs, notices, reviews, users, cities, tourist-spots, public-utilities, autonomous-professionals, push-tokens). Veja `src/routes/index.ts`.
 
-Rotas de negócios (empresas, categorias, anúncios, banners, usuários) ainda
-não foram implementadas — adicionar em `src/routes/` + `src/controllers/` +
-`src/models/`.
+## Convenções
+
+- Camadas: `routes → controllers → services → models`.
+- Validação de entrada com zod em `src/types/dto.ts`.
+- Paginação via `parsePagination` → `Paginated<T>`.
+- Erros: `statusCode` em services; `errorHandler` com 4 parâmetros.

@@ -59,6 +59,7 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     title: {
       color: colors.text,
             ...Typography.h2,
+      position: 'absolute', left: 0, right: 0, textAlign: 'center',
     },
     text: {
       color: colors.textSecondary,
