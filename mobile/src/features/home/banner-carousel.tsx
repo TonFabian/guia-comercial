@@ -1,14 +1,7 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { Linking, ScrollView, StyleSheet, Text, TouchableOpacity } from 'react-native';
 
-import {
-  CardColors,
-  CardShadow,
-  Overlays,
-  Radius,
-  Spacing,
-  Type,
-} from '@/constants/theme';
+import { CardColors, CardShadow, Overlays, Radius, Spacing, Typography, FontFamily, FontWeight } from '@/constants/theme';
 import { useThemeColors } from '@/hooks/use-theme-colors';
 import type { DisplayBanner } from '@/data/mock';
 
@@ -72,19 +65,20 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
       gap: Spacing.one,
     },
     bannerEmoji: {
-      fontSize: 28,
+      ...Typography.h1,
       position: 'absolute',
       top: 12,
       right: 14,
     },
     bannerTitle: {
       color: colors.text,
-      fontSize: Type.section,
-      fontWeight: '700',
+            ...Typography.h5,
+      fontFamily: FontFamily.body700,
+      fontWeight: FontWeight.bold,
     },
     bannerSubtitle: {
       color: Overlays.whiteMild,
-      fontSize: Type.body,
+      ...Typography.body,
     },
   });
 }

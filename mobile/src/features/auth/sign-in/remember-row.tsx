@@ -1,7 +1,7 @@
 import Feather from '@expo/vector-icons/Feather';
 import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
-import { LoginColors, Type } from '@/constants/theme';
+import { LoginColors, Typography, FontFamily, FontWeight } from '@/constants/theme';
 
 interface RememberRowProps {
   remember: boolean;
@@ -75,11 +75,12 @@ const styles = StyleSheet.create({
   },
   rememberText: {
     color: LoginColors.text,
-    fontSize: Type.base,
+    ...Typography.body,
   },
   forgot: {
     color: LoginColors.link,
-    fontSize: Type.base,
-    fontWeight: '600',
+        ...Typography.body,
+    fontFamily: FontFamily.body600,
+    fontWeight: FontWeight.semibold,
   },
 });

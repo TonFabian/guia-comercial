@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Radius, Spacing, Type } from '@/constants/theme';
+import { Typography, FontFamily, FontWeight } from '@/constants/theme';
 import { getAutonomousProfessionals } from '@/services/api';
 import type { AutonomousProfessional } from '@/types/domain';
 import { useThemeColors } from '@/hooks/use-theme-colors';
@@ -90,17 +90,17 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     safeArea: { flex: 1 },
     topBar: { flexDirection: 'row', alignItems: 'center', paddingHorizontal: 16, paddingVertical: 12 },
     topButton: { paddingVertical: 6, paddingHorizontal: 10 },
-    topButtonText: { color: colors.primary, fontSize: 14, fontWeight: '600' },
+    topButtonText: { color: colors.primary, ...Typography.body, fontFamily: FontFamily.body600, fontWeight: FontWeight.semibold },
     content: { padding: 16, gap: 12 },
-    title: { color: colors.text, fontSize: 22, fontWeight: '700' },
-    specialty: { color: colors.primary, fontSize: 15, fontWeight: '600' },
-    desc: { color: colors.textSecondary, fontSize: 14, lineHeight: 20 },
-    meta: { color: colors.textSecondary, fontSize: 13 },
+    title: { position: 'absolute', left: 0, right: 0, textAlign: 'center', color: colors.text, ...Typography.h3 },
+    specialty: { color: colors.primary, ...Typography.h5 },
+    desc: { color: colors.textSecondary, ...Typography.body, lineHeight: 20 },
+    meta: { color: colors.textSecondary, ...Typography.body },
     whatsappBtn: { backgroundColor: colors.primary, borderRadius: 10, paddingVertical: 12, alignItems: 'center', marginTop: 8 },
-    whatsappBtnText: { color: colors.background, fontSize: 15, fontWeight: '700' },
+    whatsappBtnText: { color: colors.background, ...Typography.h5, fontFamily: FontFamily.body700, fontWeight: FontWeight.bold },
     center: { flex: 1, alignItems: 'center', justifyContent: 'center', padding: 20 },
-    notFound: { color: colors.textSecondary, fontSize: 16, marginBottom: 12 },
+    notFound: { color: colors.textSecondary, ...Typography.h5, marginBottom: 12 },
     backBtn: { paddingVertical: 8, paddingHorizontal: 16, borderRadius: 8, backgroundColor: colors.surface },
-    backBtnText: { color: colors.text, fontSize: 14 },
+    backBtnText: { color: colors.text, ...Typography.body },
   });
 }

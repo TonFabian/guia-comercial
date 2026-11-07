@@ -2,7 +2,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
-import { Radius, Spacing, Type } from '@/constants/theme';
+import { Radius, Spacing, Typography } from '@/constants/theme';
 import { useThemeColors } from '@/hooks/use-theme-colors';
 import type { AutonomousProfessional } from '@/types/domain';
 import { SectionHeader } from './section-header';
@@ -45,7 +45,7 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     card: { flexDirection: 'row', alignItems: 'center', gap: 12, paddingHorizontal: 16, paddingVertical: 12, borderBottomWidth: 1, borderBottomColor: colors.border },
     avatar: { width: 40, height: 40, borderRadius: 20, backgroundColor: colors.surfaceAlt, alignItems: 'center', justifyContent: 'center' },
     body: { flex: 1, gap: 2 },
-    name: { color: colors.text, fontSize: Type.subtitle, fontWeight: '600' },
-    specialty: { color: colors.textSecondary, fontSize: Type.small },
+    name: { color: colors.text, ...Typography.h5 },
+    specialty: { color: colors.textSecondary, ...Typography.caption },
   });
 }

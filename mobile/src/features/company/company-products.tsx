@@ -1,6 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native';
 
-import { Spacing, Type } from '@/constants/theme';
+import { Spacing, Typography, FontFamily, FontWeight } from '@/constants/theme';
 import { useThemeColors } from '@/hooks/use-theme-colors';
 import type { CompanyProduct } from '@/types/domain';
 
@@ -45,17 +45,17 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     productName: {
       color: colors.text,
-      fontSize: Type.subtitle,
-      fontWeight: '600',
+            ...Typography.h5,
     },
     productDescription: {
       color: colors.textSecondary,
-      fontSize: Type.body,
+      ...Typography.body,
     },
     price: {
       color: colors.primary,
-      fontSize: Type.subtitle,
-      fontWeight: '700',
+            ...Typography.h5,
+      fontFamily: FontFamily.body700,
+      fontWeight: FontWeight.bold,
     },
   });
 }

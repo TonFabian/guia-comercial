@@ -3,7 +3,7 @@ import { router, useFocusEffect } from 'expo-router';
 import { useCallback, useState } from 'react';
 import { StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
-import { Radius, Spacing, Type } from '@/constants/theme';
+import { Radius, Spacing, Typography } from '@/constants/theme';
 import { useVoiceSearch } from '@/features/search/use-voice-search';
 import { useThemeColors } from '@/hooks/use-theme-colors';
 
@@ -82,7 +82,7 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     searchInput: {
       flex: 1,
       color: colors.text,
-      fontSize: Type.subtitle,
+      ...Typography.h5,
       paddingVertical: 0,
     },
     micButton: {
@@ -98,7 +98,7 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     voiceError: {
       color: colors.error,
-      fontSize: Type.small,
+      ...Typography.caption,
       marginHorizontal: 16,
       marginTop: -Spacing.three,
       marginBottom: Spacing.two,

@@ -1,6 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native';
 
-import { Radius, Type } from '@/constants/theme';
+import { Radius, Typography } from '@/constants/theme';
 import { useThemeColors } from '@/hooks/use-theme-colors';
 
 interface CompanyAboutProps {
@@ -43,8 +43,7 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
   return StyleSheet.create({
     description: {
       color: colors.text,
-      fontSize: Type.base,
-      lineHeight: 21,
+            ...Typography.body,
     },
     addressRow: {
       flexDirection: 'row',
@@ -53,11 +52,11 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     addressLabel: {
       color: colors.textSecondary,
-      fontSize: Type.body,
+      ...Typography.body,
     },
     addressValue: {
       color: colors.text,
-      fontSize: Type.body,
+      ...Typography.body,
       flexShrink: 1,
     },
     services: {
@@ -76,7 +75,7 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     serviceText: {
       color: colors.text,
-      fontSize: Type.small,
+      ...Typography.caption,
     },
   });
 }

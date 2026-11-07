@@ -3,7 +3,7 @@ import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SectionHeader } from './section-header';
 
-import { Overlays, Radius, Spacing, Type } from '@/constants/theme';
+import { FontFamily, FontWeight, Overlays, Radius, Spacing, Typography } from '@/constants/theme';
 import { ContactHintRow } from '@/features/home/contact-hidden-hint';
 import { useThemeColors } from '@/hooks/use-theme-colors';
 import type { Company } from '@/types/domain';
@@ -43,6 +43,16 @@ export function FeaturedCompany({ company }: { company: Company | null }) {
         </TouchableOpacity>
         <View style={styles.companyActions}>
           <TouchableOpacity
+            style={styles.whatsappPill}
+            activeOpacity={0.7}
+            onPress={() => company.whatsapp && void openWhatsApp(company.whatsapp)}
+            disabled={!company.whatsapp}
+            accessibilityLabel={!company.whatsapp ? 'WhatsApp não disponível' : 'Abrir WhatsApp'}
+          >
+            <MaterialCommunityIcons name="whatsapp" size={16} color={colors.background} />
+            <Text style={styles.whatsappPillText}>WhatsApp</Text>
+          </TouchableOpacity>
+          <TouchableOpacity
             style={styles.actionPill}
             activeOpacity={0.7}
             onPress={() => company.phone && void callPhone(company.phone)}
@@ -61,16 +71,6 @@ export function FeaturedCompany({ company }: { company: Company | null }) {
           >
             <Ionicons name="location-outline" size={16} color={colors.primary} />
             <Text style={styles.actionPillText}>Endereço</Text>
-          </TouchableOpacity>
-          <TouchableOpacity
-            style={styles.whatsappPill}
-            activeOpacity={0.7}
-            onPress={() => company.whatsapp && void openWhatsApp(company.whatsapp)}
-            disabled={!company.whatsapp}
-            accessibilityLabel={!company.whatsapp ? 'WhatsApp não disponível' : 'Abrir WhatsApp'}
-          >
-            <MaterialCommunityIcons name="whatsapp" size={16} color={colors.background} />
-            <Text style={styles.whatsappPillText}>WhatsApp</Text>
           </TouchableOpacity>
         </View>
         {!company.phone && !company.address && !company.whatsapp ? <ContactHintRow /> : null}
@@ -112,8 +112,9 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     highlightTagText: {
       color: colors.background,
-      fontSize: Type.small,
-      fontWeight: '800',
+      ...Typography.caption,
+      fontFamily: FontFamily.body800,
+      fontWeight: FontWeight.heavy,
     },
     companyBody: {
       padding: 16,
@@ -121,12 +122,13 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     companyName: {
       color: colors.text,
-      fontSize: Type.section,
-      fontWeight: '700',
+      ...Typography.h5,
+      fontFamily: FontFamily.body700,
+      fontWeight: FontWeight.bold,
     },
     companyCategory: {
       color: colors.textSecondary,
-      fontSize: Type.body,
+      ...Typography.body,
     },
     addressRow: {
       flexDirection: 'row',
@@ -136,13 +138,15 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     companyAddress: {
       color: colors.textSecondary,
-      fontSize: Type.body,
+      ...Typography.body,
     },
     companyActions: {
       flexDirection: 'row',
       flexWrap: 'wrap',
-      gap: 8,
+      gap: 6,
       marginTop: 12,
+      marginBottom: 16,
+      marginHorizontal: 8,
     },
     actionPill: {
       flexDirection: 'row',
@@ -156,8 +160,9 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     actionPillText: {
       color: colors.primary,
-      fontSize: Type.body,
-      fontWeight: '600',
+      ...Typography.body,
+      fontFamily: FontFamily.body600,
+      fontWeight: FontWeight.semibold,
     },
     whatsappPill: {
       flexDirection: 'row',
@@ -171,8 +176,9 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     whatsappPillText: {
       color: colors.background,
-      fontSize: Type.body,
-      fontWeight: '700',
+      ...Typography.body,
+      fontFamily: FontFamily.body700,
+      fontWeight: FontWeight.bold,
     },
   });
 }

@@ -11,7 +11,7 @@ import {
 } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Radius, Type } from '@/constants/theme';
+import { Radius, Typography } from '@/constants/theme';
 import { GuestBanner } from '@/features/auth/guest-banner';
 import { AnnounceCta } from '@/features/home/announce-cta';
 import { BannerCarousel } from '@/features/home/banner-carousel';
@@ -265,8 +265,7 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     cityLabel: {
       color: colors.textSecondary,
-      fontSize: Type.base,
-      fontWeight: '600',
+      ...Typography.bodySemibold,
     },
     cityChip: {
       backgroundColor: colors.surface,
@@ -282,8 +281,7 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     cityChipText: {
       color: colors.textSecondary,
-      fontSize: Type.small,
-      fontWeight: '600',
+      ...Typography.captionSemibold,
     },
     cityChipTextActive: {
       color: colors.background,
@@ -300,7 +298,7 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
       backgroundColor: colors.surface,
     },
     errorText: {
-      fontSize: 18,
+      ...Typography.h3,
       color: colors.error,
       textAlign: 'center',
     },
@@ -313,8 +311,7 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     retryButtonText: {
       color: colors.background,
-      fontSize: 14,
-      fontWeight: '600',
+      ...Typography.bodySemibold,
     },
   });
 }

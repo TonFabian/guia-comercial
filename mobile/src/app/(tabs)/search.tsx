@@ -14,7 +14,7 @@ import {
 import * as Location from 'expo-location';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Radius, Spacing, Type } from '@/constants/theme';
+import { Radius, Spacing, Typography, FontFamily, FontWeight } from '@/constants/theme';
 import { openCompanyDetails } from '@/features/company/open-company';
 import {
   deriveSearchView,
@@ -787,8 +787,8 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     title: {
       color: colors.text,
-      fontSize: Type.headline,
-      fontWeight: '700',
+            ...Typography.h2,
+      position: 'absolute', left: 0, right: 0, textAlign: 'center',
     },
     mapButton: {
       flexDirection: 'row',
@@ -803,8 +803,9 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     mapButtonText: {
       color: colors.primary,
-      fontSize: Type.small,
-      fontWeight: '700',
+            ...Typography.caption,
+      fontFamily: FontFamily.body700,
+      fontWeight: FontWeight.bold,
     },
     searchBar: {
       flexDirection: 'row',
@@ -820,7 +821,7 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     searchInput: {
       flex: 1,
       color: colors.text,
-      fontSize: Type.subtitle,
+      ...Typography.h5,
       paddingVertical: 0,
     },
     micButton: {
@@ -828,7 +829,7 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     voiceError: {
       color: colors.error,
-      fontSize: Type.small,
+      ...Typography.caption,
     },
     errorBox: {
       gap: Spacing.two,
@@ -836,7 +837,7 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     errorText: {
       color: colors.error,
-      fontSize: Type.body,
+      ...Typography.body,
     },
     retryButton: {
       paddingVertical: Spacing.two,
@@ -848,8 +849,9 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     retryText: {
       color: colors.primary,
-      fontSize: Type.small,
-      fontWeight: '700',
+            ...Typography.caption,
+      fontFamily: FontFamily.body700,
+      fontWeight: FontWeight.bold,
     },
     selectedChipsRow: {
       flexDirection: 'row',
@@ -877,8 +879,9 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     categoryChipText: {
       color: colors.textSecondary,
-      fontSize: Type.small,
-      fontWeight: '600',
+            ...Typography.caption,
+      fontFamily: FontFamily.body600,
+      fontWeight: FontWeight.semibold,
     },
     categoryChipTextSelected: {
       color: colors.background,
@@ -898,8 +901,9 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     chipText: {
       color: colors.primary,
-      fontSize: Type.small,
-      fontWeight: '700',
+            ...Typography.caption,
+      fontFamily: FontFamily.body700,
+      fontWeight: FontWeight.bold,
     },
     spinner: {
       marginTop: Spacing.four,
@@ -915,14 +919,16 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     groupTitle: {
       color: colors.textSecondary,
-      fontSize: Type.small,
-      fontWeight: '700',
+            ...Typography.caption,
+      fontFamily: FontFamily.body700,
+      fontWeight: FontWeight.bold,
       textTransform: 'uppercase',
     },
     groupCount: {
       color: colors.textSecondary,
-      fontSize: Type.small,
-      fontWeight: '600',
+            ...Typography.caption,
+      fontFamily: FontFamily.body600,
+      fontWeight: FontWeight.semibold,
     },
     row: {
       flexDirection: 'row',
@@ -949,12 +955,11 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     rowTitle: {
       color: colors.text,
-      fontSize: Type.subtitle,
-      fontWeight: '600',
+            ...Typography.h5,
     },
     rowSubtitle: {
       color: colors.textSecondary,
-      fontSize: Type.body,
+      ...Typography.body,
     },
     loadMoreButton: {
       alignSelf: 'center',
@@ -968,8 +973,7 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     loadMoreText: {
       color: colors.primary,
-      fontSize: Type.subtitle,
-      fontWeight: '600',
+            ...Typography.h5,
     },
     clearAllButton: {
       flexDirection: 'row',
@@ -982,12 +986,13 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     clearAllText: {
       color: colors.textSecondary,
-      fontSize: Type.small,
-      fontWeight: '600',
+            ...Typography.caption,
+      fontFamily: FontFamily.body600,
+      fontWeight: FontWeight.semibold,
     },
     emptyText: {
       color: colors.textSecondary,
-      fontSize: Type.base,
+      ...Typography.body,
       textAlign: 'center',
       marginTop: Spacing.four,
     },

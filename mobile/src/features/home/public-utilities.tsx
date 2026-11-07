@@ -3,14 +3,7 @@ import * as Haptics from 'expo-haptics';
 import { useMemo, useState } from 'react';
 import { ActivityIndicator, Modal, Pressable, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
-import {
-  Glass,
-  Overlays,
-  Radius,
-  Spacing,
-  Type,
-  UtilityColors,
-} from '@/constants/theme';
+import { Glass, Overlays, Radius, Spacing, UtilityColors, Typography, FontFamily, FontWeight } from '@/constants/theme';
 import { useThemeColors } from '@/hooks/use-theme-colors';
 import type { PublicUtility } from '@/types/domain';
 import { callPhone } from '@/utils/links';
@@ -292,8 +285,9 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
       paddingVertical: 4,
     },
     phoneBadgeText: {
-      fontSize: Type.small,
-      fontWeight: '800',
+            ...Typography.caption,
+      fontFamily: FontFamily.body800,
+      fontWeight: FontWeight.heavy,
     },
     detailsBadge: {
       width: 28,
@@ -308,14 +302,13 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     cardTitle: {
       color: colors.text,
-      fontSize: Type.base,
-      fontWeight: '700',
-      lineHeight: 18,
+            ...Typography.body,
+      fontFamily: FontFamily.body700,
+      fontWeight: FontWeight.bold,
     },
     cardDescription: {
       color: colors.textSecondary,
-      fontSize: Type.small,
-      lineHeight: 16,
+            ...Typography.caption,
     },
     cardAction: {
       flexDirection: 'row',
@@ -324,8 +317,9 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     cardActionText: {
       color: colors.primary,
-      fontSize: Type.small,
-      fontWeight: '700',
+            ...Typography.caption,
+      fontFamily: FontFamily.body700,
+      fontWeight: FontWeight.bold,
     },
     center: {
       paddingVertical: Spacing.four,
@@ -335,7 +329,7 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     empty: {
       color: colors.textSecondary,
-      fontSize: Type.small,
+      ...Typography.caption,
       paddingHorizontal: Spacing.three,
       paddingVertical: Spacing.two,
       textAlign: 'center',
@@ -349,8 +343,9 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     retryText: {
       color: colors.primary,
-      fontSize: Type.small,
-      fontWeight: '700',
+            ...Typography.caption,
+      fontFamily: FontFamily.body700,
+      fontWeight: FontWeight.bold,
     },
     modalOverlay: {
       flex: 1,
@@ -394,12 +389,13 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     modalTitle: {
       color: colors.text,
-      fontSize: Type.title,
-      fontWeight: '700',
+            ...Typography.h4,
+      fontFamily: FontFamily.heading700,
+      fontWeight: FontWeight.bold,
     },
     modalDescription: {
       color: colors.textSecondary,
-      fontSize: Type.base,
+      ...Typography.body,
     },
     modalDetails: {
       gap: Spacing.two,
@@ -418,8 +414,7 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     modalDetailText: {
       flex: 1,
       color: colors.textSecondary,
-      fontSize: Type.body,
-      lineHeight: 19,
+            ...Typography.body,
     },
     modalCallButton: {
       flexDirection: 'row',
@@ -432,8 +427,9 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     modalCallText: {
       color: colors.background,
-      fontSize: Type.base,
-      fontWeight: '700',
+            ...Typography.body,
+      fontFamily: FontFamily.body700,
+      fontWeight: FontWeight.bold,
     },
     modalDismissButton: {
       alignItems: 'center',
@@ -445,8 +441,9 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     modalDismissText: {
       color: colors.text,
-      fontSize: Type.base,
-      fontWeight: '700',
+            ...Typography.body,
+      fontFamily: FontFamily.body700,
+      fontWeight: FontWeight.bold,
     },
   });
 }

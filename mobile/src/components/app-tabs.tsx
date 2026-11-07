@@ -1,7 +1,7 @@
 import { NativeTabs } from 'expo-router/native-tabs';
 import { Platform } from 'react-native';
 
-import { Glass } from '@/constants/theme';
+import { Glass, FontWeight } from '@/constants/theme';
 import { useThemeColors } from '@/hooks/use-theme-colors';
 
 export default function AppTabs() {
@@ -19,7 +19,7 @@ export default function AppTabs() {
       disableIndicator
       labelStyle={{
         default: { color: colors.textSecondary },
-        selected: { color: colors.primary, fontWeight: '600' },
+        selected: { color: colors.primary, fontWeight: FontWeight.semibold },
       }}>
       <NativeTabs.Trigger name="index">
         <NativeTabs.Trigger.Label>Início</NativeTabs.Trigger.Label>

@@ -1,7 +1,7 @@
 import { router } from 'expo-router';
 import { StyleSheet, Text, TouchableOpacity } from 'react-native';
 
-import { LoginColors, Spacing, Type } from '@/constants/theme';
+import { LoginColors, Spacing, Typography } from '@/constants/theme';
 import { useAuthState } from '@/providers/auth-provider';
 
 /**
@@ -35,7 +35,7 @@ const styles = StyleSheet.create({
   },
   text: {
     color: LoginColors.muted,
-    fontSize: Type.body,
+    ...Typography.body,
     textDecorationLine: 'underline',
   },
 });

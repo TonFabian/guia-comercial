@@ -2,7 +2,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { useEffect, useState } from 'react';
 import { ActivityIndicator, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
-import { Spacing, Type } from '@/constants/theme';
+import { Spacing, Typography, FontFamily, FontWeight } from '@/constants/theme';
 import { useThemeColors } from '@/hooks/use-theme-colors';
 import { useAuthState } from '@/providers/auth-provider';
 import { createReview, getReviews } from '@/services/api';
@@ -126,7 +126,7 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
   return StyleSheet.create({
     summary: { flexDirection: 'row', alignItems: 'center' },
     form: { gap: 8, paddingVertical: Spacing.two },
-    formTitle: { color: colors.text, fontSize: Type.subtitle, fontWeight: '600' },
+    formTitle: { color: colors.text, ...Typography.h5 },
     stars: { flexDirection: 'row', gap: 4 },
     input: {
       backgroundColor: colors.surface,
@@ -136,7 +136,7 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
       borderColor: colors.border,
       paddingHorizontal: 12,
       paddingVertical: 10,
-      fontSize: Type.base,
+      ...Typography.body,
       minHeight: 60,
     },
     submitButton: {
@@ -146,10 +146,10 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
       paddingVertical: 8,
       paddingHorizontal: 16,
     },
-    submitText: { color: colors.background, fontSize: Type.base, fontWeight: '700' },
+    submitText: { color: colors.background, ...Typography.body, fontFamily: FontFamily.body700, fontWeight: FontWeight.bold },
     empty: { alignItems: 'center', gap: 6, paddingVertical: Spacing.three },
-    emptyTitle: { color: colors.text, fontSize: Type.subtitle, fontWeight: '600' },
-    emptyText: { color: colors.textSecondary, fontSize: Type.body, textAlign: 'center' },
+    emptyTitle: { color: colors.text, ...Typography.h5 },
+    emptyText: { color: colors.textSecondary, ...Typography.body, textAlign: 'center' },
     list: { gap: Spacing.two },
     review: {
       backgroundColor: colors.surface,
@@ -160,7 +160,7 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
       gap: 4,
     },
     reviewHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
-    reviewAuthor: { color: colors.text, fontSize: Type.base, fontWeight: '600' },
-    reviewComment: { color: colors.textSecondary, fontSize: Type.body },
+    reviewAuthor: { color: colors.text, ...Typography.body, fontFamily: FontFamily.body600, fontWeight: FontWeight.semibold },
+    reviewComment: { color: colors.textSecondary, ...Typography.body },
   });
 }

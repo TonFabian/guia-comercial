@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Radius, Spacing, Type } from '@/constants/theme';
+import { Radius, Spacing, Typography, FontFamily, FontWeight } from '@/constants/theme';
 import { useThemeColors } from '@/hooks/use-theme-colors';
 import { useAuthState } from '@/providers/auth-provider';
 import { getMe, updateMe } from '@/services/api';
@@ -241,13 +241,16 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     topButtonText: {
       color: colors.primary,
-      fontSize: Type.base,
-      fontWeight: '600',
+            ...Typography.body,
+      fontFamily: FontFamily.body600,
+      fontWeight: FontWeight.semibold,
     },
     title: {
       color: colors.text,
-      fontSize: Type.title,
-      fontWeight: '700',
+            ...Typography.h4,
+      fontFamily: FontFamily.heading700,
+      fontWeight: FontWeight.bold,
+      position: 'absolute', left: 0, right: 0, textAlign: 'center',
     },
     content: {
       paddingHorizontal: Spacing.three,
@@ -256,8 +259,9 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     label: {
       color: colors.textSecondary,
-      fontSize: Type.small,
-      fontWeight: '700',
+            ...Typography.caption,
+      fontFamily: FontFamily.body700,
+      fontWeight: FontWeight.bold,
       textTransform: 'uppercase',
       marginTop: Spacing.two,
     },
@@ -269,7 +273,7 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
       borderColor: colors.border,
       paddingHorizontal: Spacing.three,
       paddingVertical: Spacing.three - Spacing.one,
-      fontSize: Type.base,
+      ...Typography.body,
     },
     inputReadonly: {
       color: colors.textSecondary,
@@ -277,7 +281,7 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     helper: {
       color: colors.textSecondary,
-      fontSize: Type.small,
+      ...Typography.caption,
     },
     saveButton: {
       flexDirection: 'row',
@@ -294,8 +298,9 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     saveButtonText: {
       color: colors.background,
-      fontSize: Type.subtitle,
-      fontWeight: '700',
+            ...Typography.h5,
+      fontFamily: FontFamily.body700,
+      fontWeight: FontWeight.bold,
     },
   });
 }

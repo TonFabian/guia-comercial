@@ -1,7 +1,9 @@
 import '@/global.css';
 
 import { DarkTheme } from 'expo-router';
-import { Platform } from 'react-native';
+import type { Theme } from 'expo-router';
+import { Dimensions, Platform } from 'react-native';
+import { fluidWidthFactor } from '@/theme/fluid-width';
 
 export const GuiaColors = {
   background: '#121212',
@@ -129,16 +131,48 @@ export const LoginGradients = {
   waveBottom: ['rgba(229, 148, 0, 0)', 'rgba(241, 168, 10, 0.16)'],
 } as const;
 
+const _fontScale = fluidWidthFactor(375, Dimensions.get('window').width);
+const _s = (n: number) => Math.round(n * _fontScale);
+
 export const Type = {
-  caption: 11,
-  small: 12,
-  body: 13,
-  base: 14,
-  subtitle: 15,
-  cardTitle: 16,
-  section: 17,
-  title: 18,
-  headline: 24,
+  xs: { size: _s(11), lineHeight: _s(15) },
+  sm: { size: _s(13), lineHeight: _s(18) },
+  md: { size: _s(15), lineHeight: _s(22) },
+  lg: { size: _s(18), lineHeight: _s(25) },
+  xg: { size: _s(22), lineHeight: _s(29) },
+} as const;
+
+export const FontFamily = {
+  heading600: 'Rubik_600SemiBold',
+  heading700: 'Rubik_700Bold',
+  heading800: 'Rubik_800ExtraBold',
+  body400: 'Inter_400Regular',
+  body500: 'Inter_500Medium',
+  body600: 'Inter_600SemiBold',
+  body700: 'Inter_700Bold',
+  body800: 'Inter_800ExtraBold',
+} as const;
+
+export const FontWeight = {
+  regular: '400',
+  medium: '500',
+  semibold: '600',
+  bold: '700',
+  heavy: '800',
+} as const;
+
+export const Typography = {
+  h1: { fontFamily: FontFamily.heading700, fontSize: _s(25), lineHeight: _s(31), fontWeight: FontWeight.bold },
+  h2: { fontFamily: FontFamily.heading700, fontSize: _s(22), lineHeight: _s(29), fontWeight: FontWeight.bold },
+  h3: { fontFamily: FontFamily.heading700, fontSize: _s(18), lineHeight: _s(24), fontWeight: FontWeight.bold },
+  h4: { fontFamily: FontFamily.heading600, fontSize: _s(16), lineHeight: _s(22), fontWeight: FontWeight.semibold },
+  h5: { fontFamily: FontFamily.heading600, fontSize: _s(15), lineHeight: _s(20), fontWeight: FontWeight.semibold },
+  body: { fontFamily: FontFamily.body400, fontSize: _s(13), lineHeight: _s(19), fontWeight: FontWeight.regular },
+  bodySemibold: { fontFamily: FontFamily.body600, fontSize: _s(13), lineHeight: _s(19), fontWeight: FontWeight.semibold },
+  bodyBold: { fontFamily: FontFamily.body700, fontSize: _s(13), lineHeight: _s(19), fontWeight: FontWeight.bold },
+  caption: { fontFamily: FontFamily.body400, fontSize: _s(11), lineHeight: _s(15), fontWeight: FontWeight.regular, maxFontSizeMultiplier: 1.4 },
+  captionSemibold: { fontFamily: FontFamily.body600, fontSize: _s(11), lineHeight: _s(15), fontWeight: FontWeight.semibold, maxFontSizeMultiplier: 1.4 },
+  label: { fontFamily: FontFamily.body700, fontSize: _s(11), lineHeight: _s(15), fontWeight: FontWeight.bold, textTransform: 'uppercase' as const, maxFontSizeMultiplier: 1.4 },
 } as const;
 
 /** Sombra/elevação padrão dos cards em carrossel (banners e cupons). */
@@ -154,7 +188,7 @@ export const BottomTabInset = Platform.select({ ios: 50, android: 80 }) ?? 0;
 export const MaxContentWidth = 800;
 
 /** Tema de navegação (tabs/stack) alinhado aos tokens da GUIA. */
-export const DarkGuiTheme = {
+export const DarkGuiTheme: Theme = {
   ...DarkTheme,
   colors: {
     ...DarkTheme.colors,
@@ -183,7 +217,7 @@ export const GuiaColorsLight = {
   coverPlaceholder: '#E5E7EB',
 } as const;
 
-export const LightGuiTheme = {
+export const LightGuiTheme: Theme = {
   ...DarkTheme,
   colors: {
     ...DarkTheme.colors,

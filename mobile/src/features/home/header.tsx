@@ -1,7 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
-import { Spacing, Type } from '@/constants/theme';
+import { Spacing, Typography, FontFamily, FontWeight } from '@/constants/theme';
 import { useThemeColors } from '@/hooks/use-theme-colors';
 
 export function Header({ city }: { city?: string }) {
@@ -37,16 +37,16 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     locationText: {
       color: colors.text,
-      fontSize: Type.base,
-      fontWeight: '600',
+            ...Typography.body,
+      fontFamily: FontFamily.body600,
+      fontWeight: FontWeight.semibold,
       maxWidth: 180,
       flexShrink: 1,
     },
     headerTitle: {
       color: colors.text,
-      fontSize: Type.title,
-      fontWeight: '700',
-      lineHeight: 24,
-    },
+            ...Typography.h4,
+      fontFamily: FontFamily.heading700,
+      fontWeight: FontWeight.bold,    },
   });
 }

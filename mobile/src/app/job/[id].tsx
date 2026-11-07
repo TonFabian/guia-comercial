@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Overlays, Radius, Spacing, Type } from '@/constants/theme';
+import { Overlays, Radius, Spacing, Typography, FontFamily, FontWeight } from '@/constants/theme';
 import { openCompanyDetails } from '@/features/company/open-company';
 import { useThemeColors } from '@/hooks/use-theme-colors';
 import { useThemeMode } from '@/providers/theme-provider';
@@ -200,12 +200,13 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     notFoundTitle: {
       color: colors.text,
-      fontSize: Type.title,
-      fontWeight: '700',
+            ...Typography.h4,
+      fontFamily: FontFamily.heading700,
+      fontWeight: FontWeight.bold,
     },
     notFoundText: {
       color: colors.textSecondary,
-      fontSize: Type.base,
+      ...Typography.body,
       textAlign: 'center',
     },
     backButton: {
@@ -217,8 +218,9 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     backButtonText: {
       color: colors.background,
-      fontSize: Type.body,
-      fontWeight: '700',
+            ...Typography.body,
+      fontFamily: FontFamily.body700,
+      fontWeight: FontWeight.bold,
     },
     topBar: {
       flexDirection: 'row',
@@ -238,9 +240,12 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
       gap: Spacing.two,
     },
     title: {
+      position: 'absolute',
+      left: 0,
+      right: 0,
+      textAlign: 'center',
       color: colors.text,
-      fontSize: Type.headline,
-      fontWeight: '700',
+            ...Typography.h2,
     },
     typeBadge: {
       alignSelf: 'flex-start',
@@ -251,8 +256,9 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     typeBadgeText: {
       color: colors.primary,
-      fontSize: Type.caption,
-      fontWeight: '700',
+            ...Typography.caption,
+      fontFamily: FontFamily.body700,
+      fontWeight: FontWeight.bold,
       textTransform: 'uppercase',
       letterSpacing: 0.4,
     },
@@ -271,16 +277,17 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     companyLink: {
       color: colors.primary,
-      fontSize: Type.base,
-      fontWeight: '600',
+            ...Typography.body,
+      fontFamily: FontFamily.body600,
+      fontWeight: FontWeight.semibold,
     },
     companyText: {
       color: colors.text,
-      fontSize: Type.base,
+      ...Typography.body,
     },
     metaText: {
       color: colors.textSecondary,
-      fontSize: Type.base,
+      ...Typography.body,
     },
     descriptionBlock: {
       gap: Spacing.one,
@@ -288,13 +295,13 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     sectionTitle: {
       color: colors.text,
-      fontSize: Type.subtitle,
-      fontWeight: '700',
+            ...Typography.h5,
+      fontFamily: FontFamily.body700,
+      fontWeight: FontWeight.bold,
     },
     description: {
       color: colors.textSoft,
-      fontSize: Type.base,
-      lineHeight: 20,
+            ...Typography.body,
     },
     verEmpresaButton: {
       marginTop: Spacing.two,
@@ -306,8 +313,9 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     verEmpresaText: {
       color: colors.background,
-      fontSize: Type.body,
-      fontWeight: '700',
+            ...Typography.body,
+      fontFamily: FontFamily.body700,
+      fontWeight: FontWeight.bold,
     },
     voltarButton: {
       backgroundColor: colors.surfaceAlt,
@@ -320,8 +328,9 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     voltarText: {
       color: colors.text,
-      fontSize: Type.body,
-      fontWeight: '700',
+            ...Typography.body,
+      fontFamily: FontFamily.body700,
+      fontWeight: FontWeight.bold,
     },
   });
 }

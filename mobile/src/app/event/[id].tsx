@@ -12,12 +12,7 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import {
-  Overlays,
-  Radius,
-  Spacing,
-  Type,
-} from '@/constants/theme';
+import { Overlays, Radius, Spacing, Typography, FontFamily, FontWeight } from '@/constants/theme';
 import {
   agruparProgramacaoPorDia,
   classificarEvento,
@@ -358,8 +353,9 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     backText: {
       color: colors.primary,
-      fontSize: Type.small,
-      fontWeight: '700',
+            ...Typography.body,
+      fontFamily: FontFamily.body700,
+      fontWeight: FontWeight.bold,
     },
     content: {
       gap: Spacing.two,
@@ -391,17 +387,20 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
       borderRadius: Radius.chip,
     },
     seloText: {
-      fontSize: Type.small,
-      fontWeight: '800',
+            ...Typography.caption,
+      fontFamily: FontFamily.body800,
+      fontWeight: FontWeight.heavy,
     },
     title: {
       color: colors.text,
-      fontSize: Type.headline,
-      fontWeight: '800',
+            ...Typography.h2,
+      fontFamily: FontFamily.heading800,
+      fontWeight: FontWeight.heavy,
+      position: 'absolute', left: 0, right: 0, textAlign: 'center',
     },
     meta: {
       color: colors.textSecondary,
-      fontSize: Type.body,
+      ...Typography.body,
     },
     whenRow: {
       flexDirection: 'row',
@@ -410,28 +409,29 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     whenText: {
       color: colors.textSecondary,
-      fontSize: Type.body,
+      ...Typography.body,
     },
     description: {
       color: colors.textSoft,
-      fontSize: Type.base,
-      lineHeight: 20,
+            ...Typography.body,
     },
     section: {
       gap: Spacing.two,
     },
     sectionTitle: {
       color: colors.text,
-      fontSize: Type.subtitle,
-      fontWeight: '700',
+            ...Typography.h5,
+      fontFamily: FontFamily.body700,
+      fontWeight: FontWeight.bold,
     },
     dayGroup: {
       gap: Spacing.two,
     },
     dayTitle: {
       color: colors.primary,
-      fontSize: Type.body,
-      fontWeight: '800',
+            ...Typography.body,
+      fontFamily: FontFamily.body800,
+      fontWeight: FontWeight.heavy,
     },
     scheduleItem: {
       gap: Spacing.one,
@@ -450,22 +450,23 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     scheduleTitle: {
       flexShrink: 1,
       color: colors.text,
-      fontSize: Type.base,
-      fontWeight: '700',
+            ...Typography.body,
+      fontFamily: FontFamily.body700,
+      fontWeight: FontWeight.bold,
     },
     scheduleTime: {
       color: colors.textSecondary,
-      fontSize: Type.small,
-      fontWeight: '700',
+            ...Typography.caption,
+      fontFamily: FontFamily.body700,
+      fontWeight: FontWeight.bold,
     },
     scheduleMeta: {
       color: colors.textSecondary,
-      fontSize: Type.body,
+      ...Typography.body,
     },
     scheduleDescription: {
       color: colors.textSoft,
-      fontSize: Type.body,
-      lineHeight: 18,
+            ...Typography.body,
     },
     linkButton: {
       flexDirection: 'row',
@@ -475,8 +476,9 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     linkText: {
       color: colors.primary,
-      fontSize: Type.body,
-      fontWeight: '700',
+            ...Typography.body,
+      fontFamily: FontFamily.body700,
+      fontWeight: FontWeight.bold,
     },
     ticketButton: {
       backgroundColor: colors.primary,
@@ -486,8 +488,9 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     ticketButtonText: {
       color: colors.background,
-      fontSize: Type.base,
-      fontWeight: '800',
+            ...Typography.body,
+      fontFamily: FontFamily.body800,
+      fontWeight: FontWeight.heavy,
     },
     pressed: {
       opacity: 0.8,
@@ -502,7 +505,7 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     stateText: {
       color: colors.textSecondary,
-      fontSize: Type.base,
+      ...Typography.body,
       textAlign: 'center',
     },
     stateButton: {
@@ -513,8 +516,9 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     stateButtonText: {
       color: colors.background,
-      fontSize: Type.base,
-      fontWeight: '800',
+            ...Typography.body,
+      fontFamily: FontFamily.body800,
+      fontWeight: FontWeight.heavy,
     },
   });
 }

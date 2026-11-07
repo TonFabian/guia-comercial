@@ -12,7 +12,7 @@ import {
   View,
 } from 'react-native';
 
-import { LoginColors, LoginGradients, Type } from '@/constants/theme';
+import { LoginColors, LoginGradients, Typography, FontFamily, FontWeight } from '@/constants/theme';
 import { clerkErrorToMessage, GenericAuthErrorMessage } from '@/features/auth/clerk-errors';
 
 import { LoginField } from './login-field';
@@ -440,12 +440,12 @@ const styles = StyleSheet.create({
   },
   helper: {
     color: LoginColors.muted,
-    fontSize: Type.body,
+    ...Typography.body,
     textAlign: 'center',
   },
   error: {
     color: LoginColors.error,
-    fontSize: Type.small,
+    ...Typography.caption,
   },
   submitWrap: {
     marginTop: 8,
@@ -459,8 +459,9 @@ const styles = StyleSheet.create({
   },
   submitText: {
     color: LoginColors.primaryText,
-    fontSize: Type.title,
-    fontWeight: '700',
+        ...Typography.h4,
+    fontFamily: FontFamily.heading700,
+    fontWeight: FontWeight.bold,
   },
   submitArrow: {
     marginLeft: 8,
@@ -470,6 +471,6 @@ const styles = StyleSheet.create({
   },
   linkText: {
     color: LoginColors.muted,
-    fontSize: Type.small,
+    ...Typography.caption,
   },
 });

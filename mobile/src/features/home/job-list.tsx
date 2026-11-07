@@ -10,7 +10,7 @@ import {
   View,
 } from 'react-native';
 
-import { Overlays, Radius, Spacing, Type } from '@/constants/theme';
+import { Overlays, Radius, Spacing, Typography, FontFamily, FontWeight } from '@/constants/theme';
 import { useThemeColors } from '@/hooks/use-theme-colors';
 import type { Job } from '@/types/domain';
 import { companyLabel } from '@/types/domain';
@@ -140,8 +140,9 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     jobTypeText: {
       color: colors.primary,
-      fontSize: Type.caption,
-      fontWeight: '700',
+            ...Typography.caption,
+      fontFamily: FontFamily.body700,
+      fontWeight: FontWeight.bold,
       textTransform: 'uppercase',
       letterSpacing: 0.4,
     },
@@ -173,13 +174,12 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     jobRole: {
       color: colors.text,
-      fontSize: Type.cardTitle,
-      fontWeight: '700',
-      lineHeight: 20,
-    },
+            ...Typography.h5,
+      fontFamily: FontFamily.body700,
+      fontWeight: FontWeight.bold,    },
     jobCompany: {
       color: colors.textSecondary,
-      fontSize: Type.body,
+      ...Typography.body,
     },
     jobButton: {
       backgroundColor: colors.primary,
@@ -189,8 +189,9 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     jobButtonText: {
       color: colors.background,
-      fontSize: Type.body,
-      fontWeight: '700',
+            ...Typography.body,
+      fontFamily: FontFamily.body700,
+      fontWeight: FontWeight.bold,
     },
     jobMetaRow: {
       flexDirection: 'row',
@@ -200,7 +201,7 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     jobMetaText: {
       flex: 1,
       color: colors.textSecondary,
-      fontSize: Type.small,
+      ...Typography.caption,
     },
     jobDetailsButton: {
       flexDirection: 'row',
@@ -216,8 +217,9 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     jobDetailsText: {
       color: colors.primary,
-      fontSize: Type.small,
-      fontWeight: '700',
+            ...Typography.caption,
+      fontFamily: FontFamily.body700,
+      fontWeight: FontWeight.bold,
     },
   });
 }

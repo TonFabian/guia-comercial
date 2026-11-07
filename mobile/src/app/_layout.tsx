@@ -1,7 +1,22 @@
 import { ClerkProvider } from '@clerk/expo';
 import { tokenCache } from '@clerk/expo/token-cache';
+import {
+  Inter_400Regular,
+  Inter_500Medium,
+  Inter_600SemiBold,
+  Inter_700Bold,
+  Inter_800ExtraBold,
+  useFonts as useInterFonts,
+} from '@expo-google-fonts/inter';
+import {
+  Rubik_600SemiBold,
+  Rubik_700Bold,
+  Rubik_800ExtraBold,
+  useFonts as useRubikFonts,
+} from '@expo-google-fonts/rubik';
 import { ThemeProvider as RouterThemeProvider, Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
+import { useEffect } from 'react';
 import type { ReactNode } from 'react';
 
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
@@ -53,6 +68,29 @@ function ThemedStack() {
 }
 
 export default function RootLayout() {
+  const [interLoaded, interError] = useInterFonts({
+    Inter_400Regular,
+    Inter_500Medium,
+    Inter_600SemiBold,
+    Inter_700Bold,
+    Inter_800ExtraBold,
+  });
+  const [rubikLoaded, rubikError] = useRubikFonts({
+    Rubik_600SemiBold,
+    Rubik_700Bold,
+    Rubik_800ExtraBold,
+  });
+  const fontError = interError ?? rubikError;
+  const fontsLoaded = interLoaded && rubikLoaded;
+
+  useEffect(() => {
+    if (fontsLoaded || fontError) {
+      SplashScreen.hideAsync().catch(() => {});
+    }
+  }, [fontsLoaded, fontError]);
+
+  if (!fontsLoaded && !fontError) return null; // splash mantido
+
   return (
     <ThemeProvider>
       <ThemedStack />

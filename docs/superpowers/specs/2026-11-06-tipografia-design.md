@@ -57,6 +57,20 @@ Tabela 1 — escada (referência 375dp; `size`/`line` = fontSize/lineHeight):
 
 Presets (`Pick<TextStyle, 'fontFamily' | 'fontSize' | 'lineHeight' | 'fontWeight'>`; valores já escalados com `Math.round(size × fator)`):
 
+**Os eixos são ortogonais — presets não são correntes.** Qualquer combinação
+família × tamanho é válida com os primitivos (ex.: Rubik com tamanho `sm`:
+
+```ts
+{ fontFamily: FontFamily.heading600, fontSize: Type.sm.size, lineHeight: Type.sm.line }
+```
+
+). Preset cobre apenas os padrões recorrentes do app; caso fora do padrão
+usa os primitivos — os três eixos continuam saindo dos tokens (nada cru).
+Como cada peso é uma família registrada separadamente no device (ver §
+Carregamento), **para mudar o peso de um preset, troque o `fontFamily` pelo
+token do peso desejado** — sobrescrever só `fontWeight` no call site não
+troca a face no device.
+
 | Preset | fontFamily | size/line | weight |
 | --- | --- | --- | --- |
 | `Typography.h1` | Rubik_700Bold | 28/34 | 700 |
@@ -145,7 +159,10 @@ Instalação: `npm i -D @playwright/test` em `mobile/` e `admin/` (ferramenta de
 ## Critérios de aceite
 
 1. Nenhuma ocorreência de `fontSize` cru fora de `theme.ts` no mobile src; nenhum `fontWeight` cru fora de `FontWeight`.
-2. Presets cobrem h1–h5 (Rubik) e body/caption/label (Inter); **todo `<Text>` migrado usa um preset `Typography.*` que carrega a família** — nenhum `<Text>` de título sem `fontFamily` e nenhum texto de body sem preset (migração size-only não pode deixar o texto na fonte do sistema).
+2. Presets cobrem h1–h5 (Rubik) e body/caption/label (Inter) como padrões
+   recorrentes; **todo `<Text>` migrado define a família via tokens**
+   (preset OU primitivos `FontFamily`/`Type`) — nenhum texto na fonte do
+   sistema nem tamanho cru.
 3. Mobile: tamanho computado do texto varia conforme a largura (verificado por Playwright em 4 viewports + screenshots).
 4. Admin: tamanhos em rem/vars CSS, Rubik/Inter visíveis nos computed styles, build verde.
 5. Testes E2E estáveis: asserções de estilo computado (não imagem exata), evitando flakiness por renderização.

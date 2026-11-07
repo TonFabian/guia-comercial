@@ -17,7 +17,7 @@ import {
 import type { ListRenderItemInfo } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { CardShadow, Radius, Spacing, Type } from '@/constants/theme';
+import { CardShadow, Radius, Spacing, Typography, FontFamily, FontWeight } from '@/constants/theme';
 import { useThemeColors } from '@/hooks/use-theme-colors';
 import { SectionHeader } from '@/features/home/section-header';
 import { openVideo } from '@/utils/links';
@@ -472,8 +472,9 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
   },
   placeholderText: {
     color: colors.textSecondary,
-    fontSize: Type.small,
-    fontWeight: '600',
+        ...Typography.caption,
+    fontFamily: FontFamily.body600,
+    fontWeight: FontWeight.semibold,
   },
   playBadge: {
     position: 'absolute',
@@ -500,8 +501,9 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
   },
   gridPlaceholderText: {
     color: colors.textSecondary,
-    fontSize: Type.small,
-    fontWeight: '600',
+        ...Typography.caption,
+    fontFamily: FontFamily.body600,
+    fontWeight: FontWeight.semibold,
     paddingHorizontal: Spacing.one,
   },
   gridPlayBadge: {
@@ -536,12 +538,13 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
   },
   modalTitle: {
     color: colors.text,
-    fontSize: Type.headline,
-    fontWeight: '800',
+        ...Typography.h2,
+    fontFamily: FontFamily.heading800,
+    fontWeight: FontWeight.heavy,
   },
   modalSubtitle: {
     color: colors.textSecondary,
-    fontSize: Type.small,
+    ...Typography.caption,
   },
   modalClose: {
     width: 40,
@@ -579,8 +582,9 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
   },
   lightboxCounter: {
     color: colors.textSecondary,
-    fontSize: Type.small,
-    fontWeight: '700',
+        ...Typography.caption,
+    fontFamily: FontFamily.body700,
+    fontWeight: FontWeight.bold,
   },
   lightboxHeaderSpacer: {
     width: 40,
@@ -606,12 +610,13 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
   },
   lightboxPlaceholderTitle: {
     color: colors.text,
-    fontSize: Type.subtitle,
-    fontWeight: '700',
+        ...Typography.h5,
+    fontFamily: FontFamily.body700,
+    fontWeight: FontWeight.bold,
   },
   lightboxPlaceholderText: {
     color: colors.textSecondary,
-    fontSize: Type.small,
+    ...Typography.caption,
   },
   lightboxPlay: {
     position: 'absolute',
@@ -633,8 +638,9 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
   lightboxCaption: {
     flex: 1,
     color: colors.textSecondary,
-    fontSize: Type.small,
-    fontWeight: '600',
+        ...Typography.caption,
+    fontFamily: FontFamily.body600,
+    fontWeight: FontWeight.semibold,
     textAlign: 'center',
   },
   lightboxNavButton: {

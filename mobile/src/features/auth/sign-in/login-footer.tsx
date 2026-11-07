@@ -1,6 +1,6 @@
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
-import { LoginColors, Type } from '@/constants/theme';
+import { LoginColors, Typography, FontFamily, FontWeight } from '@/constants/theme';
 
 import type { AuthMode } from './login-labels';
 import { loginFooterAction, loginFooterPrompt } from './login-labels';
@@ -36,12 +36,13 @@ const styles = StyleSheet.create({
   },
   prompt: {
     color: LoginColors.text,
-    fontSize: Type.base,
+    ...Typography.body,
   },
   action: {
     color: LoginColors.link,
-    fontSize: Type.base,
-    fontWeight: '700',
+        ...Typography.body,
+    fontFamily: FontFamily.body700,
+    fontWeight: FontWeight.bold,
     textDecorationLine: 'underline',
   },
 });

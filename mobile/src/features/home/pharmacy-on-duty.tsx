@@ -2,7 +2,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
-import { Radius, Spacing, Type } from '@/constants/theme';
+import { Radius, Spacing, Typography, FontFamily, FontWeight } from '@/constants/theme';
 import { openCompanyDetails } from '@/features/company/open-company';
 import { ContactHintRow } from '@/features/home/contact-hidden-hint';
 import { useThemeColors } from '@/hooks/use-theme-colors';
@@ -82,13 +82,15 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     pharmacyTitle: {
       color: colors.text,
-      fontSize: Type.cardTitle,
-      fontWeight: '700',
+            ...Typography.h5,
+      fontFamily: FontFamily.body700,
+      fontWeight: FontWeight.bold,
     },
     pharmacyName: {
       color: colors.text,
-      fontSize: Type.title,
-      fontWeight: '700',
+            ...Typography.h4,
+      fontFamily: FontFamily.heading700,
+      fontWeight: FontWeight.bold,
     },
     statusRow: {
       flexDirection: 'row',
@@ -103,8 +105,9 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     statusText: {
       color: colors.success,
-      fontSize: Type.body,
-      fontWeight: '600',
+            ...Typography.body,
+      fontFamily: FontFamily.body600,
+      fontWeight: FontWeight.semibold,
     },
     pharmacyActions: {
       flexDirection: 'row',
@@ -125,8 +128,9 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     pillDarkText: {
       color: colors.primary,
-      fontSize: Type.body,
-      fontWeight: '600',
+            ...Typography.body,
+      fontFamily: FontFamily.body600,
+      fontWeight: FontWeight.semibold,
     },
     pillYellow: {
       flexDirection: 'row',
@@ -140,8 +144,9 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     pillYellowText: {
       color: colors.background,
-      fontSize: Type.body,
-      fontWeight: '700',
+            ...Typography.body,
+      fontFamily: FontFamily.body700,
+      fontWeight: FontWeight.bold,
     },
   });
 }

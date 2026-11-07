@@ -1,6 +1,6 @@
 import { StyleSheet, Text, View } from 'react-native';
 
-import { Overlays, Radius, Spacing, Type } from '@/constants/theme';
+import { Overlays, Radius, Spacing, Typography, FontFamily, FontWeight } from '@/constants/theme';
 import { useThemeColors } from '@/hooks/use-theme-colors';
 import type { Coupon } from '@/types/domain';
 
@@ -53,8 +53,9 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     couponTitle: {
       flex: 1,
       color: colors.text,
-      fontSize: Type.subtitle,
-      fontWeight: '700',
+            ...Typography.h5,
+      fontFamily: FontFamily.body700,
+      fontWeight: FontWeight.bold,
     },
     discountBox: {
       backgroundColor: Overlays.amberTag,
@@ -64,12 +65,13 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     discountText: {
       color: colors.primary,
-      fontSize: Type.small,
-      fontWeight: '800',
+            ...Typography.caption,
+      fontFamily: FontFamily.body800,
+      fontWeight: FontWeight.heavy,
     },
     couponDescription: {
       color: colors.textSecondary,
-      fontSize: Type.body,
+      ...Typography.body,
     },
     codeBox: {
       flexDirection: 'row',
@@ -84,12 +86,13 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     codeLabel: {
       color: colors.textSecondary,
-      fontSize: Type.small,
+      ...Typography.caption,
     },
     code: {
       color: colors.primary,
-      fontSize: Type.subtitle,
-      fontWeight: '800',
+            ...Typography.h5,
+      fontFamily: FontFamily.body800,
+      fontWeight: FontWeight.heavy,
       letterSpacing: 1,
     },
   });

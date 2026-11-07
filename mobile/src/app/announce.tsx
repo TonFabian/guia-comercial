@@ -10,7 +10,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { GuiaColors, Radius, Spacing, Type } from '@/constants/theme';
+import { GuiaColors, Radius, Spacing, Typography, FontFamily, FontWeight } from '@/constants/theme';
 import { useThemeColors } from '@/hooks/use-theme-colors';
 import { useThemeMode } from '@/providers/theme-provider';
 import { callPhone, openExternalUrl, openWhatsApp } from '@/utils/links';
@@ -158,13 +158,12 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     title: {
       color: colors.text,
-      fontSize: Type.headline,
-      fontWeight: '700',
+            ...Typography.h2,
+      position: 'absolute', left: 0, right: 0, textAlign: 'center',
     },
     description: {
       color: colors.textSecondary,
-      fontSize: Type.base,
-      lineHeight: 20,
+            ...Typography.body,
     },
     card: {
       backgroundColor: colors.surface,
@@ -176,8 +175,9 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     sectionTitle: {
       color: colors.text,
-      fontSize: Type.subtitle,
-      fontWeight: '700',
+            ...Typography.h5,
+      fontFamily: FontFamily.body700,
+      fontWeight: FontWeight.bold,
     },
     benefitRow: {
       flexDirection: 'row',
@@ -186,7 +186,7 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     benefitText: {
       color: colors.textSecondary,
-      fontSize: Type.base,
+      ...Typography.body,
       flex: 1,
     },
     contactButton: {
@@ -217,13 +217,14 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     contactButtonText: {
       color: colors.text,
-      fontSize: Type.base,
-      fontWeight: '700',
+            ...Typography.body,
+      fontFamily: FontFamily.body700,
+      fontWeight: FontWeight.bold,
       flex: 1,
     },
     contactButtonHint: {
       color: colors.textSecondary,
-      fontSize: Type.small,
+      ...Typography.caption,
     },
     voltarButton: {
       backgroundColor: colors.surfaceAlt,
@@ -236,8 +237,9 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     voltarText: {
       color: colors.text,
-      fontSize: Type.body,
-      fontWeight: '700',
+            ...Typography.body,
+      fontFamily: FontFamily.body700,
+      fontWeight: FontWeight.bold,
     },
   });
 }

@@ -20,11 +20,14 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import {
   ButtonGradients,
   CardShadow,
+  FontFamily,
+  FontWeight,
   Glass,
   Overlays,
   Radius,
   Spacing,
   Type,
+  Typography,
 } from '@/constants/theme';
 import { useFavorites } from '@/features/favorites/favorites-provider';
 import { ContactHintRow } from '@/features/home/contact-hidden-hint';
@@ -470,8 +473,9 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     companyName: {
       color: colors.text,
-      fontSize: Type.headline,
-      fontWeight: '800',
+      ...Typography.h2,
+      fontFamily: FontFamily.heading800,
+      fontWeight: FontWeight.heavy,
       letterSpacing: -0.3,
     },
     metaRow: {
@@ -490,8 +494,10 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     categoryText: {
       color: colors.primary,
-      fontSize: Type.small,
-      fontWeight: '700',
+      fontFamily: FontFamily.body700,
+      fontSize: Type.xs.size,
+      lineHeight: Type.xs.lineHeight,
+      fontWeight: FontWeight.bold,
     },
     registryTag: {
       backgroundColor: Glass.surface,
@@ -503,8 +509,7 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     registryText: {
       color: colors.textSecondary,
-      fontSize: Type.small,
-      fontWeight: '600',
+      ...Typography.captionSemibold,
     },
     featuredTag: {
       backgroundColor: colors.primary,
@@ -514,8 +519,10 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     featuredTagText: {
       color: colors.background,
-      fontSize: Type.small,
-      fontWeight: '800',
+      fontFamily: FontFamily.body800,
+      fontSize: Type.xs.size,
+      lineHeight: Type.xs.lineHeight,
+      fontWeight: FontWeight.heavy,
     },
     promotionBanner: {
       backgroundColor: colors.surfaceAlt,
@@ -527,8 +534,7 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     promotionText: {
       color: colors.primary,
-      fontSize: Type.base,
-      fontWeight: '700',
+      ...Typography.bodyBold,
     },
     addressRow: {
       flexDirection: 'row',
@@ -538,8 +544,7 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     addressText: {
       flex: 1,
       color: colors.textSecondary,
-      fontSize: Type.body,
-      lineHeight: 18,
+      ...Typography.body,
     },
     mapButton: {
       backgroundColor: colors.primary,
@@ -549,8 +554,10 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     mapAction: {
       color: colors.background,
-      fontSize: Type.small,
-      fontWeight: '800',
+      fontFamily: FontFamily.body800,
+      fontSize: Type.xs.size,
+      lineHeight: Type.xs.lineHeight,
+      fontWeight: FontWeight.heavy,
     },
     section: {
       marginBottom: Spacing.four,
@@ -567,14 +574,14 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     storyTitle: {
       color: colors.primary,
-      fontSize: Type.title,
-      fontWeight: '800',
+      ...Typography.h4,
+      fontFamily: FontFamily.heading800,
+      fontWeight: FontWeight.heavy,
       letterSpacing: 0.2,
     },
     storyText: {
       color: colors.textSoft,
-      fontSize: Type.base,
-      lineHeight: 24,
+      ...Typography.body,
     },
     servicesList: {
       paddingHorizontal: Spacing.three,
@@ -607,12 +614,11 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     serviceName: {
       flex: 1,
       color: colors.text,
-      fontSize: Type.base,
-      fontWeight: '700',
+      ...Typography.bodyBold,
     },
     emptyServices: {
       color: colors.textSecondary,
-      fontSize: Type.base,
+      ...Typography.body,
     },
     hoursCard: {
       ...CardShadow,
@@ -637,8 +643,10 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     hoursCardTitle: {
       color: colors.text,
-      fontSize: Type.subtitle,
-      fontWeight: '700',
+      fontFamily: FontFamily.heading700,
+      fontSize: Type.sm.size,
+      lineHeight: Type.sm.lineHeight,
+      fontWeight: FontWeight.bold,
     },
     hoursHeaderDivider: {
       marginTop: Spacing.two,
@@ -677,8 +685,10 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
       backgroundColor: colors.textSecondary,
     },
     statusText: {
-      fontSize: Type.small,
-      fontWeight: '700',
+      fontFamily: FontFamily.body700,
+      fontSize: Type.xs.size,
+      lineHeight: Type.xs.lineHeight,
+      fontWeight: FontWeight.bold,
     },
     statusTextOpen: {
       color: colors.success,
@@ -702,19 +712,23 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     hoursLabel: {
       color: colors.textSoft,
-      fontSize: Type.base,
-      fontWeight: '500',
+      fontFamily: FontFamily.body500,
+      fontSize: Type.sm.size,
+      lineHeight: Type.sm.lineHeight,
+      fontWeight: FontWeight.medium,
     },
     hoursValue: {
       flexShrink: 1,
       color: colors.primary,
-      fontSize: Type.base,
-      fontWeight: '700',
+      ...Typography.bodyBold,
       textAlign: 'right',
     },
     hoursClosed: {
       color: colors.textSecondary,
-      fontWeight: '500',
+      fontFamily: FontFamily.body500,
+      fontSize: Type.sm.size,
+      lineHeight: Type.sm.lineHeight,
+      fontWeight: FontWeight.medium,
     },
     floatingNav: {
       position: 'absolute',
@@ -777,8 +791,10 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     whatsappButtonText: {
       color: colors.background,
-      fontSize: Type.base,
-      fontWeight: '800',
+      fontFamily: FontFamily.body800,
+      fontSize: Type.sm.size,
+      lineHeight: Type.sm.lineHeight,
+      fontWeight: FontWeight.heavy,
     },
     callButton: {
       flex: 1,
@@ -795,8 +811,10 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     callButtonText: {
       color: colors.background,
-      fontSize: Type.base,
-      fontWeight: '800',
+      fontFamily: FontFamily.body800,
+      fontSize: Type.sm.size,
+      lineHeight: Type.sm.lineHeight,
+      fontWeight: FontWeight.heavy,
     },
     buttonDisabled: {
       backgroundColor: colors.surfaceAlt,
@@ -815,7 +833,7 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     stateText: {
       color: colors.textSecondary,
-      fontSize: Type.base,
+      ...Typography.body,
       textAlign: 'center',
     },
     stateButton: {
@@ -826,8 +844,10 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     stateButtonText: {
       color: colors.background,
-      fontSize: Type.base,
-      fontWeight: '800',
+      fontFamily: FontFamily.body800,
+      fontSize: Type.sm.size,
+      lineHeight: Type.sm.lineHeight,
+      fontWeight: FontWeight.heavy,
     },
   });
 }

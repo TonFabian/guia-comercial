@@ -2,6 +2,7 @@ import type { CSSProperties } from 'react';
 
 import type { TouristSpot } from '../types/domain';
 import { hintStyle } from './styles';
+import { FontSize } from '../theme/typography';
 
 /** Ingresso do item: `''` = herda o ingresso do evento (campo ausente no payload). */
 export type ScheduleTicket = '' | 'free' | 'paid';
@@ -191,7 +192,7 @@ const itemAcoesStyle: CSSProperties = {
 const inlineErrorStyle: CSSProperties = {
   width: '100%',
   color: '#ff6b6b',
-  fontSize: 12,
+  fontSize: FontSize.xs,
 };
 
 /** Editor de itens de programação (um por dia/horário), embutido no formulário de evento. */

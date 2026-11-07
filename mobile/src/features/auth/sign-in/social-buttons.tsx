@@ -2,7 +2,7 @@ import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { ActivityIndicator, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import type { ReactNode } from 'react';
 
-import { LoginColors, Type } from '@/constants/theme';
+import { LoginColors, Typography } from '@/constants/theme';
 
 interface SocialButtonsProps {
   onGoogle: () => void;
@@ -100,7 +100,6 @@ const styles = StyleSheet.create({
   },
   text: {
     color: LoginColors.text,
-    fontSize: Type.subtitle,
-    fontWeight: '600',
+        ...Typography.h5,
   },
 });

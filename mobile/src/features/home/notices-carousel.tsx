@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
-import { Radius, Spacing, Type } from '@/constants/theme';
+import { Radius, Spacing, Typography, FontFamily, FontWeight } from '@/constants/theme';
 import { useThemeColors } from '@/hooks/use-theme-colors';
 import type { Notice } from '@/types/domain';
 import { SectionHeader } from './section-header';
@@ -91,16 +91,16 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     bar: { width: 4 },
     body: { flex: 1, padding: 12, gap: 4 },
-    title: { color: colors.text, fontSize: Type.body, fontWeight: '700' },
-    preview: { color: colors.textSecondary, fontSize: Type.small, lineHeight: 16 },
+    title: { color: colors.text, ...Typography.body, fontFamily: FontFamily.body700, fontWeight: FontWeight.bold },
+    preview: { color: colors.textSecondary, ...Typography.caption, lineHeight: 16 },
     center: { paddingVertical: 20, alignItems: 'center' },
-    empty: { color: colors.textSecondary, fontSize: Type.small, paddingHorizontal: 16, paddingVertical: 12 },
+    empty: { color: colors.textSecondary, ...Typography.caption, paddingHorizontal: 16, paddingVertical: 12 },
     modalOverlay: { flex: 1, backgroundColor: 'rgba(0,0,0,0.6)', justifyContent: 'center', padding: 20 },
     modalCard: { backgroundColor: colors.surface, borderRadius: Radius.card, padding: 20, gap: 12 },
     modalBar: { width: 40, height: 4, borderRadius: 2, marginBottom: 4 },
-    modalTitle: { color: colors.text, fontSize: Type.subtitle, fontWeight: '700' },
-    modalBody: { color: colors.textSecondary, fontSize: Type.base, lineHeight: 20 },
+    modalTitle: { color: colors.text, ...Typography.h5, fontFamily: FontFamily.body700, fontWeight: FontWeight.bold },
+    modalBody: { color: colors.textSecondary, ...Typography.body, lineHeight: 20 },
     closeBtn: { alignSelf: 'flex-end', paddingVertical: 8, paddingHorizontal: 16, borderRadius: Radius.chip, backgroundColor: colors.surfaceAlt },
-    closeBtnText: { color: colors.text, fontSize: Type.base, fontWeight: '600' },
+    closeBtnText: { color: colors.text, ...Typography.body, fontFamily: FontFamily.body600, fontWeight: FontWeight.semibold },
   });
 }

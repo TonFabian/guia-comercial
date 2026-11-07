@@ -10,7 +10,7 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Overlays, Radius, Spacing, Type } from '@/constants/theme';
+import { Overlays, Radius, Spacing, Typography, FontFamily, FontWeight } from '@/constants/theme';
 import {
   descreverEntrada,
   labelCategoriaAtracao,
@@ -243,8 +243,9 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     backText: {
       color: colors.primary,
-      fontSize: Type.small,
-      fontWeight: '700',
+            ...Typography.body,
+      fontFamily: FontFamily.body700,
+      fontWeight: FontWeight.bold,
     },
     content: {
       gap: Spacing.two,
@@ -271,8 +272,10 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     title: {
       color: colors.text,
-      fontSize: Type.headline,
-      fontWeight: '800',
+            ...Typography.h2,
+      fontFamily: FontFamily.heading800,
+      fontWeight: FontWeight.heavy,
+      position: 'absolute', left: 0, right: 0, textAlign: 'center',
     },
     tag: {
       alignSelf: 'flex-start',
@@ -283,25 +286,26 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     tagText: {
       color: colors.primary,
-      fontSize: Type.small,
-      fontWeight: '700',
+            ...Typography.caption,
+      fontFamily: FontFamily.body700,
+      fontWeight: FontWeight.bold,
     },
     meta: {
       color: colors.textSecondary,
-      fontSize: Type.body,
+      ...Typography.body,
     },
     description: {
       color: colors.textSoft,
-      fontSize: Type.base,
-      lineHeight: 20,
+            ...Typography.body,
     },
     section: {
       gap: Spacing.two,
     },
     sectionTitle: {
       color: colors.text,
-      fontSize: Type.subtitle,
-      fontWeight: '700',
+            ...Typography.h5,
+      fontFamily: FontFamily.body700,
+      fontWeight: FontWeight.bold,
     },
     hourRow: {
       flexDirection: 'row',
@@ -310,7 +314,7 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     hourText: {
       color: colors.textSecondary,
-      fontSize: Type.body,
+      ...Typography.body,
     },
     linkButton: {
       flexDirection: 'row',
@@ -324,8 +328,9 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     linkText: {
       color: colors.primary,
-      fontSize: Type.body,
-      fontWeight: '700',
+            ...Typography.body,
+      fontFamily: FontFamily.body700,
+      fontWeight: FontWeight.bold,
     },
     pressed: {
       opacity: 0.8,
@@ -340,7 +345,7 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     stateText: {
       color: colors.textSecondary,
-      fontSize: Type.base,
+      ...Typography.body,
       textAlign: 'center',
     },
     stateButton: {
@@ -351,8 +356,9 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     stateButtonText: {
       color: colors.background,
-      fontSize: Type.base,
-      fontWeight: '800',
+            ...Typography.body,
+      fontFamily: FontFamily.body800,
+      fontWeight: FontWeight.heavy,
     },
   });
 }

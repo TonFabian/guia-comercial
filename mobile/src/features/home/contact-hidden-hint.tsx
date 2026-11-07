@@ -1,7 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { StyleSheet, Text, View } from 'react-native';
 
-import { Spacing, Type } from '@/constants/theme';
+import { Spacing, Typography } from '@/constants/theme';
 import { useThemeColors } from '@/hooks/use-theme-colors';
 
 /**
@@ -33,7 +33,7 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     text: {
       color: colors.textSecondary,
-      fontSize: Type.body,
+      ...Typography.body,
     },
   });
 }

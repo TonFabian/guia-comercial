@@ -1,6 +1,6 @@
 import { StyleSheet, Text, TouchableOpacity } from 'react-native';
 
-import { Spacing, Type } from '@/constants/theme';
+import { Spacing, Typography, FontWeight } from '@/constants/theme';
 import { useThemeColors } from '@/hooks/use-theme-colors';
 import { router } from 'expo-router';
 
@@ -30,13 +30,11 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     ctaText: {
       color: colors.textSecondary,
-      fontSize: Type.base,
-      textAlign: 'center',
-      lineHeight: 20,
-    },
+      ...Typography.body,
+      textAlign: 'center',    },
     ctaHighlight: {
       color: colors.primary,
-      fontWeight: '600',
+      fontWeight: FontWeight.semibold,
     },
   });
 }

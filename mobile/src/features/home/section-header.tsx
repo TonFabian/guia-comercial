@@ -1,7 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
-import { Type } from '@/constants/theme';
+import { Typography, FontFamily, FontWeight } from '@/constants/theme';
 import { useThemeColors } from '@/hooks/use-theme-colors';
 
 export function SectionHeader({
@@ -64,8 +64,9 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     sectionTitle: {
       flexShrink: 1,
       color: colors.text,
-      fontSize: Type.title,
-      fontWeight: '700',
+            ...Typography.h4,
+      fontFamily: FontFamily.heading700,
+      fontWeight: FontWeight.bold,
     },
     actionButton: {
       flexShrink: 0,
@@ -78,8 +79,9 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     actionText: {
       color: colors.primary,
-      fontSize: Type.body,
-      fontWeight: '600',
+            ...Typography.body,
+      fontFamily: FontFamily.body600,
+      fontWeight: FontWeight.semibold,
     },
   });
 }

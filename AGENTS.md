@@ -298,10 +298,16 @@ Regras **obrigatórias em toda alteração de UI no mobile**:
 
 - **Tamanho** só pelo token de escada (xs 12/16 · sm 14/20 · md 16/24 ·
   lg 20/28 · xg 24/32, referência 375dp) — nunca `fontSize` cru.
-- **Preferir presets** de `Typography.*` (`h1`–`h5`, `body`, `bodySemibold`,
-  `bodyBold`, `caption`, `captionSemibold`, `label`): eles já trazem família +
-  tamanho + line-height + peso + fator fluido. O estilo do call site adiciona
-  só cor/espaçamento: `style={[Typography.h2, { color }]}`.
+- **Presets** `Typography.*` (`h1`–`h5`, `body`, `bodySemibold`, `bodyBold`,
+  `caption`, `captionSemibold`, `label`) cobrem os padrões recorrentes —
+  já trazem família + tamanho + line-height + peso + fator fluido; o estilo
+  do call site adiciona só cor/espaçamento: `style={[Typography.h2, { color }]}`.
+  **Presets não são correntes**: os eixos são ortogonais, e combinação fora
+  do padrão sai dos primitivos (ex. Rubik em `sm`:
+  `{ fontFamily: FontFamily.heading600, fontSize: Type.sm.size, lineHeight: Type.sm.line }`).
+  Para mudar o peso de um preset, troque o `fontFamily` pelo token do peso
+  desejado (cada peso é uma família registrada no device); sobrescrever só
+  `fontWeight` no call site não troca a face.
 - **Peso** só via `FontWeight` (`regular` 400 · `medium` 500 · `semibold`
   600 · `bold` 700 · `heavy` 800) — nunca string numérica crua.
 - **Line-height** sempre pareado ao tamanho (vem do preset); `lineHeight` cru
@@ -311,7 +317,7 @@ Regras **obrigatórias em toda alteração de UI no mobile**:
   Não recriar cálculo de escala em componente.
 - **Acessibilidade**: `allowFontScaling` nativo permanece ativo; textos
   críticos (tabs, labels de botões de fluxo) usam `maxFontSizeMultiplier: 1.4`.
-- **Gate de grep**: `fontSize:\s*\d` cru e `fontWeight: '[0-9]'` cru só podem
+- **Gate de grep**: `fontSize:\s*\d` cru e `fontWeight: '[0-9]+'` cru só podem
   existir em `src/constants/theme.ts`; qualquer outra ocorrência no mobile src
   é bug de padronização.
 

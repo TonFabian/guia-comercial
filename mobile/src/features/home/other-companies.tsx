@@ -2,7 +2,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
-import { Radius, Spacing, Type } from '@/constants/theme';
+import { Radius, Spacing, Typography } from '@/constants/theme';
 import { useThemeColors } from '@/hooks/use-theme-colors';
 import type { Company } from '@/types/domain';
 import { categoryLabel } from '@/types/domain';
@@ -85,9 +85,9 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     thumb: { width: 40, height: 40, borderRadius: 8, backgroundColor: colors.surfaceAlt, alignItems: 'center', justifyContent: 'center' },
     body: { flex: 1, gap: 2 },
     whatsappBtn: { padding: 6, borderRadius: Radius.chip, backgroundColor: colors.surfaceAlt },
-    name: { color: colors.text, fontSize: Type.cardTitle, fontWeight: '600' },
-    meta: { color: colors.textSecondary, fontSize: Type.body },
+    name: { color: colors.text, ...Typography.h5 },
+    meta: { color: colors.textSecondary, ...Typography.body },
     center: { paddingVertical: 20, alignItems: 'center' },
-    empty: { color: colors.textSecondary, fontSize: Type.small, paddingHorizontal: 16, paddingVertical: 12 },
+    empty: { color: colors.textSecondary, ...Typography.caption, paddingHorizontal: 16, paddingVertical: 12 },
   });
 }
