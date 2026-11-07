@@ -67,7 +67,6 @@ export default function ProfileScreen() {
     <View style={styles.root}>
       <SafeAreaView style={styles.safeArea} edges={['top']}>
         <ScrollView contentContainerStyle={styles.content} showsVerticalScrollIndicator={false}>
-          <Text style={styles.title}>Perfil</Text>
 
           <ProfileHeader
             state={state}
