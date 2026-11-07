@@ -48,6 +48,22 @@ export function planejarMigracao(
   return { schedule: scheduleNovo, naoParseaveis };
 }
 
+/**
+ * Monta o update do MongoDB a partir do plano. As duas operações entram no
+ * MESMO $set quando há não parseáveis — spread de uma segunda chave `$set`
+ * descartaria o schedule silenciosamente (última chave vence no objeto JS).
+ */
+export function montarUpdate(
+  plano: PlanoMigracao,
+): Record<string, unknown> {
+  if (plano.naoParseaveis.length > 0) {
+    return {
+      $set: { schedule: plano.schedule, openingHours: plano.naoParseaveis },
+    };
+  }
+  return { $set: { schedule: plano.schedule }, $unset: { openingHours: '' } };
+}
+
 /** Migra todas as empresas elegíveis; retorna quantas foram alteradas. */
 export async function migrarCompanies(): Promise<number> {
   const empresas = await CompanyModel.find({
@@ -56,6 +72,7 @@ export async function migrarCompanies(): Promise<number> {
   });
 
   let migradas = 0;
+  let comNaoParseaveis = 0;
   for (const empresa of empresas) {
     const plano = planejarMigracao(empresa.openingHours, empresa.schedule);
     if (!plano) continue;
@@ -64,23 +81,26 @@ export async function migrarCompanies(): Promise<number> {
     // parser traduziu com confiança.
     const atualizada = await CompanyModel.findByIdAndUpdate(
       empresa._id,
-      {
-        $set: { schedule: plano.schedule },
-        // Linhas não parseáveis ficam; quando tudo converteu, o campo sai.
-        ...(plano.naoParseaveis.length > 0
-          ? { $set: { openingHours: plano.naoParseaveis } }
-          : { $unset: { openingHours: '' } }),
-      },
+      montarUpdate(plano),
     );
     if (!atualizada) continue;
     migradas += 1;
 
-    for (const linha of plano.naoParseaveis) {
-      console.warn(`Não parseável em "${empresa.name}": "${linha}"`);
+    if (plano.naoParseaveis.length > 0) {
+      comNaoParseaveis += 1;
+      console.warn(
+        `Empresa "${empresa.name}" (id ${String(empresa._id)}) mantém openingHours: ${plano.naoParseaveis.length} linha(s) não parseável(is)`,
+      );
+      for (const linha of plano.naoParseaveis) {
+        console.warn(`  Não parseável: "${linha}"`);
+      }
     }
   }
 
   console.log(`Empresas migradas: ${migradas} de ${empresas.length} elegíveis`);
+  console.log(
+    `Empresas com linhas não parseáveis (mantêm openingHours para correção manual): ${comNaoParseaveis}`,
+  );
   return migradas;
 }
 

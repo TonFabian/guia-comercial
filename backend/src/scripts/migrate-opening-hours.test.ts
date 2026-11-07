@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 
-import { planejarMigracao } from './migrate-opening-hours.js';
+import { montarUpdate, planejarMigracao } from './migrate-opening-hours.js';
+
+const SEGUNDA = [{ day: 1, opens: 480, closes: 1080 }];
 
 describe('planejarMigracao', () => {
   it('empresa sem openingHours não precisa migrar (retorna null)', () => {
@@ -40,5 +42,30 @@ describe('planejarMigracao', () => {
     const plano = planejarMigracao(['24h por telefone'], []);
     expect(plano?.schedule).toEqual([]);
     expect(plano?.naoParseaveis).toEqual(['24h por telefone']);
+  });
+});
+
+describe('montarUpdate', () => {
+  it('com não parseáveis: $set salva schedule E openingHours no mesmo $set', () => {
+    const update = montarUpdate({
+      schedule: SEGUNDA,
+      naoParseaveis: ['Feriados: consultar'],
+    });
+    // Um único $set com as duas chaves — a chave duplicada anterior descartava
+    // o schedule silenciosamente.
+    expect(update).toEqual({
+      $set: {
+        schedule: SEGUNDA,
+        openingHours: ['Feriados: consultar'],
+      },
+    });
+  });
+
+  it('sem não parseáveis: $set só schedule e $unset remove openingHours', () => {
+    const update = montarUpdate({ schedule: SEGUNDA, naoParseaveis: [] });
+    expect(update).toEqual({
+      $set: { schedule: SEGUNDA },
+      $unset: { openingHours: '' },
+    });
   });
 });
