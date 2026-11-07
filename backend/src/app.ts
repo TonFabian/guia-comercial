@@ -5,6 +5,7 @@ import helmet from 'helmet';
 import { assertValidClerkConfiguration, warnIfWithoutAuthentication } from './config/boot-check.js';
 import { errorHandler } from './middlewares/error.middleware.js';
 import { notFoundHandler } from './middlewares/not-found.middleware.js';
+import { createRateLimitMiddleware } from './middlewares/rate-limit.middleware.js';
 import routes from './routes/index.js';
 import { clerkWebhook } from './routes/webhooks/clerk.js';
 
@@ -36,7 +37,7 @@ app.post('/api/webhooks/clerk', express.raw({ type: 'application/json' }), clerk
 
 app.use(express.json({ limit: '1mb' }));
 
-app.use('/api', routes);
+app.use('/api', createRateLimitMiddleware(), routes);
 
 // 404 para rotas não tratadas; deve vir depois de todas as rotas.
 app.use(notFoundHandler);
