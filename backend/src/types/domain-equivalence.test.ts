@@ -11,7 +11,6 @@ function readDomain(relativePath: string): string {
 describe('domain.ts equivalence', () => {
   it('shared, mobile and admin copies are textually identical', () => {
     const shared = readDomain('shared/domain.ts');
-    const mobile = readDomain('mobile/src/types/domain.ts');
     const admin = readDomain('admin/src/types/domain.ts');
 
     // mobile possui helpers extras (categoryLabel/companyLabel) ausentes em shared; pendência de refactor.

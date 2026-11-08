@@ -56,7 +56,8 @@ export async function updateJob(id: string, dto: UpdateJobDto, clerkId?: string)
     notFoundMessage: 'empresa não encontrada',
     forbiddenMessage: 'sem permissão para editar esta vaga',
   });
-  const { company: _ignore, ...rest } = dto as UpdateJobDto & { company?: unknown };
+  const rest = { ...(dto as Record<string, unknown>) };
+  delete rest.company;
   return JobModel.findByIdAndUpdate(id, rest, { returnDocument: 'after', runValidators: true }).populate('company').lean();
 }
 
