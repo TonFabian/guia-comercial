@@ -225,7 +225,8 @@ export interface TouristSpot {
   city?: string | City;
   latitude?: number;
   longitude?: number;
-  openingHours?: string[];
+  openingHours?: string[]; // deprecated
+  schedule?: { day: number; opens: number; closes: number }[];
   entryFee?: 'free' | 'paid' | 'donation';
   entryPrice?: string; // texto livre ("R$ 10,00"); obrigatório se entryFee === 'paid'
   phone?: string | null;

@@ -32,6 +32,7 @@ const touristSpotSchema = new Schema<TouristSpot>(
     latitude: Number,
     longitude: Number,
     openingHours: [String],
+    schedule: [{ day: Number, opens: Number, closes: Number }],
     entryFee: { type: String, enum: ['free', 'paid', 'donation'] },
     // Texto livre ("R$ 10,00"): o valor pode incluir contexto ("R$ 5,00 por pessoa").
     entryPrice: { type: String, trim: true },
