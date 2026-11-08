@@ -111,4 +111,3 @@ export async function deleteCoupon(id: string, clerkId?: string) {
 export function isObjectId(value: string): boolean {
   return isValidObjectId(value);
 }
-

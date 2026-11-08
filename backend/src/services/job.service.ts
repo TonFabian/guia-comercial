@@ -59,7 +59,9 @@ export async function updateJob(id: string, dto: UpdateJobDto, clerkId?: string)
   // `company` não é mutável no update: remover do payload antes de persistir.
   const rest = { ...dto } as UpdateJobDto & { company?: unknown };
   delete rest.company;
-  return JobModel.findByIdAndUpdate(id, rest, { returnDocument: 'after', runValidators: true }).populate('company').lean();
+  return JobModel.findByIdAndUpdate(id, rest, { returnDocument: 'after', runValidators: true })
+    .populate('company')
+    .lean();
 }
 
 export async function deleteJob(id: string, clerkId?: string) {
