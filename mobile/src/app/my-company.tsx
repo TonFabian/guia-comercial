@@ -34,7 +34,8 @@ export default function MyCompanyScreen() {
   const auth = useAuthState();
   const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(true);
-  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingHoursId, setEditingHoursId] = useState<string | null>(null);
+  const [editingInfoId, setEditingInfoId] = useState<string | null>(null);
   const [scheduleDays, setScheduleDays] = useState<DayState[]>(
     scheduleToDayStates([]),
   );
@@ -73,13 +74,17 @@ export default function MyCompanyScreen() {
     return () => { cancelled = true; };
   }, [auth.state, auth.user?.clerkId]);
 
-  function startEdit(company: Company) {
-    setEditingId(company._id);
+  function startEditHours(company: Company) {
+    setEditingHoursId(company._id);
     setScheduleDays(
       company.schedule && company.schedule.length > 0
         ? scheduleToDayStates(company.schedule)
         : [],
     );
+  }
+
+  function startEditInfo(company: Company) {
+    setEditingInfoId(company._id);
     setPromotionText(company.promotion ?? '');
     setDescription(company.description ?? '');
     setAddress(company.address ?? '');
@@ -90,17 +95,37 @@ export default function MyCompanyScreen() {
     setSamePhone(Boolean(p) && p === w);
   }
 
-  async function save() {
-    if (!editingId) return;
+  async function saveHours() {
+    if (!editingHoursId) return;
     setSaving(true);
     try {
       const schedule = dayStatesToSchedule(scheduleDays);
+      const updated = await updateCompany(editingHoursId, { schedule });
+      if (!updated) {
+        Alert.alert('Empresa', 'Não foi possível salvar. Tente novamente.');
+        return;
+      }
+      setCompanies((prev) =>
+        prev.map((c) => (c._id === editingHoursId ? { ...c, schedule: updated.schedule ?? schedule } : c)),
+      );
+      setEditingHoursId(null);
+      Alert.alert('Empresa', 'Horários atualizados com sucesso.');
+    } catch {
+      Alert.alert('Empresa', 'Não foi possível salvar. Tente novamente.');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function saveInfo() {
+    if (!editingInfoId) return;
+    setSaving(true);
+    try {
       const { phone: phoneValue, whatsapp: whatsappValue } = resolveContactNumbers(phone, whatsapp, samePhone);
       const descriptionValue = description.trim() || undefined;
       const addressValue = address.trim() || undefined;
       const promotionValue = promotionText.trim() || undefined;
-      const updated = await updateCompany(editingId, {
-        schedule,
+      const updated = await updateCompany(editingInfoId, {
         promotion: promotionValue,
         description: descriptionValue,
         address: addressValue,
@@ -113,7 +138,7 @@ export default function MyCompanyScreen() {
       }
       setCompanies((prev) =>
         prev.map((c) =>
-          c._id === editingId
+          c._id === editingInfoId
             ? {
                 ...c,
                 promotion: updated.promotion ?? promotionValue,
@@ -125,8 +150,8 @@ export default function MyCompanyScreen() {
             : c,
         ),
       );
-      setEditingId(null);
-      Alert.alert('Empresa', 'Horários atualizados com sucesso.');
+      setEditingInfoId(null);
+      Alert.alert('Empresa', 'Informações atualizadas com sucesso.');
     } catch {
       Alert.alert('Empresa', 'Não foi possível salvar. Tente novamente.');
     } finally {
@@ -167,10 +192,21 @@ export default function MyCompanyScreen() {
                 <Text style={styles.cardTitle}>{c.name}</Text>
                 <Text style={styles.cardMeta}>{cityName(c.city) || '—'}</Text>
 
-                {editingId === c._id ? (
+                {editingHoursId === c._id ? (
                   <>
                     <Text style={styles.label}>Horários</Text>
                     <ScheduleEditorGrid value={scheduleDays} onChange={setScheduleDays} />
+                    <View style={styles.actions}>
+                      <TouchableOpacity style={styles.btn} onPress={() => setEditingHoursId(null)}>
+                        <Text style={styles.btnText}>Cancelar</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity style={[styles.btn, styles.btnPrimary]} onPress={saveHours} disabled={saving}>
+                        <Text style={[styles.btnText, styles.btnPrimaryText]}>{saving ? 'Salvando…' : 'Salvar horários'}</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </>
+                ) : editingInfoId === c._id ? (
+                  <>
                     <Text style={styles.label}>Descrição</Text>
                     <TextInput
                       style={[styles.input, styles.phoneInput]}
@@ -228,11 +264,11 @@ export default function MyCompanyScreen() {
                       editable={!samePhone}
                     />
                     <View style={styles.actions}>
-                      <TouchableOpacity style={styles.btn} onPress={() => setEditingId(null)}>
+                      <TouchableOpacity style={styles.btn} onPress={() => setEditingInfoId(null)}>
                         <Text style={styles.btnText}>Cancelar</Text>
                       </TouchableOpacity>
-                      <TouchableOpacity style={[styles.btn, styles.btnPrimary]} onPress={save} disabled={saving}>
-                        <Text style={[styles.btnText, styles.btnPrimaryText]}>{saving ? 'Salvando…' : 'Salvar'}</Text>
+                      <TouchableOpacity style={[styles.btn, styles.btnPrimary]} onPress={saveInfo} disabled={saving}>
+                        <Text style={[styles.btnText, styles.btnPrimaryText]}>{saving ? 'Salvando…' : 'Salvar informações'}</Text>
                       </TouchableOpacity>
                     </View>
                   </>
@@ -247,9 +283,14 @@ export default function MyCompanyScreen() {
                     ) : (
                       <Text style={styles.hourLineMuted}>Não informado</Text>
                     )}
-                    <TouchableOpacity style={styles.editBtn} onPress={() => startEdit(c)}>
-                      <Text style={styles.editBtnText}>Editar horários</Text>
-                    </TouchableOpacity>
+                    <View style={{ flexDirection: 'row', gap: 8, marginTop: 4 }}>
+                      <TouchableOpacity style={styles.editBtn} onPress={() => startEditHours(c)}>
+                        <Text style={styles.editBtnText}>Editar horários</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity style={styles.editBtn} onPress={() => startEditInfo(c)}>
+                        <Text style={styles.editBtnText}>Editar informações</Text>
+                      </TouchableOpacity>
+                    </View>
                   </>
                 )}
               </View>
