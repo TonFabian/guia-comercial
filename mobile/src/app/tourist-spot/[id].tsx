@@ -22,6 +22,10 @@ import {
 import { useThemeColors } from '@/hooks/use-theme-colors';
 import { useThemeMode } from '@/providers/theme-provider';
 import { getTouristSpotById } from '@/services/api';
+import {
+  formatOpeningRange,
+  scheduleToOpeningHours,
+} from '@/features/company/opening-hours';
 import type { TouristSpot } from '@/types/domain';
 import { openExternalUrl } from '@/utils/links';
 import { cityName } from '@/utils/city';
@@ -160,21 +164,28 @@ export default function TouristSpotDetailScreen() {
 
           <Text style={styles.description}>{spot.description}</Text>
 
-          {spot.openingHours && spot.openingHours.length > 0 ? (
-            <View style={styles.section}>
-              <Text style={styles.sectionTitle}>Horários</Text>
-              {spot.openingHours.map((periodo) => (
-                <View key={periodo} style={styles.hourRow}>
-                  <MaterialCommunityIcons
-                    name="clock-outline"
-                    size={14}
-                    color={colors.primary}
-                  />
-                  <Text style={styles.hourText}>{periodo}</Text>
-                </View>
-              ))}
-            </View>
-          ) : null}
+          {(() => {
+            const linhas =
+              spot.schedule && spot.schedule.length > 0
+                ? scheduleToOpeningHours(spot.schedule).map(formatOpeningRange)
+                : spot.openingHours ?? [];
+            if (linhas.length === 0) return null;
+            return (
+              <View style={styles.section}>
+                <Text style={styles.sectionTitle}>Horários</Text>
+                {linhas.map((periodo) => (
+                  <View key={periodo} style={styles.hourRow}>
+                    <MaterialCommunityIcons
+                      name="clock-outline"
+                      size={14}
+                      color={colors.primary}
+                    />
+                    <Text style={styles.hourText}>{periodo}</Text>
+                  </View>
+                ))}
+              </View>
+            );
+          })()}
 
           {entrada ? (
             <Text style={styles.meta}>🎟️ {entrada}</Text>
