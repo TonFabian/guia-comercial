@@ -39,7 +39,6 @@ interface TouristSpotForm {
   city: string;
   latitude: string;
   longitude: string;
-  openingHours: string;
   schedule: { day: number; opens: number; closes: number }[];
   entryFee: EntryFee;
   entryPrice: string;
@@ -63,7 +62,6 @@ const EMPTY_FORM: TouristSpotForm = {
   city: '',
   latitude: '',
   longitude: '',
-  openingHours: '',
   schedule: [],
   entryFee: 'free',
   entryPrice: '',
@@ -168,7 +166,6 @@ export function AtracoesSection({ cities, citiesError, companies, companiesTotal
       city: citySlug(spot.city, cities),
       latitude: spot.latitude !== undefined ? String(spot.latitude) : '',
       longitude: spot.longitude !== undefined ? String(spot.longitude) : '',
-      openingHours: (spot.openingHours ?? []).join('\n'),
       schedule: spot.schedule ?? [],
       entryFee: spot.entryFee ?? 'free',
       entryPrice: spot.entryPrice ?? '',
@@ -213,7 +210,6 @@ export function AtracoesSection({ cities, citiesError, companies, companiesTotal
       city: form.city || null,
       latitude,
       longitude,
-      openingHours: parseLines(form.openingHours),
       entryFee: form.entryFee,
       // Omitir preserva o preço já salvo (regra do PUT parcial no backend).
       entryPrice: form.entryFee === 'paid' ? form.entryPrice.trim() : undefined,
@@ -393,12 +389,6 @@ export function AtracoesSection({ cities, citiesError, companies, companiesTotal
           placeholder="Fotos (uma URL por linha)"
           value={form.photos}
           onChange={(event) => setForm({ ...form, photos: event.target.value })}
-          style={{ minWidth: 300, minHeight: 60, width: '100%' }}
-        />
-        <textarea
-          placeholder="Horários (um por linha, ex.: Quarta a domingo, 8h às 17h)"
-          value={form.openingHours}
-          onChange={(event) => setForm({ ...form, openingHours: event.target.value })}
           style={{ minWidth: 300, minHeight: 60, width: '100%' }}
         />
          <fieldset>

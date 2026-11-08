@@ -168,7 +168,7 @@ export default function TouristSpotDetailScreen() {
             const linhas =
               spot.schedule && spot.schedule.length > 0
                 ? scheduleToOpeningHours(spot.schedule).map(formatOpeningRange)
-                : spot.openingHours ?? [];
+                : [];
             if (linhas.length === 0) return null;
             return (
               <View style={styles.section}>

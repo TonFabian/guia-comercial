@@ -315,7 +315,6 @@ const touristSpotBaseSchema = z.object({
   city: z.string().trim().min(1).nullish(),
   latitude: z.number().optional(),
   longitude: z.number().optional(),
-  openingHours: z.array(z.string()).optional(), // deprecated
   schedule: z.array(scheduleItemSchema).optional(),
   entryFee: z.enum(['free', 'paid', 'donation']).optional(),
   entryPrice: z.string().optional(),

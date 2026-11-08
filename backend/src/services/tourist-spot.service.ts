@@ -9,7 +9,6 @@ import type { CreateTouristSpotDto, UpdateTouristSpotDto } from '../types/dto.js
 import type { Pagination } from '../utils/http.js';
 import { escapeRegex } from '../utils/regex.js';
 import { lerBooleano, lerEnum, lerTexto } from '../utils/query.js';
-import { convertOpeningHoursToSchedule } from '../utils/opening-hours.js';
 import type { ScheduleItem } from '../utils/opening-hours.js';
 
 /** Critério de busca compatível com o filtro aceito pelo model. */
@@ -120,7 +119,7 @@ export async function createTouristSpot(
   try {
     return await TouristSpotModel.create({
       ...dto,
-      schedule: resolverSchedule(dto.schedule, dto.openingHours),
+      schedule: resolverSchedule(dto.schedule),
       city: city as TouristSpot['city'],
       relatedCompany: relatedCompany as TouristSpot['relatedCompany'],
     });
@@ -150,8 +149,8 @@ export async function updateTouristSpot(
     ...dto,
   };
 
-  const scheduleResolvido = resolverSchedule(update.schedule, update.openingHours);
-  if (scheduleResolvido !== undefined || update.openingHours !== undefined) {
+  const scheduleResolvido = resolverSchedule(update.schedule);
+  if (scheduleResolvido !== undefined) {
     update.schedule = scheduleResolvido ?? [];
   }
 
@@ -255,11 +254,7 @@ function ehCategoria(valor: string): valor is TouristSpotCategory {
 
 function resolverSchedule(
   schedule: CreateTouristSpotDto['schedule'],
-  openingHours?: string[],
 ): ScheduleItem[] | undefined {
   if (schedule !== undefined && schedule.length > 0) return schedule;
-  if ((!schedule || schedule.length === 0) && openingHours && openingHours.length > 0) {
-    return convertOpeningHoursToSchedule(openingHours);
-  }
   return schedule ?? undefined;
 }
