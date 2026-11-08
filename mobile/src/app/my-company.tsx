@@ -11,15 +11,22 @@ import { useAuthState } from '@/providers/auth-provider';
 import { useThemeColors } from '@/hooks/use-theme-colors';
 import { cityName } from '@/utils/city';
 import { filterOwnedCompanies, resolveContactNumbers } from '@/features/company/owner';
-import {
-  dayStatesToSchedule,
-  openingHoursToDayStates,
-  scheduleToDayStates,
-} from '@/features/company/schedule-editor';
+import { dayStatesToSchedule, scheduleToDayStates } from '@/features/company/schedule-editor';
+import { ScheduleEditorGrid } from '@/features/company/schedule-editor-grid';
 import type { DayState } from '@/features/company/schedule-editor';
-import { scheduleToOpeningHours } from '@/features/company/opening-hours';
+import { buildCompanyDetails } from '@/features/company/company-details';
 
-const DAY_NAMES = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'] as const;
+/** Linhas de horário da empresa ("Seg–Sex 08h às 18h"), sem inferência. */
+function hoursLines(company: Company): string[] {
+  const { weekdays, saturday, sunday } = buildCompanyDetails(company).workingHours;
+  return [
+    { rotulo: 'Seg a Sex', texto: weekdays },
+    { rotulo: 'Sábado', texto: saturday },
+    { rotulo: 'Domingo', texto: sunday },
+  ]
+    .filter((linha) => linha.texto && linha.texto !== 'Consulte a empresa')
+    .map(({ rotulo, texto }) => `${rotulo}: ${texto}`);
+}
 
 export default function MyCompanyScreen() {
   const colors = useThemeColors();
@@ -162,8 +169,8 @@ export default function MyCompanyScreen() {
 
                 {editingId === c._id ? (
                   <>
-                    <Text style={styles.label}>Horários (grade estruturada)</Text>
-                    <Text style={styles.hourLineMuted}>Edição estruturada via scheduleDays</Text>
+                    <Text style={styles.label}>Horários</Text>
+                    <ScheduleEditorGrid value={scheduleDays} onChange={setScheduleDays} />
                     <Text style={styles.label}>Descrição</Text>
                     <TextInput
                       style={[styles.input, styles.phoneInput]}
@@ -233,7 +240,13 @@ export default function MyCompanyScreen() {
                   <>
                     <Text style={styles.label}>Horários</Text>
                     {c.promotion ? <Text style={styles.promoLine}>🔥 {c.promotion}</Text> : null}
-                    <Text style={styles.hourLineMuted}>Não informado</Text>
+                    {hoursLines(c).length > 0 ? (
+                      hoursLines(c).map((linha) => (
+                        <Text key={linha} style={styles.hourLine}>{linha}</Text>
+                      ))
+                    ) : (
+                      <Text style={styles.hourLineMuted}>Não informado</Text>
+                    )}
                     <TouchableOpacity style={styles.editBtn} onPress={() => startEdit(c)}>
                       <Text style={styles.editBtnText}>Editar horários</Text>
                     </TouchableOpacity>
