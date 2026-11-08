@@ -47,8 +47,6 @@ export interface Company {
   website?: string;
   instagram?: string;
   facebook?: string;
-  /** @deprecated Use `schedule` instead. */
-  openingHours?: string[];
   schedule?: { day: number; opens: number; closes: number }[];
   services?: string[];
   products?: CompanyProduct[];

@@ -150,11 +150,10 @@ function buildWorkingHours(company: Company): WorkingHours {
     };
   }
 
-  const [weekdays, saturday, sunday] = company.openingHours ?? [];
   return {
-    weekdays: weekdays ?? CONSULT_HOURS,
-    saturday: saturday ?? CONSULT_HOURS,
-    sunday: sunday ?? CONSULT_HOURS,
+    weekdays: CONSULT_HOURS,
+    saturday: CONSULT_HOURS,
+    sunday: CONSULT_HOURS,
   };
 }
 

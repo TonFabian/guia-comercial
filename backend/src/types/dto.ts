@@ -118,9 +118,6 @@ export const createCompanySchema = z.object({
   website: urlSeguraSchema.optional(),
   instagram: z.string().optional(),
   facebook: urlSeguraSchema.optional(),
-  // Deprecated: schedule estruturado é a fonte da verdade; o texto livre
-  // permanece aceito e emitido até o rollout do app (fase final remove).
-  openingHours: z.array(z.string()).meta({ deprecated: true }).optional(),
   schedule: z.array(scheduleItemSchema).optional(),
   services: z.array(z.string()).optional(),
   products: z.array(companyProductSchema).optional(),

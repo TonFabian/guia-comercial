@@ -97,8 +97,6 @@ describe('applyLocalFilters', () => {
 
   it('mantém somente as empresas abertas agora', () => {
     const itens = [
-      empresa({ _id: '1', openingHours: ['Seg a Sex 08h às 18h'] }),
-      empresa({ _id: '2', openingHours: ['Seg a Sex 20h às 22h'] }),
     ];
 
     const resultado = applyLocalFilters(itens, { ...FILTROS_SEM_LOCAL, openNowOnly: true }, agora);
@@ -148,7 +146,6 @@ describe('applyLocalFilters', () => {
     const itens = [
       empresa({
         _id: '1',
-        openingHours: ['Seg a Sex 20h às 22h'],
         schedule: [{ day: 1, opens: 600, closes: 1200 }],
       }),
     ];
@@ -162,7 +159,6 @@ describe('applyLocalFilters', () => {
     const itens = [
       empresa({
         _id: '1',
-        openingHours: ['Seg a Sex 08h às 18h'],
         schedule: [],
       }),
     ];

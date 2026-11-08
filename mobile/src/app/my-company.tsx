@@ -68,11 +68,10 @@ export default function MyCompanyScreen() {
 
   function startEdit(company: Company) {
     setEditingId(company._id);
-    const parsed = parseOpeningHours(company.openingHours ?? []);
     setScheduleDays(
       company.schedule && company.schedule.length > 0
         ? scheduleToDayStates(company.schedule)
-        : openingHoursToDayStates(parsed),
+        : [],
     );
     setPromotionText(company.promotion ?? '');
     setDescription(company.description ?? '');
@@ -110,7 +109,6 @@ export default function MyCompanyScreen() {
           c._id === editingId
             ? {
                 ...c,
-                openingHours: updated.openingHours ?? [],
                 promotion: updated.promotion ?? promotionValue,
                 description: updated.description ?? descriptionValue ?? c.description,
                 address: updated.address ?? addressValue ?? c.address,
@@ -235,12 +233,7 @@ export default function MyCompanyScreen() {
                   <>
                     <Text style={styles.label}>Horários</Text>
                     {c.promotion ? <Text style={styles.promoLine}>🔥 {c.promotion}</Text> : null}
-                    {(c.openingHours ?? []).map((h, i) => (
-                      <Text key={i} style={styles.hourLine}>{h}</Text>
-                    ))}
-                    {(!c.openingHours || c.openingHours.length === 0) && (
-                      <Text style={styles.hourLineMuted}>Não informado</Text>
-                    )}
+                    <Text style={styles.hourLineMuted}>Não informado</Text>
                     <TouchableOpacity style={styles.editBtn} onPress={() => startEdit(c)}>
                       <Text style={styles.editBtnText}>Editar horários</Text>
                     </TouchableOpacity>

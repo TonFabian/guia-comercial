@@ -224,7 +224,7 @@ export interface TouristSpotInput {
   city?: string | null;
   latitude?: number;
   longitude?: number;
-  openingHours?: string[];
+
   entryFee?: 'free' | 'paid' | 'donation';
   /** Texto livre ("R$ 10,00"); obrigatório quando `entryFee` é "paid". */
   entryPrice?: string;
@@ -239,6 +239,7 @@ export interface TouristSpotInput {
   order?: number;
   /** Empresa relacionada, por id ou slug. `null` limpa. */
   relatedCompany?: string | null;
+  openingHours?: string[];
 }
 
 export type UpdateTouristSpotInput = Partial<TouristSpotInput>;

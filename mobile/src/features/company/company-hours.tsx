@@ -6,19 +6,18 @@ import { useThemeColors } from '@/hooks/use-theme-colors';
 import { formatOpeningRange, isOpenNow, isOpenNowFromSchedule, parseOpeningHours, scheduleToOpeningHours } from './opening-hours';
 
 interface CompanyHoursProps {
-  openingHours?: string[];
   schedule?: { day: number; opens: number; closes: number }[];
   now?: Date;
 }
 
 /** Horário de funcionamento com o status atual (aberto/fechado). */
-export function CompanyHours({ openingHours, schedule, now = new Date() }: CompanyHoursProps) {
+export function CompanyHours({ schedule, now = new Date() }: CompanyHoursProps) {
   const colors = useThemeColors();
   const styles = makeStyles(colors);
   const scheduleAtivo = schedule && schedule.length > 0 ? schedule : undefined;
   const parsed = scheduleAtivo
     ? scheduleToOpeningHours(scheduleAtivo)
-    : parseOpeningHours(openingHours ?? []);
+    : [];
 
   // Status direto do schedule entende faixa que atravessa a meia-noite;
   // quando só há texto livre, usa a interpretação heurística.

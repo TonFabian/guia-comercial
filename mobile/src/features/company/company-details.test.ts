@@ -40,7 +40,6 @@ describe('buildCompanyDetails — workingHours', () => {
     const detalhes = buildCompanyDetails(
       empresa({
         _id: '1',
-        openingHours: ['Seg a Sex: 08h às 18h', 'Sáb: 08h às 12h'],
         schedule: [],
       }),
     );

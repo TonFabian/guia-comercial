@@ -107,7 +107,7 @@ export function applyLocalFilters(
       // enquanto a deprecação durar.
       const open = company.schedule && company.schedule.length > 0
         ? isOpenNowFromSchedule(company.schedule, now)
-        : isOpenNow(parseOpeningHours(company.openingHours ?? []), now);
+        : false;
       return open === true;
     });
   }

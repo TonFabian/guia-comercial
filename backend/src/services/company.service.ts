@@ -10,7 +10,7 @@ import type { CreateCompanyDto, UpdateCompanyDto } from '../types/dto.js';
 import type { Pagination } from '../utils/http.js';
 import { geocodeAddress } from '../utils/geocode.js';
 import { escapeRegex } from '../utils/regex.js';
-import { convertOpeningHoursToSchedule } from '../utils/opening-hours.js';
+
 import type { ScheduleItem } from '../utils/opening-hours.js';
 import { lerBooleano, lerListaDeSlugs, lerTexto } from '../utils/query.js';
 
@@ -47,11 +47,9 @@ export interface CompanyListFilters {
  */
 function resolverSchedule(
   schedule: CreateCompanyDto['schedule'],
-  openingHours: string[] | undefined,
 ): ScheduleItem[] | undefined {
   if (schedule !== undefined && schedule.length > 0) return schedule;
-  if (!openingHours || openingHours.length === 0) return schedule ?? undefined;
-  return convertOpeningHoursToSchedule(openingHours);
+  return schedule ?? undefined;
 }
 
 export async function listCompanies(
@@ -157,7 +155,7 @@ export async function createCompany(dto: CreateCompanyDto, ownerClerkId?: string
   try {
     return await CompanyModel.create({
       ...dto,
-      schedule: resolverSchedule(dto.schedule, dto.openingHours),
+      schedule: resolverSchedule(dto.schedule),
       category: resolvedCategory,
       ownerClerkId,
       city: city as unknown as Company['city'],
@@ -196,7 +194,7 @@ export async function updateCompany(id: string, dto: UpdateCompanyDto, clerkId?:
   // PUT parcial: só escreve schedule quando há algo a derivar para não
   // transformar a ausência de campos em limpeza (assinatura de undefined em
   // update do Mongo viraria null).
-  const scheduleResolvido = resolverSchedule(update.schedule, update.openingHours);
+  const scheduleResolvido = resolverSchedule(update.schedule);
   if (scheduleResolvido !== undefined) {
     update.schedule = scheduleResolvido;
   }
