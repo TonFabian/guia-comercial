@@ -10,6 +10,7 @@ import type { Company } from '@/types/domain';
 import { useAuthState } from '@/providers/auth-provider';
 import { useThemeColors } from '@/hooks/use-theme-colors';
 import { SavingDots } from '@/components/saving-dots';
+import { TopBackButton } from '@/components/top-back-button';
 import { cityName } from '@/utils/city';
 import { filterOwnedCompanies, resolveContactNumbers } from '@/features/company/owner';
 import { dayStatesToSchedule, scheduleToDayStates } from '@/features/company/schedule-editor';
@@ -173,9 +174,7 @@ export default function MyCompanyScreen() {
       <StatusBar style="light" />
       <SafeAreaView style={styles.safeArea} edges={['top']}>
         <View style={styles.topBar}>
-          <TouchableOpacity style={styles.topButton} onPress={() => (router.canGoBack() ? router.back() : router.replace("/(tabs)"))} accessibilityRole="button" accessibilityLabel="Voltar">
-            <Text style={styles.topButtonText}>← Voltar</Text>
-          </TouchableOpacity>
+          <TopBackButton />
           <Text style={styles.title}>Minha Empresa</Text>
         </View>
 

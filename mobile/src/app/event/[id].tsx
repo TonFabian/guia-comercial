@@ -116,7 +116,7 @@ export default function EventDetailScreen() {
           onPress={voltar}
           accessibilityRole="button"
           accessibilityLabel="Voltar"
-        >
+          hitSlop={12}>
           <Text style={styles.stateButtonText}>Voltar</Text>
         </Pressable>
       </View>

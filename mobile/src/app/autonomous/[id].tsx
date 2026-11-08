@@ -8,6 +8,7 @@ import { Typography, FontFamily, FontWeight } from '@/constants/theme';
 import { getAutonomousProfessionals } from '@/services/api';
 import type { AutonomousProfessional } from '@/types/domain';
 import { useThemeColors } from '@/hooks/use-theme-colors';
+import { TopBackButton } from '@/components/top-back-button';
 import { openWhatsApp, callPhone } from '@/utils/links';
 import { cityName } from '@/utils/city';
 
@@ -60,9 +61,7 @@ export default function AutonomousDetailScreen() {
       <StatusBar style="light" />
       <SafeAreaView style={styles.safeArea} edges={['top']}>
         <View style={styles.topBar}>
-          <TouchableOpacity style={styles.topButton} onPress={() => router.back()} accessibilityRole="button" accessibilityLabel="Voltar">
-            <Text style={styles.topButtonText}>← Voltar</Text>
-          </TouchableOpacity>
+          <TopBackButton onPress={() => router.back()} />
         </View>
         <View style={styles.content}>
           <Text style={styles.title}>{pro.name}</Text>

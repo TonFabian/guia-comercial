@@ -103,7 +103,7 @@ export default function TouristSpotDetailScreen() {
           onPress={voltar}
           accessibilityRole="button"
           accessibilityLabel="Voltar"
-        >
+          hitSlop={12}>
           <Text style={styles.stateButtonText}>Voltar</Text>
         </Pressable>
       </View>

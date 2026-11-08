@@ -17,6 +17,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { SUPPORT_WHATSAPP_MESSAGE, SUPPORT_WHATSAPP_PHONE, TERMS_URL } from '@/constants/support';
 import { Radius, Spacing, Typography, FontFamily, FontWeight } from '@/constants/theme';
 import { useThemeColors } from '@/hooks/use-theme-colors';
+import { TopBackButton } from '@/components/top-back-button';
 import { useAuthState } from '@/providers/auth-provider';
 import { useThemeMode } from '@/providers/theme-provider';
 import { getMe, updateMe } from '@/services/api';
@@ -121,14 +122,7 @@ export default function SettingsScreen() {
     <View style={styles.root}>
       <SafeAreaView style={styles.safeArea} edges={['top']}>
         <View style={styles.topBar}>
-          <TouchableOpacity
-            style={styles.topButton}
-            onPress={() => router.back()}
-            accessibilityRole="button"
-            accessibilityLabel="Voltar"
-          >
-            <Text style={styles.topButtonText}>← Voltar</Text>
-          </TouchableOpacity>
+          <TopBackButton onPress={() => router.back()} />
           <Text style={styles.title}>Configurações</Text>
         </View>
 

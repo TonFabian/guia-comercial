@@ -83,6 +83,7 @@ export default function JobDetailScreen() {
           activeOpacity={0.8}
           accessibilityRole="button"
           accessibilityLabel="Voltar"
+          hitSlop={12}
           onPress={() => router.back()}
         >
           <Text style={styles.backButtonText}>Voltar</Text>
@@ -104,6 +105,7 @@ export default function JobDetailScreen() {
               activeOpacity={0.7}
               accessibilityRole="button"
               accessibilityLabel="Voltar"
+          hitSlop={12}
               onPress={() => router.back()}
             >
               <Ionicons name="chevron-back" size={22} color={colors.text} />
@@ -166,6 +168,7 @@ export default function JobDetailScreen() {
             activeOpacity={0.8}
             accessibilityRole="button"
             accessibilityLabel="Voltar"
+          hitSlop={12}
             onPress={() => router.back()}
           >
             <Text style={styles.voltarText}>Voltar</Text>

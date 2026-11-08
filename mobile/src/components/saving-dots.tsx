@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Animated, Text, View } from 'react-native';
+import { Animated, View } from 'react-native';
 
 import { FontFamily, FontWeight, Typography } from '@/constants/theme';
 
