@@ -56,6 +56,7 @@ export interface Company {
   website?: string;
   instagram?: string;
   facebook?: string;
+  /** @deprecated Use `schedule` instead. */
   openingHours?: string[];
   /** Horário estruturado (minutos desde a meia-noite). Preferido para consultas. */
   schedule?: { day: number; opens: number; closes: number }[];
