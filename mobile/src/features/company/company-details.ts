@@ -130,23 +130,38 @@ function buildMedia(company: Company): CompanyMedia[] {
 }
 
 /** Monta a linha de horário para o bucket a partir das faixas de schedule dele. */
+const DIAS_SEMANA = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+
 function scheduleHoursText(
   schedule: { day: number; opens: number; closes: number }[],
   days: number[],
 ): string {
   const faixas = schedule.filter((item) => days.includes(item.day));
   if (faixas.length === 0) return 'Fechado';
-  // Não inferir: cada faixa distinta é listada; dias sem entrada ficam "Fechado"
-  // implícito (não aparecem na lista). Agrupar faixas idênticas em uma única
-  // linha para não duplicar.
-  const unicas = new Map<string, string>();
+  // Não inferir: listar apenas os dias que de fato têm entrada no schedule.
+  // Agrupar dias adjacentes (na ordem do bucket) com faixa idêntica.
+  const porDia = new Map<number, string>();
   for (const f of faixas) {
-    const chave = `${f.opens}-${f.closes}`;
-    if (!unicas.has(chave)) {
-      unicas.set(chave, `${formatMinutes(f.opens)} às ${formatMinutes(f.closes)}`);
+    porDia.set(f.day, `${formatMinutes(f.opens)} às ${formatMinutes(f.closes)}`);
+  }
+  const grupos: { dias: number[]; texto: string }[] = [];
+  for (const d of days) {
+    const texto = porDia.get(d);
+    if (!texto) continue;
+    const ultimo = grupos[grupos.length - 1];
+    if (ultimo && ultimo.texto === texto && ultimo.dias[ultimo.dias.length - 1] === d - 1) {
+      ultimo.dias.push(d);
+    } else {
+      grupos.push({ dias: [d], texto });
     }
   }
-  return Array.from(unicas.values()).join(', ');
+  return grupos
+    .map((g) =>
+      g.dias.length === 1
+        ? `${DIAS_SEMANA[g.dias[0]]} ${g.texto}`
+        : `${DIAS_SEMANA[g.dias[0]]} a ${DIAS_SEMANA[g.dias[g.dias.length - 1]]}: ${g.texto}`,
+    )
+    .join('; ');
 }
 
 function buildWorkingHours(company: Company): WorkingHours {
