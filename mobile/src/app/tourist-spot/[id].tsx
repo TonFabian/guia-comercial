@@ -10,6 +10,7 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { TopBackButton } from '@/components/top-back-button';
 import { FontFamily, FontWeight, Overlays, Radius, Spacing, Typography } from '@/constants/theme';
 import { formatOpeningRange, scheduleToOpeningHours } from '@/features/company/opening-hours';
 import { descreverEntrada, labelCategoriaAtracao } from '@/features/tourism/event-meta';
@@ -105,14 +106,7 @@ export default function TouristSpotDetailScreen() {
       <StatusBar style={mode === 'dark' ? 'light' : 'dark'} />
       <SafeAreaView style={styles.safeArea} edges={['top']}>
         <View style={styles.topBar}>
-          <Pressable
-            onPress={voltar}
-            hitSlop={20}
-            accessibilityRole="button"
-            accessibilityLabel="Voltar"
-          >
-            <Text style={styles.backText}>← Voltar</Text>
-          </Pressable>
+          <TopBackButton onPress={() => router.back()} />
         </View>
 
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>

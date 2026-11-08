@@ -4,6 +4,7 @@ import { StatusBar } from 'expo-status-bar';
 import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { TopBackButton } from '@/components/top-back-button';
 import { FontFamily, FontWeight, GuiaColors, Radius, Spacing, Typography } from '@/constants/theme';
 import { useThemeColors } from '@/hooks/use-theme-colors';
 import { useThemeMode } from '@/providers/theme-provider';
@@ -31,16 +32,7 @@ export default function AnnounceScreen() {
       <SafeAreaView style={styles.safeArea} edges={['top']}>
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
           <View style={styles.topBar}>
-            <TouchableOpacity
-              style={styles.topButton}
-              activeOpacity={0.7}
-              accessibilityRole="button"
-              accessibilityLabel="Voltar"
-              hitSlop={20}
-              onPress={() => router.back()}
-            >
-              <Ionicons name="chevron-back" size={22} color={colors.text} />
-            </TouchableOpacity>
+            <TopBackButton onPress={() => router.back()} />
             <Text style={styles.title}>Anuncie no Guia</Text>
           </View>
 
