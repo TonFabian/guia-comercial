@@ -140,7 +140,7 @@ export default function MyCompanyScreen() {
       <StatusBar style="light" />
       <SafeAreaView style={styles.safeArea} edges={['top']}>
         <View style={styles.topBar}>
-          <TouchableOpacity style={styles.topButton} onPress={() => router.back()} accessibilityRole="button" accessibilityLabel="Voltar">
+          <TouchableOpacity style={styles.topButton} onPress={() => (router.canGoBack() ? router.back() : router.replace("/(tabs)"))} accessibilityRole="button" accessibilityLabel="Voltar">
             <Text style={styles.topButtonText}>← Voltar</Text>
           </TouchableOpacity>
           <Text style={styles.title}>Minha Empresa</Text>
