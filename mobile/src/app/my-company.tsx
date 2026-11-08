@@ -210,11 +210,13 @@ export default function MyCompanyScreen() {
                   <>
                     <Text style={styles.label}>Descrição</Text>
                     <TextInput
-                      style={[styles.input]}
+                      style={styles.input}
                       value={description}
                       onChangeText={setDescription}
                       placeholder="Descrição da empresa"
                       placeholderTextColor={colors.textSecondary}
+                      multiline
+                      numberOfLines={3}
                     />
                     <Text style={styles.label}>Endereço</Text>
                     <TextInput
@@ -231,6 +233,8 @@ export default function MyCompanyScreen() {
                       onChangeText={setPromotionText}
                       placeholder="Ex.: 20% OFF em pizzas hoje!"
                       placeholderTextColor={colors.textSecondary}
+                      multiline
+                      numberOfLines={3}
                     />
                     <Text style={styles.label}>Telefone (ligar)</Text>
                     <TextInput
