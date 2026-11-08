@@ -96,7 +96,7 @@ describe('applyLocalFilters', () => {
   });
 
   it('mantém somente as empresas abertas agora', () => {
-    const itens = [
+    const itens: any[] = [
     ];
 
     const resultado = applyLocalFilters(itens, { ...FILTROS_SEM_LOCAL, openNowOnly: true }, agora);
