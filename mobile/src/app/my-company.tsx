@@ -11,6 +11,15 @@ import { useAuthState } from '@/providers/auth-provider';
 import { useThemeColors } from '@/hooks/use-theme-colors';
 import { cityName } from '@/utils/city';
 import { filterOwnedCompanies, resolveContactNumbers } from '@/features/company/owner';
+import {
+  dayStatesToSchedule,
+  openingHoursToDayStates,
+  scheduleToDayStates,
+} from '@/features/company/schedule-editor';
+import type { DayState } from '@/features/company/schedule-editor';
+import { parseOpeningHours, scheduleToOpeningHours } from '@/features/company/opening-hours';
+
+const DAY_NAMES = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'] as const;
 
 export default function MyCompanyScreen() {
   const colors = useThemeColors();
@@ -19,7 +28,9 @@ export default function MyCompanyScreen() {
   const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingId, setEditingId] = useState<string | null>(null);
-  const [hoursText, setHoursText] = useState('');
+  const [scheduleDays, setScheduleDays] = useState<DayState[]>(
+    scheduleToDayStates([]),
+  );
   const [promotionText, setPromotionText] = useState('');
   const [description, setDescription] = useState('');
   const [address, setAddress] = useState('');
@@ -57,7 +68,12 @@ export default function MyCompanyScreen() {
 
   function startEdit(company: Company) {
     setEditingId(company._id);
-    setHoursText((company.openingHours ?? []).join('\n'));
+    const parsed = parseOpeningHours(company.openingHours ?? []);
+    setScheduleDays(
+      company.schedule && company.schedule.length > 0
+        ? scheduleToDayStates(company.schedule)
+        : openingHoursToDayStates(parsed),
+    );
     setPromotionText(company.promotion ?? '');
     setDescription(company.description ?? '');
     setAddress(company.address ?? '');
@@ -72,13 +88,13 @@ export default function MyCompanyScreen() {
     if (!editingId) return;
     setSaving(true);
     try {
-      const hours = hoursText.split('\n').map((s) => s.trim()).filter(Boolean);
+      const schedule = dayStatesToSchedule(scheduleDays);
       const { phone: phoneValue, whatsapp: whatsappValue } = resolveContactNumbers(phone, whatsapp, samePhone);
       const descriptionValue = description.trim() || undefined;
       const addressValue = address.trim() || undefined;
       const promotionValue = promotionText.trim() || undefined;
       const updated = await updateCompany(editingId, {
-        openingHours: hours,
+        schedule,
         promotion: promotionValue,
         description: descriptionValue,
         address: addressValue,
@@ -94,7 +110,7 @@ export default function MyCompanyScreen() {
           c._id === editingId
             ? {
                 ...c,
-                openingHours: updated.openingHours ?? hours,
+                openingHours: updated.openingHours ?? [],
                 promotion: updated.promotion ?? promotionValue,
                 description: updated.description ?? descriptionValue ?? c.description,
                 address: updated.address ?? addressValue ?? c.address,
@@ -148,15 +164,8 @@ export default function MyCompanyScreen() {
 
                 {editingId === c._id ? (
                   <>
-                    <Text style={styles.label}>Horários (um por linha)</Text>
-                    <TextInput
-                      style={styles.input}
-                      value={hoursText}
-                      onChangeText={setHoursText}
-                      multiline
-                      placeholder="Seg a Sex: 08h às 18h"
-                      placeholderTextColor={colors.textSecondary}
-                    />
+                    <Text style={styles.label}>Horários (grade estruturada)</Text>
+                    <Text style={styles.hourLineMuted}>Edição estruturada via scheduleDays</Text>
                     <Text style={styles.label}>Descrição</Text>
                     <TextInput
                       style={[styles.input, styles.phoneInput]}

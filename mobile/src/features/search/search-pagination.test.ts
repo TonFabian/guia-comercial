@@ -113,6 +113,64 @@ describe('applyLocalFilters', () => {
 
     expect(resultado).toHaveLength(0);
   });
+
+  it('usa o schedule estruturado para decidir "aberto agora"', () => {
+    const itens = [
+      empresa({ _id: '1', schedule: [{ day: 1, opens: 600, closes: 1200 }] }),
+      empresa({ _id: '2', schedule: [{ day: 1, opens: 900, closes: 1200 }] }),
+      empresa({ _id: '3', schedule: [{ day: 1, opens: 500, closes: 1439 }] }),
+    ];
+
+    const resultado = applyLocalFilters(itens, { ...FILTROS_SEM_LOCAL, openNowOnly: true }, agora);
+
+    expect(resultado.map((item) => item._id)).toEqual(['1', '3']);
+  });
+
+  it('caiu no meio da madrugada: faixa de sábado que fecha no domingo conta como aberta', () => {
+    const madrugadaDeDomingo = new Date('2024-01-07T01:00:00');
+    const itens = [
+      empresa({
+        _id: '1',
+        schedule: [{ day: 6, opens: 1200, closes: 180 }],
+      }),
+    ];
+
+    const resultado = applyLocalFilters(
+      itens,
+      { ...FILTROS_SEM_LOCAL, openNowOnly: true },
+      madrugadaDeDomingo,
+    );
+
+    expect(resultado.map((item) => item._id)).toEqual(['1']);
+  });
+
+  it('prefere o schedule quando ele e o openingHours contam histórias diferentes', () => {
+    const itens = [
+      empresa({
+        _id: '1',
+        openingHours: ['Seg a Sex 20h às 22h'],
+        schedule: [{ day: 1, opens: 600, closes: 1200 }],
+      }),
+    ];
+
+    const resultado = applyLocalFilters(itens, { ...FILTROS_SEM_LOCAL, openNowOnly: true }, agora);
+
+    expect(resultado.map((item) => item._id)).toEqual(['1']);
+  });
+
+  it('cai no fallback do openingHours quando o schedule vem vazio', () => {
+    const itens = [
+      empresa({
+        _id: '1',
+        openingHours: ['Seg a Sex 08h às 18h'],
+        schedule: [],
+      }),
+    ];
+
+    const resultado = applyLocalFilters(itens, { ...FILTROS_SEM_LOCAL, openNowOnly: true }, agora);
+
+    expect(resultado.map((item) => item._id)).toEqual(['1']);
+  });
 });
 
 describe('shouldDrainMorePages', () => {

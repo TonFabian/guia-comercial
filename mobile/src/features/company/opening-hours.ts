@@ -146,6 +146,35 @@ export function isOpenNow(hours: OpeningHour[], now: Date): boolean | null {
   return today.some((hour) => isWithinRange(hour, minutes));
 }
 
+/** Dias que um item do schedule cobre: o próprio dia e, atravessando meia-noite (closes < opens), o seguinte. */
+export function scheduleDaysCovered(item: { day: number; opens: number; closes: number }): number[] {
+  return item.closes < item.opens ? [item.day, (item.day + 1) % 7] : [item.day];
+}
+
+/**
+ * Diz se a empresa está aberta no instante informado, a partir do schedule
+ * estruturado (minutos). `null` quando o schedule está vazio — o chamador
+ * decide o fallback.
+ */
+export function isOpenNowFromSchedule(
+  schedule: { day: number; opens: number; closes: number }[],
+  now: Date,
+): boolean | null {
+  if (schedule.length === 0) return null;
+
+  const minutes = now.getHours() * 60 + now.getMinutes();
+  const today = now.getDay();
+
+  return schedule.some((item) => {
+    if (!scheduleDaysCovered(item).includes(today)) return false;
+    if (item.closes >= item.opens) {
+      return minutes >= item.opens && minutes <= item.closes;
+    }
+    // Faixa que atravessa a meia-noite (ex.: sábado 18h às 02h).
+    return minutes >= item.opens || minutes <= item.closes;
+  });
+}
+
 export function scheduleToOpeningHours(
   schedule: { day: number; opens: number; closes: number }[],
 ): OpeningHour[] {

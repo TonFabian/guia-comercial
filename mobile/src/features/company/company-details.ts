@@ -1,6 +1,7 @@
 import { categoryLabel } from '@/types/domain';
 import { cityName } from '@/utils/city';
 import type { Company } from '@/types/domain';
+import { formatMinutes } from '@/features/company/opening-hours';
 
 export type WorkingHours = {
   weekdays: string;
@@ -128,10 +129,37 @@ function buildMedia(company: Company): CompanyMedia[] {
   }));
 }
 
+/** Monta a linha de horário para o bucket a partir das faixas de schedule dele. */
+function scheduleHoursText(
+  schedule: { day: number; opens: number; closes: number }[],
+  days: number[],
+): string {
+  const faixas = schedule.filter((item) => days.includes(item.day));
+  if (faixas.length === 0) return 'Fechado';
+  const menor = faixas.reduce((a, b) => (b.opens < a.opens ? b : a));
+  return `${formatMinutes(menor.opens)} às ${formatMinutes(menor.closes)}`;
+}
+
+function buildWorkingHours(company: Company): WorkingHours {
+  const schedule = company.schedule ?? [];
+  if (schedule.length > 0) {
+    return {
+      weekdays: scheduleHoursText(schedule, [1, 2, 3, 4, 5]),
+      saturday: scheduleHoursText(schedule, [6]),
+      sunday: scheduleHoursText(schedule, [0]),
+    };
+  }
+
+  const [weekdays, saturday, sunday] = company.openingHours ?? [];
+  return {
+    weekdays: weekdays ?? CONSULT_HOURS,
+    saturday: saturday ?? CONSULT_HOURS,
+    sunday: sunday ?? CONSULT_HOURS,
+  };
+}
+
 /** Prepara os dados da empresa para a tela, com fallbacks para campos opcionais. */
 export function buildCompanyDetails(company: Company): CompanyDetails {
-  const [weekdays, saturday, sunday] = company.openingHours ?? [];
-
   return {
     id: company._id,
     name: company.name,
@@ -152,11 +180,7 @@ export function buildCompanyDetails(company: Company): CompanyDetails {
       text: company.description || EMPTY_DESCRIPTION,
     },
     servicesList: buildServices(company.services),
-    workingHours: {
-      weekdays: weekdays ?? CONSULT_HOURS,
-      saturday: saturday ?? CONSULT_HOURS,
-      sunday: sunday ?? CONSULT_HOURS,
-    },
+    workingHours: buildWorkingHours(company),
     phone: company.phone ?? undefined,
     whatsapp: company.whatsapp ?? undefined,
   };
