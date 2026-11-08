@@ -128,6 +128,7 @@ export interface CompanyInput {
   whatsapp?: string;
   address?: string;
   promotion?: string;
+  schedule?: { day: number; opens: number; closes: number }[];
 }
 
 export type UpdateCompanyInput = Partial<CompanyInput>;
