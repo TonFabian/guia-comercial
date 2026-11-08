@@ -10,25 +10,16 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Overlays, Radius, Spacing, Typography, FontFamily, FontWeight } from '@/constants/theme';
-import {
-  descreverEntrada,
-  labelCategoriaAtracao,
-} from '@/features/tourism/event-meta';
-import {
-  TourismAddressRow,
-  TourismContactActions,
-} from '@/features/tourism/tourism-actions';
+import { FontFamily, FontWeight, Overlays, Radius, Spacing, Typography } from '@/constants/theme';
+import { formatOpeningRange, scheduleToOpeningHours } from '@/features/company/opening-hours';
+import { descreverEntrada, labelCategoriaAtracao } from '@/features/tourism/event-meta';
+import { TourismAddressRow, TourismContactActions } from '@/features/tourism/tourism-actions';
 import { useThemeColors } from '@/hooks/use-theme-colors';
 import { useThemeMode } from '@/providers/theme-provider';
 import { getTouristSpotById } from '@/services/api';
-import {
-  formatOpeningRange,
-  scheduleToOpeningHours,
-} from '@/features/company/opening-hours';
 import type { TouristSpot } from '@/types/domain';
-import { openExternalUrl } from '@/utils/links';
 import { cityName } from '@/utils/city';
+import { openExternalUrl } from '@/utils/links';
 
 /** Link do Instagram: aceita "@handle" (padrão vindo do cadastro) ou URL. */
 function linkInstagram(instagram: string): string {
@@ -55,9 +46,7 @@ export default function TouristSpotDetailScreen() {
         if (!cancelled) setSpot(encontrado);
       } catch (falha) {
         if (!cancelled) {
-          setErro(
-            falha instanceof Error ? falha.message : 'Erro ao carregar a atração',
-          );
+          setErro(falha instanceof Error ? falha.message : 'Erro ao carregar a atração');
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -92,18 +81,15 @@ export default function TouristSpotDetailScreen() {
     return (
       <View style={styles.centered}>
         <StatusBar style={mode === 'dark' ? 'light' : 'dark'} />
-        <MaterialCommunityIcons
-          name="map-marker-circle"
-          size={42}
-          color={colors.primary}
-        />
+        <MaterialCommunityIcons name="map-marker-circle" size={42} color={colors.primary} />
         <Text style={styles.stateText}>{erro ?? 'Atração não encontrada.'}</Text>
         <Pressable
           style={styles.stateButton}
           onPress={voltar}
           accessibilityRole="button"
           accessibilityLabel="Voltar"
-          hitSlop={12}>
+          hitSlop={20}
+        >
           <Text style={styles.stateButtonText}>Voltar</Text>
         </Pressable>
       </View>
@@ -121,7 +107,7 @@ export default function TouristSpotDetailScreen() {
         <View style={styles.topBar}>
           <Pressable
             onPress={voltar}
-            hitSlop={Spacing.two}
+            hitSlop={20}
             accessibilityRole="button"
             accessibilityLabel="Voltar"
           >
@@ -129,10 +115,7 @@ export default function TouristSpotDetailScreen() {
           </Pressable>
         </View>
 
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.content}
-        >
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
           <View style={styles.photoBox}>
             {fotoPrincipal ? (
               <Image
@@ -175,11 +158,7 @@ export default function TouristSpotDetailScreen() {
                 <Text style={styles.sectionTitle}>Horários</Text>
                 {linhas.map((periodo) => (
                   <View key={periodo} style={styles.hourRow}>
-                    <MaterialCommunityIcons
-                      name="clock-outline"
-                      size={14}
-                      color={colors.primary}
-                    />
+                    <MaterialCommunityIcons name="clock-outline" size={14} color={colors.primary} />
                     <Text style={styles.hourText}>{periodo}</Text>
                   </View>
                 ))}
@@ -187,9 +166,7 @@ export default function TouristSpotDetailScreen() {
             );
           })()}
 
-          {entrada ? (
-            <Text style={styles.meta}>🎟️ {entrada}</Text>
-          ) : null}
+          {entrada ? <Text style={styles.meta}>🎟️ {entrada}</Text> : null}
 
           <TourismAddressRow
             address={spot.address}
@@ -207,11 +184,7 @@ export default function TouristSpotDetailScreen() {
               accessibilityRole="button"
               accessibilityLabel="Abrir o site da atração"
             >
-              <MaterialCommunityIcons
-                name="web"
-                size={16}
-                color={colors.primary}
-              />
+              <MaterialCommunityIcons name="web" size={16} color={colors.primary} />
               <Text style={styles.linkText}>Site oficial</Text>
             </Pressable>
           ) : null}
@@ -219,17 +192,11 @@ export default function TouristSpotDetailScreen() {
           {spot.instagram ? (
             <Pressable
               style={({ pressed }) => [styles.linkButton, pressed && styles.pressed]}
-              onPress={() =>
-                void openExternalUrl(linkInstagram(spot.instagram ?? ''), 'Instagram')
-              }
+              onPress={() => void openExternalUrl(linkInstagram(spot.instagram ?? ''), 'Instagram')}
               accessibilityRole="button"
               accessibilityLabel="Abrir o Instagram da atração"
             >
-              <MaterialCommunityIcons
-                name="instagram"
-                size={16}
-                color={colors.primary}
-              />
+              <MaterialCommunityIcons name="instagram" size={16} color={colors.primary} />
               <Text style={styles.linkText}>Instagram</Text>
             </Pressable>
           ) : null}
@@ -254,7 +221,7 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     backText: {
       color: colors.primary,
-            ...Typography.body,
+      ...Typography.body,
       fontFamily: FontFamily.body700,
       fontWeight: FontWeight.bold,
     },
@@ -283,10 +250,13 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     title: {
       color: colors.text,
-            ...Typography.h2,
+      ...Typography.h2,
       fontFamily: FontFamily.heading800,
       fontWeight: FontWeight.heavy,
-      position: 'absolute', left: 0, right: 0, textAlign: 'center',
+      position: 'absolute',
+      left: 0,
+      right: 0,
+      textAlign: 'center',
     },
     tag: {
       alignSelf: 'flex-start',
@@ -297,7 +267,7 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     tagText: {
       color: colors.primary,
-            ...Typography.caption,
+      ...Typography.caption,
       fontFamily: FontFamily.body700,
       fontWeight: FontWeight.bold,
     },
@@ -307,14 +277,14 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     description: {
       color: colors.textSoft,
-            ...Typography.body,
+      ...Typography.body,
     },
     section: {
       gap: Spacing.two,
     },
     sectionTitle: {
       color: colors.text,
-            ...Typography.h5,
+      ...Typography.h5,
       fontFamily: FontFamily.body700,
       fontWeight: FontWeight.bold,
     },
@@ -339,7 +309,7 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     linkText: {
       color: colors.primary,
-            ...Typography.body,
+      ...Typography.body,
       fontFamily: FontFamily.body700,
       fontWeight: FontWeight.bold,
     },
@@ -367,7 +337,7 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     stateButtonText: {
       color: colors.background,
-            ...Typography.body,
+      ...Typography.body,
       fontFamily: FontFamily.body800,
       fontWeight: FontWeight.heavy,
     },

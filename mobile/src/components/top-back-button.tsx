@@ -1,5 +1,5 @@
-import { StyleSheet, Text, TouchableOpacity } from 'react-native';
 import { router } from 'expo-router';
+import { StyleSheet, Text, TouchableOpacity } from 'react-native';
 
 import { FontFamily, FontWeight, Typography } from '@/constants/theme';
 import { useThemeColors } from '@/hooks/use-theme-colors';
@@ -21,7 +21,7 @@ export function TopBackButton({ onPress, label = '← Voltar' }: Props) {
     <TouchableOpacity
       style={styles.button}
       onPress={voltar}
-      hitSlop={12}
+      hitSlop={24}
       activeOpacity={0.7}
       accessibilityRole="button"
       accessibilityLabel="Voltar"
@@ -39,6 +39,10 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     justifyContent: 'center',
     alignItems: 'flex-start',
+    // Sobre o título absoluto das telas (left: 0, right: 0), que cobre o centro
+    // do topBar e interceptava o clique no texto do botão.
+    zIndex: 10,
+    elevation: 10,
   },
   text: {
     ...Typography.body,

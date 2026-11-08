@@ -12,7 +12,7 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Overlays, Radius, Spacing, Typography, FontFamily, FontWeight } from '@/constants/theme';
+import { FontFamily, FontWeight, Overlays, Radius, Spacing, Typography } from '@/constants/theme';
 import {
   agruparProgramacaoPorDia,
   classificarEvento,
@@ -26,16 +26,13 @@ import {
   labelCategoriaEvento,
   type EstadoEvento,
 } from '@/features/tourism/event-meta';
-import {
-  TourismAddressRow,
-  TourismContactActions,
-} from '@/features/tourism/tourism-actions';
+import { TourismAddressRow, TourismContactActions } from '@/features/tourism/tourism-actions';
 import { useThemeColors } from '@/hooks/use-theme-colors';
 import { useThemeMode } from '@/providers/theme-provider';
 import { getEventById } from '@/services/api';
 import type { TourEvent } from '@/types/domain';
-import { openExternalUrl } from '@/utils/links';
 import { cityName } from '@/utils/city';
+import { openExternalUrl } from '@/utils/links';
 
 /**
  * Selo do evento conforme o estado: o texto muda e a cor usa os tokens
@@ -68,9 +65,7 @@ export default function EventDetailScreen() {
         if (!cancelled) setEvento(encontrado);
       } catch (falha) {
         if (!cancelled) {
-          setErro(
-            falha instanceof Error ? falha.message : 'Erro ao carregar o evento',
-          );
+          setErro(falha instanceof Error ? falha.message : 'Erro ao carregar o evento');
         }
       } finally {
         if (!cancelled) setLoading(false);
@@ -105,18 +100,15 @@ export default function EventDetailScreen() {
     return (
       <View style={styles.centered}>
         <StatusBar style={mode === 'dark' ? 'light' : 'dark'} />
-        <MaterialCommunityIcons
-          name="calendar-star"
-          size={42}
-          color={colors.primary}
-        />
+        <MaterialCommunityIcons name="calendar-star" size={42} color={colors.primary} />
         <Text style={styles.stateText}>{erro ?? 'Evento não encontrado.'}</Text>
         <Pressable
           style={styles.stateButton}
           onPress={voltar}
           accessibilityRole="button"
           accessibilityLabel="Voltar"
-          hitSlop={12}>
+          hitSlop={20}
+        >
           <Text style={styles.stateButtonText}>Voltar</Text>
         </Pressable>
       </View>
@@ -143,7 +135,7 @@ export default function EventDetailScreen() {
         <View style={styles.topBar}>
           <Pressable
             onPress={voltar}
-            hitSlop={Spacing.two}
+            hitSlop={20}
             accessibilityRole="button"
             accessibilityLabel="Voltar"
           >
@@ -151,10 +143,7 @@ export default function EventDetailScreen() {
           </Pressable>
         </View>
 
-        <ScrollView
-          showsVerticalScrollIndicator={false}
-          contentContainerStyle={styles.content}
-        >
+        <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
           <View style={styles.photoBox}>
             {evento.photos?.[0] ? (
               <Image
@@ -178,9 +167,7 @@ export default function EventDetailScreen() {
 
           <View style={styles.headerGroup}>
             <View style={[styles.selo, { backgroundColor: selo.fundo }]}>
-              <Text style={[styles.seloText, { color: colors[selo.cor] }]}>
-                {selo.texto}
-              </Text>
+              <Text style={[styles.seloText, { color: colors[selo.cor] }]}>{selo.texto}</Text>
             </View>
             <Text style={styles.title}>{evento.name}</Text>
             <Text style={styles.meta}>
@@ -198,11 +185,7 @@ export default function EventDetailScreen() {
 
           {evento.location ? (
             <View style={styles.whenRow}>
-              <MaterialCommunityIcons
-                name="map-marker"
-                size={16}
-                color={colors.primary}
-              />
+              <MaterialCommunityIcons name="map-marker" size={16} color={colors.primary} />
               <Text style={styles.whenText}>{evento.location}</Text>
             </View>
           ) : null}
@@ -232,9 +215,7 @@ export default function EventDetailScreen() {
             </Pressable>
           ) : null}
 
-          {organizador ? (
-            <Text style={styles.meta}>Organização: {organizador}</Text>
-          ) : null}
+          {organizador ? <Text style={styles.meta}>Organização: {organizador}</Text> : null}
 
           {diasProgramacao.length > 0 ? (
             <View style={styles.section}>
@@ -256,33 +237,23 @@ export default function EventDetailScreen() {
                         ? item.relatedSpot
                         : undefined;
                     return (
-                      <View
-                        key={`${dia.date}-${indice}-${item.title}`}
-                        style={styles.scheduleItem}
-                      >
+                      <View key={`${dia.date}-${indice}-${item.title}`} style={styles.scheduleItem}>
                         <View style={styles.scheduleHeader}>
                           <Text style={styles.scheduleTitle}>{item.title}</Text>
-                          {horario ? (
-                            <Text style={styles.scheduleTime}>{horario}</Text>
-                          ) : null}
+                          {horario ? <Text style={styles.scheduleTime}>{horario}</Text> : null}
                         </View>
                         {item.stage ? (
                           <Text style={styles.scheduleMeta}>🎪 {item.stage}</Text>
                         ) : null}
                         {item.description ? (
-                          <Text style={styles.scheduleDescription}>
-                            {item.description}
-                          </Text>
+                          <Text style={styles.scheduleDescription}>{item.description}</Text>
                         ) : null}
                         {ingressoItem ? (
                           <Text style={styles.scheduleMeta}>🎟️ {ingressoItem}</Text>
                         ) : null}
                         {atracao ? (
                           <Pressable
-                            style={({ pressed }) => [
-                              styles.linkButton,
-                              pressed && styles.pressed,
-                            ]}
+                            style={({ pressed }) => [styles.linkButton, pressed && styles.pressed]}
                             onPress={() =>
                               router.push({
                                 pathname: '/tourist-spot/[id]',
@@ -302,24 +273,14 @@ export default function EventDetailScreen() {
                         ) : null}
                         {item.ticketUrl ? (
                           <Pressable
-                            style={({ pressed }) => [
-                              styles.linkButton,
-                              pressed && styles.pressed,
-                            ]}
+                            style={({ pressed }) => [styles.linkButton, pressed && styles.pressed]}
                             onPress={() =>
-                              void openExternalUrl(
-                                item.ticketUrl ?? '',
-                                'Ingresso da programação',
-                              )
+                              void openExternalUrl(item.ticketUrl ?? '', 'Ingresso da programação')
                             }
                             accessibilityRole="button"
                             accessibilityLabel={`Comprar ingresso de ${item.title}`}
                           >
-                            <Ionicons
-                              name="ticket-outline"
-                              size={16}
-                              color={colors.primary}
-                            />
+                            <Ionicons name="ticket-outline" size={16} color={colors.primary} />
                             <Text style={styles.linkText}>Ingresso do item</Text>
                           </Pressable>
                         ) : null}
@@ -353,7 +314,7 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     backText: {
       color: colors.primary,
-            ...Typography.body,
+      ...Typography.body,
       fontFamily: FontFamily.body700,
       fontWeight: FontWeight.bold,
     },
@@ -387,16 +348,19 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
       borderRadius: Radius.chip,
     },
     seloText: {
-            ...Typography.caption,
+      ...Typography.caption,
       fontFamily: FontFamily.body800,
       fontWeight: FontWeight.heavy,
     },
     title: {
       color: colors.text,
-            ...Typography.h2,
+      ...Typography.h2,
       fontFamily: FontFamily.heading800,
       fontWeight: FontWeight.heavy,
-      position: 'absolute', left: 0, right: 0, textAlign: 'center',
+      position: 'absolute',
+      left: 0,
+      right: 0,
+      textAlign: 'center',
     },
     meta: {
       color: colors.textSecondary,
@@ -413,14 +377,14 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     description: {
       color: colors.textSoft,
-            ...Typography.body,
+      ...Typography.body,
     },
     section: {
       gap: Spacing.two,
     },
     sectionTitle: {
       color: colors.text,
-            ...Typography.h5,
+      ...Typography.h5,
       fontFamily: FontFamily.body700,
       fontWeight: FontWeight.bold,
     },
@@ -429,7 +393,7 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     dayTitle: {
       color: colors.primary,
-            ...Typography.body,
+      ...Typography.body,
       fontFamily: FontFamily.body800,
       fontWeight: FontWeight.heavy,
     },
@@ -450,13 +414,13 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     scheduleTitle: {
       flexShrink: 1,
       color: colors.text,
-            ...Typography.body,
+      ...Typography.body,
       fontFamily: FontFamily.body700,
       fontWeight: FontWeight.bold,
     },
     scheduleTime: {
       color: colors.textSecondary,
-            ...Typography.caption,
+      ...Typography.caption,
       fontFamily: FontFamily.body700,
       fontWeight: FontWeight.bold,
     },
@@ -466,7 +430,7 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     scheduleDescription: {
       color: colors.textSoft,
-            ...Typography.body,
+      ...Typography.body,
     },
     linkButton: {
       flexDirection: 'row',
@@ -476,7 +440,7 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     linkText: {
       color: colors.primary,
-            ...Typography.body,
+      ...Typography.body,
       fontFamily: FontFamily.body700,
       fontWeight: FontWeight.bold,
     },
@@ -488,7 +452,7 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     ticketButtonText: {
       color: colors.background,
-            ...Typography.body,
+      ...Typography.body,
       fontFamily: FontFamily.body800,
       fontWeight: FontWeight.heavy,
     },
@@ -516,7 +480,7 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     stateButtonText: {
       color: colors.background,
-            ...Typography.body,
+      ...Typography.body,
       fontFamily: FontFamily.body800,
       fontWeight: FontWeight.heavy,
     },

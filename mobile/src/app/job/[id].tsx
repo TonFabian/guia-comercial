@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Overlays, Radius, Spacing, Typography, FontFamily, FontWeight } from '@/constants/theme';
+import { FontFamily, FontWeight, Overlays, Radius, Spacing, Typography } from '@/constants/theme';
 import { openCompanyDetails } from '@/features/company/open-company';
 import { useThemeColors } from '@/hooks/use-theme-colors';
 import { useThemeMode } from '@/providers/theme-provider';
@@ -83,7 +83,7 @@ export default function JobDetailScreen() {
           activeOpacity={0.8}
           accessibilityRole="button"
           accessibilityLabel="Voltar"
-          hitSlop={12}
+          hitSlop={20}
           onPress={() => router.back()}
         >
           <Text style={styles.backButtonText}>Voltar</Text>
@@ -105,7 +105,7 @@ export default function JobDetailScreen() {
               activeOpacity={0.7}
               accessibilityRole="button"
               accessibilityLabel="Voltar"
-          hitSlop={12}
+              hitSlop={20}
               onPress={() => router.back()}
             >
               <Ionicons name="chevron-back" size={22} color={colors.text} />
@@ -168,7 +168,7 @@ export default function JobDetailScreen() {
             activeOpacity={0.8}
             accessibilityRole="button"
             accessibilityLabel="Voltar"
-          hitSlop={12}
+            hitSlop={20}
             onPress={() => router.back()}
           >
             <Text style={styles.voltarText}>Voltar</Text>
@@ -203,7 +203,7 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     notFoundTitle: {
       color: colors.text,
-            ...Typography.h4,
+      ...Typography.h4,
       fontFamily: FontFamily.heading700,
       fontWeight: FontWeight.bold,
     },
@@ -221,7 +221,7 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     backButtonText: {
       color: colors.background,
-            ...Typography.body,
+      ...Typography.body,
       fontFamily: FontFamily.body700,
       fontWeight: FontWeight.bold,
     },
@@ -248,7 +248,7 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
       right: 0,
       textAlign: 'center',
       color: colors.text,
-            ...Typography.h2,
+      ...Typography.h2,
     },
     typeBadge: {
       alignSelf: 'flex-start',
@@ -259,7 +259,7 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     typeBadgeText: {
       color: colors.primary,
-            ...Typography.caption,
+      ...Typography.caption,
       fontFamily: FontFamily.body700,
       fontWeight: FontWeight.bold,
       textTransform: 'uppercase',
@@ -280,7 +280,7 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     companyLink: {
       color: colors.primary,
-            ...Typography.body,
+      ...Typography.body,
       fontFamily: FontFamily.body600,
       fontWeight: FontWeight.semibold,
     },
@@ -298,13 +298,13 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     sectionTitle: {
       color: colors.text,
-            ...Typography.h5,
+      ...Typography.h5,
       fontFamily: FontFamily.body700,
       fontWeight: FontWeight.bold,
     },
     description: {
       color: colors.textSoft,
-            ...Typography.body,
+      ...Typography.body,
     },
     verEmpresaButton: {
       marginTop: Spacing.two,
@@ -316,7 +316,7 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     verEmpresaText: {
       color: colors.background,
-            ...Typography.body,
+      ...Typography.body,
       fontFamily: FontFamily.body700,
       fontWeight: FontWeight.bold,
     },
@@ -331,7 +331,7 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     voltarText: {
       color: colors.text,
-            ...Typography.body,
+      ...Typography.body,
       fontFamily: FontFamily.body700,
       fontWeight: FontWeight.bold,
     },
