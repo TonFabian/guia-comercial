@@ -122,21 +122,13 @@ export async function getCompanyById(id: string) {
 }
 
 export async function createCompany(dto: CreateCompanyDto, ownerClerkId?: string) {
-  let latitude = dto.latitude;
-  let longitude = dto.longitude;
-
-  if ((latitude === undefined || longitude === undefined) && dto.address) {
-    const coords = await geocodeAddress(dto.address, undefined);
-    if (coords) {
-      latitude = coords.latitude;
-      longitude = coords.longitude;
-    }
-  }
-
-  // Resolve cidade para o documento City (estruturado) ou default Castelo do Piauí.
+  // Resolve cidade primeiro: o nome entra na query de geocodificação (endereço
+  // sozinho frequentemente não é encontrado, sem estado/cidade).
   let city: string | null | undefined;
+  let cityDoc: { name?: string } | null = null;
   if (dto.city === undefined) {
     const fallback = await CityModel.findOne({ slug: 'castelo-do-piaui' }).lean();
+    cityDoc = fallback ?? null;
     city = fallback ? String(fallback._id) : undefined;
   } else if (dto.city === null) {
     city = null;
@@ -147,7 +139,19 @@ export async function createCompany(dto: CreateCompanyDto, ownerClerkId?: string
       .replace(/[\u0300-\u036f]/g, '')
       .replace(/\s+/g, '-');
     const found = await CityModel.findOne({ slug }).lean();
+    cityDoc = found ?? null;
     city = found ? String(found._id) : undefined;
+  }
+
+  let latitude = dto.latitude;
+  let longitude = dto.longitude;
+
+  if ((latitude === undefined || longitude === undefined) && dto.address) {
+    const coords = await geocodeAddress(dto.address, cityDoc?.name);
+    if (coords) {
+      latitude = coords.latitude;
+      longitude = coords.longitude;
+    }
   }
 
   const resolvedCategory = await resolveCategoryId(dto.category);
@@ -224,7 +228,14 @@ export async function updateCompany(id: string, dto: UpdateCompanyDto, clerkId?:
     typeof update.address === 'string' &&
     update.address.length > 0
   ) {
-    const coords = await geocodeAddress(update.address);
+    // O nome da cidade entra na query: endereço sozinho não é encontrado pelo
+    // geocoder (falta estado/cidade na busca).
+    let cityName: string | undefined;
+    if (typeof update.city === 'string') {
+      const cityDoc = await CityModel.findById(update.city).lean();
+      cityName = cityDoc?.name;
+    }
+    const coords = await geocodeAddress(update.address, cityName);
     if (coords) {
       update.latitude = coords.latitude;
       update.longitude = coords.longitude;

@@ -65,7 +65,7 @@ export function FeaturedCompany({ company }: { company: Company | null }) {
           <TouchableOpacity
             style={styles.actionPill}
             activeOpacity={0.7}
-            onPress={() => company.address && void openAddress(company.address)}
+            onPress={() => company.address && void openAddress(company.address, { latitude: company.latitude, longitude: company.longitude })}
             disabled={!company.address}
             accessibilityLabel={!company.address ? 'Endereço não disponível' : 'Abrir endereço'}
           >

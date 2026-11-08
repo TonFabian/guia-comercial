@@ -130,6 +130,19 @@ function buildMedia(company: Company): CompanyMedia[] {
 }
 
 /** Monta a linha de horário para o bucket a partir das faixas de schedule dele. */
+/**
+ * Link do Google Maps da empresa: coordenadas geocodificadas têm prioridade
+ * (a busca por texto livre costuma falhar sem cidade; com pin exato não falha).
+ */
+function mapLinkFor(company: Company): string | undefined {
+  if (typeof company.latitude === 'number' && typeof company.longitude === 'number') {
+    return `https://maps.google.com/?q=${company.latitude},${company.longitude}`;
+  }
+  if (!company.address) return undefined;
+  const query = [company.address, cityName(company.city)].filter(Boolean).join(', ');
+  return `https://maps.google.com/?q=${encodeURIComponent(query)}`;
+}
+
 const DIAS_SEMANA = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 
 function scheduleHoursText(
@@ -202,9 +215,7 @@ export function buildCompanyDetails(company: Company): CompanyDetails {
     city: cityName(company.city),
     address: company.address ?? undefined,
     promotion: company.promotion,
-    mapLink: company.address
-      ? `https://maps.google.com/?q=${encodeURIComponent(company.address)}`
-      : undefined,
+    mapLink: mapLinkFor(company),
     about: {
       title: ABOUT_TITLE,
       text: company.description || EMPTY_DESCRIPTION,
