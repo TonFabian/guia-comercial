@@ -33,12 +33,16 @@ export function ScheduleEditorGrid({ value, onChange }: Props) {
     if (estado.isOpen) {
       setDay(day, { isOpen: false });
     } else {
-      setDay(day, { isOpen: true, opens: estado.opens || '08:00', closes: estado.closes || '18:00' });
+      setDay(day, {
+        isOpen: true,
+        opens: estado.opens || '08:00',
+        closes: estado.closes || '18:00',
+      });
     }
   }
 
   const [modeloOpens, setModeloOpens] = useState('08:00');
-  const [modeloCloses, setModeloCloses] = useState('18:00');
+  const [modeloCloses, setModeloCloses] = useState('17:00');
 
   function aplicarModelo() {
     onChange(
@@ -52,9 +56,10 @@ export function ScheduleEditorGrid({ value, onChange }: Props) {
 
   return (
     <View>
-      <View style={styles.modeloRow}>
+      <View style={styles.modeloBloco}>
         <Text style={styles.modeloLabel}>Aplicar a todos os dias abertos:</Text>
-        <TextInput
+        <View style={styles.modeloRow}>
+          <TextInput
           style={styles.horaInput}
           value={modeloOpens}
           onChangeText={setModeloOpens}
@@ -64,26 +69,27 @@ export function ScheduleEditorGrid({ value, onChange }: Props) {
           maxLength={5}
           accessibilityLabel="Horário de abertura padrão"
         />
-        <Text style={styles.horaSeparador}>às</Text>
-        <TextInput
-          style={styles.horaInput}
-          value={modeloCloses}
-          onChangeText={setModeloCloses}
-          placeholder="18:00"
-          placeholderTextColor={colors.textSecondary}
-          keyboardType="numbers-and-punctuation"
-          maxLength={5}
-          accessibilityLabel="Horário de fechamento padrão"
-        />
-        <TouchableOpacity
-          style={[styles.aplicarBtn, !algumAberto && styles.aplicarBtnDesabilitado]}
-          onPress={aplicarModelo}
-          disabled={!algumAberto}
-          accessibilityRole="button"
-          accessibilityLabel="Aplicar este horário a todos os dias abertos"
-        >
-          <Text style={styles.aplicarText}>Aplicar</Text>
-        </TouchableOpacity>
+          <Text style={styles.horaSeparador}>às</Text>
+          <TextInput
+            style={styles.horaInput}
+            value={modeloCloses}
+            onChangeText={setModeloCloses}
+            placeholder="17:00"
+            placeholderTextColor={colors.textSecondary}
+            keyboardType="numbers-and-punctuation"
+            maxLength={5}
+            accessibilityLabel="Horário de fechamento padrão"
+          />
+          <TouchableOpacity
+            style={[styles.aplicarBtn, !algumAberto && styles.aplicarBtnDesabilitado]}
+            onPress={aplicarModelo}
+            disabled={!algumAberto}
+            accessibilityRole="button"
+            accessibilityLabel="Aplicar este horário a todos os dias abertos"
+          >
+            <Text style={styles.aplicarText}>Aplicar</Text>
+          </TouchableOpacity>
+        </View>
       </View>
 
       {value.map((estado) => {
@@ -135,8 +141,7 @@ export function ScheduleEditorGrid({ value, onChange }: Props) {
       })}
 
       <Text style={styles.dica}>
-        Formato 24h (00:00–23:59). Uma faixa por dia; meia-noite cruzada também
-        é aceita.
+        Formato 24h (00:00–23:59). Uma faixa por dia; meia-noite cruzada também é aceita.
       </Text>
     </View>
   );
@@ -153,12 +158,14 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     aplicarBtnDesabilitado: {
       opacity: 0.5,
     },
+    modeloBloco: {
+      marginBottom: 12,
+      gap: 6,
+    },
     modeloRow: {
       flexDirection: 'row',
       alignItems: 'center',
-      flexWrap: 'wrap',
       gap: 8,
-      marginBottom: 8,
     },
     modeloLabel: {
       color: colors.textSecondary,
