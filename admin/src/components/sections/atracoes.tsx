@@ -129,6 +129,18 @@ function companyOptionValue(valor: string | Company | undefined, companies: Comp
   return found ? found._id : '';
 }
 
+
+function minutesToTime(m: number): string {
+  const h = Math.floor(m / 60);
+  const mm = m % 60;
+  return `${String(h).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
+}
+function timeToMinutes(t: string): number {
+  if (!t) return 0;
+  const [h, mm] = t.split(':');
+  return Number(h) * 60 + Number(mm);
+}
+
 export function AtracoesSection({ cities, citiesError, companies, companiesTotal, companiesError }: AtracoesSectionProps) {
   const { items, total, page, pageSize, loading, error, setPage, reload } =
     useResource<TouristSpot>(getTouristSpots);
@@ -396,8 +408,8 @@ export function AtracoesSection({ cities, citiesError, companies, companiesTotal
            {form.schedule.map((item, index) => (
              <div key={index}>
                <input type="number" min={0} max={6} value={item.day} onChange={(e) => { const next = [...form.schedule]; next[index] = { ...item, day: Number(e.target.value) }; setForm({ ...form, schedule: next }); }} />
-               <input type="number" min={0} max={1439} value={item.opens} onChange={(e) => { const next = [...form.schedule]; next[index] = { ...item, opens: Number(e.target.value) }; setForm({ ...form, schedule: next }); }} />
-               <input type="number" min={0} max={1439} value={item.closes} onChange={(e) => { const next = [...form.schedule]; next[index] = { ...item, closes: Number(e.target.value) }; setForm({ ...form, schedule: next }); }} />
+               <input type="time" value={minutesToTime(item.opens)} onChange={(e) => { const next = [...form.schedule]; next[index] = { ...item, opens: timeToMinutes(e.target.value) }; setForm({ ...form, schedule: next }); }} />
+               <input type="time" value={minutesToTime(item.closes)} onChange={(e) => { const next = [...form.schedule]; next[index] = { ...item, closes: timeToMinutes(e.target.value) }; setForm({ ...form, schedule: next }); }} />
                <button type="button" onClick={() => setForm({ ...form, schedule: form.schedule.filter((_, i) => i !== index) })}>Remover</button>
              </div>
            ))}

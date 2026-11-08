@@ -50,6 +50,18 @@ const EMPTY_FORM: CompanyForm = {
   schedule: [],
 };
 
+
+function minutesToTime(m: number): string {
+  const h = Math.floor(m / 60);
+  const mm = m % 60;
+  return `${String(h).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
+}
+function timeToMinutes(t: string): number {
+  if (!t) return 0;
+  const [h, mm] = t.split(':');
+  return Number(h) * 60 + Number(mm);
+}
+
 export function EmpresasSection({ categories, categoriesError, cities, citiesError }: EmpresasSectionProps) {
   const { items, total, page, pageSize, loading, error, setPage, reload } = useResource<Company>(getCompanies);
   const [search, setSearch] = useState('');
@@ -223,24 +235,20 @@ export function EmpresasSection({ categories, categoriesError, cities, citiesErr
                 }}
               />
               <input
-                type="number"
-                min={0}
-                max={1439}
-                value={item.opens}
+                type="time"
+                value={minutesToTime(item.opens)}
                 onChange={(e) => {
                   const next = [...form.schedule];
-                  next[index] = { ...item, opens: Number(e.target.value) };
+                  next[index] = { ...item, opens: timeToMinutes(e.target.value) };
                   setForm({ ...form, schedule: next });
                 }}
               />
               <input
-                type="number"
-                min={0}
-                max={1439}
-                value={item.closes}
+                type="time"
+                value={minutesToTime(item.closes)}
                 onChange={(e) => {
                   const next = [...form.schedule];
-                  next[index] = { ...item, closes: Number(e.target.value) };
+                  next[index] = { ...item, closes: timeToMinutes(e.target.value) };
                   setForm({ ...form, schedule: next });
                 }}
               />
@@ -257,6 +265,28 @@ export function EmpresasSection({ categories, categoriesError, cities, citiesErr
             onClick={() => setForm({ ...form, schedule: [...form.schedule, { day: 0, opens: 0, closes: 0 }] })}
           >
             Adicionar dia
+          </button>
+          <button
+            type="button"
+            onClick={() =>
+              setForm({
+                ...form,
+                schedule: [0, 1, 2, 3, 4, 5, 6].map((day) => ({ day, opens: 480, closes: 1080 })),
+              })
+            }
+          >
+            Preencher semana
+          </button>
+          <button
+            type="button"
+            onClick={() =>
+              setForm({
+                ...form,
+                schedule: [0, 1, 2, 3, 4, 5, 6].map((day) => ({ day, opens: 480, closes: 1080 })),
+              })
+            }
+          >
+            Preencher semana
           </button>
         </fieldset>
         <button type="submit" disabled={saving}>
