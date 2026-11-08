@@ -12,6 +12,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { TopBackButton } from '@/components/top-back-button';
 import { FontFamily, FontWeight, Overlays, Radius, Spacing, Typography } from '@/constants/theme';
 import { openCompanyDetails } from '@/features/company/open-company';
 import { useThemeColors } from '@/hooks/use-theme-colors';
@@ -100,16 +101,7 @@ export default function JobDetailScreen() {
       <SafeAreaView style={styles.safeArea} edges={['top']}>
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
           <View style={styles.topBar}>
-            <TouchableOpacity
-              style={styles.topButton}
-              activeOpacity={0.7}
-              accessibilityRole="button"
-              accessibilityLabel="Voltar"
-              hitSlop={20}
-              onPress={() => router.back()}
-            >
-              <Ionicons name="chevron-back" size={22} color={colors.text} />
-            </TouchableOpacity>
+            <TopBackButton onPress={() => router.back()} />
           </View>
 
           <View style={styles.header}>

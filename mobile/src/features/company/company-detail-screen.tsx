@@ -43,7 +43,7 @@ import { getOpeningStatus, type OpeningStatus } from './opening-hours';
 import { useCompanyDetail } from './use-company-detail';
 
 const WHATSAPP_MESSAGE =
-  'Olá, vi sua empresa no aplicativo **Guia de Castelo do Piauí** e gostaria de mais informações!';
+  'Olá, vi sua empresa no aplicativo *Guia de Castelo do Piauí* e gostaria de mais informações!';
 const SERVICE_WHATSAPP_PREFIX = 'Olá, tenho interesse no serviço de';
 
 const HERO_HEIGHT = 230;
@@ -355,7 +355,7 @@ export function CompanyDetailScreen({ companyId }: { companyId: string }) {
           <Ionicons
             name={favorite ? 'heart' : 'heart-outline'}
             size={21}
-            color={favorite ? colors.primary : colors.text}
+            color={favorite ? colors.background : colors.text}
           />
         </Pressable>
       </View>
@@ -745,12 +745,12 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
       borderRadius: 22,
       alignItems: 'center',
       justifyContent: 'center',
-      backgroundColor: Overlays.scrim,
+      backgroundColor: colors.surfaceAlt,
       borderWidth: 1,
       borderColor: colors.border,
     },
     favoriteActive: {
-      backgroundColor: Overlays.amberTag,
+      backgroundColor: colors.primary,
       borderColor: colors.primary,
     },
     pressed: {

@@ -99,10 +99,10 @@ async function seed(): Promise<void> {
   }
 
   const categorias = [
-    { name: 'Construção', slug: 'construcao', icon: 'hammer', order: 1 },
+    { name: 'Construção', slug: 'construcao', icon: 'hammer-wrench', order: 1 },
     { name: 'Alimentação', slug: 'alimentacao', icon: 'silverware-fork-knife', order: 2 },
     { name: 'Oficina', slug: 'oficina', icon: 'car-wrench', order: 3 },
-    { name: 'Farmácia', slug: 'farmacia', icon: 'pill', order: 4 },
+    { name: 'Farmácia', slug: 'farmacia', icon: 'medical-bag', order: 4 },
     { name: 'Beleza', slug: 'beleza', icon: 'content-cut', order: 5 },
     { name: 'Serviços', slug: 'servicos', icon: 'tools', order: 6 },
     { name: 'Saúde', slug: 'saude', icon: 'hospital-building', order: 7 },

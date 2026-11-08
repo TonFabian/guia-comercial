@@ -1,54 +1,50 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+import * as Location from 'expo-location';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
-  SectionList,
   ScrollView,
+  SectionList,
   StyleSheet,
   Text,
   TextInput,
   TouchableOpacity,
   View,
 } from 'react-native';
-import * as Location from 'expo-location';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Radius, Spacing, Typography, FontFamily, FontWeight } from '@/constants/theme';
+import { FontFamily, FontWeight, Radius, Spacing, Typography } from '@/constants/theme';
 import { openCompanyDetails } from '@/features/company/open-company';
+import type {
+  CompanyPageFetcher,
+  SearchFilters,
+  SearchState,
+} from '@/features/search/search-pagination';
 import {
   deriveSearchView,
   loadFirstPage,
   loadNextPage,
   SEARCH_PAGE_SIZE,
 } from '@/features/search/search-pagination';
-import type {
-  CompanyPageFetcher,
-  SearchFilters,
-  SearchState,
-} from '@/features/search/search-pagination';
-import { useVoiceSearch } from '@/features/search/use-voice-search';
+import type { SearchItem, SearchSection } from '@/features/search/tourism-search';
 import {
   buildSearchSections,
   resultadoObsoleto,
   temMaisPagina,
 } from '@/features/search/tourism-search';
-import type { SearchItem, SearchSection } from '@/features/search/tourism-search';
+import { useVoiceSearch } from '@/features/search/use-voice-search';
+import type { EstadoEvento } from '@/features/tourism/event-meta';
 import {
   classificarEvento,
   formatarPeriodoEvento,
   hojeISO,
   labelCategoriaAtracao,
 } from '@/features/tourism/event-meta';
-import type { EstadoEvento } from '@/features/tourism/event-meta';
 import { useThemeColors } from '@/hooks/use-theme-colors';
-import {
-  getCategories,
-  getEvents,
-  getTouristSpots,
-  searchCompanies,
-} from '@/services/api';
 import type { TourismPage } from '@/services/api';
+import { getCategories, getEvents, getTouristSpots, searchCompanies } from '@/services/api';
 import type { Category, Company, TourEvent, TouristSpot } from '@/types/domain';
 import { categoryLabel } from '@/types/domain';
 
@@ -230,9 +226,7 @@ export default function SearchScreen() {
           setPage(0);
           setExhausted(true);
           setError(
-            caught instanceof Error
-              ? caught.message
-              : 'Não foi possível carregar as empresas.',
+            caught instanceof Error ? caught.message : 'Não foi possível carregar as empresas.',
           );
         } finally {
           if (!cancelled) setLoading(false);
@@ -251,10 +245,7 @@ export default function SearchScreen() {
     [loaded, serverTotal, page, exhausted],
   );
 
-  const view = useMemo(
-    () => deriveSearchView(state, filters, new Date()),
-    [state, filters],
-  );
+  const view = useMemo(() => deriveSearchView(state, filters, new Date()), [state, filters]);
 
   // Cada coleção de turismo decide sozinha quando há mais páginas (o `total`
   // do servidor é a fonte da verdade — helper puro `temMaisPagina`).
@@ -341,7 +332,11 @@ export default function SearchScreen() {
     term,
   ]);
 
-  const { listening, error: voiceError, start: startVoice } = useVoiceSearch((transcript) => {
+  const {
+    listening,
+    error: voiceError,
+    start: startVoice,
+  } = useVoiceSearch((transcript) => {
     setManualTerm(transcript);
   });
 
@@ -396,15 +391,16 @@ export default function SearchScreen() {
   );
 
   const listaVazia = sections.length === 0 && !loading && !loadingTurismo && !error;
-  const mensagemVazio = showSpots || showEvents
-    ? 'Nada encontrado para os filtros selecionados.'
-    : nearMeCity
-    ? `Nenhuma empresa encontrada perto de ${nearMeCity}.`
-    : openNowOnly
-    ? 'Nenhuma empresa aberta agora.'
-    : term
-    ? `Nada encontrado para "${term}".`
-    : 'Pesquise por empresas, produtos ou serviços da cidade.';
+  const mensagemVazio =
+    showSpots || showEvents
+      ? 'Nada encontrado para os filtros selecionados.'
+      : nearMeCity
+        ? `Nenhuma empresa encontrada perto de ${nearMeCity}.`
+        : openNowOnly
+          ? 'Nenhuma empresa aberta agora.'
+          : term
+            ? `Nada encontrado para "${term}".`
+            : 'Pesquise por empresas, produtos ou serviços da cidade.';
 
   const filteredCategories = useMemo(() => {
     let result = categories;
@@ -467,9 +463,7 @@ export default function SearchScreen() {
           activeOpacity={0.7}
           accessibilityRole="button"
           accessibilityLabel={`Ver atração: ${spot.name}`}
-          onPress={() =>
-            router.push({ pathname: '/tourist-spot/[id]', params: { id: spot._id } })
-          }
+          onPress={() => router.push({ pathname: '/tourist-spot/[id]', params: { id: spot._id } })}
         >
           <View style={styles.rowIcon}>
             <Ionicons name="location-outline" size={18} color={colors.primary} />
@@ -546,7 +540,12 @@ export default function SearchScreen() {
             />
           </TouchableOpacity>
           {term.length > 0 && (
-            <TouchableOpacity onPress={clearSearch} hitSlop={8} accessibilityRole="button" accessibilityLabel="Limpar busca">
+            <TouchableOpacity
+              onPress={clearSearch}
+              hitSlop={8}
+              accessibilityRole="button"
+              accessibilityLabel="Limpar busca"
+            >
               <Ionicons name="close-circle" size={18} color={colors.textSecondary} />
             </TouchableOpacity>
           )}
@@ -603,7 +602,9 @@ export default function SearchScreen() {
                         <Ionicons name="pricetag-outline" size={14} color={colors.primary} />
                         <Text style={styles.chipText}>{cat.name}</Text>
                         <TouchableOpacity
-                          onPress={() => setManualCategories(selectedSlugs.filter((s) => s !== cat.slug))}
+                          onPress={() =>
+                            setManualCategories(selectedSlugs.filter((s) => s !== cat.slug))
+                          }
                           hitSlop={8}
                           accessibilityLabel={`Remover filtro ${cat.name}`}
                         >
@@ -641,8 +642,17 @@ export default function SearchScreen() {
                     accessibilityRole="button"
                     accessibilityLabel="Filtrar empresas perto de mim"
                   >
-                    <Ionicons name="navigate" size={14} color={nearMeCity ? colors.background : colors.primary} />
-                    <Text style={[styles.categoryChipText, nearMeCity && styles.categoryChipTextSelected]}>
+                    <Ionicons
+                      name="navigate"
+                      size={14}
+                      color={nearMeCity ? colors.background : colors.primary}
+                    />
+                    <Text
+                      style={[
+                        styles.categoryChipText,
+                        nearMeCity && styles.categoryChipTextSelected,
+                      ]}
+                    >
                       {nearMeLoading ? 'Localizando…' : 'Perto de mim'}
                     </Text>
                   </TouchableOpacity>
@@ -654,8 +664,17 @@ export default function SearchScreen() {
                     accessibilityRole="button"
                     accessibilityLabel="Filtrar empresas abertas agora"
                   >
-                    <Ionicons name="time" size={14} color={openNowOnly ? colors.background : colors.primary} />
-                    <Text style={[styles.categoryChipText, openNowOnly && styles.categoryChipTextSelected]}>
+                    <Ionicons
+                      name="time"
+                      size={14}
+                      color={openNowOnly ? colors.background : colors.primary}
+                    />
+                    <Text
+                      style={[
+                        styles.categoryChipText,
+                        openNowOnly && styles.categoryChipTextSelected,
+                      ]}
+                    >
                       Aberto agora
                     </Text>
                   </TouchableOpacity>
@@ -672,7 +691,12 @@ export default function SearchScreen() {
                       size={14}
                       color={showSpots ? colors.background : colors.primary}
                     />
-                    <Text style={[styles.categoryChipText, showSpots && styles.categoryChipTextSelected]}>
+                    <Text
+                      style={[
+                        styles.categoryChipText,
+                        showSpots && styles.categoryChipTextSelected,
+                      ]}
+                    >
                       Atrações
                     </Text>
                   </TouchableOpacity>
@@ -689,7 +713,12 @@ export default function SearchScreen() {
                       size={14}
                       color={showEvents ? colors.background : colors.primary}
                     />
-                    <Text style={[styles.categoryChipText, showEvents && styles.categoryChipTextSelected]}>
+                    <Text
+                      style={[
+                        styles.categoryChipText,
+                        showEvents && styles.categoryChipTextSelected,
+                      ]}
+                    >
                       Eventos
                     </Text>
                   </TouchableOpacity>
@@ -711,7 +740,21 @@ export default function SearchScreen() {
                         accessibilityRole="button"
                         accessibilityLabel={`Filtrar por ${category.name}`}
                       >
-                        <Text style={[styles.categoryChipText, selected && styles.categoryChipTextSelected]}>
+                        <MaterialCommunityIcons
+                          name={
+                            (category.icon ?? 'dots-horizontal-circle') as React.ComponentProps<
+                              typeof MaterialCommunityIcons
+                            >['name']
+                          }
+                          size={16}
+                          color={selected ? colors.background : colors.primary}
+                        />
+                        <Text
+                          style={[
+                            styles.categoryChipText,
+                            selected && styles.categoryChipTextSelected,
+                          ]}
+                        >
                           {category.name}
                         </Text>
                       </TouchableOpacity>
@@ -719,12 +762,13 @@ export default function SearchScreen() {
                   })}
                 </ScrollView>
 
-                {(nearMeCity || openNowOnly || showSpots || showEvents) && selectedCategories.length === 0 && (
-                  <TouchableOpacity style={styles.clearAllButton} onPress={clearAllFilters}>
-                    <Ionicons name="trash-outline" size={14} color={colors.textSecondary} />
-                    <Text style={styles.clearAllText}>Limpar todos os filtros</Text>
-                  </TouchableOpacity>
-                )}
+                {(nearMeCity || openNowOnly || showSpots || showEvents) &&
+                  selectedCategories.length === 0 && (
+                    <TouchableOpacity style={styles.clearAllButton} onPress={clearAllFilters}>
+                      <Ionicons name="trash-outline" size={14} color={colors.textSecondary} />
+                      <Text style={styles.clearAllText}>Limpar todos os filtros</Text>
+                    </TouchableOpacity>
+                  )}
               </>
             }
             ListFooterComponent={
@@ -787,8 +831,11 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     title: {
       color: colors.text,
-            ...Typography.h2,
-      position: 'absolute', left: 0, right: 0, textAlign: 'center',
+      ...Typography.h2,
+      position: 'absolute',
+      left: 0,
+      right: 0,
+      textAlign: 'center',
     },
     mapButton: {
       flexDirection: 'row',
@@ -803,7 +850,7 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     mapButtonText: {
       color: colors.primary,
-            ...Typography.caption,
+      ...Typography.caption,
       fontFamily: FontFamily.body700,
       fontWeight: FontWeight.bold,
     },
@@ -849,7 +896,7 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     retryText: {
       color: colors.primary,
-            ...Typography.caption,
+      ...Typography.caption,
       fontFamily: FontFamily.body700,
       fontWeight: FontWeight.bold,
     },
@@ -860,11 +907,14 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
       marginBottom: Spacing.two,
     },
     chipsScroll: {
-      gap: Spacing.three,
+      gap: Spacing.two,
       paddingVertical: Spacing.two,
       marginBottom: Spacing.two,
     },
     categoryChip: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      gap: Spacing.one,
       backgroundColor: colors.surface,
       borderRadius: Radius.pill,
       borderWidth: 1,
@@ -879,7 +929,7 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     categoryChipText: {
       color: colors.textSecondary,
-            ...Typography.caption,
+      ...Typography.caption,
       fontFamily: FontFamily.body600,
       fontWeight: FontWeight.semibold,
     },
@@ -901,7 +951,7 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     chipText: {
       color: colors.primary,
-            ...Typography.caption,
+      ...Typography.caption,
       fontFamily: FontFamily.body700,
       fontWeight: FontWeight.bold,
     },
@@ -919,14 +969,14 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     groupTitle: {
       color: colors.textSecondary,
-            ...Typography.caption,
+      ...Typography.caption,
       fontFamily: FontFamily.body700,
       fontWeight: FontWeight.bold,
       textTransform: 'uppercase',
     },
     groupCount: {
       color: colors.textSecondary,
-            ...Typography.caption,
+      ...Typography.caption,
       fontFamily: FontFamily.body600,
       fontWeight: FontWeight.semibold,
     },
@@ -955,7 +1005,7 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     rowTitle: {
       color: colors.text,
-            ...Typography.h5,
+      ...Typography.h5,
     },
     rowSubtitle: {
       color: colors.textSecondary,
@@ -973,7 +1023,7 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     loadMoreText: {
       color: colors.primary,
-            ...Typography.h5,
+      ...Typography.h5,
     },
     clearAllButton: {
       flexDirection: 'row',
@@ -986,7 +1036,7 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     clearAllText: {
       color: colors.textSecondary,
-            ...Typography.caption,
+      ...Typography.caption,
       fontFamily: FontFamily.body600,
       fontWeight: FontWeight.semibold,
     },

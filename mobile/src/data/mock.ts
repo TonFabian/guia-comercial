@@ -9,10 +9,10 @@ export type DisplayBanner = Banner & { emoji?: string; color?: string };
 export type DisplayCoupon = Coupon & { color?: string };
 
 export const MOCK_CATEGORIES: Category[] = [
-  { _id: '1', name: 'Construção', slug: 'construcao', icon: 'hammer' },
+  { _id: '1', name: 'Construção', slug: 'construcao', icon: 'hammer-wrench' },
   { _id: '2', name: 'Alimentação', slug: 'alimentacao', icon: 'silverware-fork-knife' },
   { _id: '3', name: 'Oficina', slug: 'oficina', icon: 'car-wrench' },
-  { _id: '4', name: 'Farmácia', slug: 'farmacia', icon: 'pill' },
+  { _id: '4', name: 'Farmácia', slug: 'farmacia', icon: 'medical-bag' },
   { _id: '5', name: 'Beleza', slug: 'beleza', icon: 'content-cut' },
   { _id: '6', name: 'Serviços', slug: 'servicos', icon: 'tools' },
   { _id: '7', name: 'Outros', slug: 'outros', icon: 'dots-horizontal-circle' },

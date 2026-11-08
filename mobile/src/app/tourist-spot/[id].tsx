@@ -10,6 +10,7 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
+import { TopBackButton } from '@/components/top-back-button';
 import { FontFamily, FontWeight, Overlays, Radius, Spacing, Typography } from '@/constants/theme';
 import { formatOpeningRange, scheduleToOpeningHours } from '@/features/company/opening-hours';
 import { descreverEntrada, labelCategoriaAtracao } from '@/features/tourism/event-meta';
@@ -105,14 +106,7 @@ export default function TouristSpotDetailScreen() {
       <StatusBar style={mode === 'dark' ? 'light' : 'dark'} />
       <SafeAreaView style={styles.safeArea} edges={['top']}>
         <View style={styles.topBar}>
-          <Pressable
-            onPress={voltar}
-            hitSlop={20}
-            accessibilityRole="button"
-            accessibilityLabel="Voltar"
-          >
-            <Text style={styles.backText}>← Voltar</Text>
-          </Pressable>
+          <TopBackButton onPress={() => router.back()} />
         </View>
 
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
@@ -138,7 +132,9 @@ export default function TouristSpotDetailScreen() {
           </View>
 
           <View style={styles.headerGroup}>
-            <Text style={styles.title}>{spot.name}</Text>
+            <Text style={styles.title} numberOfLines={1} ellipsizeMode="tail">
+              {spot.name}
+            </Text>
             <View style={styles.tag}>
               <Text style={styles.tagText}>{labelCategoriaAtracao(spot.category)}</Text>
             </View>
@@ -247,16 +243,17 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     headerGroup: {
       gap: Spacing.half,
+      marginBottom: Spacing.three,
     },
     title: {
       color: colors.text,
       ...Typography.h2,
       fontFamily: FontFamily.heading800,
       fontWeight: FontWeight.heavy,
-      position: 'absolute',
-      left: 0,
-      right: 0,
       textAlign: 'center',
+      // Título centralizado na própria linha: sem position absolute (estava
+      // ancorado na tela e caindo sobre a descrição) e com ellipsis para
+      // nomes longos não estourarem o layout.
     },
     tag: {
       alignSelf: 'flex-start',

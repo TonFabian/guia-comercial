@@ -1,12 +1,13 @@
 import type { User } from '@/types/domain';
 import { useAuth, useUser } from '@clerk/expo';
-import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import Constants from 'expo-constants';
 import * as Notifications from 'expo-notifications';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
+import { Platform } from 'react-native';
 
-import { registerTokenGetter } from '@/services/http';
 import { updatePushToken } from '@/services/api';
+import { registerTokenGetter } from '@/services/http';
 
 const GUEST_KEY = 'guia:guest';
 
@@ -61,6 +62,20 @@ function ClerkAuthProvider({ children }: { children: ReactNode }) {
   const { user } = useUser();
   const [guest, setGuest] = useState(false);
 
+  // Registra o getter de token de forma SÍNCRONA (durante o render), antes de
+  // os filhos montarem seus effects — caso contrário a primeira requisição
+  // autenticada (ex.: /me, /companies?owner=) sai sem Authorization e vira
+  // 401/403 mesmo com sessão válida.
+  const tokenGetter = useMemo(
+    () => async (options?: { skipCache?: boolean }) => (await getToken(options)) ?? null,
+    [getToken],
+  );
+  registerTokenGetter(tokenGetter);
+
+  useEffect(() => {
+    return () => registerTokenGetter(null);
+  }, []);
+
   // Restaura modo convidado persistido (sobrevive a reload).
   useEffect(() => {
     AsyncStorage.getItem(GUEST_KEY).then((value) => {
@@ -68,16 +83,12 @@ function ClerkAuthProvider({ children }: { children: ReactNode }) {
     });
   }, []);
 
-  // Fecha o gap entre o token de sessão do Clerk e a fachada http.ts.
-  useEffect(() => {
-    registerTokenGetter(async (options) => (await getToken(options)) ?? null);
-    return () => registerTokenGetter(null);
-  }, [getToken]);
-
   // Registra push token no backend (funciona para convidados e logados).
+  // Pulo no web: expo-notifications exige VAPID e o registro é inócuo aqui.
   useEffect(() => {
     let cancelled = false;
     (async () => {
+      if (Platform.OS === 'web') return;
       try {
         const { status } = await Notifications.requestPermissionsAsync();
         if (status !== 'granted' || cancelled) {
