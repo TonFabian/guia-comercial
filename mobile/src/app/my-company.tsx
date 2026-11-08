@@ -199,8 +199,7 @@ export default function MyCompanyScreen() {
                     <ScheduleEditorGrid value={scheduleDays} onChange={setScheduleDays} />
                     <View style={styles.actions}>
                       <TouchableOpacity style={[styles.btn, styles.btnPrimary]} onPress={saveHours} disabled={saving}>
-                        <Text style={[styles.btnText, styles.btnPrimaryText]}>{saving ? null : 'Salvar horários'}</Text>
-                        {saving ? <SavingDots color={colors.background} /> : null}
+                        {saving ? <SavingDots color={colors.background} /> : <Text style={[styles.btnText, styles.btnPrimaryText]}>Salvar horários</Text>}
                       </TouchableOpacity>
                       <TouchableOpacity style={[styles.btn, saving && styles.btnDisabled]} onPress={() => setEditingHoursId(null)} disabled={saving}>
                         <Text style={styles.btnText}>Cancelar</Text>
@@ -267,8 +266,7 @@ export default function MyCompanyScreen() {
                     />
                     <View style={styles.actions}>
                       <TouchableOpacity style={[styles.btn, styles.btnPrimary]} onPress={saveInfo} disabled={saving}>
-                        <Text style={[styles.btnText, styles.btnPrimaryText]}>{saving ? null : 'Salvar informações'}</Text>
-                        {saving ? <SavingDots color={colors.background} /> : null}
+                        {saving ? <SavingDots color={colors.background} /> : <Text style={[styles.btnText, styles.btnPrimaryText]}>Salvar informações</Text>}
                       </TouchableOpacity>
                       <TouchableOpacity style={[styles.btn, saving && styles.btnDisabled]} onPress={() => setEditingInfoId(null)} disabled={saving}>
                         <Text style={styles.btnText}>Cancelar</Text>

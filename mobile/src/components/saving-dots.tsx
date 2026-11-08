@@ -1,10 +1,10 @@
-import { useEffect, useRef, useState } from 'react';
-import { Animated, Text } from 'react-native';
+import { useEffect, useState } from 'react';
+import { Animated, Text, View } from 'react-native';
 
-import { Typography, FontFamily, FontWeight } from '@/constants/theme';
+import { FontFamily, FontWeight, Typography } from '@/constants/theme';
 
 /**
- * Texto "Salvando" com efeito de pontos animados (DotsLoading).
+ * Efeito de pontos animados (DotsLoading) centralizado, sem texto.
  */
 export function SavingDots({ color }: { color: string }) {
   const [dots] = useState(() => new Animated.Value(0));
@@ -24,12 +24,13 @@ export function SavingDots({ color }: { color: string }) {
   const opacity2 = dots.interpolate({ inputRange: [0, 0.33, 0.66, 1], outputRange: [0.3, 0.3, 1, 0.3] });
   const opacity3 = dots.interpolate({ inputRange: [0, 0.33, 0.66, 1], outputRange: [0.3, 0.3, 0.3, 1] });
 
+  const dotStyle = { color, ...Typography.body, fontFamily: FontFamily.body700, fontWeight: FontWeight.bold, marginHorizontal: 2 };
+
   return (
-    <Text style={{ color, ...Typography.body, fontFamily: FontFamily.body600, fontWeight: FontWeight.semibold }}>
-      Salvando
-      <Animated.Text style={{ opacity: opacity1 }}>.</Animated.Text>
-      <Animated.Text style={{ opacity: opacity2 }}>.</Animated.Text>
-      <Animated.Text style={{ opacity: opacity3 }}>.</Animated.Text>
-    </Text>
+    <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'center' }}>
+      <Animated.Text style={[dotStyle, { opacity: opacity1 }]}>•</Animated.Text>
+      <Animated.Text style={[dotStyle, { opacity: opacity2 }]}>•</Animated.Text>
+      <Animated.Text style={[dotStyle, { opacity: opacity3 }]}>•</Animated.Text>
+    </View>
   );
 }
