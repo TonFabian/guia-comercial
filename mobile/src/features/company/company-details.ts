@@ -135,11 +135,11 @@ function buildMedia(company: Company): CompanyMedia[] {
  * (a busca por texto livre costuma falhar sem cidade; com pin exato não falha).
  */
 function mapLinkFor(company: Company): string | undefined {
-  if (typeof company.latitude === 'number' && typeof company.longitude === 'number') {
-    return `https://maps.google.com/?q=${company.latitude},${company.longitude}`;
-  }
   if (!company.address) return undefined;
-  const query = [company.address, cityName(company.city)].filter(Boolean).join(', ');
+  const city = typeof company.city === 'string' ? null : company.city;
+  const cityNameValue = cityName(company.city);
+  const state = city && typeof city === 'object' ? (city as { state?: string }).state : undefined;
+  const query = [company.address, cityNameValue, state].filter(Boolean).join(', ');
   return `https://maps.google.com/?q=${encodeURIComponent(query)}`;
 }
 
