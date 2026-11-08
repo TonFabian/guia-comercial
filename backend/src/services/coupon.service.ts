@@ -78,7 +78,8 @@ export async function updateCoupon(id: string, dto: UpdateCouponDto, clerkId?: s
     notFoundMessage: 'empresa não encontrada',
     forbiddenMessage: 'sem permissão para editar este cupom',
   });
-  const { company: _ignore, ...rest } = dto as UpdateCouponDto & { company?: unknown };
+  const rest = { ...(dto as Record<string, unknown>) };
+  delete rest.company;
   return CouponModel.findByIdAndUpdate(id, rest, { returnDocument: 'after', runValidators: true })
     .populate('company')
     .lean();

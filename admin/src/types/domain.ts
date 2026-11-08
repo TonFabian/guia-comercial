@@ -1,6 +1,3 @@
-// fontes da verdade: ../shared/domain.ts (cópia fiel para o build Vite/tsc
-// resolver sem path hacks entre projetos). Ao alterar o original, reflita aqui.
-
 /**
  * Tipos de domínio compartilhados (ONDA 1).
  *
@@ -60,6 +57,7 @@ export interface Company {
   instagram?: string;
   facebook?: string;
   openingHours?: string[];
+  /** Horário estruturado (minutos desde a meia-noite). Preferido para consultas. */
   schedule?: { day: number; opens: number; closes: number }[];
   services?: string[];
   products?: CompanyProduct[];
