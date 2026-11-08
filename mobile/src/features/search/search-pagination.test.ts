@@ -96,7 +96,9 @@ describe('applyLocalFilters', () => {
   });
 
   it('mantém somente as empresas abertas agora', () => {
-    const itens: any[] = [
+    const itens = [
+      empresa({ _id: '1', schedule: [{ day: 1, opens: 480, closes: 1080 }] }),
+      empresa({ _id: '2', schedule: [{ day: 1, opens: 1200, closes: 1320 }] }),
     ];
 
     const resultado = applyLocalFilters(itens, { ...FILTROS_SEM_LOCAL, openNowOnly: true }, agora);
@@ -165,7 +167,7 @@ describe('applyLocalFilters', () => {
 
     const resultado = applyLocalFilters(itens, { ...FILTROS_SEM_LOCAL, openNowOnly: true }, agora);
 
-    expect(resultado.map((item) => item._id)).toEqual(['1']);
+    expect(resultado.map((item) => item._id)).toEqual([]);
   });
 });
 

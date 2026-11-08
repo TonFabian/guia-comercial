@@ -136,8 +136,17 @@ function scheduleHoursText(
 ): string {
   const faixas = schedule.filter((item) => days.includes(item.day));
   if (faixas.length === 0) return 'Fechado';
-  const menor = faixas.reduce((a, b) => (b.opens < a.opens ? b : a));
-  return `${formatMinutes(menor.opens)} às ${formatMinutes(menor.closes)}`;
+  // Não inferir: cada faixa distinta é listada; dias sem entrada ficam "Fechado"
+  // implícito (não aparecem na lista). Agrupar faixas idênticas em uma única
+  // linha para não duplicar.
+  const unicas = new Map<string, string>();
+  for (const f of faixas) {
+    const chave = `${f.opens}-${f.closes}`;
+    if (!unicas.has(chave)) {
+      unicas.set(chave, `${formatMinutes(f.opens)} às ${formatMinutes(f.closes)}`);
+    }
+  }
+  return Array.from(unicas.values()).join(', ');
 }
 
 function buildWorkingHours(company: Company): WorkingHours {

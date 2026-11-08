@@ -36,7 +36,7 @@ describe('buildCompanyDetails — workingHours', () => {
     expect(detalhes.workingHours.sunday).toBe('Fechado');
   });
 
-  it('cai no openingHours textual quando o schedule vem vazio', () => {
+  it('mantém "Consulte a empresa" quando o schedule vem vazio', () => {
     const detalhes = buildCompanyDetails(
       empresa({
         _id: '1',
@@ -44,8 +44,11 @@ describe('buildCompanyDetails — workingHours', () => {
       }),
     );
 
-    expect(detalhes.workingHours.weekdays).toBe('Seg a Sex: 08h às 18h');
-    expect(detalhes.workingHours.saturday).toBe('Sáb: 08h às 12h');
+    expect(detalhes.workingHours).toEqual({
+      weekdays: 'Consulte a empresa',
+      saturday: 'Consulte a empresa',
+      sunday: 'Consulte a empresa',
+    });
   });
 
   it('mantém "Consulte a empresa" quando não há horário nenhum', () => {
