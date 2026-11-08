@@ -9,6 +9,7 @@ import { getCompanies, updateCompany } from '@/services/api';
 import type { Company } from '@/types/domain';
 import { useAuthState } from '@/providers/auth-provider';
 import { useThemeColors } from '@/hooks/use-theme-colors';
+import { SavingDots } from '@/components/saving-dots';
 import { cityName } from '@/utils/city';
 import { filterOwnedCompanies, resolveContactNumbers } from '@/features/company/owner';
 import { dayStatesToSchedule, scheduleToDayStates } from '@/features/company/schedule-editor';
@@ -197,11 +198,12 @@ export default function MyCompanyScreen() {
                     <Text style={styles.label}>Horários</Text>
                     <ScheduleEditorGrid value={scheduleDays} onChange={setScheduleDays} />
                     <View style={styles.actions}>
-                      <TouchableOpacity style={styles.btn} onPress={() => setEditingHoursId(null)}>
-                        <Text style={styles.btnText}>Cancelar</Text>
-                      </TouchableOpacity>
                       <TouchableOpacity style={[styles.btn, styles.btnPrimary]} onPress={saveHours} disabled={saving}>
-                        <Text style={[styles.btnText, styles.btnPrimaryText]}>{saving ? 'Salvando…' : 'Salvar horários'}</Text>
+                        <Text style={[styles.btnText, styles.btnPrimaryText]}>{saving ? null : 'Salvar horários'}</Text>
+                        {saving ? <SavingDots color={colors.background} /> : null}
+                      </TouchableOpacity>
+                      <TouchableOpacity style={[styles.btn, saving && styles.btnDisabled]} onPress={() => setEditingHoursId(null)} disabled={saving}>
+                        <Text style={styles.btnText}>Cancelar</Text>
                       </TouchableOpacity>
                     </View>
                   </>
@@ -209,7 +211,7 @@ export default function MyCompanyScreen() {
                   <>
                     <Text style={styles.label}>Descrição</Text>
                     <TextInput
-                      style={[styles.input, styles.phoneInput]}
+                      style={[styles.input]}
                       value={description}
                       onChangeText={setDescription}
                       placeholder="Descrição da empresa"
@@ -264,11 +266,12 @@ export default function MyCompanyScreen() {
                       editable={!samePhone}
                     />
                     <View style={styles.actions}>
-                      <TouchableOpacity style={styles.btn} onPress={() => setEditingInfoId(null)}>
-                        <Text style={styles.btnText}>Cancelar</Text>
-                      </TouchableOpacity>
                       <TouchableOpacity style={[styles.btn, styles.btnPrimary]} onPress={saveInfo} disabled={saving}>
-                        <Text style={[styles.btnText, styles.btnPrimaryText]}>{saving ? 'Salvando…' : 'Salvar informações'}</Text>
+                        <Text style={[styles.btnText, styles.btnPrimaryText]}>{saving ? null : 'Salvar informações'}</Text>
+                        {saving ? <SavingDots color={colors.background} /> : null}
+                      </TouchableOpacity>
+                      <TouchableOpacity style={[styles.btn, saving && styles.btnDisabled]} onPress={() => setEditingInfoId(null)} disabled={saving}>
+                        <Text style={styles.btnText}>Cancelar</Text>
                       </TouchableOpacity>
                     </View>
                   </>
@@ -334,6 +337,7 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     btn: { paddingVertical: 8, paddingHorizontal: 16, borderRadius: 10, backgroundColor: colors.surfaceAlt },
     btnText: { color: colors.text, ...Typography.body, fontFamily: FontFamily.body600, fontWeight: FontWeight.semibold },
     btnPrimary: { backgroundColor: colors.primary },
+    btnDisabled: { opacity: 0.5 },
     btnPrimaryText: { color: colors.background },
     editBtn: { alignSelf: 'flex-start', paddingVertical: 6, paddingHorizontal: 12, borderRadius: 8, backgroundColor: colors.surfaceAlt, borderWidth: 1, borderColor: colors.border, marginTop: 4 },
     editBtnText: { color: colors.primary, ...Typography.body, fontFamily: FontFamily.body600, fontWeight: FontWeight.semibold },
