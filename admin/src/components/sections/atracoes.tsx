@@ -39,7 +39,7 @@ interface TouristSpotForm {
   city: string;
   latitude: string;
   longitude: string;
-  openingHours: string;
+  schedule: { day: number; opens: number; closes: number }[];
   entryFee: EntryFee;
   entryPrice: string;
   phone: string;
@@ -62,7 +62,7 @@ const EMPTY_FORM: TouristSpotForm = {
   city: '',
   latitude: '',
   longitude: '',
-  openingHours: '',
+  schedule: [],
   entryFee: 'free',
   entryPrice: '',
   phone: '',
@@ -129,6 +129,18 @@ function companyOptionValue(valor: string | Company | undefined, companies: Comp
   return found ? found._id : '';
 }
 
+
+function minutesToTime(m: number): string {
+  const h = Math.floor(m / 60);
+  const mm = m % 60;
+  return `${String(h).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
+}
+function timeToMinutes(t: string): number {
+  if (!t) return 0;
+  const [h, mm] = t.split(':');
+  return Number(h) * 60 + Number(mm);
+}
+
 export function AtracoesSection({ cities, citiesError, companies, companiesTotal, companiesError }: AtracoesSectionProps) {
   const { items, total, page, pageSize, loading, error, setPage, reload } =
     useResource<TouristSpot>(getTouristSpots);
@@ -166,7 +178,7 @@ export function AtracoesSection({ cities, citiesError, companies, companiesTotal
       city: citySlug(spot.city, cities),
       latitude: spot.latitude !== undefined ? String(spot.latitude) : '',
       longitude: spot.longitude !== undefined ? String(spot.longitude) : '',
-      openingHours: (spot.openingHours ?? []).join('\n'),
+      schedule: spot.schedule ?? [],
       entryFee: spot.entryFee ?? 'free',
       entryPrice: spot.entryPrice ?? '',
       phone: spot.phone ?? '',
@@ -210,7 +222,6 @@ export function AtracoesSection({ cities, citiesError, companies, companiesTotal
       city: form.city || null,
       latitude,
       longitude,
-      openingHours: parseLines(form.openingHours),
       entryFee: form.entryFee,
       // Omitir preserva o preço já salvo (regra do PUT parcial no backend).
       entryPrice: form.entryFee === 'paid' ? form.entryPrice.trim() : undefined,
@@ -392,12 +403,18 @@ export function AtracoesSection({ cities, citiesError, companies, companiesTotal
           onChange={(event) => setForm({ ...form, photos: event.target.value })}
           style={{ minWidth: 300, minHeight: 60, width: '100%' }}
         />
-        <textarea
-          placeholder="Horários (um por linha, ex.: Quarta a domingo, 8h às 17h)"
-          value={form.openingHours}
-          onChange={(event) => setForm({ ...form, openingHours: event.target.value })}
-          style={{ minWidth: 300, minHeight: 60, width: '100%' }}
-        />
+         <fieldset>
+           <legend>Horário estruturado (schedule)</legend>
+           {form.schedule.map((item, index) => (
+             <div key={index}>
+               <input type="number" min={0} max={6} value={item.day} onChange={(e) => { const next = [...form.schedule]; next[index] = { ...item, day: Number(e.target.value) }; setForm({ ...form, schedule: next }); }} />
+               <input type="time" value={minutesToTime(item.opens)} onChange={(e) => { const next = [...form.schedule]; next[index] = { ...item, opens: timeToMinutes(e.target.value) }; setForm({ ...form, schedule: next }); }} />
+               <input type="time" value={minutesToTime(item.closes)} onChange={(e) => { const next = [...form.schedule]; next[index] = { ...item, closes: timeToMinutes(e.target.value) }; setForm({ ...form, schedule: next }); }} />
+               <button type="button" onClick={() => setForm({ ...form, schedule: form.schedule.filter((_, i) => i !== index) })}>Remover</button>
+             </div>
+           ))}
+           <button type="button" onClick={() => setForm({ ...form, schedule: [...form.schedule, { day: 0, opens: 0, closes: 0 }] })}>Adicionar dia</button>
+         </fieldset>
       </form>
       {companiesTotal > companies.length && (
         <p style={hintStyle}>

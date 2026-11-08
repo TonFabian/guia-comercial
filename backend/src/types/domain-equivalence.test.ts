@@ -9,7 +9,7 @@ function readDomain(relativePath: string): string {
 }
 
 describe('domain.ts equivalence', () => {
-  it('shared, mobile and admin copies are textually identical', () => {
+  it('admin copy is textually identical to shared', () => {
     const shared = readDomain('shared/domain.ts');
     const admin = readDomain('admin/src/types/domain.ts');
 

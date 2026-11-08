@@ -20,6 +20,12 @@ export interface EmpresasSectionProps {
   citiesError: string | null;
 }
 
+interface CompanyScheduleItemForm {
+  day: number;
+  opens: number;
+  closes: number;
+}
+
 interface CompanyForm {
   name: string;
   slug: string;
@@ -29,6 +35,7 @@ interface CompanyForm {
   phone: string;
   whatsapp: string;
   samePhone: boolean;
+  schedule: CompanyScheduleItemForm[];
 }
 
 const EMPTY_FORM: CompanyForm = {
@@ -40,7 +47,20 @@ const EMPTY_FORM: CompanyForm = {
   phone: '',
   whatsapp: '',
   samePhone: false,
+  schedule: [],
 };
+
+
+function minutesToTime(m: number): string {
+  const h = Math.floor(m / 60);
+  const mm = m % 60;
+  return `${String(h).padStart(2, '0')}:${String(mm).padStart(2, '0')}`;
+}
+function timeToMinutes(t: string): number {
+  if (!t) return 0;
+  const [h, mm] = t.split(':');
+  return Number(h) * 60 + Number(mm);
+}
 
 export function EmpresasSection({ categories, categoriesError, cities, citiesError }: EmpresasSectionProps) {
   const { items, total, page, pageSize, loading, error, setPage, reload } = useResource<Company>(getCompanies);
@@ -72,6 +92,7 @@ export function EmpresasSection({ categories, categoriesError, cities, citiesErr
       phone: company.phone ?? '',
       whatsapp: company.whatsapp ?? '',
       samePhone: false,
+      schedule: company.schedule ?? [],
     });
   }
 
@@ -104,6 +125,7 @@ export function EmpresasSection({ categories, categoriesError, cities, citiesErr
       city: form.city || undefined,
       phone: form.phone || undefined,
       whatsapp: form.whatsapp || undefined,
+      schedule: form.schedule,
     };
 
     try {
@@ -197,6 +219,76 @@ export function EmpresasSection({ categories, categoriesError, cities, citiesErr
           onChange={(event) => setForm({ ...form, whatsapp: event.target.value })}
           disabled={form.samePhone}
         />
+        <fieldset>
+          <legend>Horário de funcionamento</legend>
+          {form.schedule.map((item, index) => (
+            <div key={index}>
+              <input
+                type="number"
+                min={0}
+                max={6}
+                value={item.day}
+                onChange={(e) => {
+                  const next = [...form.schedule];
+                  next[index] = { ...item, day: Number(e.target.value) };
+                  setForm({ ...form, schedule: next });
+                }}
+              />
+              <input
+                type="time"
+                value={minutesToTime(item.opens)}
+                onChange={(e) => {
+                  const next = [...form.schedule];
+                  next[index] = { ...item, opens: timeToMinutes(e.target.value) };
+                  setForm({ ...form, schedule: next });
+                }}
+              />
+              <input
+                type="time"
+                value={minutesToTime(item.closes)}
+                onChange={(e) => {
+                  const next = [...form.schedule];
+                  next[index] = { ...item, closes: timeToMinutes(e.target.value) };
+                  setForm({ ...form, schedule: next });
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => setForm({ ...form, schedule: form.schedule.filter((_, i) => i !== index) })}
+              >
+                Remover
+              </button>
+            </div>
+          ))}
+          <button
+            type="button"
+            onClick={() => setForm({ ...form, schedule: [...form.schedule, { day: 0, opens: 0, closes: 0 }] })}
+          >
+            Adicionar dia
+          </button>
+          <button
+            type="button"
+            onClick={() =>
+              setForm({
+                ...form,
+                schedule: [0, 1, 2, 3, 4, 5, 6].map((day) => ({ day, opens: 480, closes: 1080 })),
+              })
+            }
+          >
+            Preencher semana
+          </button>
+          <button
+            type="button"
+            onClick={() =>
+              setForm({
+                ...form,
+                schedule: [0, 1, 2, 3, 4, 5, 6].map((day) => ({ day, opens: 480, closes: 1080 })),
+              })
+            }
+          >
+            Preencher semana
+          </button>
+        </fieldset>
         <button type="submit" disabled={saving}>
           {editingId ? 'Salvar' : 'Criar'}
         </button>

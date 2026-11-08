@@ -147,7 +147,6 @@ async function seed(): Promise<void> {
       website: 'https://construtoraalicerce.com.br',
       instagram: '@construtoraalicerce',
       facebook: 'https://facebook.com/construtoraalicerce',
-      openingHours: ['Seg a Sex: 08h às 18h', 'Sáb: 08h às 12h'],
       schedule: [
         { day: 1, opens: 480, closes: 1080 },
         { day: 2, opens: 480, closes: 1080 },
@@ -184,7 +183,6 @@ async function seed(): Promise<void> {
       ratingCount: 214,
       isVerified: true,
       instagram: '@saborarte',
-      openingHours: ['Todos os dias: 11h às 23h'],
       schedule: [
         { day: 0, opens: 660, closes: 1380 },
         { day: 1, opens: 660, closes: 1380 },
@@ -215,7 +213,6 @@ async function seed(): Promise<void> {
       rating: 4.2,
       ratingCount: 87,
       instagram: '@oficinadoze',
-      openingHours: ['Seg a Sáb: 08h às 18h'],
       schedule: [
         { day: 1, opens: 480, closes: 1080 },
         { day: 2, opens: 480, closes: 1080 },
@@ -244,7 +241,6 @@ async function seed(): Promise<void> {
       isVerified: true,
       website: 'https://drogariapopular.com.br',
       facebook: 'https://facebook.com/drogariapopular',
-      openingHours: ['Todos os dias: 00h às 23h59'],
       schedule: [
         { day: 0, opens: 0, closes: 1439 },
         { day: 1, opens: 0, closes: 1439 },
@@ -278,7 +274,6 @@ async function seed(): Promise<void> {
       website: 'https://barbeariacentral.com.br',
       instagram: '@barbeariacentral',
       facebook: 'https://facebook.com/barbeariacentral',
-      openingHours: ['Ter a Dom: 09h às 20h'],
       schedule: [
         { day: 0, opens: 540, closes: 1200 },
         { day: 2, opens: 540, closes: 1200 },
@@ -304,7 +299,6 @@ async function seed(): Promise<void> {
       address: 'Av. Principal, s/n — Centro',
       city: casteloId,
       isVerified: true,
-      openingHours: ['Todos os dias: 00h às 23h59'],
       schedule: [
         { day: 0, opens: 0, closes: 1439 },
         { day: 1, opens: 0, closes: 1439 },
@@ -545,7 +539,6 @@ async function seed(): Promise<void> {
       city: casteloId,
       latitude: -7.31,
       longitude: -43.04,
-      openingHours: ['Todos os dias: 08h às 17h'],
       entryFee: 'free',
       featured: true,
       active: true,
@@ -561,7 +554,6 @@ async function seed(): Promise<void> {
       city: casteloId,
       latitude: -7.32,
       longitude: -43.06,
-      openingHours: ['Todos os dias: 08h às 17h'],
       entryFee: 'free',
       active: true,
       order: 2,
@@ -576,7 +568,6 @@ async function seed(): Promise<void> {
       city: casteloId,
       latitude: -7.25,
       longitude: -43.05,
-      openingHours: ['Todos os dias: 08h às 17h'],
       entryFee: 'free',
       active: true,
       order: 3,
@@ -591,7 +582,6 @@ async function seed(): Promise<void> {
       city: casteloId,
       latitude: -7.2833,
       longitude: -43.0167,
-      openingHours: ['Ter a Sáb: 09h às 17h', 'Dom: 09h às 13h'],
       entryFee: 'free',
       active: true,
       order: 4,

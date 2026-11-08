@@ -85,6 +85,16 @@ const companyProductSchema = z.object({
   image: z.string().optional(),
 });
 
+/**
+ * Item do horário de funcionamento estruturado da empresa: `schedule` é a
+ * fonte da verdade e `openingHours` (texto livre) está em deprecação.
+ */
+export const scheduleItemSchema = z.object({
+  day: z.number().int().min(0).max(6),
+  opens: z.number().int().min(0).max(1439),
+  closes: z.number().int().min(0).max(1439),
+});
+
 export const createCompanySchema = z.object({
   name: z.string().min(1),
   slug: slugSchema,
@@ -108,7 +118,7 @@ export const createCompanySchema = z.object({
   website: urlSeguraSchema.optional(),
   instagram: z.string().optional(),
   facebook: urlSeguraSchema.optional(),
-  openingHours: z.array(z.string()).optional(),
+  schedule: z.array(scheduleItemSchema).optional(),
   services: z.array(z.string()).optional(),
   products: z.array(companyProductSchema).optional(),
 });
@@ -305,7 +315,7 @@ const touristSpotBaseSchema = z.object({
   city: z.string().trim().min(1).nullish(),
   latitude: z.number().optional(),
   longitude: z.number().optional(),
-  openingHours: z.array(z.string()).optional(),
+  schedule: z.array(scheduleItemSchema).optional(),
   entryFee: z.enum(['free', 'paid', 'donation']).optional(),
   entryPrice: z.string().optional(),
   phone: z.string().trim().min(1).nullish(),

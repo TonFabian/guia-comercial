@@ -2,13 +2,14 @@ import { router } from 'expo-router';
 import * as Location from 'expo-location';
 import { StatusBar } from 'expo-status-bar';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
 import { Typography, FontFamily, FontWeight } from '@/constants/theme';
 import { getCompanies } from '@/services/api';
 import type { Company } from '@/types/domain';
 import { useThemeColors } from '@/hooks/use-theme-colors';
+import { TopBackButton } from '@/components/top-back-button';
 import { InteractiveMap } from '@/features/map/interactive-map';
 import type { MappableCompany } from '@/features/map/interactive-map.types';
 
@@ -79,15 +80,7 @@ export default function MapScreen() {
       <StatusBar style="light" />
       <SafeAreaView style={styles.safeArea} edges={['top']}>
         <View style={styles.topBar}>
-          <TouchableOpacity
-            style={styles.topButton}
-            activeOpacity={0.7}
-            onPress={() => router.back()}
-            accessibilityRole="button"
-            accessibilityLabel="Voltar"
-          >
-            <Text style={styles.topButtonText}>← Voltar</Text>
-          </TouchableOpacity>
+          <TopBackButton onPress={() => router.back()} />
           <Text style={styles.title}>Mapa de empresas</Text>
         </View>
         {withCoords.length === 0 ? (

@@ -34,8 +34,14 @@ export async function openMapLink(url: string) {
   }
 }
 
-export async function openAddress(address: string) {
-  await openMapLink(`https://maps.google.com/?q=${encodeURIComponent(address)}`);
+/**
+ * Abre o mapa do endereço. Coordenadas geocodificadas têm prioridade (a busca
+ * por texto livre muitas vezes falha no Google Maps, como em ruas sem número
+ * indexado); sem coordenadas, cai para a busca textual com a cidade.
+ */
+export async function openAddress(address: string, city?: string) {
+  const query = [address, city].filter(Boolean).join(', ');
+  await openMapLink(`https://maps.google.com/?q=${encodeURIComponent(query)}`);
 }
 
 export async function openVideo(url: string) {

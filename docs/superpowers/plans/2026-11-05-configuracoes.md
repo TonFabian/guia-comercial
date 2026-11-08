@@ -15,6 +15,7 @@
 ### Task 1: Backend — preferências de notificação
 
 **Files:**
+
 - Modify: `shared/domain.ts`
 - Modify: `backend/src/types/dto.ts`
 - Modify: `backend/src/models/user.model.ts`
@@ -107,9 +108,7 @@ it('persiste as duas preferências de notificação', async () => {
     jobPostingAlerts: true,
   });
 
-  const usuario = modeloUsuarios.documents.find(
-    (documento) => documento.clerkId === 'user_comum',
-  );
+  const usuario = modeloUsuarios.documents.find((documento) => documento.clerkId === 'user_comum');
   expect(usuario?.preferences).toEqual({
     publicUtilityAlerts: false,
     jobPostingAlerts: true,
@@ -132,6 +131,7 @@ Expected: tudo verde.
 ### Task 2: Mobile — tipos e constantes de suporte
 
 **Files:**
+
 - Modify: `mobile/src/types/domain.ts`
 - Create: `mobile/src/constants/support.ts`
 
@@ -139,8 +139,7 @@ Expected: tudo verde.
 
 ```ts
 export const SUPPORT_WHATSAPP_PHONE = '5586999990000';
-export const SUPPORT_WHATSAPP_MESSAGE =
-  'Olá! Preciso de ajuda com o Guia Comercial.';
+export const SUPPORT_WHATSAPP_MESSAGE = 'Olá! Preciso de ajuda com o **Guia Comercial**.';
 export const TERMS_URL = 'https://example.com/termos-de-uso';
 ```
 
@@ -164,6 +163,7 @@ Expected: PASS.
 ### Task 3: Mobile — tela Configurações
 
 **Files:**
+
 - Modify: `mobile/src/features/settings/settings-screen.tsx`
 
 - [ ] **Step 1: Replace notification state**
@@ -192,10 +192,7 @@ if (loadedJobPosting !== undefined) setJobPostingAlerts(loadedJobPosting);
 - [ ] **Step 3: Save both values**
 
 ```ts
-async function savePreferences(next: {
-  publicUtilityAlerts: boolean;
-  jobPostingAlerts: boolean;
-}) {
+async function savePreferences(next: { publicUtilityAlerts: boolean; jobPostingAlerts: boolean }) {
   setSaving(true);
   setError(null);
 
@@ -225,8 +222,9 @@ Handlers otimistas:
 function togglePublicUtility(value: boolean) {
   const anterior = publicUtilityAlerts;
   setPublicUtilityAlerts(value);
-  void savePreferences({ publicUtilityAlerts: value, jobPostingAlerts })
-    .catch(() => setPublicUtilityAlerts(anterior));
+  void savePreferences({ publicUtilityAlerts: value, jobPostingAlerts }).catch(() =>
+    setPublicUtilityAlerts(anterior),
+  );
 }
 ```
 

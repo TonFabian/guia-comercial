@@ -32,7 +32,7 @@ export function PharmacyOnDuty({ pharmacy }: { pharmacy: Company | null }) {
         <Text style={styles.pharmacyName}>{pharmacy.name}</Text>
         <View style={styles.statusRow}>
           <View style={styles.statusDot} />
-          <Text style={styles.statusText}>{pharmacy.openingHours?.[0] ?? 'Aberto agora'}</Text>
+          <Text style={styles.statusText}>{'Aberto agora'}</Text>
         </View>
       </TouchableOpacity>
 

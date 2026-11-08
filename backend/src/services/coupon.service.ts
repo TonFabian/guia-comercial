@@ -78,7 +78,8 @@ export async function updateCoupon(id: string, dto: UpdateCouponDto, clerkId?: s
     notFoundMessage: 'empresa não encontrada',
     forbiddenMessage: 'sem permissão para editar este cupom',
   });
-  const rest = { ...(dto as Record<string, unknown>) };
+  // `company` não é mutável no update: remover do payload antes de persistir.
+  const rest = { ...dto } as UpdateCouponDto & { company?: unknown };
   delete rest.company;
   return CouponModel.findByIdAndUpdate(id, rest, { returnDocument: 'after', runValidators: true })
     .populate('company')
@@ -110,4 +111,3 @@ export async function deleteCoupon(id: string, clerkId?: string) {
 export function isObjectId(value: string): boolean {
   return isValidObjectId(value);
 }
-

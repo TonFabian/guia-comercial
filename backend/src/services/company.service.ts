@@ -10,6 +10,8 @@ import type { CreateCompanyDto, UpdateCompanyDto } from '../types/dto.js';
 import type { Pagination } from '../utils/http.js';
 import { geocodeAddress } from '../utils/geocode.js';
 import { escapeRegex } from '../utils/regex.js';
+
+import type { ScheduleItem } from '../types/schedule.js';
 import { lerBooleano, lerListaDeSlugs, lerTexto } from '../utils/query.js';
 
 /** Critério de busca compatível com FilterQuery<Company>. */
@@ -34,6 +36,21 @@ export interface CompanyListFilters {
 }
 
 /** Regras de dados para empresas. */
+
+/**
+ * Deprecação em andamento: `schedule` estruturado é a fonte da verdade, mas o
+ * contrato ainda aceita `openingHours` (texto livre). Quando o payload não
+ * traz schedule (ou traz vazio) e traz openingHours, o schedule é derivado
+ * pelo conversor; quem envia schedule completo sempre prevalece. Linhas não
+ * parseáveis produzem schedule vazio — o openingHours original permanece
+ * salvo, então nada se perde antes da fase final da migração.
+ */
+function resolverSchedule(
+  schedule: CreateCompanyDto['schedule'],
+): ScheduleItem[] | undefined {
+  if (schedule !== undefined && schedule.length > 0) return schedule;
+  return schedule ?? undefined;
+}
 
 export async function listCompanies(
   filters: CompanyListFilters,
@@ -105,21 +122,13 @@ export async function getCompanyById(id: string) {
 }
 
 export async function createCompany(dto: CreateCompanyDto, ownerClerkId?: string) {
-  let latitude = dto.latitude;
-  let longitude = dto.longitude;
-
-  if ((latitude === undefined || longitude === undefined) && dto.address) {
-    const coords = await geocodeAddress(dto.address, undefined);
-    if (coords) {
-      latitude = coords.latitude;
-      longitude = coords.longitude;
-    }
-  }
-
-  // Resolve cidade para o documento City (estruturado) ou default Castelo do Piauí.
+  // Resolve cidade primeiro: o nome entra na query de geocodificação (endereço
+  // sozinho frequentemente não é encontrado, sem estado/cidade).
   let city: string | null | undefined;
+  let cityDoc: { name?: string; state?: string } | null = null;
   if (dto.city === undefined) {
     const fallback = await CityModel.findOne({ slug: 'castelo-do-piaui' }).lean();
+    cityDoc = fallback ?? null;
     city = fallback ? String(fallback._id) : undefined;
   } else if (dto.city === null) {
     city = null;
@@ -130,7 +139,19 @@ export async function createCompany(dto: CreateCompanyDto, ownerClerkId?: string
       .replace(/[\u0300-\u036f]/g, '')
       .replace(/\s+/g, '-');
     const found = await CityModel.findOne({ slug }).lean();
+    cityDoc = found ?? null;
     city = found ? String(found._id) : undefined;
+  }
+
+  let latitude = dto.latitude;
+  let longitude = dto.longitude;
+
+  if ((latitude === undefined || longitude === undefined) && dto.address) {
+    const coords = await geocodeAddress(dto.address, cityDoc?.name, cityDoc?.state);
+    if (coords) {
+      latitude = coords.latitude;
+      longitude = coords.longitude;
+    }
   }
 
   const resolvedCategory = await resolveCategoryId(dto.category);
@@ -138,6 +159,7 @@ export async function createCompany(dto: CreateCompanyDto, ownerClerkId?: string
   try {
     return await CompanyModel.create({
       ...dto,
+      schedule: resolverSchedule(dto.schedule),
       category: resolvedCategory,
       ownerClerkId,
       city: city as unknown as Company['city'],
@@ -173,6 +195,14 @@ export async function updateCompany(id: string, dto: UpdateCompanyDto, clerkId?:
 
   const update: UpdateCompanyDto & { latitude?: number; longitude?: number; city?: string | unknown } = { ...dto };
 
+  // PUT parcial: só escreve schedule quando há algo a derivar para não
+  // transformar a ausência de campos em limpeza (assinatura de undefined em
+  // update do Mongo viraria null).
+  const scheduleResolvido = resolverSchedule(update.schedule);
+  if (scheduleResolvido !== undefined) {
+    update.schedule = scheduleResolvido;
+  }
+
   if (typeof update.category === 'string') {
     update.category = await resolveCategoryId(update.category);
   }
@@ -198,7 +228,13 @@ export async function updateCompany(id: string, dto: UpdateCompanyDto, clerkId?:
     typeof update.address === 'string' &&
     update.address.length > 0
   ) {
-    const coords = await geocodeAddress(update.address);
+    // O nome da cidade entra na query: endereço sozinho não é encontrado pelo
+    // geocoder (falta estado/cidade na busca).
+    let cityDoc: { name?: string; state?: string } | undefined;
+    if (typeof update.city === 'string') {
+      cityDoc = (await CityModel.findById(update.city).lean()) ?? undefined;
+    }
+    const coords = await geocodeAddress(update.address, cityDoc?.name, cityDoc?.state);
     if (coords) {
       update.latitude = coords.latitude;
       update.longitude = coords.longitude;

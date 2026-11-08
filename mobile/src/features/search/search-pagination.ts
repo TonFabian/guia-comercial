@@ -6,7 +6,7 @@
  * caso o app consome as páginas do servidor em sequência, acumulando os
  * resultados que passam no filtro local.
  */
-import { isOpenNow, parseOpeningHours } from '@/features/company/opening-hours';
+import { isOpenNowFromSchedule } from '@/features/company/opening-hours';
 import type { Company } from '@/types/domain';
 
 /** Quantidade de empresas buscadas por página. */
@@ -103,8 +103,12 @@ export function applyLocalFilters(
 
   if (filters.openNowOnly) {
     result = result.filter((company) => {
-      const status = isOpenNow(parseOpeningHours(company.openingHours ?? []), now);
-      return status === true;
+      // schedule é a fonte da verdade; openingHours entra como fallback
+      // enquanto a deprecação durar.
+      const open = company.schedule && company.schedule.length > 0
+        ? isOpenNowFromSchedule(company.schedule, now)
+        : null;
+      return open === true;
     });
   }
 

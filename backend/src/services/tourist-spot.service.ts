@@ -9,6 +9,7 @@ import type { CreateTouristSpotDto, UpdateTouristSpotDto } from '../types/dto.js
 import type { Pagination } from '../utils/http.js';
 import { escapeRegex } from '../utils/regex.js';
 import { lerBooleano, lerEnum, lerTexto } from '../utils/query.js';
+import type { ScheduleItem } from '../types/schedule.js';
 
 /** Critério de busca compatível com o filtro aceito pelo model. */
 type TouristSpotQuery = {
@@ -118,6 +119,7 @@ export async function createTouristSpot(
   try {
     return await TouristSpotModel.create({
       ...dto,
+      schedule: resolverSchedule(dto.schedule),
       city: city as TouristSpot['city'],
       relatedCompany: relatedCompany as TouristSpot['relatedCompany'],
     });
@@ -146,6 +148,11 @@ export async function updateTouristSpot(
   const update: UpdateTouristSpotDto & { city?: string | null; relatedCompany?: string | null } = {
     ...dto,
   };
+
+  const scheduleResolvido = resolverSchedule(update.schedule);
+  if (scheduleResolvido !== undefined) {
+    update.schedule = scheduleResolvido ?? [];
+  }
 
   // Invariante reforçada sobre o estado resultante (payload sobrescreve o
   // documento salvo): entrada paga exige preço, mesmo quando o PUT não traz
@@ -243,4 +250,11 @@ function normalizarSlug(valor: string): string {
 
 function ehCategoria(valor: string): valor is TouristSpotCategory {
   return (CATEGORIAS as string[]).includes(valor);
+}
+
+function resolverSchedule(
+  schedule: CreateTouristSpotDto['schedule'],
+): ScheduleItem[] | undefined {
+  if (schedule !== undefined && schedule.length > 0) return schedule;
+  return schedule ?? undefined;
 }

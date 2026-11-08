@@ -1,16 +1,10 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import {
-  ScrollView,
-  StyleSheet,
-  Text,
-  TouchableOpacity,
-  View,
-} from 'react-native';
+import { ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { GuiaColors, Radius, Spacing, Typography, FontFamily, FontWeight } from '@/constants/theme';
+import { FontFamily, FontWeight, GuiaColors, Radius, Spacing, Typography } from '@/constants/theme';
 import { useThemeColors } from '@/hooks/use-theme-colors';
 import { useThemeMode } from '@/providers/theme-provider';
 import { callPhone, openExternalUrl, openWhatsApp } from '@/utils/links';
@@ -42,6 +36,7 @@ export default function AnnounceScreen() {
               activeOpacity={0.7}
               accessibilityRole="button"
               accessibilityLabel="Voltar"
+              hitSlop={20}
               onPress={() => router.back()}
             >
               <Ionicons name="chevron-back" size={22} color={colors.text} />
@@ -51,8 +46,8 @@ export default function AnnounceScreen() {
           <View style={styles.header}>
             <Text style={styles.title}>Anuncie no Guia</Text>
             <Text style={styles.description}>
-              Leve sua empresa para mais clientes da região. Anuncie no Guia
-              Comercial e apareça para quem procura pelo que você oferece.
+              Leve sua empresa para mais clientes da região. Anuncie no Guia Comercial e apareça
+              para quem procura pelo que você oferece.
             </Text>
           </View>
 
@@ -73,11 +68,18 @@ export default function AnnounceScreen() {
               activeOpacity={0.8}
               accessibilityRole="button"
               accessibilityLabel="Contato via WhatsApp"
-              onPress={() => void openWhatsApp(COMMERCIAL_PHONE, 'Olá! Gostaria de anunciar minha empresa no Guia Comercial.')}
+              onPress={() =>
+                void openWhatsApp(
+                  COMMERCIAL_PHONE,
+                  'Olá! Gostaria de anunciar minha empresa no **Guia Comercial**.',
+                )
+              }
             >
               <Ionicons name="logo-whatsapp" size={20} color="#FFFFFF" />
               <Text style={[styles.contactButtonText, styles.whatsappText]}>WhatsApp</Text>
-              <Text style={[styles.contactButtonHint, styles.whatsappHint]}>{COMMERCIAL_PHONE}</Text>
+              <Text style={[styles.contactButtonHint, styles.whatsappHint]}>
+                {COMMERCIAL_PHONE}
+              </Text>
             </TouchableOpacity>
 
             <TouchableOpacity
@@ -115,6 +117,7 @@ export default function AnnounceScreen() {
             activeOpacity={0.8}
             accessibilityRole="button"
             accessibilityLabel="Voltar"
+            hitSlop={20}
             onPress={() => router.back()}
           >
             <Text style={styles.voltarText}>Voltar</Text>
@@ -158,12 +161,15 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     title: {
       color: colors.text,
-            ...Typography.h2,
-      position: 'absolute', left: 0, right: 0, textAlign: 'center',
+      ...Typography.h2,
+      position: 'absolute',
+      left: 0,
+      right: 0,
+      textAlign: 'center',
     },
     description: {
       color: colors.textSecondary,
-            ...Typography.body,
+      ...Typography.body,
     },
     card: {
       backgroundColor: colors.surface,
@@ -175,7 +181,7 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     sectionTitle: {
       color: colors.text,
-            ...Typography.h5,
+      ...Typography.h5,
       fontFamily: FontFamily.body700,
       fontWeight: FontWeight.bold,
     },
@@ -217,7 +223,7 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     contactButtonText: {
       color: colors.text,
-            ...Typography.body,
+      ...Typography.body,
       fontFamily: FontFamily.body700,
       fontWeight: FontWeight.bold,
       flex: 1,
@@ -237,7 +243,7 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     voltarText: {
       color: colors.text,
-            ...Typography.body,
+      ...Typography.body,
       fontFamily: FontFamily.body700,
       fontWeight: FontWeight.bold,
     },

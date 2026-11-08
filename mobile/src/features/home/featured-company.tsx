@@ -9,6 +9,7 @@ import { useThemeColors } from '@/hooks/use-theme-colors';
 import type { Company } from '@/types/domain';
 import { categoryLabel } from '@/types/domain';
 import { callPhone, openAddress, openWhatsApp } from '@/utils/links';
+import { cityName } from '@/utils/city';
 import { openCompanyDetails } from '../company/open-company';
 
 export function FeaturedCompany({ company }: { company: Company | null }) {
@@ -65,7 +66,7 @@ export function FeaturedCompany({ company }: { company: Company | null }) {
           <TouchableOpacity
             style={styles.actionPill}
             activeOpacity={0.7}
-            onPress={() => company.address && void openAddress(company.address)}
+            onPress={() => company.address && void openAddress(company.address, cityName(company.city))}
             disabled={!company.address}
             accessibilityLabel={!company.address ? 'Endereço não disponível' : 'Abrir endereço'}
           >

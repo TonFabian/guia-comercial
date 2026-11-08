@@ -68,7 +68,6 @@ export const MOCK_COMPANIES: Company[] = [
     website: 'https://construtoraalicerce.com.br',
     instagram: '@construtoraalicerce',
     facebook: 'https://facebook.com/construtoraalicerce',
-    openingHours: ['Seg–Sex 08h–18h', 'Sáb 08h–12h'],
     schedule: [{day:1,opens:480,closes:1080},{day:2,opens:480,closes:1080},{day:3,opens:480,closes:1080},{day:4,opens:480,closes:1080},{day:5,opens:480,closes:1080},{day:6,opens:480,closes:720}],
     services: ['Reformas', 'Projetos', 'Brita e areia'],
     products: [
@@ -97,7 +96,6 @@ export const MOCK_COMPANIES: Company[] = [
     ratingCount: 214,
     isVerified: true,
     instagram: '@saborarte',
-    openingHours: ['Todos os dias: 11h às 23h'],
     schedule: [0,1,2,3,4,5,6].map((d)=>({day:d,opens:660,closes:1380})),
     services: ['Delivery', 'Salão', 'Marmitex'],
     products: [
@@ -120,7 +118,6 @@ export const MOCK_COMPANIES: Company[] = [
     rating: 4.2,
     ratingCount: 87,
     instagram: '@oficinadoze',
-    openingHours: ['Seg–Sáb 08h–18h'],
     schedule: [1,2,3,4,5,6].map((d)=>({day:d,opens:480,closes:1080})),
     services: ['Troca de óleo', 'Suspensão', 'Freios'],
     products: [
@@ -143,7 +140,6 @@ export const MOCK_COMPANIES: Company[] = [
     website: 'https://barbeariacentral.com.br',
     instagram: '@barbeariacentral',
     facebook: 'https://facebook.com/barbeariacentral',
-    openingHours: ['Ter–Dom 09h–20h'],
     schedule: [0,2,3,4,5,6].map((d)=>({day:d,opens:540,closes:1200})),
     services: ['Corte', 'Barba', 'Pigmentação'],
     products: [
@@ -165,7 +161,6 @@ export const MOCK_COMPANIES: Company[] = [
     isVerified: true,
     website: 'https://drogariapopular.com.br',
     facebook: 'https://facebook.com/drogariapopular',
-    openingHours: ['Todos os dias: 00h às 23h59'],
     schedule: [0,1,2,3,4,5,6].map((d)=>({day:d,opens:0,closes:1439})),
     services: ['Plantão', 'Entrega', 'Medidas de pressão'],
     products: [
@@ -269,7 +264,6 @@ export const MOCK_TOURIST_SPOTS: TouristSpot[] = [
       'Unidade de conservação municipal em torno da Pedra do Castelo, com trilhas e mirantes. Principal cartão-postal de Castelo do Piauí.',
     category: 'park',
     city: 'Castelo do Piauí',
-    openingHours: ['Todos os dias: 08h às 17h'],
     entryFee: 'free',
     featured: true,
     active: true,
@@ -283,7 +277,6 @@ export const MOCK_TOURIST_SPOTS: TouristSpot[] = [
       'Paredões rochosos e águas do Rio Poti esculpindo um cânion no sertão, com banho de rio e paisagens para fotografia.',
     category: 'nature',
     city: 'Castelo do Piauí',
-    openingHours: ['Todos os dias: 08h às 17h'],
     entryFee: 'free',
     active: true,
     order: 2,
@@ -296,7 +289,6 @@ export const MOCK_TOURIST_SPOTS: TouristSpot[] = [
       'Sequência de cachoeiras e poços do Rio Poti, procurada para banho e descanso nos fins de semana.',
     category: 'waterfall',
     city: 'Castelo do Piauí',
-    openingHours: ['Todos os dias: 08h às 17h'],
     entryFee: 'free',
     active: true,
     order: 3,
@@ -309,7 +301,6 @@ export const MOCK_TOURIST_SPOTS: TouristSpot[] = [
       'Espaço cultural e monumento no centro da cidade, abrigando exposições e memórias da história de Castelo do Piauí.',
     category: 'monument',
     city: 'Castelo do Piauí',
-    openingHours: ['Ter a Sáb: 09h às 17h', 'Dom: 09h às 13h'],
     entryFee: 'free',
     active: true,
     order: 4,

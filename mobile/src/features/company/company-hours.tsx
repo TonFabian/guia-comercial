@@ -3,23 +3,28 @@ import { StyleSheet, Text, View } from 'react-native';
 import { Spacing, Typography, FontFamily, FontWeight } from '@/constants/theme';
 import { useThemeColors } from '@/hooks/use-theme-colors';
 
-import { formatOpeningRange, openingStatusLabel, parseOpeningHours, scheduleToOpeningHours } from './opening-hours';
+import { isOpenNowFromSchedule } from './opening-hours';
 
 interface CompanyHoursProps {
-  openingHours?: string[];
   schedule?: { day: number; opens: number; closes: number }[];
   now?: Date;
 }
 
 /** Horário de funcionamento com o status atual (aberto/fechado). */
-export function CompanyHours({ openingHours, schedule, now = new Date() }: CompanyHoursProps) {
+export function CompanyHours({ schedule, now = new Date() }: CompanyHoursProps) {
   const colors = useThemeColors();
   const styles = makeStyles(colors);
-  const parsed = schedule && schedule.length > 0
-    ? scheduleToOpeningHours(schedule)
-    : parseOpeningHours(openingHours ?? []);
-  const status = openingStatusLabel(parsed, now);
-  const isOpen = status === 'Aberto agora';
+  const scheduleAtivo = schedule && schedule.length > 0 ? schedule : undefined;
+  // Sem schedule (ou vazio): horário não informado — sem inferência.
+  const open = scheduleAtivo
+    ? isOpenNowFromSchedule(scheduleAtivo, now)
+    : null;
+  const status = open === null
+    ? 'Horário não informado'
+    : open
+      ? 'Aberto agora'
+      : 'Fechado agora';
+  const isOpen = open === true;
 
   return (
     <>
@@ -30,12 +35,7 @@ export function CompanyHours({ openingHours, schedule, now = new Date() }: Compa
         </Text>
       </View>
 
-      {parsed.map((hour) => (
-        <View key={hour.raw} style={styles.row}>
-          <Text style={styles.label}>{hour.label}</Text>
-          <Text style={styles.range}>{formatOpeningRange(hour)}</Text>
-        </View>
-      ))}
+
     </>
   );
 }

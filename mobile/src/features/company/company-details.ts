@@ -1,6 +1,7 @@
 import { categoryLabel } from '@/types/domain';
 import { cityName } from '@/utils/city';
 import type { Company } from '@/types/domain';
+import { formatMinutes } from '@/features/company/opening-hours';
 
 export type WorkingHours = {
   weekdays: string;
@@ -128,10 +129,80 @@ function buildMedia(company: Company): CompanyMedia[] {
   }));
 }
 
+/** Monta a linha de horário para o bucket a partir das faixas de schedule dele. */
+/**
+ * Link do Google Maps da empresa: coordenadas geocodificadas têm prioridade
+ * (a busca por texto livre costuma falhar sem cidade; com pin exato não falha).
+ */
+function mapLinkFor(company: Company): string | undefined {
+  if (!company.address) return undefined;
+  const city = typeof company.city === 'string' ? null : company.city;
+  const cityNameValue = cityName(company.city);
+  const state = city && typeof city === 'object' ? (city as { state?: string }).state : undefined;
+  const query = [company.address, cityNameValue, state].filter(Boolean).join(', ');
+  return `https://maps.google.com/?q=${encodeURIComponent(query)}`;
+}
+
+const DIAS_SEMANA = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
+
+function scheduleHoursText(
+  schedule: { day: number; opens: number; closes: number }[],
+  days: number[],
+): string {
+  const faixas = schedule.filter((item) => days.includes(item.day));
+  if (faixas.length === 0) return 'Fechado';
+  // Não inferir: listar apenas os dias que de fato têm entrada no schedule.
+  // Agrupar dias adjacentes (na ordem do bucket) com faixa idêntica.
+  const porDia = new Map<number, string>();
+  for (const f of faixas) {
+    porDia.set(f.day, `${formatMinutes(f.opens)} às ${formatMinutes(f.closes)}`);
+  }
+  const grupos: { dias: number[]; texto: string }[] = [];
+  for (const d of days) {
+    const texto = porDia.get(d);
+    if (!texto) continue;
+    const ultimo = grupos[grupos.length - 1];
+    if (ultimo && ultimo.texto === texto && ultimo.dias[ultimo.dias.length - 1] === d - 1) {
+      ultimo.dias.push(d);
+    } else {
+      grupos.push({ dias: [d], texto });
+    }
+  }
+  // Se todos os dias do bucket estão presentes com a mesma faixa, mostrar
+  // apenas a faixa (sem prefixo de dia) — caso clássico "Seg a Sex: 08h às 18h".
+  const todosPresentes = days.every((d) => porDia.has(d));
+  const faixaUnica = grupos.length === 1 && grupos[0].dias.length === days.length;
+  if (todosPresentes && faixaUnica) {
+    return grupos[0].texto;
+  }
+  return grupos
+    .map((g) =>
+      g.dias.length === 1
+        ? `${DIAS_SEMANA[g.dias[0]]} ${g.texto}`
+        : `${DIAS_SEMANA[g.dias[0]]} a ${DIAS_SEMANA[g.dias[g.dias.length - 1]]}: ${g.texto}`,
+    )
+    .join('; ');
+}
+
+function buildWorkingHours(company: Company): WorkingHours {
+  const schedule = company.schedule ?? [];
+  if (schedule.length > 0) {
+    return {
+      weekdays: scheduleHoursText(schedule, [1, 2, 3, 4, 5]),
+      saturday: scheduleHoursText(schedule, [6]),
+      sunday: scheduleHoursText(schedule, [0]),
+    };
+  }
+
+  return {
+    weekdays: CONSULT_HOURS,
+    saturday: CONSULT_HOURS,
+    sunday: CONSULT_HOURS,
+  };
+}
+
 /** Prepara os dados da empresa para a tela, com fallbacks para campos opcionais. */
 export function buildCompanyDetails(company: Company): CompanyDetails {
-  const [weekdays, saturday, sunday] = company.openingHours ?? [];
-
   return {
     id: company._id,
     name: company.name,
@@ -144,19 +215,13 @@ export function buildCompanyDetails(company: Company): CompanyDetails {
     city: cityName(company.city),
     address: company.address ?? undefined,
     promotion: company.promotion,
-    mapLink: company.address
-      ? `https://maps.google.com/?q=${encodeURIComponent(company.address)}`
-      : undefined,
+    mapLink: mapLinkFor(company),
     about: {
       title: ABOUT_TITLE,
       text: company.description || EMPTY_DESCRIPTION,
     },
     servicesList: buildServices(company.services),
-    workingHours: {
-      weekdays: weekdays ?? CONSULT_HOURS,
-      saturday: saturday ?? CONSULT_HOURS,
-      sunday: sunday ?? CONSULT_HOURS,
-    },
+    workingHours: buildWorkingHours(company),
     phone: company.phone ?? undefined,
     whatsapp: company.whatsapp ?? undefined,
   };

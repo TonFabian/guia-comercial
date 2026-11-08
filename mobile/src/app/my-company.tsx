@@ -9,8 +9,26 @@ import { getCompanies, updateCompany } from '@/services/api';
 import type { Company } from '@/types/domain';
 import { useAuthState } from '@/providers/auth-provider';
 import { useThemeColors } from '@/hooks/use-theme-colors';
+import { SavingDots } from '@/components/saving-dots';
+import { TopBackButton } from '@/components/top-back-button';
 import { cityName } from '@/utils/city';
 import { filterOwnedCompanies, resolveContactNumbers } from '@/features/company/owner';
+import { dayStatesToSchedule, scheduleToDayStates } from '@/features/company/schedule-editor';
+import { ScheduleEditorGrid } from '@/features/company/schedule-editor-grid';
+import type { DayState } from '@/features/company/schedule-editor';
+import { buildCompanyDetails } from '@/features/company/company-details';
+
+/** Linhas de horário da empresa ("Seg–Sex 08h às 18h"), sem inferência. */
+function hoursLines(company: Company): string[] {
+  const { weekdays, saturday, sunday } = buildCompanyDetails(company).workingHours;
+  return [
+    { rotulo: 'Seg a Sex', texto: weekdays },
+    { rotulo: 'Sábado', texto: saturday },
+    { rotulo: 'Domingo', texto: sunday },
+  ]
+    .filter((linha) => linha.texto && linha.texto !== 'Consulte a empresa')
+    .map(({ rotulo, texto }) => `${rotulo}: ${texto}`);
+}
 
 export default function MyCompanyScreen() {
   const colors = useThemeColors();
@@ -18,8 +36,11 @@ export default function MyCompanyScreen() {
   const auth = useAuthState();
   const [companies, setCompanies] = useState<Company[]>([]);
   const [loading, setLoading] = useState(true);
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [hoursText, setHoursText] = useState('');
+  const [editingHoursId, setEditingHoursId] = useState<string | null>(null);
+  const [editingInfoId, setEditingInfoId] = useState<string | null>(null);
+  const [scheduleDays, setScheduleDays] = useState<DayState[]>(
+    scheduleToDayStates([]),
+  );
   const [promotionText, setPromotionText] = useState('');
   const [description, setDescription] = useState('');
   const [address, setAddress] = useState('');
@@ -55,9 +76,17 @@ export default function MyCompanyScreen() {
     return () => { cancelled = true; };
   }, [auth.state, auth.user?.clerkId]);
 
-  function startEdit(company: Company) {
-    setEditingId(company._id);
-    setHoursText((company.openingHours ?? []).join('\n'));
+  function startEditHours(company: Company) {
+    setEditingHoursId(company._id);
+    setScheduleDays(
+      company.schedule && company.schedule.length > 0
+        ? scheduleToDayStates(company.schedule)
+        : [],
+    );
+  }
+
+  function startEditInfo(company: Company) {
+    setEditingInfoId(company._id);
     setPromotionText(company.promotion ?? '');
     setDescription(company.description ?? '');
     setAddress(company.address ?? '');
@@ -68,17 +97,37 @@ export default function MyCompanyScreen() {
     setSamePhone(Boolean(p) && p === w);
   }
 
-  async function save() {
-    if (!editingId) return;
+  async function saveHours() {
+    if (!editingHoursId) return;
     setSaving(true);
     try {
-      const hours = hoursText.split('\n').map((s) => s.trim()).filter(Boolean);
+      const schedule = dayStatesToSchedule(scheduleDays);
+      const updated = await updateCompany(editingHoursId, { schedule });
+      if (!updated) {
+        Alert.alert('Empresa', 'Não foi possível salvar. Tente novamente.');
+        return;
+      }
+      setCompanies((prev) =>
+        prev.map((c) => (c._id === editingHoursId ? { ...c, schedule: updated.schedule ?? schedule } : c)),
+      );
+      setEditingHoursId(null);
+      Alert.alert('Empresa', 'Horários atualizados com sucesso.');
+    } catch {
+      Alert.alert('Empresa', 'Não foi possível salvar. Tente novamente.');
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function saveInfo() {
+    if (!editingInfoId) return;
+    setSaving(true);
+    try {
       const { phone: phoneValue, whatsapp: whatsappValue } = resolveContactNumbers(phone, whatsapp, samePhone);
       const descriptionValue = description.trim() || undefined;
       const addressValue = address.trim() || undefined;
       const promotionValue = promotionText.trim() || undefined;
-      const updated = await updateCompany(editingId, {
-        openingHours: hours,
+      const updated = await updateCompany(editingInfoId, {
         promotion: promotionValue,
         description: descriptionValue,
         address: addressValue,
@@ -91,10 +140,9 @@ export default function MyCompanyScreen() {
       }
       setCompanies((prev) =>
         prev.map((c) =>
-          c._id === editingId
+          c._id === editingInfoId
             ? {
                 ...c,
-                openingHours: updated.openingHours ?? hours,
                 promotion: updated.promotion ?? promotionValue,
                 description: updated.description ?? descriptionValue ?? c.description,
                 address: updated.address ?? addressValue ?? c.address,
@@ -104,8 +152,8 @@ export default function MyCompanyScreen() {
             : c,
         ),
       );
-      setEditingId(null);
-      Alert.alert('Empresa', 'Horários atualizados com sucesso.');
+      setEditingInfoId(null);
+      Alert.alert('Empresa', 'Informações atualizadas com sucesso.');
     } catch {
       Alert.alert('Empresa', 'Não foi possível salvar. Tente novamente.');
     } finally {
@@ -126,9 +174,7 @@ export default function MyCompanyScreen() {
       <StatusBar style="light" />
       <SafeAreaView style={styles.safeArea} edges={['top']}>
         <View style={styles.topBar}>
-          <TouchableOpacity style={styles.topButton} onPress={() => router.back()} accessibilityRole="button" accessibilityLabel="Voltar">
-            <Text style={styles.topButtonText}>← Voltar</Text>
-          </TouchableOpacity>
+          <TopBackButton />
           <Text style={styles.title}>Minha Empresa</Text>
         </View>
 
@@ -146,24 +192,30 @@ export default function MyCompanyScreen() {
                 <Text style={styles.cardTitle}>{c.name}</Text>
                 <Text style={styles.cardMeta}>{cityName(c.city) || '—'}</Text>
 
-                {editingId === c._id ? (
+                {editingHoursId === c._id ? (
                   <>
-                    <Text style={styles.label}>Horários (um por linha)</Text>
-                    <TextInput
-                      style={styles.input}
-                      value={hoursText}
-                      onChangeText={setHoursText}
-                      multiline
-                      placeholder="Seg a Sex: 08h às 18h"
-                      placeholderTextColor={colors.textSecondary}
-                    />
+                    <Text style={styles.label}>Horários</Text>
+                    <ScheduleEditorGrid value={scheduleDays} onChange={setScheduleDays} />
+                    <View style={styles.actions}>
+                      <TouchableOpacity style={[styles.btn, styles.btnPrimary]} onPress={saveHours} disabled={saving}>
+                        {saving ? <SavingDots color={colors.background} /> : <Text style={[styles.btnText, styles.btnPrimaryText]}>Salvar horários</Text>}
+                      </TouchableOpacity>
+                      <TouchableOpacity style={[styles.btn, saving && styles.btnDisabled]} onPress={() => setEditingHoursId(null)} disabled={saving}>
+                        <Text style={styles.btnText}>Cancelar</Text>
+                      </TouchableOpacity>
+                    </View>
+                  </>
+                ) : editingInfoId === c._id ? (
+                  <>
                     <Text style={styles.label}>Descrição</Text>
                     <TextInput
-                      style={[styles.input, styles.phoneInput]}
+                      style={styles.input}
                       value={description}
                       onChangeText={setDescription}
                       placeholder="Descrição da empresa"
                       placeholderTextColor={colors.textSecondary}
+                      multiline
+                      numberOfLines={3}
                     />
                     <Text style={styles.label}>Endereço</Text>
                     <TextInput
@@ -180,6 +232,8 @@ export default function MyCompanyScreen() {
                       onChangeText={setPromotionText}
                       placeholder="Ex.: 20% OFF em pizzas hoje!"
                       placeholderTextColor={colors.textSecondary}
+                      multiline
+                      numberOfLines={3}
                     />
                     <Text style={styles.label}>Telefone (ligar)</Text>
                     <TextInput
@@ -214,11 +268,11 @@ export default function MyCompanyScreen() {
                       editable={!samePhone}
                     />
                     <View style={styles.actions}>
-                      <TouchableOpacity style={styles.btn} onPress={() => setEditingId(null)}>
-                        <Text style={styles.btnText}>Cancelar</Text>
+                      <TouchableOpacity style={[styles.btn, styles.btnPrimary]} onPress={saveInfo} disabled={saving}>
+                        {saving ? <SavingDots color={colors.background} /> : <Text style={[styles.btnText, styles.btnPrimaryText]}>Salvar informações</Text>}
                       </TouchableOpacity>
-                      <TouchableOpacity style={[styles.btn, styles.btnPrimary]} onPress={save} disabled={saving}>
-                        <Text style={[styles.btnText, styles.btnPrimaryText]}>{saving ? 'Salvando…' : 'Salvar'}</Text>
+                      <TouchableOpacity style={[styles.btn, saving && styles.btnDisabled]} onPress={() => setEditingInfoId(null)} disabled={saving}>
+                        <Text style={styles.btnText}>Cancelar</Text>
                       </TouchableOpacity>
                     </View>
                   </>
@@ -226,15 +280,21 @@ export default function MyCompanyScreen() {
                   <>
                     <Text style={styles.label}>Horários</Text>
                     {c.promotion ? <Text style={styles.promoLine}>🔥 {c.promotion}</Text> : null}
-                    {(c.openingHours ?? []).map((h, i) => (
-                      <Text key={i} style={styles.hourLine}>{h}</Text>
-                    ))}
-                    {(!c.openingHours || c.openingHours.length === 0) && (
+                    {hoursLines(c).length > 0 ? (
+                      hoursLines(c).map((linha) => (
+                        <Text key={linha} style={styles.hourLine}>{linha}</Text>
+                      ))
+                    ) : (
                       <Text style={styles.hourLineMuted}>Não informado</Text>
                     )}
-                    <TouchableOpacity style={styles.editBtn} onPress={() => startEdit(c)}>
-                      <Text style={styles.editBtnText}>Editar horários</Text>
-                    </TouchableOpacity>
+                    <View style={{ flexDirection: 'row', gap: 8, marginTop: 4 }}>
+                      <TouchableOpacity style={styles.editBtn} onPress={() => startEditHours(c)}>
+                        <Text style={styles.editBtnText}>Editar horários</Text>
+                      </TouchableOpacity>
+                      <TouchableOpacity style={styles.editBtn} onPress={() => startEditInfo(c)}>
+                        <Text style={styles.editBtnText}>Editar informações</Text>
+                      </TouchableOpacity>
+                    </View>
                   </>
                 )}
               </View>
@@ -278,6 +338,7 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     btn: { paddingVertical: 8, paddingHorizontal: 16, borderRadius: 10, backgroundColor: colors.surfaceAlt },
     btnText: { color: colors.text, ...Typography.body, fontFamily: FontFamily.body600, fontWeight: FontWeight.semibold },
     btnPrimary: { backgroundColor: colors.primary },
+    btnDisabled: { opacity: 0.5 },
     btnPrimaryText: { color: colors.background },
     editBtn: { alignSelf: 'flex-start', paddingVertical: 6, paddingHorizontal: 12, borderRadius: 8, backgroundColor: colors.surfaceAlt, borderWidth: 1, borderColor: colors.border, marginTop: 4 },
     editBtnText: { color: colors.primary, ...Typography.body, fontFamily: FontFamily.body600, fontWeight: FontWeight.semibold },
