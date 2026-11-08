@@ -151,8 +151,8 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
       marginTop: Spacing.half,
     },
     tagPartner: {
-      backgroundColor: Overlays.amberTag,
-      borderColor: colors.primaryDim,
+      backgroundColor: colors.surface,
+      borderColor: colors.primary,
     },
     tagCitizen: {
       backgroundColor: Overlays.neutralTag,

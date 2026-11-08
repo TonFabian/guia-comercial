@@ -94,10 +94,11 @@ export async function request<T>(
       signal: init?.signal,
     });
 
-    // Token pode expirar entre sessões: um retry com token renovado (skipCache)
-    // antes de reportar o 401 a quem chamou.
-    if (response.status === 401 && token) {
-      const renewed = await currentToken({ skipCache: true });
+    // Token pode expirar entre sessões ou ainda não ter sido registrado
+    // (corrida de montagem do AuthProvider): um retry com token renovado
+    // (skipCache) antes de reportar o 401 a quem chamou.
+    if (response.status === 401) {
+      const renewed = token ? await currentToken({ skipCache: true }) : await currentToken();
 
       if (renewed && renewed !== token) {
         response = await fetch(`${BASE_URL}${path}`, {
