@@ -11,7 +11,7 @@ import type { Pagination } from '../utils/http.js';
 import { geocodeAddress } from '../utils/geocode.js';
 import { escapeRegex } from '../utils/regex.js';
 
-import type { ScheduleItem } from '../utils/opening-hours.js';
+import type { ScheduleItem } from '../types/schedule.js';
 import { lerBooleano, lerListaDeSlugs, lerTexto } from '../utils/query.js';
 
 /** Critério de busca compatível com FilterQuery<Company>. */

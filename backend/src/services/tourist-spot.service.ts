@@ -9,7 +9,7 @@ import type { CreateTouristSpotDto, UpdateTouristSpotDto } from '../types/dto.js
 import type { Pagination } from '../utils/http.js';
 import { escapeRegex } from '../utils/regex.js';
 import { lerBooleano, lerEnum, lerTexto } from '../utils/query.js';
-import type { ScheduleItem } from '../utils/opening-hours.js';
+import type { ScheduleItem } from '../types/schedule.js';
 
 /** Critério de busca compatível com o filtro aceito pelo model. */
 type TouristSpotQuery = {

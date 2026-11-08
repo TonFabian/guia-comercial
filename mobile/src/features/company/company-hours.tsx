@@ -3,7 +3,7 @@ import { StyleSheet, Text, View } from 'react-native';
 import { Spacing, Typography, FontFamily, FontWeight } from '@/constants/theme';
 import { useThemeColors } from '@/hooks/use-theme-colors';
 
-import { formatOpeningRange, isOpenNow, isOpenNowFromSchedule, parseOpeningHours, scheduleToOpeningHours } from './opening-hours';
+import { isOpenNowFromSchedule } from './opening-hours';
 
 interface CompanyHoursProps {
   schedule?: { day: number; opens: number; closes: number }[];
@@ -15,15 +15,10 @@ export function CompanyHours({ schedule, now = new Date() }: CompanyHoursProps) 
   const colors = useThemeColors();
   const styles = makeStyles(colors);
   const scheduleAtivo = schedule && schedule.length > 0 ? schedule : undefined;
-  const parsed = scheduleAtivo
-    ? scheduleToOpeningHours(scheduleAtivo)
-    : [];
-
-  // Status direto do schedule entende faixa que atravessa a meia-noite;
-  // quando só há texto livre, usa a interpretação heurística.
+  // Sem schedule (ou vazio): horário não informado — sem inferência.
   const open = scheduleAtivo
     ? isOpenNowFromSchedule(scheduleAtivo, now)
-    : isOpenNow(parsed, now);
+    : null;
   const status = open === null
     ? 'Horário não informado'
     : open
@@ -40,12 +35,7 @@ export function CompanyHours({ schedule, now = new Date() }: CompanyHoursProps) 
         </Text>
       </View>
 
-      {parsed.map((hour) => (
-        <View key={hour.raw} style={styles.row}>
-          <Text style={styles.label}>{hour.label}</Text>
-          <Text style={styles.range}>{formatOpeningRange(hour)}</Text>
-        </View>
-      ))}
+
     </>
   );
 }

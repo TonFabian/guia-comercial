@@ -17,7 +17,7 @@ import {
   scheduleToDayStates,
 } from '@/features/company/schedule-editor';
 import type { DayState } from '@/features/company/schedule-editor';
-import { parseOpeningHours, scheduleToOpeningHours } from '@/features/company/opening-hours';
+import { scheduleToOpeningHours } from '@/features/company/opening-hours';
 
 const DAY_NAMES = ['Domingo', 'Segunda', 'Terça', 'Quarta', 'Quinta', 'Sexta', 'Sábado'] as const;
 
