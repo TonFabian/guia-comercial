@@ -155,6 +155,13 @@ function scheduleHoursText(
       grupos.push({ dias: [d], texto });
     }
   }
+  // Se todos os dias do bucket estão presentes com a mesma faixa, mostrar
+  // apenas a faixa (sem prefixo de dia) — caso clássico "Seg a Sex: 08h às 18h".
+  const todosPresentes = days.every((d) => porDia.has(d));
+  const faixaUnica = grupos.length === 1 && grupos[0].dias.length === days.length;
+  if (todosPresentes && faixaUnica) {
+    return grupos[0].texto;
+  }
   return grupos
     .map((g) =>
       g.dias.length === 1
