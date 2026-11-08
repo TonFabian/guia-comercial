@@ -15,7 +15,7 @@ export async function registerPushToken(req: Request, res: Response): Promise<vo
 
 export async function broadcastPush(req: Request, res: Response): Promise<void> {
   // Em desenvolvimento, libera as validações (Clerk/secret) apenas para este endpoint.
-  const isDev = process.env.NODE_ENV !== 'production';
+  const isDev = process.env.NODE_ENV === 'development';
 
   if (!isDev) {
     // Fail-closed: sem nenhum mecanismo de proteção configurado, não transmitir.
