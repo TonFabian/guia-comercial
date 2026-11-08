@@ -14,25 +14,30 @@ export async function registerPushToken(req: Request, res: Response): Promise<vo
 }
 
 export async function broadcastPush(req: Request, res: Response): Promise<void> {
-  // Fail-closed: sem nenhum mecanismo de proteção configurado, não transmitir.
-  // As checagens de admin/secret precedem qualquer uso de title/body.
-  if (!process.env.CLERK_SECRET_KEY && !process.env.NOTIFY_SECRET) {
-    res.status(401).json({ error: 'Não autenticado' });
-    return;
-  }
+  // Em desenvolvimento, libera as validações (Clerk/secret) apenas para este endpoint.
+  const isDev = process.env.NODE_ENV !== 'production';
 
-  if (process.env.CLERK_SECRET_KEY) {
-    if (!req.auth?.clerkId) {
+  if (!isDev) {
+    // Fail-closed: sem nenhum mecanismo de proteção configurado, não transmitir.
+    // As checagens de admin/secret precedem qualquer uso de title/body.
+    if (!process.env.CLERK_SECRET_KEY && !process.env.NOTIFY_SECRET) {
       res.status(401).json({ error: 'Não autenticado' });
       return;
     }
-    await assertAdmin(req.auth.clerkId, 'broadcast de notificações');
-  }
 
-  const secret = process.env.NOTIFY_SECRET;
-  if (secret && req.headers['x-notify-secret'] !== secret) {
-    res.status(403).json({ error: 'Não autorizado' });
-    return;
+    if (process.env.CLERK_SECRET_KEY) {
+      if (!req.auth?.clerkId) {
+        res.status(401).json({ error: 'Não autenticado' });
+        return;
+      }
+      await assertAdmin(req.auth.clerkId, 'broadcast de notificações');
+    }
+
+    const secret = process.env.NOTIFY_SECRET;
+    if (secret && req.headers['x-notify-secret'] !== secret) {
+      res.status(403).json({ error: 'Não autorizado' });
+      return;
+    }
   }
 
   // title/body já validados e limitados pelo `broadcastSchema` (zod).
