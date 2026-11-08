@@ -41,10 +41,10 @@ export default function AnnounceScreen() {
             >
               <Ionicons name="chevron-back" size={22} color={colors.text} />
             </TouchableOpacity>
+            <Text style={styles.title}>Anuncie no Guia</Text>
           </View>
 
           <View style={styles.header}>
-            <Text style={styles.title}>Anuncie no Guia</Text>
             <Text style={styles.description}>
               Leve sua empresa para mais clientes da região. Anuncie no Guia Comercial e apareça
               para quem procura pelo que você oferece.
@@ -71,7 +71,7 @@ export default function AnnounceScreen() {
               onPress={() =>
                 void openWhatsApp(
                   COMMERCIAL_PHONE,
-                  'Olá! Gostaria de anunciar minha empresa no **Guia Comercial**.',
+                  'Olá! Gostaria de anunciar minha empresa no *Guia Comercial*.',
                 )
               }
             >
@@ -145,6 +145,8 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     topBar: {
       flexDirection: 'row',
       alignItems: 'center',
+      minHeight: 40,
+      position: 'relative',
     },
     topButton: {
       width: 40,
