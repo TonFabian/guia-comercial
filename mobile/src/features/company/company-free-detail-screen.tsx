@@ -6,7 +6,7 @@ import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import {
   ButtonGradients,
@@ -30,7 +30,7 @@ import { callPhone, openWhatsApp } from '@/utils/links';
 import type { CompanyFreeView } from './company-free-view';
 import { buildCompanyFreeView } from './company-free-view';
 
-const IMAGE_HEIGHT = 220;
+const IMAGE_ASPECT_RATIO = 16 / 9;
 const ICON_BUTTON_SIZE = 44;
 const WHATSAPP_MESSAGE =
   'Olá, vi sua empresa no aplicativo *Guia de Castelo do Piauí* e gostaria de mais informações!';
@@ -70,76 +70,85 @@ export function CompanyFreeDetailScreen({ company }: { company: Company }) {
   return (
     <View style={styles.root}>
       <StatusBar style={mode === 'dark' ? 'light' : 'dark'} />
-      <ScrollView
-        showsVerticalScrollIndicator={false}
-        contentContainerStyle={[
-          styles.scrollContent,
-          { paddingBottom: insets.bottom + Spacing.six * 2 },
-        ]}
-      >
-        <View style={styles.imageWrapper}>
-          {view.coverUrl ? (
-            <Image
-              source={{ uri: view.coverUrl }}
-              style={styles.cover}
-              contentFit="cover"
-              transition={250}
-              accessibilityRole="image"
-              accessibilityLabel={`Foto de ${view.name}`}
-            />
-          ) : (
-            <View style={[styles.cover, styles.coverPlaceholder]}>
-              <MaterialCommunityIcons
-                name="storefront-outline"
-                size={48}
-                color={colors.textSecondary}
+      <SafeAreaView style={styles.safeArea} edges={['top']}>
+        <ScrollView
+          showsVerticalScrollIndicator={false}
+          contentContainerStyle={[
+            styles.scrollContent,
+            { paddingBottom: insets.bottom + Spacing.six * 2 },
+          ]}
+        >
+          <View style={styles.imageWrapper}>
+            {view.coverUrl ? (
+              <Image
+                source={{ uri: view.coverUrl }}
+                style={styles.cover}
+                contentFit="cover"
+                placeholder={colors.coverPlaceholder}
+                transition={250}
+                accessibilityRole="image"
+                accessibilityLabel={`Foto de ${view.name}`}
               />
-            </View>
-          )}
-        </View>
-
-        <View style={styles.basicInfo}>
-          <Text style={styles.companyName}>{view.name}</Text>
-
-          <Text style={[styles.statusText, { color: statusColor(view.status.tone, colors) }]}>
-            Horário de Atendimento: {view.status.label}
-          </Text>
-
-          <Text style={styles.categoryText}>Categoria: {view.category}</Text>
-
-          {view.addressLine ? (
-            <View style={styles.addressRow}>
-              <Ionicons name="location-outline" size={16} color={colors.textSecondary} />
-              <Text style={styles.addressText}>{view.addressLine}</Text>
-            </View>
-          ) : null}
-        </View>
-
-        <View style={styles.section}>
-          <Text style={styles.descriptionTitle}>Nossa Descrição (Simplificada)</Text>
-          <Text style={styles.descriptionText} numberOfLines={4}>
-            {view.description}
-          </Text>
-        </View>
-
-        <View style={styles.section}>
-          <View style={styles.hoursCard}>
-            <Text style={styles.hoursTitle}>Horário de Funcionamento</Text>
-
-            {view.hoursRows.map((row, index) => (
-              <View
-                key={row.key}
-                style={[styles.hoursRow, index < view.hoursRows.length - 1 && styles.hoursDivider]}
-              >
-                <Text style={styles.hoursLabel}>{row.label}</Text>
-                <Text style={[styles.hoursValue, row.closed && styles.hoursClosed]}>
-                  {row.value}
-                </Text>
+            ) : (
+              <View style={[styles.cover, styles.coverPlaceholder]}>
+                <MaterialCommunityIcons
+                  name="storefront-outline"
+                  size={48}
+                  color={colors.textSecondary}
+                />
               </View>
-            ))}
+            )}
           </View>
-        </View>
-      </ScrollView>
+
+          <View style={styles.basicInfo}>
+            <Text style={styles.companyName}>{view.name}</Text>
+
+            <Text style={styles.statusText}>
+              Horário de Atendimento:{' '}
+              <Text style={[styles.statusValue, { color: statusColor(view.status.tone, colors) }]}>
+                {view.status.label}
+              </Text>
+            </Text>
+
+            <Text style={styles.categoryText}>Categoria: {view.category}</Text>
+
+            {view.addressLine ? (
+              <View style={styles.addressRow}>
+                <Ionicons name="location-outline" size={14} color={colors.textSecondary} />
+                <Text style={styles.addressText}>{view.addressLine}</Text>
+              </View>
+            ) : null}
+          </View>
+
+          <View style={styles.section}>
+            <Text style={styles.descriptionTitle}>Nossa Descrição (Simplificada)</Text>
+            <Text style={styles.descriptionText} numberOfLines={4}>
+              {view.description}
+            </Text>
+          </View>
+
+          <View style={styles.section}>
+            <View style={styles.hoursCard}>
+              <Text style={styles.hoursTitle}>Horário de Funcionamento</Text>
+
+              {view.hoursRows.map((row, index) => (
+                <View
+                  key={row.key}
+                  style={[
+                    styles.hoursRow,
+                    index < view.hoursRows.length - 1 && styles.hoursDivider,
+                  ]}
+                >
+                  <Text style={styles.hoursLabel}>{row.label}</Text>
+                  <Text style={[styles.hoursValue, row.closed && styles.hoursClosed]}>
+                    {row.value}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          </View>
+        </ScrollView>
+      </SafeAreaView>
 
       <View style={[styles.floatingNav, { top: insets.top + Spacing.two }]}>
         <Pressable
@@ -259,6 +268,9 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
       flex: 1,
       backgroundColor: colors.background,
     },
+    safeArea: {
+      flex: 1,
+    },
     scrollContent: {
       paddingTop: 0,
     },
@@ -269,7 +281,7 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     cover: {
       width: '100%',
-      height: IMAGE_HEIGHT,
+      aspectRatio: IMAGE_ASPECT_RATIO,
       borderRadius: Radius.card,
       backgroundColor: colors.coverPlaceholder,
     },
@@ -285,14 +297,17 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     companyName: {
       color: colors.text,
       ...Typography.h2,
-      fontFamily: FontFamily.heading800,
-      fontWeight: FontWeight.heavy,
       letterSpacing: -0.3,
     },
     statusText: {
-      fontFamily: FontFamily.body600,
+      color: colors.textSecondary,
+      fontFamily: FontFamily.body500,
       fontSize: Type.sm.size,
       lineHeight: Type.sm.lineHeight,
+      fontWeight: FontWeight.medium,
+    },
+    statusValue: {
+      fontFamily: FontFamily.body600,
       fontWeight: FontWeight.semibold,
     },
     categoryText: {
@@ -316,8 +331,8 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     descriptionTitle: {
       color: colors.primary,
       ...Typography.h4,
-      fontFamily: FontFamily.heading600,
-      fontWeight: FontWeight.semibold,
+      fontFamily: FontFamily.heading700,
+      fontWeight: FontWeight.bold,
       marginBottom: Spacing.two,
     },
     descriptionText: {
@@ -334,10 +349,7 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     hoursTitle: {
       color: colors.text,
-      fontFamily: FontFamily.heading600,
-      fontSize: Type.sm.size,
-      lineHeight: Type.sm.lineHeight,
-      fontWeight: FontWeight.semibold,
+      ...Typography.h5,
       marginBottom: Spacing.two,
     },
     hoursRow: {
