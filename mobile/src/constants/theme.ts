@@ -95,6 +95,12 @@ export const ButtonGradients = {
   call: ['#FFD54F', '#D4AF37'],
 } as const;
 
+/** Cores de texto/ícone sobre os gradientes dos botões de contato. */
+export const ButtonTextColors = {
+  whatsapp: '#FFFFFF',
+  call: '#121212',
+} as const;
+
 /** Cores de marca dos provedores de login (guideline de cada marca). */
 export const BrandColors = {
   googleBg: '#FFFFFF',
