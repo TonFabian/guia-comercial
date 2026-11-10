@@ -50,6 +50,8 @@ export interface Company {
   gallery?: string[];
   registry?: string;
   isFeatured?: boolean;
+  /** Plano comercial. Ausente/undefined → tratado como 'free'. */
+  plan?: 'free' | 'basic' | 'premium';
   rating?: number;
   ratingCount?: number;
   isVerified?: boolean;
@@ -83,6 +85,8 @@ export interface Coupon {
   code?: string | null;
   discount?: string;
   description?: string;
+  /** Cupom patrocinado (destaque pago). */
+  sponsored?: boolean;
   expiresAt?: string;
   createdAt?: string;
 }
