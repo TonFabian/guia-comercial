@@ -141,11 +141,11 @@ const _fontScale = fluidWidthFactor(375, Dimensions.get('window').width);
 const _s = (n: number) => Math.round(n * _fontScale);
 
 export const Type = {
-  xs: { size: _s(11), lineHeight: _s(15) },
-  sm: { size: _s(13), lineHeight: _s(18) },
-  md: { size: _s(15), lineHeight: _s(22) },
-  lg: { size: _s(18), lineHeight: _s(25) },
-  xg: { size: _s(22), lineHeight: _s(29) },
+  xs: { size: _s(12), lineHeight: _s(16) },
+  sm: { size: _s(14), lineHeight: _s(20) },
+  md: { size: _s(16), lineHeight: _s(24) },
+  lg: { size: _s(20), lineHeight: _s(28) },
+  xg: { size: _s(24), lineHeight: _s(32) },
 } as const;
 
 export const FontFamily = {
