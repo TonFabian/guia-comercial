@@ -429,7 +429,9 @@ function SubmitButton({
 
 const styles = StyleSheet.create({
   container: {
-    gap: 16,
+    display: 'flex',
+    flexDirection: 'column',
+    gap: 8,
   },
   nameRow: {
     flexDirection: 'row',
@@ -448,10 +450,12 @@ const styles = StyleSheet.create({
     ...Typography.caption,
   },
   submitWrap: {
-    marginTop: 8,
+    marginTop: 4,
+    alignSelf: 'center',
   },
   submitGradient: {
     height: 54,
+    paddingHorizontal: 32,
     borderRadius: 27,
     flexDirection: 'row',
     alignItems: 'center',
