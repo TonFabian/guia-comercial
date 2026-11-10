@@ -31,6 +31,8 @@ import type { CompanyFreeView } from './company-free-view';
 import { buildCompanyFreeView } from './company-free-view';
 
 const IMAGE_ASPECT_RATIO = 16 / 9;
+const IMAGE_MIN_HEIGHT = 200;
+const IMAGE_MAX_HEIGHT = 320;
 const ICON_BUTTON_SIZE = 44;
 const WHATSAPP_MESSAGE =
   'Olá, vi sua empresa no aplicativo *Guia de Castelo do Piauí* e gostaria de mais informações!';
@@ -282,6 +284,8 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     cover: {
       width: '100%',
       aspectRatio: IMAGE_ASPECT_RATIO,
+      minHeight: IMAGE_MIN_HEIGHT,
+      maxHeight: IMAGE_MAX_HEIGHT,
       borderRadius: Radius.card,
       backgroundColor: colors.coverPlaceholder,
     },
