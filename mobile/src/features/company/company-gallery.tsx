@@ -459,16 +459,17 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     borderWidth: 1,
     borderColor: colors.border,
     backgroundColor: colors.surface,
-    overflow: 'hidden',
   },
   previewImage: {
     flex: 1,
+    borderRadius: Radius.detailCard,
   },
   placeholder: {
     flex: 1,
     alignItems: 'center',
     justifyContent: 'center',
     gap: Spacing.two,
+    borderRadius: Radius.detailCard,
   },
   placeholderText: {
     color: colors.textSecondary,
@@ -494,10 +495,10 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     borderWidth: 1,
     borderColor: colors.border,
     backgroundColor: colors.surface,
-    overflow: 'hidden',
   },
   gridImage: {
     flex: 1,
+    borderRadius: Radius.detailCard,
   },
   gridPlaceholderText: {
     color: colors.textSecondary,
