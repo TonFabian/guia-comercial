@@ -18,12 +18,20 @@ import { ThemeProvider as RouterThemeProvider, Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
 import type { ReactNode } from 'react';
+import { StyleSheet, View } from 'react-native';
 
 import { AnimatedSplashOverlay } from '@/components/animated-icon';
-import { DarkGuiTheme, GuiaColors, GuiaColorsLight, LightGuiTheme } from '@/constants/theme';
+import {
+  DarkGuiTheme,
+  GuiaColors,
+  GuiaColorsLight,
+  LightGuiTheme,
+  MaxContentWidth,
+} from '@/constants/theme';
 import { FavoritesProvider } from '@/features/favorites/favorites-provider';
 import { AuthProvider } from '@/providers/auth-provider';
 import { ThemeProvider, useThemeMode } from '@/providers/theme-provider';
+import { useThemeColors } from '@/hooks/use-theme-colors';
 
 SplashScreen.preventAutoHideAsync();
 
@@ -46,6 +54,20 @@ function AuthProviders({ children }: { children: ReactNode }) {
   );
 }
 
+/**
+ * Canvas centralizado do app: em telas mais largas que MaxContentWidth
+ * (desktop/tablet/landscape) o conteúdo fica limitado a 800dp no centro;
+ * em celulares o maxWidth não atinge e a tela continua inalterada.
+ */
+function AppCanvas({ children }: { children: ReactNode }) {
+  const colors = useThemeColors();
+  return (
+    <View style={[appCanvasStyles.canvas, { backgroundColor: colors.background }]}>
+      <View style={appCanvasStyles.content}>{children}</View>
+    </View>
+  );
+}
+
 function ThemedStack() {
   const { mode } = useThemeMode();
   const colors = mode === 'dark' ? GuiaColors : GuiaColorsLight;
@@ -55,20 +77,21 @@ function ThemedStack() {
       <AuthProviders>
         <FavoritesProvider>
           <AnimatedSplashOverlay />
-          <Stack
-            screenOptions={{
-              headerShown: false,
-              contentStyle: { backgroundColor: colors.background },
-            }}
-          />
+          <AppCanvas>
+            <Stack
+              screenOptions={{
+                headerShown: false,
+                contentStyle: { backgroundColor: colors.background },
+              }}
+            />
+          </AppCanvas>
         </FavoritesProvider>
       </AuthProviders>
     </RouterThemeProvider>
   );
 }
 
-export default function RootLayout() {
-  const [interLoaded, interError] = useInterFonts({
+export default function RootLayout() {  const [interLoaded, interError] = useInterFonts({
     Inter_400Regular,
     Inter_500Medium,
     Inter_600SemiBold,
@@ -97,3 +120,15 @@ export default function RootLayout() {
     </ThemeProvider>
   );
 }
+
+const appCanvasStyles = StyleSheet.create({
+  canvas: {
+    flex: 1,
+    alignItems: 'center',
+  },
+  content: {
+    flex: 1,
+    width: '100%',
+    maxWidth: MaxContentWidth,
+  },
+});

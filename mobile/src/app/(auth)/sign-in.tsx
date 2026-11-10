@@ -15,7 +15,8 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { LoginColors, LoginGradients, Typography } from '@/constants/theme';
+import { Typography } from '@/constants/theme';
+import { useLoginColors, useLoginGradients } from '@/features/auth/use-login-theme';
 import { clerkErrorToMessage } from '@/features/auth/clerk-errors';
 import { EmailPasswordForm } from '@/features/auth/sign-in/email-password-form';
 import { ForgotOrGuest } from '@/features/auth/sign-in/forgot-or-guest';
@@ -43,6 +44,10 @@ export default function SignInScreen() {
   const clerk = useClerk();
   const router = useRouter();
   const { state } = useAuthState();
+
+  const colors = useLoginColors();
+  const gradients = useLoginGradients();
+  const styles = makeStyles(colors);
 
   const [mode, setMode] = useState<AuthMode>('entrar');
 
@@ -101,7 +106,7 @@ export default function SignInScreen() {
     <View style={styles.root}>
       <StatusBar barStyle="light-content" />
       <LinearGradient
-        colors={LoginGradients.background}
+        colors={gradients.background}
         style={StyleSheet.absoluteFill}
       />
       <LoginBackground />
@@ -145,11 +150,11 @@ export default function SignInScreen() {
   );
 }
 
-function makeStyles() {
+function makeStyles(colors: ReturnType<typeof useLoginColors>) {
   return StyleSheet.create({
     root: {
       flex: 1,
-      backgroundColor: LoginColors.backgroundTop,
+      backgroundColor: colors.backgroundTop,
     },
     safeArea: {
       flex: 1,
@@ -165,7 +170,7 @@ function makeStyles() {
       gap: 24,
     },
     error: {
-      color: LoginColors.error,
+      color: colors.error,
       ...Typography.caption,
       textAlign: 'center',
     },
@@ -176,14 +181,14 @@ function makeStyles() {
     dividerLine: {
       flex: 1,
       height: 1,
-      backgroundColor: LoginColors.divider,
+      backgroundColor: colors.divider,
     },
     dividerText: {
-      color: LoginColors.dividerText,
+      color: colors.dividerText,
       paddingHorizontal: 12,
       ...Typography.body,
     },
   });
 }
 
-const styles = makeStyles();
+// styles computed inside component (theme-aware)

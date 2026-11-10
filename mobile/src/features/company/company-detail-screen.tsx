@@ -38,6 +38,8 @@ import { callPhone, openMapLink, openWhatsApp } from '@/utils/links';
 
 import type { WorkingHours } from './company-details';
 import { buildCompanyDetails } from './company-details';
+import { CompanyFreeDetailScreen } from './company-free-detail-screen';
+import { companyDetailVariant } from './company-free-view';
 import { CompanyGallery } from './company-gallery';
 import { getOpeningStatus, type OpeningStatus } from './opening-hours';
 import { useCompanyDetail } from './use-company-detail';
@@ -156,7 +158,7 @@ export function CompanyDetailScreen({ companyId }: { companyId: string }) {
     );
   }
 
-  if (!details) {
+  if (!company || !details) {
     return (
       <View style={styles.centered}>
         <StatusBar style={mode === 'dark' ? 'light' : 'dark'} />
@@ -167,6 +169,10 @@ export function CompanyDetailScreen({ companyId }: { companyId: string }) {
         </Pressable>
       </View>
     );
+  }
+
+  if (companyDetailVariant(company) === 'free') {
+    return <CompanyFreeDetailScreen company={company} />;
   }
 
   const hasContact = Boolean(details.whatsapp || details.phone);

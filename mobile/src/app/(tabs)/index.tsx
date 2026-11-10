@@ -28,6 +28,7 @@ import { SectionHeader } from '@/features/home/section-header';
 import { TourismSection } from '@/features/home/tourism-section';
 import { useHomeData } from '@/features/home/use-home-data';
 import { useThemeColors } from '@/hooks/use-theme-colors';
+import { useThemeMode } from '@/providers/theme-provider';
 import { getCities, getCompanies, getNotices, getPublicUtilities } from '@/services/api';
 import type { Company, Notice, PublicUtility } from '@/types/domain';
 
@@ -42,6 +43,7 @@ export default function HomeScreen() {
   const { loading, categories, banners, featuredCompany, jobs, error } = useHomeData(selectedCity, retryKey);
   const insets = useSafeAreaInsets();
   const colors = useThemeColors();
+  const { mode } = useThemeMode();
   const styles = makeStyles(colors);
 
   useEffect(() => {
@@ -155,7 +157,7 @@ export default function HomeScreen() {
 
   return (
     <View style={styles.root}>
-      <StatusBar barStyle="light-content" />
+      <StatusBar barStyle={mode === 'dark' ? 'light-content' : 'dark-content'} />
       <SafeAreaView style={styles.safeArea} edges={['top']}>
         <ScrollView
           style={styles.scrollView}

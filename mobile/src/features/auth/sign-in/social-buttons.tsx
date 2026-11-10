@@ -2,7 +2,8 @@ import FontAwesome from '@expo/vector-icons/FontAwesome';
 import { ActivityIndicator, Platform, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import type { ReactNode } from 'react';
 
-import { LoginColors, Typography } from '@/constants/theme';
+import { Typography } from '@/constants/theme';
+import { useLoginColors } from '@/features/auth/use-login-theme';
 
 interface SocialButtonsProps {
   onGoogle: () => void;
@@ -18,15 +19,17 @@ interface SocialButtonsProps {
  * plataformas; Apple só no iOS.
  */
 export function SocialButtons({ onGoogle, onApple, googleLoading, appleLoading }: SocialButtonsProps) {
+  const colors = useLoginColors();
+  const styles = makeStyles(colors);
   return (
     <View style={styles.column}>
       <SocialLoginButton
         title="Entrar com Google"
         icon={(loading) =>
           loading ? (
-            <ActivityIndicator size="small" color={LoginColors.googleIcon} />
+            <ActivityIndicator size="small" color={colors.googleIcon} />
           ) : (
-            <FontAwesome name="google" size={20} color={LoginColors.googleIcon} />
+            <FontAwesome name="google" size={20} color={colors.googleIcon} />
           )
         }
         loading={googleLoading}
@@ -38,9 +41,9 @@ export function SocialButtons({ onGoogle, onApple, googleLoading, appleLoading }
           title="Entrar com Apple"
           icon={(loading) =>
             loading ? (
-              <ActivityIndicator size="small" color={LoginColors.text} />
+              <ActivityIndicator size="small" color={colors.text} />
             ) : (
-              <FontAwesome name="apple" size={20} color={LoginColors.text} />
+              <FontAwesome name="apple" size={20} color={colors.text} />
             )
           }
           loading={appleLoading}
@@ -60,6 +63,8 @@ interface SocialLoginButtonProps {
 }
 
 function SocialLoginButton({ title, icon, loading, onPress }: SocialLoginButtonProps) {
+  const colors = useLoginColors();
+  const styles = makeStyles(colors);
   return (
     <TouchableOpacity
       style={[styles.button, loading && styles.buttonDisabled]}
@@ -76,7 +81,8 @@ function SocialLoginButton({ title, icon, loading, onPress }: SocialLoginButtonP
   );
 }
 
-const styles = StyleSheet.create({
+function makeStyles(colors: ReturnType<typeof useLoginColors>) {
+  return StyleSheet.create({
   column: {
     gap: 12,
   },
@@ -88,8 +94,8 @@ const styles = StyleSheet.create({
     height: 52,
     borderRadius: 26,
     borderWidth: 1,
-    borderColor: LoginColors.googleBorder,
-    backgroundColor: LoginColors.googleBackground,
+    borderColor: colors.googleBorder,
+    backgroundColor: colors.googleBackground,
   },
   buttonDisabled: {
     opacity: 0.7,
@@ -99,7 +105,8 @@ const styles = StyleSheet.create({
     left: 20,
   },
   text: {
-    color: LoginColors.text,
+    color: colors.text,
         ...Typography.h5,
   },
-});
+  });
+}

@@ -9,3 +9,11 @@
   --font-rounded: 'SF Pro Rounded', 'Hiragino Maru Gothic ProN', Meiryo, 'MS PGothic', sans-serif;
   --font-serif: Georgia, 'Times New Roman', serif;
 }
+
+/* Remove o anel de foco padrão do navegador nos inputs do formulário de
+   login (web): o indicador de foco é o contorno amarelo do container. */
+input:focus,
+input:focus-visible {
+  outline: none !important;
+  box-shadow: none !important;
+}
