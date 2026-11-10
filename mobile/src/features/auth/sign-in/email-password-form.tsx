@@ -431,7 +431,7 @@ const styles = StyleSheet.create({
   container: {
     display: 'flex',
     flexDirection: 'column',
-    gap: 8,
+    gap: 10,
   },
   nameRow: {
     flexDirection: 'row',
