@@ -5,6 +5,7 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
+import { useEffect } from 'react';
 import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -21,6 +22,7 @@ import {
   Typography,
 } from '@/constants/theme';
 import { useFavorites } from '@/features/favorites/favorites-provider';
+import { trackView, trackWhatsappClick } from '@/features/analytics/track';
 import { ContactHintRow } from '@/features/home/contact-hidden-hint';
 import { useThemeColors } from '@/hooks/use-theme-colors';
 import { useThemeMode } from '@/providers/theme-provider';
@@ -54,6 +56,10 @@ export function CompanyFreeDetailScreen({ company }: { company: Company }) {
   const { isFavorite, toggleFavorite } = useFavorites();
   const view = buildCompanyFreeView(company, new Date());
   const favorite = isFavorite(company._id);
+
+  useEffect(() => {
+    if (company?._id) trackView(company._id);
+  }, [company?._id]);
 
   function goBack() {
     if (router.canGoBack()) {
@@ -194,7 +200,10 @@ export function CompanyFreeDetailScreen({ company }: { company: Company }) {
               pressed && view.whatsapp ? styles.pressed : null,
             ]}
             onPress={() => {
-              if (view.whatsapp) void openWhatsApp(view.whatsapp, WHATSAPP_MESSAGE);
+              if (view.whatsapp) {
+                if (company?._id) trackWhatsappClick(company._id);
+                void openWhatsApp(view.whatsapp, WHATSAPP_MESSAGE);
+              }
             }}
             disabled={!view.whatsapp}
             accessibilityRole="button"

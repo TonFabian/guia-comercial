@@ -5,6 +5,7 @@ import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'rea
 import { Radius, Spacing, Typography } from '@/constants/theme';
 import { useThemeColors } from '@/hooks/use-theme-colors';
 import type { Company } from '@/types/domain';
+import { companyPlan } from '@/features/company/company-plan';
 import { categoryLabel } from '@/types/domain';
 import { openWhatsApp } from '@/utils/links';
 import { SectionHeader } from './section-header';
@@ -18,6 +19,14 @@ interface Props {
 export function OtherCompanies({ companies, loading = false, error = null }: Props) {
   const colors = useThemeColors();
   const styles = makeStyles(colors);
+
+  const PLAN_PRIORITY: Record<string, number> = { premium: 0, basic: 1, free: 2 };
+  const sorted = [...companies].sort((a, b) => {
+    const pa = PLAN_PRIORITY[companyPlan(a)] ?? 2;
+    const pb = PLAN_PRIORITY[companyPlan(b)] ?? 2;
+    if (pa !== pb) return pa - pb;
+    return a.name.localeCompare(b.name);
+  });
 
   return (
     <View style={styles.section}>
@@ -33,11 +42,11 @@ export function OtherCompanies({ companies, loading = false, error = null }: Pro
         </View>
       ) : error ? (
         <Text style={styles.empty}>{error}</Text>
-      ) : companies.length === 0 ? (
+      ) : sorted.length === 0 ? (
         <Text style={styles.empty}>Nenhuma empresa cadastrada</Text>
       ) : (
         <View style={styles.list}>
-          {companies.map((c) => (
+          {sorted.map((c) => (
             <View key={c._id} style={styles.card}>
               <TouchableOpacity
                 style={styles.cardMain}

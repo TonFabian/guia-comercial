@@ -5,7 +5,7 @@ import { Image } from 'expo-image';
 import { LinearGradient } from 'expo-linear-gradient';
 import { router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
-import { useMemo } from 'react';
+import { useEffect, useMemo } from 'react';
 import {
   ActivityIndicator,
   Alert,
@@ -41,8 +41,11 @@ import { buildCompanyDetails } from './company-details';
 import { CompanyFreeDetailScreen } from './company-free-detail-screen';
 import { companyDetailVariant } from './company-free-view';
 import { CompanyGallery } from './company-gallery';
+import { CompanyProducts } from './company-products';
+import { companyPlan, hasFeature } from './company-plan';
 import { getOpeningStatus, type OpeningStatus } from './opening-hours';
 import { useCompanyDetail } from './use-company-detail';
+import { trackView, trackWhatsappClick } from '@/features/analytics/track';
 
 const WHATSAPP_MESSAGE =
   'Olá, vi sua empresa no aplicativo *Guia de Castelo do Piauí* e gostaria de mais informações!';
@@ -129,6 +132,10 @@ export function CompanyDetailScreen({ companyId }: { companyId: string }) {
   const { isFavorite, toggleFavorite } = useFavorites();
   const details = useMemo(() => (company ? buildCompanyDetails(company) : null), [company]);
   const favorite = company ? isFavorite(company._id) : false;
+
+  useEffect(() => {
+    if (company?._id) trackView(company._id);
+  }, [company?._id]);
 
   function goBack() {
     if (router.canGoBack()) {
@@ -329,6 +336,15 @@ export function CompanyDetailScreen({ companyId }: { companyId: string }) {
           </View>
         </View>
 
+        {hasFeature(companyPlan(company), 'catalog') && company.products && company.products.length > 0 ? (
+          <View style={styles.section}>
+            <SectionHeader title="Produtos e Serviços" />
+            <View style={styles.servicesList}>
+              <CompanyProducts products={company.products} whatsapp={details.whatsapp} />
+            </View>
+          </View>
+        ) : null}
+
         <View style={styles.section}>
           <SectionHeader title="Horários de Funcionamento" />
           <WorkingHoursCard hours={details.workingHours} />
@@ -377,7 +393,10 @@ export function CompanyDetailScreen({ companyId }: { companyId: string }) {
               pressed && details.whatsapp ? styles.pressed : null,
             ]}
             onPress={() => {
-              if (details.whatsapp) void openWhatsApp(details.whatsapp, WHATSAPP_MESSAGE);
+              if (details.whatsapp) {
+                if (company?._id) trackWhatsappClick(company._id);
+                void openWhatsApp(details.whatsapp, WHATSAPP_MESSAGE);
+              }
             }}
             disabled={!details.whatsapp}
             accessibilityRole="button"

@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
 
 import { useResource } from '../../hooks/use-resource';
-import { createCompany, deleteCompany, getCompanies, updateCompany } from '../../services/api';
+import { createCompany, deleteCompany, getCompanies, updateCompany, updateCompanyPlan } from '../../services/api';
 import type { CompanyInput } from '../../services/api';
 import type { Category, City, Company } from '../../types/domain';
 import { filterByText } from '../../utils/filter';
@@ -36,6 +36,7 @@ interface CompanyForm {
   whatsapp: string;
   samePhone: boolean;
   schedule: CompanyScheduleItemForm[];
+  plan: 'free' | 'basic' | 'premium';
 }
 
 const EMPTY_FORM: CompanyForm = {
@@ -48,6 +49,7 @@ const EMPTY_FORM: CompanyForm = {
   whatsapp: '',
   samePhone: false,
   schedule: [],
+  plan: 'free',
 };
 
 
@@ -93,6 +95,7 @@ export function EmpresasSection({ categories, categoriesError, cities, citiesErr
       whatsapp: company.whatsapp ?? '',
       samePhone: false,
       schedule: company.schedule ?? [],
+      plan: company.plan ?? 'free',
     });
   }
 
@@ -125,14 +128,19 @@ export function EmpresasSection({ categories, categoriesError, cities, citiesErr
       city: form.city || undefined,
       phone: form.phone || undefined,
       whatsapp: form.whatsapp || undefined,
+      plan: form.plan,
       schedule: form.schedule,
     };
 
     try {
       if (editingId) {
         await updateCompany(editingId, payload);
+        await updateCompanyPlan(editingId, form.plan);
       } else {
-        await createCompany(payload);
+        const created = await createCompany(payload);
+        if (created?._id && form.plan !== 'free') {
+          await updateCompanyPlan(created._id, form.plan);
+        }
       }
       resetForm();
       setPage(1);
@@ -219,6 +227,14 @@ export function EmpresasSection({ categories, categoriesError, cities, citiesErr
           onChange={(event) => setForm({ ...form, whatsapp: event.target.value })}
           disabled={form.samePhone}
         />
+        <select
+          value={form.plan}
+          onChange={(event) => setForm({ ...form, plan: event.target.value as 'free' | 'basic' | 'premium' })}
+        >
+          <option value="free">Plano: Gratuito</option>
+          <option value="basic">Plano: Básico</option>
+          <option value="premium">Plano: Premium</option>
+        </select>
         <fieldset>
           <legend>Horário de funcionamento</legend>
           {form.schedule.map((item, index) => (
@@ -305,12 +321,13 @@ export function EmpresasSection({ categories, categoriesError, cities, citiesErr
       </div>
 
       <Table
-        headers={['Nome', 'Categoria', 'Cidade', 'Telefone', 'Ações']}
+        headers={['Nome', 'Categoria', 'Cidade', 'Telefone', 'Plano', 'Ações']}
         rows={visible.map((company) => [
           company.name,
           categoryLabel(company.category),
           cityLabel(company.city),
           company.phone ?? '—',
+           company.plan ?? 'free',
           <RowActions
             key={company._id}
             onEdit={() => startEdit(company)}

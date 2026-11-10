@@ -123,6 +123,14 @@ export async function getCompanyById(id: string) {
 }
 
 export async function createCompany(dto: CreateCompanyDto, ownerClerkId?: string) {
+  // Plano só pode ser definido por admin. Usuário comum (dono de empresa)
+  // que criar empresa via API recebe 'free' por padrão — sem bypass.
+  if (dto.plan && dto.plan !== 'free' && process.env.CLERK_SECRET_KEY) {
+    const user = ownerClerkId ? await findUserByClerkId(ownerClerkId) : null;
+    if (user?.role !== 'admin') {
+      dto = { ...dto, plan: 'free' };
+    }
+  }
   // Resolve cidade primeiro: o nome entra na query de geocodificação (endereço
   // sozinho frequentemente não é encontrado, sem estado/cidade).
   let city: string | null | undefined;

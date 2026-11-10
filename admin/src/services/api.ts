@@ -128,6 +128,7 @@ export interface CompanyInput {
   whatsapp?: string;
   address?: string;
   promotion?: string;
+  plan?: 'free' | 'basic' | 'premium';
   schedule?: { day: number; opens: number; closes: number }[];
 }
 
@@ -410,6 +411,10 @@ export async function createCompany(body: CompanyInput): Promise<Company> {
 
 export async function updateCompany(id: string, body: UpdateCompanyInput): Promise<Company> {
   return apiPut<Company>(`/companies/${id}`, body);
+}
+
+export async function updateCompanyPlan(id: string, plan: 'free' | 'basic' | 'premium'): Promise<Company> {
+  return apiPut<Company>(`/companies/${id}/plan`, { plan });
 }
 
 export async function deleteCompany(id: string): Promise<void> {
