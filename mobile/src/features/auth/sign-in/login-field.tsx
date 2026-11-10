@@ -62,5 +62,7 @@ const styles = StyleSheet.create({
     color: LoginColors.text,
     ...Typography.h5,
     paddingVertical: 0,
+    outlineWidth: 0,
+    outlineColor: 'transparent',
   },
 });
