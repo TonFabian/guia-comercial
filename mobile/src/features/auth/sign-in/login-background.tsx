@@ -1,26 +1,23 @@
 import { LinearGradient } from 'expo-linear-gradient';
 import { StyleSheet, View } from 'react-native';
 
-import { useLoginColors, useLoginGradients } from '@/features/auth/use-login-theme';
+import { LoginColors, LoginGradients } from '@/constants/theme';
 
 /**
  * Decoração de fundo da tela de login: ondas douradas sutis desenhadas em
  * código (sem assets). Fica atrás do conteúdo e não intercepta toques.
  */
 export function LoginBackground() {
-  const colors = useLoginColors();
-  const gradients = useLoginGradients();
-  const styles = makeStyles(colors);
   return (
     <View pointerEvents="none" style={StyleSheet.absoluteFill}>
       <LinearGradient
-        colors={gradients.waveTop}
+        colors={LoginGradients.waveTop}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 1 }}
         style={styles.topWave}
       />
       <LinearGradient
-        colors={gradients.waveBottom}
+        colors={LoginGradients.waveBottom}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 0 }}
         style={styles.bottomWave}
@@ -30,8 +27,7 @@ export function LoginBackground() {
   );
 }
 
-function makeStyles(colors: ReturnType<typeof useLoginColors>) {
-  return StyleSheet.create({
+const styles = StyleSheet.create({
   topWave: {
     position: 'absolute',
     top: -160,
@@ -55,8 +51,7 @@ function makeStyles(colors: ReturnType<typeof useLoginColors>) {
     width: 220,
     height: 120,
     borderTopWidth: 2,
-    borderColor: colors.arc,
+    borderColor: LoginColors.arc,
     borderRadius: 110,
   },
-  });
-}
+});

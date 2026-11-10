@@ -12,8 +12,7 @@ import {
   View,
 } from 'react-native';
 
-import { Typography, FontFamily, FontWeight } from '@/constants/theme';
-import { useLoginColors, useLoginGradients } from '@/features/auth/use-login-theme';
+import { LoginColors, LoginGradients, Typography, FontFamily, FontWeight } from '@/constants/theme';
 import { clerkErrorToMessage, GenericAuthErrorMessage } from '@/features/auth/clerk-errors';
 
 import { LoginField } from './login-field';
@@ -39,9 +38,6 @@ export function EmailPasswordForm({ mode }: { mode: AuthMode }) {
   const { signIn } = useSignIn();
   const { signUp } = useSignUp();
   const clerk = useClerk();
-
-  const colors = useLoginColors();
-  const styles = makeStyles(colors);
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -351,7 +347,7 @@ export function EmailPasswordForm({ mode }: { mode: AuthMode }) {
             <Feather
               name={showPassword ? 'eye' : 'eye-off'}
               size={20}
-              color={colors.muted}
+              color={LoginColors.muted}
             />
           </TouchableOpacity>
         }
@@ -377,8 +373,6 @@ export function EmailPasswordForm({ mode }: { mode: AuthMode }) {
 }
 
 function ErrorText({ error }: { error: string | null }) {
-  const colors = useLoginColors();
-  const styles = makeStyles(colors);
   if (!error) {
     return null;
   }
@@ -397,9 +391,6 @@ function SubmitButton({
   loading: boolean;
   showArrow?: boolean;
 }) {
-  const colors = useLoginColors();
-  const gradients = useLoginGradients();
-  const styles = makeStyles(colors);
   return (
     <TouchableOpacity
       style={styles.submitWrap}
@@ -411,13 +402,13 @@ function SubmitButton({
       accessibilityState={{ busy: loading }}
     >
       <LinearGradient
-        colors={gradients.button}
+        colors={LoginGradients.button}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 0 }}
         style={styles.submitGradient}
       >
         {loading ? (
-          <ActivityIndicator size="small" color={colors.primaryText} />
+          <ActivityIndicator size="small" color={LoginColors.primaryText} />
         ) : (
           <>
             <Text style={styles.submitText}>{label}</Text>
@@ -425,7 +416,7 @@ function SubmitButton({
               <Feather
                 name="arrow-right"
                 size={22}
-                color={colors.primaryText}
+                color={LoginColors.primaryText}
                 style={styles.submitArrow}
               />
             ) : null}
@@ -436,8 +427,7 @@ function SubmitButton({
   );
 }
 
-function makeStyles(colors: ReturnType<typeof useLoginColors>) {
-  return StyleSheet.create({
+const styles = StyleSheet.create({
   container: {
     display: 'flex',
     flexDirection: 'column',
@@ -451,12 +441,12 @@ function makeStyles(colors: ReturnType<typeof useLoginColors>) {
     flex: 1,
   },
   helper: {
-    color: colors.muted,
+    color: LoginColors.muted,
     ...Typography.body,
     textAlign: 'center',
   },
   error: {
-    color: colors.error,
+    color: LoginColors.error,
     ...Typography.caption,
   },
   submitWrap: {
@@ -472,7 +462,7 @@ function makeStyles(colors: ReturnType<typeof useLoginColors>) {
     justifyContent: 'center',
   },
   submitText: {
-    color: colors.primaryText,
+    color: LoginColors.primaryText,
         ...Typography.h4,
     fontFamily: FontFamily.heading700,
     fontWeight: FontWeight.bold,
@@ -484,8 +474,7 @@ function makeStyles(colors: ReturnType<typeof useLoginColors>) {
     alignSelf: 'center',
   },
   linkText: {
-    color: colors.muted,
+    color: LoginColors.muted,
     ...Typography.caption,
   },
 });
-}

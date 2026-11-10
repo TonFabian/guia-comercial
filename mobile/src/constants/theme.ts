@@ -109,8 +109,8 @@ export const BrandColors = {
   appleText: '#FFFFFF',
 } as const;
 
-/** Paleta dedicada da tela de login — variante escura (padrão). */
-export const LoginColorsDark = {
+/** Paleta dedicada da tela de login (fundo escuro + dourado). */
+export const LoginColors = {
   backgroundTop: '#0D0D0D',
   backgroundBottom: '#121212',
   input: '#1A1A1A',
@@ -129,47 +129,13 @@ export const LoginColorsDark = {
   arc: 'rgba(241, 168, 10, 0.25)',
 } as const;
 
-/** Paleta dedicada da tela de login — variante clara. */
-export const LoginColorsLight = {
-  backgroundTop: '#F7F7F8',
-  backgroundBottom: '#FFFFFF',
-  input: '#FFFFFF',
-  inputBorder: '#E5E7EB',
-  inputBorderFocused: '#F1A80A',
-  text: '#111827',
-  muted: '#6B7280',
-  link: '#D48800',
-  divider: '#E5E7EB',
-  dividerText: '#9CA3AF',
-  googleBorder: '#D1D5DB',
-  googleBackground: '#FFFFFF',
-  googleIcon: '#4285F4',
-  primaryText: '#000000',
-  error: '#EF4444',
-  arc: 'rgba(241, 168, 10, 0.15)',
-} as const;
-
-/** Paleta dedicada da tela de login (fundo + dourado), tema-sensível. */
-export const LoginColors = LoginColorsDark;
-
-/** Gradientes da tela de login — variante escura (padrão). */
-export const LoginGradientsDark = {
-  background: [LoginColorsDark.backgroundTop, LoginColorsDark.backgroundBottom],
+/** Gradientes da tela de login (fundo, botão e ondas decorativas). */
+export const LoginGradients = {
+  background: [LoginColors.backgroundTop, LoginColors.backgroundBottom],
   button: ['#F5B014', '#D48800'],
   waveTop: ['rgba(241, 168, 10, 0.22)', 'rgba(241, 168, 10, 0)'],
   waveBottom: ['rgba(229, 148, 0, 0)', 'rgba(241, 168, 10, 0.16)'],
 } as const;
-
-/** Gradientes da tela de login — variante clara. */
-export const LoginGradientsLight = {
-  background: [LoginColorsLight.backgroundTop, LoginColorsLight.backgroundBottom],
-  button: ['#F5B014', '#D48800'],
-  waveTop: ['rgba(241, 168, 10, 0.12)', 'rgba(241, 168, 10, 0)'],
-  waveBottom: ['rgba(229, 148, 0, 0)', 'rgba(241, 168, 10, 0.08)'],
-} as const;
-
-/** Gradientes da tela de login (fundo, botão e ondas decorativas). */
-export const LoginGradients = LoginGradientsDark;
 
 const _fontScale = fluidWidthFactor(375, Dimensions.get('window').width);
 const _s = (n: number) => Math.round(n * _fontScale);

@@ -15,8 +15,7 @@ import {
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 
-import { Typography } from '@/constants/theme';
-import { useLoginColors, useLoginGradients } from '@/features/auth/use-login-theme';
+import { LoginColors, LoginGradients, Typography } from '@/constants/theme';
 import { clerkErrorToMessage } from '@/features/auth/clerk-errors';
 import { EmailPasswordForm } from '@/features/auth/sign-in/email-password-form';
 import { ForgotOrGuest } from '@/features/auth/sign-in/forgot-or-guest';
@@ -44,10 +43,6 @@ export default function SignInScreen() {
   const clerk = useClerk();
   const router = useRouter();
   const { state } = useAuthState();
-
-  const colors = useLoginColors();
-  const gradients = useLoginGradients();
-  const styles = makeStyles(colors);
 
   const [mode, setMode] = useState<AuthMode>('entrar');
 
@@ -106,7 +101,7 @@ export default function SignInScreen() {
     <View style={styles.root}>
       <StatusBar barStyle="light-content" />
       <LinearGradient
-        colors={gradients.background}
+        colors={LoginGradients.background}
         style={StyleSheet.absoluteFill}
       />
       <LoginBackground />
@@ -150,11 +145,11 @@ export default function SignInScreen() {
   );
 }
 
-function makeStyles(colors: ReturnType<typeof useLoginColors>) {
+function makeStyles() {
   return StyleSheet.create({
     root: {
       flex: 1,
-      backgroundColor: colors.backgroundTop,
+      backgroundColor: LoginColors.backgroundTop,
     },
     safeArea: {
       flex: 1,
@@ -170,7 +165,7 @@ function makeStyles(colors: ReturnType<typeof useLoginColors>) {
       gap: 24,
     },
     error: {
-      color: colors.error,
+      color: LoginColors.error,
       ...Typography.caption,
       textAlign: 'center',
     },
@@ -181,14 +176,14 @@ function makeStyles(colors: ReturnType<typeof useLoginColors>) {
     dividerLine: {
       flex: 1,
       height: 1,
-      backgroundColor: colors.divider,
+      backgroundColor: LoginColors.divider,
     },
     dividerText: {
-      color: colors.dividerText,
+      color: LoginColors.dividerText,
       paddingHorizontal: 12,
       ...Typography.body,
     },
   });
 }
 
-// styles computed inside component (theme-aware)
+const styles = makeStyles();
