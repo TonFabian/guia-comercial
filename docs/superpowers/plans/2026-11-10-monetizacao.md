@@ -12,7 +12,6 @@
 
 ## Global Constraints
 
-- Conventional Commits; trailer `Generated-by: opencode (glm-5.3-flash-free)`.
 - Sem segredos no código; env vars para config.
 - TDD: teste falhando antes de código de produção.
 - TypeScript estrito, sem `any`.
@@ -20,6 +19,35 @@
 - Rodar gate (lint + typecheck + test) dos apps afetados antes de declarar pronto.
 - Não instalar deps na raiz; npm dentro de cada app.
 - Não editar `ios/`/`android/`.
+
+## Security (não-negociável)
+
+- **Plano é fonte da verdade no backend.** O campo `plan` só pode ser alterado por
+  admin (role `admin`). O endpoint público de update de empresa (`PUT /companies/:id`)
+  deve ignorar/rejeitar `plan` no body (whitelist de campos editáveis pelo dono).
+  O mobile nunca "decide" o plano — apenas lê o que a API retorna e usa
+  `companyPlan()` como conveniência de UI.
+- **Gating de features premium é validado no backend.** Endpoints premium-only
+  (ex.: analytics summary, cupom patrocinado, produto destacado) retornam `403`
+  se a empresa não for `premium`/`basic`. O mobile pode esconder a UI, mas a
+  proteção real é server-side.
+- **Isolamento de tenant em analytics.** `getSummary(companyId, ...)` filtra
+  exclusivamente por `companyId` validado. O `companyId` vem da URL (validado
+  com `isValidObjectId` → 404 se malformado), nunca do body. Respostas nunca
+  incluem dados de outra empresa. Testes devem cobrir tentativa de acesso
+  cross-company (esperado 403/404).
+- **Autorização por recurso.** Incremento (`view`, `whatsapp-click`) e consulta
+  de analytics exigem que o chamador seja o dono da empresa (`ownerClerkId`
+  coincide com o Clerk ID da sessão) ou admin. Convidado/anônimo pode apenas
+  incrementar `view` (rate-limited).
+- **Rate limiting.** Endpoints de incremento (`view`, `whatsapp-click`) devem
+  ter rate limit por IP/sessão (ex.: 1 incremento por empresa por IP por hora)
+  para evitar inflação artificial de métricas. Usar middleware de rate limit
+  (express-rate-limit) ou dedup por sessão.
+- **Sem PII em analytics.** Contadores agregados apenas; nunca armazenar IP,
+  user-agent ou identificador de usuário nas tabelas de analytics.
+- **Admin: role check.** Todas as rotas de alteração de plano exigem
+  `role === 'admin'` (middleware de autorização), validado via Clerk session.
 
 ## Review Focus
 
@@ -161,6 +189,57 @@ git commit -m "feat(backend): adiciona campo plan ao modelo e DTO de Company"
 ```
 
 ---
+
+## Task 2b: Backend — autorização de plano (sem bypass)
+
+**Files:**
+- Modify: `backend/src/controllers/company.controller.ts`
+- Modify: `backend/src/middlewares/auth.middleware.ts` (ou criar `requireAdmin`)
+- Modify: `backend/src/routes/company.routes.ts`
+- Test: `backend/src/controllers/company.controller.test.ts`
+
+- [ ] **Step 1: Teste falhando** — PUT `/companies/:id` com `plan` no body não altera o plano (plano permanece o original); apenas admin via rota dedicada altera.
+
+```ts
+test('PUT /companies/:id ignora plan no body (nao-bypass)', async () => {
+  const company = await createCompany({ plan: 'free' });
+  const res = await request(app).put(`/companies/${company._id}`).send({ plan: 'premium', name: 'Novo' });
+  expect(res.status).toBe(200);
+  const updated = await Company.findById(company._id);
+  expect(updated.plan).toBe('free'); // plano nao mudou
+  expect(updated.name).toBe('Novo');
+});
+
+test('PUT /companies/:id/plan exige admin (403 para nao-admin)', async () => {
+  const company = await createCompany({ plan: 'free' });
+  const res = await request(app).put(`/companies/${company._id}/plan`).set('Authorization', 'Bearer ' + userToken).send({ plan: 'premium' });
+  expect(res.status).toBe(403);
+});
+
+test('PUT /companies/:id/plan admin altera plano', async () => {
+  const company = await createCompany({ plan: 'free' });
+  const res = await request(app).put(`/companies/${company._id}/plan`).set('Authorization', 'Bearer ' + adminToken).send({ plan: 'premium' });
+  expect(res.status).toBe(200);
+  const updated = await Company.findById(company._id);
+  expect(updated.plan).toBe('premium');
+});
+```
+
+- [ ] **Step 2: Rodar** — falha.
+
+- [ ] **Step 3: Implementar**
+  - Em `updateCompany` controller: remover `plan` do body aceito (whitelist de campos editáveis: name, description, category, phone, whatsapp, address, city, logo, cover, gallery, registry, promotion, services, products, schedule). `plan` não está na whitelist.
+  - Nova rota `PUT /companies/:id/plan` protegida por middleware `requireAdmin`, que valida `plan` via zod e persiste.
+  - Middleware `requireAdmin`: verifica Clerk session e `role === 'admin'`; 403 caso contrário.
+
+- [ ] **Step 4: Rodar** — passa.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add backend/src/controllers/company.controller.ts backend/src/middlewares/auth.middleware.ts backend/src/routes/company.routes.ts backend/src/controllers/company.controller.test.ts
+git commit -m "feat(backend): autorizacao de plano - apenas admin altera, sem bypass via PUT"
+```
 
 ## Task 3: Mobile — helper de plano
 
@@ -337,13 +416,40 @@ git commit -m "feat(mobile): analytics fire-and-forget (view, whatsapp-click)"
 - Modify: `backend/src/routes/company.routes.ts`
 - Test: `backend/src/services/analytics.service.test.ts`
 
-- [ ] **Step 1: Teste falhando** — `incrementView(companyId)` cria/incrementa contador do dia; `getSummary(companyId, from, to)` retorna totais.
+- [ ] **Step 1: Teste falhando** — `incrementView(companyId)` cria/incrementa contador do dia; `getSummary(companyId, from, to)` retorna totais. Incluir testes de isolamento:
+
+```ts
+test('getSummary nao retorna dados de outra empresa', async () => {
+  await incrementView('companyA');
+  await incrementView('companyA');
+  await incrementView('companyB');
+  const summaryA = await getSummary('companyA', from, to);
+  const summaryB = await getSummary('companyB', from, to);
+  expect(summaryA.views).toBe(2);
+  expect(summaryB.views).toBe(1);
+  // summaryA nao contem dados de B
+  expect(JSON.stringify(summaryA)).not.toContain('companyB');
+});
+
+test('getSummary com companyId malformado retorna 404 (nao 500)', async () => {
+  const res = await request(app).get('/companies/not-an-id/analytics');
+  expect(res.status).toBe(404);
+});
+
+test('GET /companies/:id/analytics exige owner ou admin (403 para terceiro)', async () => {
+  const res = await request(app).get(`/companies/${companyA._id}/analytics`).set('Authorization', 'Bearer ' + otherUserToken);
+  expect(res.status).toBe(403);
+});
+```
+
+- [ ] **Step 1b: Teste de rate limit** — múltiplos POST `/view` do mesmo IP para a mesma empresa em curto intervalo retornam 429 após o limite.
 
 - [ ] **Step 2: Implementar modelo** (schema com companyId, date (YYYY-MM-DD), views, whatsappClicks, favorites; índice composto companyId+date).
 
 - [ ] **Step 3: Implementar service** com `incrementView`, `incrementWhatsappClick`, `getSummary`.
 
-- [ ] **Step 4: Controller + rotas** `POST /companies/:id/view`, `POST /companies/:id/whatsapp-click` (validar ObjectId → 404 se malformado; não exigir auth no MVP — rate limit recomendado).
+- [ ] **Step 4: Controller + rotas** `POST /companies/:id/view`, `POST /companies/:id/whatsapp-click` (validar ObjectId → 404 se malformado). `view` permite anônimo mas com rate limit; `whatsapp-click` exige sessão (owner ou anônimo com rate limit). Nova rota `GET /companies/:id/analytics` protegida por `requireOwnerOrAdmin`, retorna summary do período (`?from=&to=`).
+- [ ] **Step 4b: Rate limit middleware** — instalar `express-rate-limit` no backend (`npm i express-rate-limit` dentro de `backend/`). Configurar por IP: 1 incremento/empresa/hora para `view`, 5/hora para `whatsapp-click`. Aplicar apenas nas rotas de incremento. Se a lib não estiver disponível, implementar dedup simples por (ip, companyId, hour) em memória como fallback.
 
 - [ ] **Step 5: Rodar testes** — passar.
 
