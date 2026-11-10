@@ -20,6 +20,7 @@ import {
   makeAuthMiddleware,
   requireAuthIfConfigured,
 } from '../middlewares/auth.middleware.js';
+import { limitarView, limitarWhatsappClick } from '../middlewares/analytics-rate-limit.middleware.js';
 import { guestScrub } from '../middlewares/guest.middleware.js';
 import {
   createAutonomousProfessionalSchema,
@@ -91,6 +92,12 @@ const requireAuthForMutations: RequestHandler = (req, res, next) => {
     next();
     return;
   }
+  // View anônima (rate-limited): convidado do app navega sem sessão e a
+  // contagem de visitas não pode depender de login (plano de monetização).
+  if (/^\/companies\/[^/]+\/view$/.test(req.path)) {
+    next();
+    return;
+  }
   return requireAuthIfConfigured(req, res, next);
 };
 routes.use(requireAuthForMutations);
@@ -116,8 +123,10 @@ companies.get('/:id/reviews', reviewController.listReviews);
 companies.post('/:id/reviews', validateBody(createReviewSchema), reviewController.createReviewHandler);
 companies.put('/:id', validateBody(updateCompanySchema), companyController.update);
 companies.put('/:id/plan', requireAuthIfConfigured, validateBody(updatePlanSchema), companyController.updatePlan);
-companies.post('/:id/view', companyController.trackView);
-companies.post('/:id/whatsapp-click', requireAuthIfConfigured, companyController.trackWhatsappClick);
+// Rate limit anti-inflação: métrica vendida ao lojista não pode ser bombada
+// por script (view 1/empresa/IP/hora, clique 5/empresa/IP/hora).
+companies.post('/:id/view', limitarView, companyController.trackView);
+companies.post('/:id/whatsapp-click', requireAuthIfConfigured, limitarWhatsappClick, companyController.trackWhatsappClick);
 companies.get('/:id/analytics', requireAuthIfConfigured, companyController.getAnalytics);
 companies.delete('/:id', companyController.remove);
 

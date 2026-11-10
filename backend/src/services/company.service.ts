@@ -34,6 +34,8 @@ export interface CompanyListFilters {
   owner?: unknown;
   /** cidade (slug ou nome) */
   city?: unknown;
+  /** 'plan': ordena premium > basic > free (sem ocultar) antes da paginação */
+  prioritize?: unknown;
 }
 
 /** Regras de dados para empresas. */
@@ -102,6 +104,37 @@ export async function listCompanies(
     const slug = cidade.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '-');
     const found = await CityModel.findOne({ slug }).lean();
     query.city = found ? found._id : new Types.ObjectId().toString();
+  }
+
+  const priorizar = lerTexto(filters.prioritize, { nome: 'prioritize' });
+  if (priorizar !== undefined && priorizar !== 'plan') {
+    // Valor desconhecido não é descartado em silêncio (padrão do repo: 400).
+    throw Object.assign(new Error("prioritize inválido: use 'plan'"), { statusCode: 400 });
+  }
+  const priorizarPorPlano = priorizar === 'plan';
+
+  if (priorizarPorPlano) {
+    // Ordenação por plano não é suportada como critério de sort nativo (o
+    // enum é texto): busca sem paginação, ordena em memória e pagina. O guia
+    // é local (catálogo pequeno), então o custo é aceitável. Empresas free
+    // continuam no resultado — apenas reordena, nunca oculta.
+    const todas = await CompanyModel.find(query)
+      .populate('category')
+      .populate('city')
+      .sort({ isFeatured: -1, name: 1 })
+      .limit(1000)
+      .lean();
+    const prioridade: Record<string, number> = { premium: 0, basic: 1, free: 2 };
+    const ordenadas = [...todas].sort((a, b) => {
+      const planoA = prioridade[(a as { plan?: string }).plan ?? 'free'] ?? 2;
+      const planoB = prioridade[(b as { plan?: string }).plan ?? 'free'] ?? 2;
+      if (planoA !== planoB) return planoA - planoB;
+      return 0;
+    });
+    return {
+      items: ordenadas.slice(pagination.skip, pagination.skip + pagination.limit),
+      total: ordenadas.length,
+    };
   }
 
   const [items, total] = await Promise.all([

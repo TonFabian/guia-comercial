@@ -10,7 +10,6 @@ const companyAnalyticsSchema = new Schema(
     date: { type: String, required: true }, // YYYY-MM-DD
     views: { type: Number, default: 0, min: 0 },
     whatsappClicks: { type: Number, default: 0, min: 0 },
-    favorites: { type: Number, default: 0, min: 0 },
   },
   { timestamps: true },
 );

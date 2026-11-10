@@ -37,7 +37,15 @@ export interface AnalyticsSummary {
   to: string;
   views: number;
   whatsappClicks: number;
-  favorites: number;
+}
+
+const DATA_ISO = /^\d{4}-\d{2}-\d{2}$/;
+
+/** Períodos inválidos viram 400 na borda, não filtro silencioso que nunca casa. */
+export function validarPeriodo(from: string, to: string): void {
+  if (!DATA_ISO.test(from) || !DATA_ISO.test(to)) {
+    throw Object.assign(new Error('período inválido: use o formato YYYY-MM-DD'), { statusCode: 400 });
+  }
 }
 
 export async function getSummary(
@@ -48,19 +56,18 @@ export async function getSummary(
   if (!isValidObjectId(companyId)) {
     throw Object.assign(new Error('id inválido'), { statusCode: 404 });
   }
+  validarPeriodo(from, to);
   const docs = await CompanyAnalyticsModel.find({
     companyId,
     date: { $gte: from, $lte: to },
   }).lean();
   let views = 0;
   let whatsappClicks = 0;
-  let favorites = 0;
   for (const d of docs) {
     views += d.views ?? 0;
     whatsappClicks += d.whatsappClicks ?? 0;
-    favorites += d.favorites ?? 0;
   }
-  return { companyId, from, to, views, whatsappClicks, favorites };
+  return { companyId, from, to, views, whatsappClicks };
 }
 
 export async function companyExists(companyId: string): Promise<boolean> {

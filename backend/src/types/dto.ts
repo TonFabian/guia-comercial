@@ -169,7 +169,6 @@ export const createCouponSchema = z.object({
   code: z.string().min(1),
   discount: z.string().optional(),
   description: z.string().optional(),
-  sponsored: z.boolean().optional(),
   expiresAt: isoDate.optional(),
 });
 

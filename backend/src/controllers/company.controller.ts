@@ -8,7 +8,7 @@ import { asyncHandler, parsePagination } from '../utils/http.js';
 export const list = asyncHandler(async (req: Request, res: Response): Promise<void> => {
   const pagination = parsePagination(req.query.page, req.query.pageSize);
   const { items, total } = await companyService.listCompanies(
-    { category: req.query.category, q: req.query.q, featured: req.query.featured, owner: req.query.owner, city: req.query.city },
+    { category: req.query.category, q: req.query.q, featured: req.query.featured, owner: req.query.owner, city: req.query.city, prioritize: req.query.prioritize },
     pagination,
     req.auth?.clerkId,
   );
@@ -85,20 +85,18 @@ export const trackWhatsappClick = asyncHandler(async (req: Request, res: Respons
 
 export const getAnalytics = asyncHandler(async (req: Request, res: Response): Promise<void> => {
   throwIfInvalidId(String(req.params.id));
-  // Autorização: owner ou admin. Sem auth configurada (legado) permite.
-  const exists = await analyticsService.companyExists(String(req.params.id));
-  if (!exists) {
+  const company = await companyService.getCompanyById(String(req.params.id));
+  if (!company) {
     res.status(404).json({ error: 'empresa não encontrada' });
     return;
   }
+  // Autorização: owner ou admin. Sem auth configurada (legado) permite.
   if (process.env.CLERK_SECRET_KEY) {
     const clerkId = req.auth?.clerkId;
     if (!clerkId) {
       res.status(401).json({ error: 'não autenticado' });
       return;
     }
-    // owner check: buscar empresa
-    const company = await companyService.getCompanyById(String(req.params.id));
     const isOwner = (company as { ownerClerkId?: string } | null)?.ownerClerkId === clerkId;
     if (!isOwner) {
       // verifica admin
@@ -109,6 +107,13 @@ export const getAnalytics = asyncHandler(async (req: Request, res: Response): Pr
         return;
       }
     }
+  }
+  // Gating server-side da feature vendida: analytics só no plano Premium —
+  // vale também no modo legado, onde não há sessão para autorizar.
+  const plan = (company as { plan?: string } | null)?.plan;
+  if (plan !== 'premium') {
+    res.status(403).json({ error: 'analytics disponível apenas no plano Premium' });
+    return;
   }
   const from = String(req.query.from ?? new Date(Date.now() - 30 * 86400000).toISOString().slice(0, 10));
   const to = String(req.query.to ?? new Date().toISOString().slice(0, 10));

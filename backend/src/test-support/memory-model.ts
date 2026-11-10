@@ -25,6 +25,7 @@ export type MemoryFilter = Record<string, unknown>;
 export interface MemoryUpdate {
   $set?: MemoryDocument;
   $unset?: Record<string, unknown>;
+  $inc?: Record<string, number>;
 }
 
 export interface MemoryQuery extends PromiseLike<unknown> {
@@ -228,10 +229,24 @@ export function criarModeloEmMemoria(opcoesDoModelo: MemoryModelOptions = {}): M
       });
     },
 
-    updateOne(filtro: MemoryFilter, atualizacao: MemoryUpdate) {
+    updateOne(filtro: MemoryFilter, atualizacao: MemoryUpdate, opcoes?: { upsert?: boolean }) {
       return criarConsulta(filtro, (casados) => {
         const alvo = casados[0];
-        if (!alvo) return { matchedCount: 0, modifiedCount: 0 };
+        if (!alvo) {
+          if (!opcoes?.upsert) return { matchedCount: 0, modifiedCount: 0 };
+          // Upsert: o documento novo nasce com os campos de igualdade do
+          // filtro (posse) — mesma semântica do Mongo — e depois recebe o
+          // update (ex.: $inc cria o contador com o primeiro valor).
+          const criado: MemoryDocument = {};
+          for (const [campo, condicao] of Object.entries(filtro)) {
+            if (typeof condicao !== 'object' || condicao === null) {
+              criado[campo] = condicao;
+            }
+          }
+          aplicarAtualizacao(criado, atualizacao);
+          inserirComUnicidade(criado);
+          return { matchedCount: 0, modifiedCount: 1, upsertedId: criado._id };
+        }
         aplicarAtualizacao(alvo, atualizacao);
         return { matchedCount: 1, modifiedCount: 1 };
       });
@@ -339,6 +354,12 @@ function aplicarAtualizacao(
 
   if (atualizacao.$set) {
     Object.assign(documento, atualizacao.$set);
+  }
+  if (atualizacao.$inc) {
+    for (const [campo, incremento] of Object.entries(atualizacao.$inc ?? {})) {
+      const atual = typeof documento[campo] === 'number' ? documento[campo] : 0;
+      documento[campo] = atual + (incremento as number);
+    }
   }
   if (atualizacao.$unset) {
     for (const campo of Object.keys(atualizacao.$unset)) {
