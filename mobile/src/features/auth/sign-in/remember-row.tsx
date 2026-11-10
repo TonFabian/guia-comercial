@@ -1,7 +1,8 @@
 import Feather from '@expo/vector-icons/Feather';
 import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
-import { LoginColors, Typography, FontFamily, FontWeight } from '@/constants/theme';
+import { Typography, FontFamily, FontWeight } from '@/constants/theme';
+import { useLoginColors } from '@/features/auth/use-login-theme';
 
 interface RememberRowProps {
   remember: boolean;
@@ -13,6 +14,8 @@ interface RememberRowProps {
  * senha. O Clerk já persiste a sessão, então "Lembrar-me" é apenas visual.
  */
 export function RememberRow({ remember, onToggleRemember }: RememberRowProps) {
+  const colors = useLoginColors();
+  const styles = makeStyles(colors);
   function forgotPassword() {
     Alert.alert(
       'Recuperar senha',
@@ -31,7 +34,7 @@ export function RememberRow({ remember, onToggleRemember }: RememberRowProps) {
       >
         <View style={[styles.checkbox, remember && styles.checkboxChecked]}>
           {remember ? (
-            <Feather name="check" size={12} color={LoginColors.primaryText} />
+            <Feather name="check" size={12} color={colors.primaryText} />
           ) : null}
         </View>
         <Text style={styles.rememberText}>Lembrar-me</Text>
@@ -48,7 +51,8 @@ export function RememberRow({ remember, onToggleRemember }: RememberRowProps) {
   );
 }
 
-const styles = StyleSheet.create({
+function makeStyles(colors: ReturnType<typeof useLoginColors>) {
+  return StyleSheet.create({
   row: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -66,22 +70,23 @@ const styles = StyleSheet.create({
     height: 18,
     borderRadius: 4,
     borderWidth: 1.5,
-    borderColor: LoginColors.muted,
+    borderColor: colors.muted,
     alignItems: 'center',
     justifyContent: 'center',
   },
   checkboxChecked: {
-    backgroundColor: LoginColors.link,
-    borderColor: LoginColors.link,
+    backgroundColor: colors.link,
+    borderColor: colors.link,
   },
   rememberText: {
-    color: LoginColors.text,
+    color: colors.text,
     ...Typography.body,
   },
   forgot: {
-    color: LoginColors.link,
+    color: colors.link,
         ...Typography.body,
     fontFamily: FontFamily.body600,
     fontWeight: FontWeight.semibold,
   },
 });
+}

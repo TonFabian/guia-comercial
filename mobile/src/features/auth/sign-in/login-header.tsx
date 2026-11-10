@@ -1,11 +1,14 @@
 import { Image, StyleSheet, Text, View } from 'react-native';
 
-import { LoginColors, Typography, FontFamily, FontWeight } from '@/constants/theme';
+import { Typography, FontFamily, FontWeight } from '@/constants/theme';
+import { useLoginColors } from '@/features/auth/use-login-theme';
 
 /**
  * Cabeçalho da tela de login: logotipo oficial, slogan e arco dourado sutil.
  */
 export function LoginHeader() {
+  const colors = useLoginColors();
+  const styles = makeStyles(colors);
   return (
     <View style={styles.container}>
       <Image
@@ -20,7 +23,8 @@ export function LoginHeader() {
   );
 }
 
-const styles = StyleSheet.create({
+function makeStyles(colors: ReturnType<typeof useLoginColors>) {
+  return StyleSheet.create({
   container: {
     alignItems: 'center',
     backgroundColor: 'transparent',
@@ -32,7 +36,7 @@ const styles = StyleSheet.create({
   },
   slogan: {
     marginTop: 8,
-    color: LoginColors.text,
+    color: colors.text,
         ...Typography.h5,
     fontFamily: FontFamily.body500,
     fontWeight: FontWeight.medium,
@@ -43,9 +47,10 @@ const styles = StyleSheet.create({
     width: 140,
     height: 18,
     borderBottomWidth: 2,
-    borderColor: LoginColors.link,
+    borderColor: colors.link,
     borderBottomLeftRadius: 70,
     borderBottomRightRadius: 70,
     opacity: 0.85,
   },
-});
+  });
+}
