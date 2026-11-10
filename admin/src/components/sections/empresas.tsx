@@ -6,7 +6,7 @@ import { createCompany, deleteCompany, getCompanies, updateCompany, updateCompan
 import type { CompanyInput } from '../../services/api';
 import type { Category, City, Company } from '../../types/domain';
 import { filterByText } from '../../utils/filter';
-import { categoryId, categoryLabel, cityLabel, citySlug } from '../../utils/labels';
+import { categoryId, categoryLabel, cityLabel, citySlug, planLabel } from '../../utils/labels';
 import { Pagination } from '../pagination';
 import { RowActions } from '../row-actions';
 import { SearchInput } from '../search-input';
@@ -134,12 +134,27 @@ export function EmpresasSection({ categories, categoriesError, cities, citiesErr
 
     try {
       if (editingId) {
-        await updateCompany(editingId, payload);
-        await updateCompanyPlan(editingId, form.plan);
+        // `plan` NÃO vai no PUT de dados: o schema público rejeita o campo
+        // (422, sem bypass). O plano é alterado pela rota dedicada logo após.
+        const dadosDaEmpresa: CompanyInput = { ...payload, plan: undefined };
+        await updateCompany(editingId, dadosDaEmpresa);
+        try {
+          await updateCompanyPlan(editingId, form.plan);
+        } catch (err) {
+          setActionError(
+            `Dados salvos, mas o plano não pôde ser alterado: ${err instanceof Error ? err.message : String(err)}`,
+          );
+        }
       } else {
         const created = await createCompany(payload);
         if (created?._id && form.plan !== 'free') {
-          await updateCompanyPlan(created._id, form.plan);
+          try {
+            await updateCompanyPlan(created._id, form.plan);
+          } catch (err) {
+            setActionError(
+              `Empresa criada, mas o plano não pôde ser definido: ${err instanceof Error ? err.message : String(err)}`,
+            );
+          }
         }
       }
       resetForm();
@@ -327,7 +342,7 @@ export function EmpresasSection({ categories, categoriesError, cities, citiesErr
           categoryLabel(company.category),
           cityLabel(company.city),
           company.phone ?? '—',
-           company.plan ?? 'free',
+          planLabel(company.plan),
           <RowActions
             key={company._id}
             onEdit={() => startEdit(company)}
