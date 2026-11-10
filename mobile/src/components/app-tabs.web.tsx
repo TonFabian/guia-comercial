@@ -5,7 +5,7 @@ import { Pressable, StyleSheet, Text } from 'react-native';
 import type { StyleProp, ViewStyle } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { Glass, Typography, FontFamily, FontWeight } from '@/constants/theme';
+import { Glass, Spacing, Typography, FontFamily, FontWeight } from '@/constants/theme';
 import { useThemeColors } from '@/hooks/use-theme-colors';
 import { useThemeMode } from '@/providers/theme-provider';
 export default function AppTabs() {
@@ -79,7 +79,8 @@ const styles = StyleSheet.create({
   tabButton: {
     flex: 1,
     alignItems: 'center',
-    gap: 3,
+    justifyContent: 'center',
+    gap: Spacing.four,
   },
   tabLabel: {
         ...Typography.caption,
