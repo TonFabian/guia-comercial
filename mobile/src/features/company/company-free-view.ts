@@ -76,7 +76,8 @@ function buildStatus(
 }
 
 function isClosedHours(value: string): boolean {
-  return value === CLOSED_HOURS || value.toLowerCase().includes(CONSULT_HOURS.toLowerCase());
+  const normalized = value.toLowerCase();
+  return normalized === CLOSED_HOURS.toLowerCase() || normalized.includes(CONSULT_HOURS.toLowerCase());
 }
 
 export function buildCompanyFreeView(company: Company, now: Date): CompanyFreeView {
