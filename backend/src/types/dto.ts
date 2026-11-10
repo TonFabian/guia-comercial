@@ -112,6 +112,7 @@ export const createCompanySchema = z.object({
   gallery: z.array(z.string()).optional(),
   registry: z.string().optional(),
   isFeatured: z.boolean().optional(),
+  plan: z.enum(['free', 'basic', 'premium']).optional().default('free'),
   rating: z.number().min(0).max(5).optional(),
   ratingCount: z.number().int().nonnegative().optional(),
   isVerified: z.boolean().optional(),
@@ -125,7 +126,21 @@ export const createCompanySchema = z.object({
 
 export type CreateCompanyDto = z.infer<typeof createCompanySchema>;
 
-export type UpdateCompanyDto = Partial<CreateCompanyDto>;
+/**
+ * Schema de atualização pública da empresa. `plan` é deliberadamente OMITIDO:
+ * o plano só pode ser alterado por admin via rota dedicada (ver Task 2b).
+ * Isso impede bypass de monetização pelo endpoint público.
+ */
+export const updateCompanySchema = createCompanySchema.omit({ plan: true }).partial().strict();
+
+export type UpdateCompanyDto = z.infer<typeof updateCompanySchema>;
+
+/** Schema dedicado para alteração de plano (rota admin-only). */
+export const updatePlanSchema = z.object({
+  plan: z.enum(['free', 'basic', 'premium']),
+});
+
+export type UpdatePlanDto = z.infer<typeof updatePlanSchema>;
 
 // ---------------------------------------------------------------------------
 // Banner
@@ -154,6 +169,7 @@ export const createCouponSchema = z.object({
   code: z.string().min(1),
   discount: z.string().optional(),
   description: z.string().optional(),
+  sponsored: z.boolean().optional(),
   expiresAt: isoDate.optional(),
 });
 

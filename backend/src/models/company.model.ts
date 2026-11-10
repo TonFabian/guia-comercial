@@ -25,6 +25,7 @@ const companySchema = new Schema<Company>(
     gallery: [String],
     registry: String,
     isFeatured: { type: Boolean, default: false },
+    plan: { type: String, enum: ['free', 'basic', 'premium'], default: 'free', index: true },
     rating: { type: Number, min: 0, max: 5 },
     ratingCount: { type: Number, min: 0 },
     isVerified: { type: Boolean, default: false },

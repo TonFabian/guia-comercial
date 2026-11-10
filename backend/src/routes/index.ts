@@ -27,6 +27,8 @@ import {
   createCategorySchema,
   createCitySchema,
   createCompanySchema,
+  updateCompanySchema,
+  updatePlanSchema,
   createCouponSchema,
   createJobSchema,
   createNoticeSchema,
@@ -112,7 +114,11 @@ companies.get('/', companyController.list);
 companies.get('/:id', companyController.getById);
 companies.get('/:id/reviews', reviewController.listReviews);
 companies.post('/:id/reviews', validateBody(createReviewSchema), reviewController.createReviewHandler);
-companies.put('/:id', validateBody(createCompanySchema.partial()), companyController.update);
+companies.put('/:id', validateBody(updateCompanySchema), companyController.update);
+companies.put('/:id/plan', requireAuthIfConfigured, validateBody(updatePlanSchema), companyController.updatePlan);
+companies.post('/:id/view', companyController.trackView);
+companies.post('/:id/whatsapp-click', requireAuthIfConfigured, companyController.trackWhatsappClick);
+companies.get('/:id/analytics', requireAuthIfConfigured, companyController.getAnalytics);
 companies.delete('/:id', companyController.remove);
 
 // -----------------------------------------------------------------------------

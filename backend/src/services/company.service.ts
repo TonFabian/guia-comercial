@@ -4,6 +4,7 @@ import { CategoryModel } from '../models/category.model.js';
 import { CityModel } from '../models/city.model.js';
 import { CompanyModel } from '../models/company.model.js';
 import { assertOwnerOrAdmin } from './authorization.service.js';
+import { findUserByClerkId } from './user.service.js';
 import { listAllPushTokens } from './push-token.service.js';
 import type { Company } from '../../../shared/domain.js';
 import type { CreateCompanyDto, UpdateCompanyDto } from '../types/dto.js';
@@ -255,6 +256,41 @@ export async function updateCompany(id: string, dto: UpdateCompanyDto, clerkId?:
     void notifyPromotion(updated?.name ?? 'Empresa', dto.promotion).catch(() => undefined);
   }
 
+  return updated;
+}
+
+export async function updateCompanyPlan(
+  id: string,
+  plan: 'free' | 'basic' | 'premium',
+  clerkId?: string,
+) {
+  if (!isObjectId(id)) {
+    throw Object.assign(new Error('id inválido'), { statusCode: 404 });
+  }
+
+  // Apenas admin pode alterar plano (sem bypass via endpoint público).
+  if (process.env.CLERK_SECRET_KEY) {
+    if (!clerkId) {
+      throw Object.assign(new Error('não autenticado'), { statusCode: 401 });
+    }
+    const user = await findUserByClerkId(clerkId);
+    if (user?.role !== 'admin') {
+      throw Object.assign(new Error('sem permissão para alterar o plano'), { statusCode: 403 });
+    }
+  }
+
+  const updated = await CompanyModel.findByIdAndUpdate(
+    id,
+    { plan },
+    { returnDocument: 'after', runValidators: true },
+  )
+    .populate('category')
+    .populate('city')
+    .lean();
+
+  if (!updated) {
+    throw Object.assign(new Error('empresa não encontrada'), { statusCode: 404 });
+  }
   return updated;
 }
 
