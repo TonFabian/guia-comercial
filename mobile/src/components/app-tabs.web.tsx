@@ -7,9 +7,12 @@ import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { Glass, Typography, FontFamily, FontWeight } from '@/constants/theme';
 import { useThemeColors } from '@/hooks/use-theme-colors';
+import { useThemeMode } from '@/providers/theme-provider';
 export default function AppTabs() {
   const insets = useSafeAreaInsets();
   const colors = useThemeColors();
+  const { mode } = useThemeMode();
+  const isDark = mode === 'dark';
 
   return (
     <Tabs>
@@ -17,8 +20,8 @@ export default function AppTabs() {
       <TabList asChild>
         <BlurView
           intensity={60}
-          tint="dark"
-          style={StyleSheet.flatten([styles.tabBar, { paddingBottom: Math.max(insets.bottom, 10), borderTopColor: colors.borderSoft }])} >
+          tint={isDark ? 'dark' : 'light'}
+          style={StyleSheet.flatten([styles.tabBar, { paddingBottom: Math.max(insets.bottom, 10), borderTopColor: colors.border, backgroundColor: isDark ? Glass.tabBar : 'rgba(255,255,255,0.85)' }])} >
         <TabTrigger name="home" href="/" asChild>
             <TabButton label="Início" icon="home" />
         </TabTrigger>
