@@ -1,0 +1,423 @@
+# Monetização (MVP Lojista) — Implementation Plan
+
+> **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
+
+**Goal:** Implementar o MVP de monetização do lado lojista: planos Gratuito/Básico/Premium com diferenciação real (tela enxuta vs. completa + catálogo + cupom destacado + analytics simples + prioridade na busca), sem checkout in-app. Vendas continuam no WhatsApp.
+
+**Architecture:** Adicionar campo `plan` ao domínio `Company` (free/basic/premium) mantendo `isFeatured` como alias de "destaque" no MVP. Backend expõe e valida o campo; mobile usa `plan` para gating de features premium e para priorização na busca. Analytics são contadores simples (views, cliques WhatsApp, favoritos) agregados por empresa/período, registrados por eventos do app. Admin ganha UI mínima para alterar o plano (venda presencial → ativação manual). Módulo Prefeitura e multi-cidade ficam para planos separados.
+
+**Tech Stack:** Express 5 + Mongoose 9 + zod (backend); Expo Router + React Native (mobile); Vite + React (admin). TDD com vitest + supertest.
+
+**Spec:** `docs/superpowers/specs/2026-11-10-monetizacao-design.md`
+
+## Global Constraints
+
+- Conventional Commits; trailer `Generated-by: opencode (glm-5.3-flash-free)`.
+- Sem segredos no código; env vars para config.
+- TDD: teste falhando antes de código de produção.
+- TypeScript estrito, sem `any`.
+- Tipos de domínio: editar `shared/domain.ts` e replicar em `mobile/src/types/domain.ts` e `admin/src/types/domain.ts` no mesmo commit.
+- Rodar gate (lint + typecheck + test) dos apps afetados antes de declarar pronto.
+- Não instalar deps na raiz; npm dentro de cada app.
+- Não editar `ios/`/`android/`.
+
+## Review Focus
+
+- `plan` com valor desconhecido/ausente deve cair para `'free'` (não quebrar empresas antigas sem o campo).
+- Analytics não pode vazar dados de uma empresa para outra (autorização por recurso — lacuna conhecida; mitigar com filtro por `companyId` validado).
+- Eventos de analytics não devem bloquear a UX (fire-and-forget, sem await no render).
+- Priorização na busca não deve esconder empresas gratuitas (apenas reordenar, não filtrar).
+- Catálogo de produtos: botão "Pedir no WhatsApp" deve usar o número da empresa e a mensagem padrão com o nome do produto.
+
+---
+
+## File Structure (novos / modificados)
+
+**Shared (fonte da verdade):**
+- `shared/domain.ts` — adicionar `plan` a `Company`.
+- `mobile/src/types/domain.ts` — cópia idêntica.
+- `admin/src/types/domain.ts` — cópia idêntica.
+
+**Backend:**
+- `backend/src/models/company.model.ts` — campo `plan` (enum, default `free`, indexado).
+- `backend/src/types/dto.ts` — `plan` em create/update schemas (update via `.partial()`).
+- `backend/src/services/company.service.ts` — persistir `plan`; helpers `incrementView`, `incrementWhatsappClick`.
+- `backend/src/controllers/company.controller.ts` — endpoints de analytics (incremento).
+- `backend/src/routes/company.routes.ts` — rotas `POST /companies/:id/view`, `POST /companies/:id/whatsapp-click`.
+- `backend/src/models/company-analytics.model.ts` (novo) — contadores por empresa/período.
+- `backend/src/services/analytics.service.ts` (novo) — agregação por período.
+
+**Mobile:**
+- `mobile/src/features/company/company-plan.ts` (novo) — `companyPlan(company): 'free'|'basic'|'premium'`, `hasFeature(plan, feature)`.
+- `mobile/src/features/company/company-plan.test.ts` (novo).
+- `mobile/src/features/company/company-detail-screen.tsx` — gating premium (serviços clicáveis, cupom, analytics), catálogo de produtos com botão WhatsApp.
+- `mobile/src/features/company/company-products.tsx` — adicionar botão "Pedir no WhatsApp" por produto.
+- `mobile/src/features/search/search-companies.ts` (ou equivalente) — priorização por plano.
+- `mobile/src/features/analytics/track.ts` (novo) — fire-and-forget para view/whatsapp-click.
+- `mobile/src/features/company/company-free-view.ts` — sem mudança (continua free).
+
+**Admin:**
+- `admin/src/pages/CompanyPlanPage.tsx` (novo) ou seção em página existente — seletor de plano + salvar.
+- `admin/src/services/api.ts` — método `updateCompanyPlan`.
+
+---
+
+## Task 1: Domínio — campo `plan` em `Company`
+
+**Files:**
+- Modify: `shared/domain.ts`
+- Modify: `mobile/src/types/domain.ts`
+- Modify: `admin/src/types/domain.ts`
+
+- [ ] **Step 1: Editar `shared/domain.ts`** — adicionar após `isFeatured?` em `Company`:
+
+```ts
+  /** Plano comercial. Ausente/undefined → tratado como 'free'. */
+  plan?: 'free' | 'basic' | 'premium';
+```
+
+E adicionar em `Coupon` (após `description?`):
+
+```ts
+  /** Cupom patrocinado (destaque pago). */
+  sponsored?: boolean;
+```
+
+- [ ] **Step 2: Replicar nas cópias** mobile e admin (mesmo campo, mesmo tipo).
+- [ ] **Step 3: Typecheck** dos três apps (mobile, admin, backend se importa shared). Backend importa shared via rootDir `..`.
+
+```bash
+cd mobile && npm run typecheck
+cd ../admin && npm run typecheck
+cd ../backend && npm run typecheck
+```
+
+Expected: 0 erros.
+
+- [ ] **Step 4: Commit**
+
+```bash
+git add shared/domain.ts mobile/src/types/domain.ts admin/src/types/domain.ts
+git commit -m "feat(domain): adiciona campo plan (free/basic/premium) em Company"
+```
+
+---
+
+## Task 2: Backend — modelo e DTO
+
+**Files:**
+- Modify: `backend/src/models/company.model.ts`
+- Modify: `backend/src/types/dto.ts`
+- Test: `backend/src/models/company.model.test.ts` (se existir) ou `backend/src/types/dto.test.ts`
+
+- [ ] **Step 1: Escrever teste falhando** no DTO (zod) — `plan` aceita os 3 valores e rejeita outros; update aceita `.partial()`.
+
+```ts
+import { createCompanySchema, updateCompanySchema } from '../types/dto';
+
+test('createCompanySchema aceita plan valido', () => {
+  const r = createCompanySchema.safeParse({ name: 'X', category: 'c', plan: 'premium' });
+  expect(r.success).toBe(true);
+});
+
+test('createCompanySchema rejeita plan invalido', () => {
+  const r = createCompanySchema.safeParse({ name: 'X', category: 'c', plan: 'gold' });
+  expect(r.success).toBe(false);
+});
+
+test('updateCompanySchema permite plan parcial', () => {
+  const r = updateCompanySchema.safeParse({ plan: 'basic' });
+  expect(r.success).toBe(true);
+});
+```
+
+- [ ] **Step 2: Rodar teste** — deve falhar (schema sem `plan`).
+
+```bash
+cd backend && npm test -- src/types/dto.test.ts
+```
+
+- [ ] **Step 3: Implementar** no modelo:
+
+```ts
+plan: { type: String, enum: ['free', 'basic', 'premium'], default: 'free', index: true },
+```
+
+E no DTO (zod):
+
+```ts
+plan: z.enum(['free', 'basic', 'premium']).optional().default('free'),
+```
+
+`updateCompanySchema = createCompanySchema.partial()` (já existente) cobre o partial.
+
+- [ ] **Step 4: Rodar teste** — deve passar.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add backend/src/models/company.model.ts backend/src/types/dto.ts backend/src/types/dto.test.ts
+git commit -m "feat(backend): adiciona campo plan ao modelo e DTO de Company"
+```
+
+---
+
+## Task 3: Mobile — helper de plano
+
+**Files:**
+- Create: `mobile/src/features/company/company-plan.ts`
+- Create: `mobile/src/features/company/company-plan.test.ts`
+
+- [ ] **Step 1: Teste falhando**
+
+```ts
+import { companyPlan, hasFeature } from './company-plan';
+import type { Company } from '@/types/domain';
+
+const base: Company = { _id: '1', name: 'X', slug: 'x', description: 'd', category: 'c' };
+
+test('companyPlan retorna free quando plan ausente', () => {
+  expect(companyPlan(base)).toBe('free');
+});
+
+test('companyPlan retorna plan quando presente', () => {
+  expect(companyPlan({ ...base, plan: 'premium' })).toBe('premium');
+});
+
+test('hasFeature: premium tem catalogo ilimitado', () => {
+  expect(hasFeature('premium', 'unlimitedCatalog')).toBe(true);
+  expect(hasFeature('basic', 'unlimitedCatalog')).toBe(false);
+  expect(hasFeature('free', 'unlimitedCatalog')).toBe(false);
+});
+
+test('hasFeature: basic tem galeria', () => {
+  expect(hasFeature('basic', 'gallery')).toBe(true);
+  expect(hasFeature('free', 'gallery')).toBe(false);
+});
+```
+
+- [ ] **Step 2: Rodar** — falha.
+
+- [ ] **Step 3: Implementar**
+
+```ts
+import type { Company } from '@/types/domain';
+
+export type Plan = 'free' | 'basic' | 'premium';
+
+export type Feature =
+  | 'gallery' | 'history' | 'promotion' | 'map' | 'badge'
+  | 'catalog' | 'unlimitedCatalog' | 'clickableServices'
+  | 'sponsoredCoupon' | 'analytics' | 'prioritySearch'
+  | 'verifiedBadge' | 'homeHighlight';
+
+const FEATURES: Record<Plan, Set<Feature>> = {
+  free: new Set([]),
+  basic: new Set(['gallery', 'history', 'promotion', 'map', 'badge', 'catalog', 'prioritySearch']),
+  premium: new Set(['gallery', 'history', 'promotion', 'map', 'badge', 'catalog', 'unlimitedCatalog', 'clickableServices', 'sponsoredCoupon', 'analytics', 'prioritySearch', 'verifiedBadge', 'homeHighlight']),
+};
+
+export function companyPlan(company: Company): Plan {
+  const p = company.plan;
+  if (p === 'basic' || p === 'premium') return p;
+  return 'free';
+}
+
+export function hasFeature(plan: Plan, feature: Feature): boolean {
+  return FEATURES[plan].has(feature);
+}
+```
+
+- [ ] **Step 4: Rodar** — passa.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add mobile/src/features/company/company-plan.ts mobile/src/features/company/company-plan.test.ts
+git commit -m "feat(mobile): adiciona helper companyPlan/hasFeature"
+```
+
+---
+
+## Task 4: Mobile — catálogo de produtos na tela de detalhe
+
+**Files:**
+- Modify: `mobile/src/features/company/company-products.tsx` (adicionar botão "Pedir no WhatsApp")
+- Modify: `mobile/src/features/company/company-detail-screen.tsx` (renderizar CompanyProducts quando `services`/`products` existirem, apenas plan basic+)
+
+- [ ] **Step 1: Ler** `company-products.tsx` atual para entender o componente.
+
+- [ ] **Step 2: Adicionar prop `whatsapp` e botão "Pedir no WhatsApp"** por produto:
+
+```tsx
+import { openWhatsApp } from '@/utils/links';
+
+export function CompanyProducts({ products, whatsapp }: { products: CompanyProduct[]; whatsapp?: string }) {
+  return (
+    <View style={styles.list}>
+      {products.map((product) => (
+        <View key={product.name} style={styles.card}>
+          {product.image ? <Image source={{ uri: product.image }} style={styles.image} contentFit="cover" /> : null}
+          <View style={styles.info}>
+            <Text style={styles.name}>{product.name}</Text>
+            {product.description ? <Text style={styles.desc}>{product.description}</Text> : null}
+            {product.price != null ? <Text style={styles.price}>R$ {product.price.toFixed(2)}</Text> : null}
+          </View>
+          {whatsapp ? (
+            <Pressable
+              style={styles.button}
+              onPress={() => void openWhatsApp(whatsapp, `Olá, tenho interesse em ${product.name}`)}
+              accessibilityRole="button"
+              accessibilityLabel={`Pedir ${product.name} no WhatsApp`}>
+              <Text style={styles.buttonText}>Pedir no WhatsApp</Text>
+            </Pressable>
+          ) : null}
+        </View>
+      ))}
+    </View>
+  );
+}
+```
+
+- [ ] **Step 3: No detail screen**, renderizar `<CompanyProducts products={details...} whatsapp={details.whatsapp} />` quando `hasFeature(plan, 'catalog')` e houver produtos. Para free, não renderizar.
+
+- [ ] **Step 4: Teste manual** no browser (web) — produto aparece, botão abre WhatsApp com mensagem.
+
+- [ ] **Step 5: Commit**
+
+```bash
+git add mobile/src/features/company/company-products.tsx mobile/src/features/company/company-detail-screen.tsx
+git commit -m "feat(mobile): expoe catalogo de produtos com botao Pedir no WhatsApp (basic+)"
+```
+
+---
+
+## Task 5: Mobile — analytics fire-and-forget
+
+**Files:**
+- Create: `mobile/src/features/analytics/track.ts`
+- Modify: `mobile/src/features/company/company-detail-screen.tsx` (disparar view ao montar)
+- Modify: `mobile/src/features/company/company-detail-screen.tsx` (disparar whatsapp-click no botão WhatsApp)
+
+- [ ] **Step 1: Implementar track.ts**
+
+```ts
+const API = process.env.EXPO_PUBLIC_API_URL;
+
+export function trackView(companyId: string) {
+  if (!API) return;
+  void fetch(`${API}/companies/${companyId}/view`, { method: 'POST' }).catch(() => {});
+}
+
+export function trackWhatsappClick(companyId: string) {
+  if (!API) return;
+  void fetch(`${API}/companies/${companyId}/whatsapp-click`, { method: 'POST' }).catch(() => {});
+}
+```
+
+- [ ] **Step 2: Disparar view** em `useEffect` no detail screen (apenas se plan basic/premium — analytics é feature premium; mas view pode ser contado para todos? Decisão: contar view para todos, analytics dashboard só premium).
+
+- [ ] **Step 3: Disparar whatsapp-click** no onPress do botão WhatsApp.
+
+- [ ] **Step 4: Commit**
+
+```bash
+git add mobile/src/features/analytics/track.ts mobile/src/features/company/company-detail-screen.tsx
+git commit -m "feat(mobile): analytics fire-and-forget (view, whatsapp-click)"
+```
+
+---
+
+## Task 6: Backend — endpoints de analytics
+
+**Files:**
+- Create: `backend/src/models/company-analytics.model.ts`
+- Create: `backend/src/services/analytics.service.ts`
+- Modify: `backend/src/controllers/company.controller.ts`
+- Modify: `backend/src/routes/company.routes.ts`
+- Test: `backend/src/services/analytics.service.test.ts`
+
+- [ ] **Step 1: Teste falhando** — `incrementView(companyId)` cria/incrementa contador do dia; `getSummary(companyId, from, to)` retorna totais.
+
+- [ ] **Step 2: Implementar modelo** (schema com companyId, date (YYYY-MM-DD), views, whatsappClicks, favorites; índice composto companyId+date).
+
+- [ ] **Step 3: Implementar service** com `incrementView`, `incrementWhatsappClick`, `getSummary`.
+
+- [ ] **Step 4: Controller + rotas** `POST /companies/:id/view`, `POST /companies/:id/whatsapp-click` (validar ObjectId → 404 se malformado; não exigir auth no MVP — rate limit recomendado).
+
+- [ ] **Step 5: Rodar testes** — passar.
+
+- [ ] **Step 6: Commit**
+
+```bash
+git add backend/src/models/company-analytics.model.ts backend/src/services/analytics.service.ts backend/src/controllers/company.controller.ts backend/src/routes/company.routes.ts backend/src/services/analytics.service.test.ts
+git commit -m "feat(backend): endpoints de analytics (view, whatsapp-click)"
+```
+
+---
+
+## Task 7: Mobile — prioridade na busca
+
+**Files:**
+- Modify: `mobile/src/features/home/other-companies.tsx` (ou o serviço de busca) — ordenar: premium > basic > free, mantendo todos visíveis.
+
+- [ ] **Step 1: Implementar ordenação** por plano (premium primeiro, depois basic, depois free), estável dentro do mesmo plano.
+
+- [ ] **Step 2: Commit**
+
+```bash
+git add mobile/src/features/home/other-companies.tsx
+git commit -m "feat(mobile): prioriza empresas premium/basic na busca (sem ocultar free)"
+```
+
+---
+
+## Task 8: Admin — gestão de plano
+
+**Files:**
+- Modify: `admin/src/services/api.ts` (método `updateCompanyPlan`)
+- Modify: `admin/src/pages/...` (seletor de plano no formulário de empresa)
+- Test: manual (admin não tem testes de componente no repo)
+
+- [ ] **Step 1: API client** — `updateCompany(id, { plan })`.
+
+- [ ] **Step 2: UI** — select com 3 opções (Gratuito/Básico/Premium) na página de edição de empresa; salvar chama `updateCompany`.
+
+- [ ] **Step 3: Verificar** que alterar plano reflete no mobile (após reload).
+
+- [ ] **Step 4: Commit**
+
+```bash
+git add admin/src/services/api.ts admin/src/pages
+git commit -m "feat(admin): seletor de plano (free/basic/premium) na edição de empresa"
+```
+
+---
+
+## Task 9: Verificação final
+
+- [ ] **Step 1: Rodar gate** em todos os apps afetados.
+
+```bash
+cd mobile && npm run typecheck && npm run lint && npm test
+cd ../backend && npm run typecheck && npm run lint && npm test
+cd ../admin && npm run typecheck && npm run lint && npm run build
+```
+
+- [ ] **Step 2: expo export** para provar bundle.
+
+```bash
+cd mobile && npx expo export
+```
+
+- [ ] **Step 3: Smoke test manual** — criar empresa premium no admin, verificar tela completa + catálogo + analytics; empresa free → tela enxuta; busca prioriza premium.
+
+- [ ] **Step 4: Commit de fechamento** (se houver ajustes).
+
+---
+
+## Notas
+
+- Módulo Prefeitura (B2B) e multi-cidade (SaaS) são planos separados — não incluídos aqui.
+- Premium cidadão (benefícios bancados por empresas) fica para fase 2.
+- E-commerce/checkout in-app permanece fora de escopo.
