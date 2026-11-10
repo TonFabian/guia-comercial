@@ -17,6 +17,7 @@ import { dayStatesToSchedule, scheduleToDayStates } from '@/features/company/sch
 import { ScheduleEditorGrid } from '@/features/company/schedule-editor-grid';
 import type { DayState } from '@/features/company/schedule-editor';
 import { buildCompanyDetails } from '@/features/company/company-details';
+import { CompanyPerformance } from '@/features/analytics/company-performance';
 
 /** Linhas de horário da empresa ("Seg–Sex 08h às 18h"), sem inferência. */
 function hoursLines(company: Company): string[] {
@@ -191,6 +192,8 @@ export default function MyCompanyScreen() {
               <View key={c._id} style={styles.card}>
                 <Text style={styles.cardTitle}>{c.name}</Text>
                 <Text style={styles.cardMeta}>{cityName(c.city) || '—'}</Text>
+
+                <CompanyPerformance company={c} />
 
                 {editingHoursId === c._id ? (
                   <>

@@ -11,7 +11,6 @@ export type Feature =
   | 'catalog'
   | 'unlimitedCatalog'
   | 'clickableServices'
-  | 'sponsoredCoupon'
   | 'analytics'
   | 'prioritySearch'
   | 'verifiedBadge'
@@ -37,7 +36,6 @@ const FEATURES: Record<Plan, Set<Feature>> = {
     'catalog',
     'unlimitedCatalog',
     'clickableServices',
-    'sponsoredCoupon',
     'analytics',
     'prioritySearch',
     'verifiedBadge',
@@ -53,4 +51,19 @@ export function companyPlan(company: Company): Plan {
 
 export function hasFeature(plan: Plan, feature: Feature): boolean {
   return FEATURES[plan].has(feature);
+}
+
+/** Ordem de prioridade: premium primeiro, free por último. */
+const PLAN_PRIORITY: Record<Plan, number> = { premium: 0, basic: 1, free: 2 };
+
+/**
+ * Ordena por plano (premium > basic > free), estável dentro do mesmo plano.
+ * Só reordena: empresas gratuitas continuam visíveis.
+ */
+export function sortCompaniesByPlan(companies: Company[]): Company[] {
+  return [...companies].sort((a, b) => {
+    const diferenca = PLAN_PRIORITY[companyPlan(a)] - PLAN_PRIORITY[companyPlan(b)];
+    if (diferenca !== 0) return diferenca;
+    return a.name.localeCompare(b.name);
+  });
 }

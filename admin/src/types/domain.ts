@@ -85,8 +85,6 @@ export interface Coupon {
   code?: string | null;
   discount?: string;
   description?: string;
-  /** Cupom patrocinado (destaque pago). */
-  sponsored?: boolean;
   expiresAt?: string;
   createdAt?: string;
 }

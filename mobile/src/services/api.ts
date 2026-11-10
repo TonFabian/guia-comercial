@@ -10,7 +10,7 @@ import type { AutonomousProfessional, Banner, Category, City, Company, Coupon, J
 import { buildTourismQuery } from '@/features/tourism/tourism-query';
 import type { TourismQueryParams } from '@/features/tourism/tourism-query';
 
-import { isApiConfigured, request } from './http';
+import { ApiError, isApiConfigured, request } from './http';
 import type { RequestPayload } from './http';
 
 import {
@@ -441,6 +441,31 @@ export async function updateCompany(id: string, body: Partial<Company>): Promise
   const payload = await request<Company>(`/companies/${encodeURIComponent(id)}`, { method: 'PUT', body });
   if (!payload) return null;
   return Array.isArray(payload) ? (payload[0] ?? null) : (payload as Company);
+}
+
+export interface CompanyAnalyticsSummary {
+  companyId: string;
+  from: string;
+  to: string;
+  views: number;
+  whatsappClicks: number;
+}
+
+/**
+ * Resumo de engajamento da empresa (feature Premium). Retorna null quando a
+ * API não está configurada (mock) ou o plano não dá acesso (403) — o card
+ * simplesmente não aparece, sem erro para o lojista free/basic.
+ */
+export async function getCompanyAnalytics(id: string): Promise<CompanyAnalyticsSummary | null> {
+  if (!isApiConfigured()) return null;
+  try {
+    const payload = await request<CompanyAnalyticsSummary>(`/companies/${encodeURIComponent(id)}/analytics`);
+    if (!payload || Array.isArray(payload) || !('views' in payload)) return null;
+    return payload;
+  } catch (error) {
+    if (error instanceof ApiError && (error.status === 403 || error.status === 404)) return null;
+    throw error;
+  }
 }
 
 /** Filtra as empresas mockadas pelo termo e pelas categorias (slug ou id). */

@@ -5,7 +5,7 @@ import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'rea
 import { Radius, Spacing, Typography } from '@/constants/theme';
 import { useThemeColors } from '@/hooks/use-theme-colors';
 import type { Company } from '@/types/domain';
-import { companyPlan } from '@/features/company/company-plan';
+import { sortCompaniesByPlan } from '@/features/company/company-plan';
 import { categoryLabel } from '@/types/domain';
 import { openWhatsApp } from '@/utils/links';
 import { SectionHeader } from './section-header';
@@ -20,13 +20,7 @@ export function OtherCompanies({ companies, loading = false, error = null }: Pro
   const colors = useThemeColors();
   const styles = makeStyles(colors);
 
-  const PLAN_PRIORITY: Record<string, number> = { premium: 0, basic: 1, free: 2 };
-  const sorted = [...companies].sort((a, b) => {
-    const pa = PLAN_PRIORITY[companyPlan(a)] ?? 2;
-    const pb = PLAN_PRIORITY[companyPlan(b)] ?? 2;
-    if (pa !== pb) return pa - pb;
-    return a.name.localeCompare(b.name);
-  });
+  const sorted = sortCompaniesByPlan(companies);
 
   return (
     <View style={styles.section}>
