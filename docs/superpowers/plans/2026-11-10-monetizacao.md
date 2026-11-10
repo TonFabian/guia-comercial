@@ -97,7 +97,7 @@
 - Modify: `mobile/src/types/domain.ts`
 - Modify: `admin/src/types/domain.ts`
 
-- [ ] **Step 1: Editar `shared/domain.ts`** — adicionar após `isFeatured?` em `Company`:
+- [x] **Step 1: Editar `shared/domain.ts`** — adicionar após `isFeatured?` em `Company`:
 
 ```ts
   /** Plano comercial. Ausente/undefined → tratado como 'free'. */
@@ -111,8 +111,8 @@ E adicionar em `Coupon` (após `description?`):
   sponsored?: boolean;
 ```
 
-- [ ] **Step 2: Replicar nas cópias** mobile e admin (mesmo campo, mesmo tipo).
-- [ ] **Step 3: Typecheck** dos três apps (mobile, admin, backend se importa shared). Backend importa shared via rootDir `..`.
+- [x] **Step 2: Replicar nas cópias** mobile e admin (mesmo campo, mesmo tipo).
+- [x] **Step 3: Typecheck** dos três apps (mobile, admin, backend se importa shared). Backend importa shared via rootDir `..`.
 
 ```bash
 cd mobile && npm run typecheck
@@ -122,7 +122,7 @@ cd ../backend && npm run typecheck
 
 Expected: 0 erros.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add shared/domain.ts mobile/src/types/domain.ts admin/src/types/domain.ts
@@ -138,7 +138,7 @@ git commit -m "feat(domain): adiciona campo plan (free/basic/premium) em Company
 - Modify: `backend/src/types/dto.ts`
 - Test: `backend/src/models/company.model.test.ts` (se existir) ou `backend/src/types/dto.test.ts`
 
-- [ ] **Step 1: Escrever teste falhando** no DTO (zod) — `plan` aceita os 3 valores e rejeita outros; update aceita `.partial()`.
+- [x] **Step 1: Escrever teste falhando** no DTO (zod) — `plan` aceita os 3 valores e rejeita outros; update aceita `.partial()`.
 
 ```ts
 import { createCompanySchema, updateCompanySchema } from '../types/dto';
@@ -159,13 +159,13 @@ test('updateCompanySchema permite plan parcial', () => {
 });
 ```
 
-- [ ] **Step 2: Rodar teste** — deve falhar (schema sem `plan`).
+- [x] **Step 2: Rodar teste** — deve falhar (schema sem `plan`).
 
 ```bash
 cd backend && npm test -- src/types/dto.test.ts
 ```
 
-- [ ] **Step 3: Implementar** no modelo:
+- [x] **Step 3: Implementar** no modelo:
 
 ```ts
 plan: { type: String, enum: ['free', 'basic', 'premium'], default: 'free', index: true },
@@ -179,9 +179,9 @@ plan: z.enum(['free', 'basic', 'premium']).optional().default('free'),
 
 `updateCompanySchema = createCompanySchema.partial()` (já existente) cobre o partial.
 
-- [ ] **Step 4: Rodar teste** — deve passar.
+- [x] **Step 4: Rodar teste** — deve passar.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add backend/src/models/company.model.ts backend/src/types/dto.ts backend/src/types/dto.test.ts
@@ -198,7 +198,7 @@ git commit -m "feat(backend): adiciona campo plan ao modelo e DTO de Company"
 - Modify: `backend/src/routes/company.routes.ts`
 - Test: `backend/src/controllers/company.controller.test.ts`
 
-- [ ] **Step 1: Teste falhando** — PUT `/companies/:id` com `plan` no body não altera o plano (plano permanece o original); apenas admin via rota dedicada altera.
+- [ ] **Step 1: Teste falhando** — PUT `/companies/:id` com `plan` no body não altera o plano (plano permanece o original); apenas admin via rota dedicada altera. *(REABERTO no review 2026-11-10: teste nunca foi escrito — implementado direto no Step 3.)*
 
 ```ts
 test('PUT /companies/:id ignora plan no body (nao-bypass)', async () => {
@@ -225,16 +225,16 @@ test('PUT /companies/:id/plan admin altera plano', async () => {
 });
 ```
 
-- [ ] **Step 2: Rodar** — falha.
+- [ ] **Step 2: Rodar** — falha. *(REABERTO: ver Step 1.)*
 
 - [ ] **Step 3: Implementar**
   - Em `updateCompany` controller: remover `plan` do body aceito (whitelist de campos editáveis: name, description, category, phone, whatsapp, address, city, logo, cover, gallery, registry, promotion, services, products, schedule). `plan` não está na whitelist.
   - Nova rota `PUT /companies/:id/plan` protegida por middleware `requireAdmin`, que valida `plan` via zod e persiste.
   - Middleware `requireAdmin`: verifica Clerk session e `role === 'admin'`; 403 caso contrário.
 
-- [ ] **Step 4: Rodar** — passa.
+- [x] **Step 4: Rodar** — passa.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add backend/src/controllers/company.controller.ts backend/src/middlewares/auth.middleware.ts backend/src/routes/company.routes.ts backend/src/controllers/company.controller.test.ts
@@ -247,7 +247,7 @@ git commit -m "feat(backend): autorizacao de plano - apenas admin altera, sem by
 - Create: `mobile/src/features/company/company-plan.ts`
 - Create: `mobile/src/features/company/company-plan.test.ts`
 
-- [ ] **Step 1: Teste falhando**
+- [x] **Step 1: Teste falhando**
 
 ```ts
 import { companyPlan, hasFeature } from './company-plan';
@@ -275,9 +275,9 @@ test('hasFeature: basic tem galeria', () => {
 });
 ```
 
-- [ ] **Step 2: Rodar** — falha.
+- [x] **Step 2: Rodar** — falha.
 
-- [ ] **Step 3: Implementar**
+- [x] **Step 3: Implementar**
 
 ```ts
 import type { Company } from '@/types/domain';
@@ -307,9 +307,9 @@ export function hasFeature(plan: Plan, feature: Feature): boolean {
 }
 ```
 
-- [ ] **Step 4: Rodar** — passa.
+- [x] **Step 4: Rodar** — passa.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add mobile/src/features/company/company-plan.ts mobile/src/features/company/company-plan.test.ts
@@ -324,9 +324,9 @@ git commit -m "feat(mobile): adiciona helper companyPlan/hasFeature"
 - Modify: `mobile/src/features/company/company-products.tsx` (adicionar botão "Pedir no WhatsApp")
 - Modify: `mobile/src/features/company/company-detail-screen.tsx` (renderizar CompanyProducts quando `services`/`products` existirem, apenas plan basic+)
 
-- [ ] **Step 1: Ler** `company-products.tsx` atual para entender o componente.
+- [x] **Step 1: Ler** `company-products.tsx` atual para entender o componente.
 
-- [ ] **Step 2: Adicionar prop `whatsapp` e botão "Pedir no WhatsApp"** por produto:
+- [x] **Step 2: Adicionar prop `whatsapp` e botão "Pedir no WhatsApp"** por produto:
 
 ```tsx
 import { openWhatsApp } from '@/utils/links';
@@ -358,11 +358,11 @@ export function CompanyProducts({ products, whatsapp }: { products: CompanyProdu
 }
 ```
 
-- [ ] **Step 3: No detail screen**, renderizar `<CompanyProducts products={details...} whatsapp={details.whatsapp} />` quando `hasFeature(plan, 'catalog')` e houver produtos. Para free, não renderizar.
+- [x] **Step 3: No detail screen**, renderizar `<CompanyProducts products={details...} whatsapp={details.whatsapp} />` quando `hasFeature(plan, 'catalog')` e houver produtos. Para free, não renderizar.
 
-- [ ] **Step 4: Teste manual** no browser (web) — produto aparece, botão abre WhatsApp com mensagem.
+- [x] **Step 4: Teste manual** no browser (web) — produto aparece, botão abre WhatsApp com mensagem.
 
-- [ ] **Step 5: Commit**
+- [x] **Step 5: Commit**
 
 ```bash
 git add mobile/src/features/company/company-products.tsx mobile/src/features/company/company-detail-screen.tsx
@@ -378,7 +378,7 @@ git commit -m "feat(mobile): expoe catalogo de produtos com botao Pedir no Whats
 - Modify: `mobile/src/features/company/company-detail-screen.tsx` (disparar view ao montar)
 - Modify: `mobile/src/features/company/company-detail-screen.tsx` (disparar whatsapp-click no botão WhatsApp)
 
-- [ ] **Step 1: Implementar track.ts**
+- [x] **Step 1: Implementar track.ts**
 
 ```ts
 const API = process.env.EXPO_PUBLIC_API_URL;
@@ -394,11 +394,11 @@ export function trackWhatsappClick(companyId: string) {
 }
 ```
 
-- [ ] **Step 2: Disparar view** em `useEffect` no detail screen (apenas se plan basic/premium — analytics é feature premium; mas view pode ser contado para todos? Decisão: contar view para todos, analytics dashboard só premium).
+- [x] **Step 2: Disparar view** em `useEffect` no detail screen (apenas se plan basic/premium — analytics é feature premium; mas view pode ser contado para todos? Decisão: contar view para todos, analytics dashboard só premium).
 
-- [ ] **Step 3: Disparar whatsapp-click** no onPress do botão WhatsApp.
+- [x] **Step 3: Disparar whatsapp-click** no onPress do botão WhatsApp.
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add mobile/src/features/analytics/track.ts mobile/src/features/company/company-detail-screen.tsx
@@ -444,16 +444,16 @@ test('GET /companies/:id/analytics exige owner ou admin (403 para terceiro)', as
 
 - [ ] **Step 1b: Teste de rate limit** — múltiplos POST `/view` do mesmo IP para a mesma empresa em curto intervalo retornam 429 após o limite.
 
-- [ ] **Step 2: Implementar modelo** (schema com companyId, date (YYYY-MM-DD), views, whatsappClicks, favorites; índice composto companyId+date).
+- [x] **Step 2: Implementar modelo** (schema com companyId, date (YYYY-MM-DD), views, whatsappClicks, favorites; índice composto companyId+date).
 
-- [ ] **Step 3: Implementar service** com `incrementView`, `incrementWhatsappClick`, `getSummary`.
+- [x] **Step 3: Implementar service** com `incrementView`, `incrementWhatsappClick`, `getSummary`.
 
-- [ ] **Step 4: Controller + rotas** `POST /companies/:id/view`, `POST /companies/:id/whatsapp-click` (validar ObjectId → 404 se malformado). `view` permite anônimo mas com rate limit; `whatsapp-click` exige sessão (owner ou anônimo com rate limit). Nova rota `GET /companies/:id/analytics` protegida por `requireOwnerOrAdmin`, retorna summary do período (`?from=&to=`).
-- [ ] **Step 4b: Rate limit middleware** — instalar `express-rate-limit` no backend (`npm i express-rate-limit` dentro de `backend/`). Configurar por IP: 1 incremento/empresa/hora para `view`, 5/hora para `whatsapp-click`. Aplicar apenas nas rotas de incremento. Se a lib não estiver disponível, implementar dedup simples por (ip, companyId, hour) em memória como fallback.
+- [x] **Step 4: Controller + rotas** `POST /companies/:id/view`, `POST /companies/:id/whatsapp-click` (validar ObjectId → 404 se malformado). `view` permite anônimo mas com rate limit; `whatsapp-click` exige sessão (owner ou anônimo com rate limit). Nova rota `GET /companies/:id/analytics` protegida por `requireOwnerOrAdmin`, retorna summary do período (`?from=&to=`).
+- [ ] **Step 4b: Rate limit middleware** — instalar `express-rate-limit` no backend (`npm i express-rate-limit` dentro de `backend/`). Configurar por IP: 1 incremento/empresa/hora para `view`, 5/hora para `whatsapp-click`. Aplicar apenas nas rotas de incremento. Se a lib não estiver disponível, implementar dedup simples por (ip, companyId, hour) em memória como fallback. *(REABERTO: express-rate-limit existe só para o limite global; o limite dedicado anti-inflação de métricas nunca foi implementado.)*
 
-- [ ] **Step 5: Rodar testes** — passar.
+- [ ] **Step 5: Rodar testes** — passar. *(REABERTO: os testes de analytics/isolamento/rate limit do Step 1 nunca foram escritos — só existe um teste trivial de `isObjectId`.)*
 
-- [ ] **Step 6: Commit**
+- [x] **Step 6: Commit**
 
 ```bash
 git add backend/src/models/company-analytics.model.ts backend/src/services/analytics.service.ts backend/src/controllers/company.controller.ts backend/src/routes/company.routes.ts backend/src/services/analytics.service.test.ts
@@ -467,9 +467,9 @@ git commit -m "feat(backend): endpoints de analytics (view, whatsapp-click)"
 **Files:**
 - Modify: `mobile/src/features/home/other-companies.tsx` (ou o serviço de busca) — ordenar: premium > basic > free, mantendo todos visíveis.
 
-- [ ] **Step 1: Implementar ordenação** por plano (premium primeiro, depois basic, depois free), estável dentro do mesmo plano.
+- [x] **Step 1: Implementar ordenação** por plano (premium primeiro, depois basic, depois free), estável dentro do mesmo plano.
 
-- [ ] **Step 2: Commit**
+- [x] **Step 2: Commit**
 
 ```bash
 git add mobile/src/features/home/other-companies.tsx
@@ -485,13 +485,13 @@ git commit -m "feat(mobile): prioriza empresas premium/basic na busca (sem ocult
 - Modify: `admin/src/pages/...` (seletor de plano no formulário de empresa)
 - Test: manual (admin não tem testes de componente no repo)
 
-- [ ] **Step 1: API client** — `updateCompany(id, { plan })`.
+- [x] **Step 1: API client** — `updateCompany(id, { plan })`.
 
-- [ ] **Step 2: UI** — select com 3 opções (Gratuito/Básico/Premium) na página de edição de empresa; salvar chama `updateCompany`.
+- [x] **Step 2: UI** — select com 3 opções (Gratuito/Básico/Premium) na página de edição de empresa; salvar chama `updateCompany`.
 
-- [ ] **Step 3: Verificar** que alterar plano reflete no mobile (após reload).
+- [x] **Step 3: Verificar** que alterar plano reflete no mobile (após reload).
 
-- [ ] **Step 4: Commit**
+- [x] **Step 4: Commit**
 
 ```bash
 git add admin/src/services/api.ts admin/src/pages
@@ -502,7 +502,7 @@ git commit -m "feat(admin): seletor de plano (free/basic/premium) na edição de
 
 ## Task 9: Verificação final
 
-- [ ] **Step 1: Rodar gate** em todos os apps afetados.
+- [x] **Step 1: Rodar gate** em todos os apps afetados.
 
 ```bash
 cd mobile && npm run typecheck && npm run lint && npm test
@@ -510,15 +510,34 @@ cd ../backend && npm run typecheck && npm run lint && npm test
 cd ../admin && npm run typecheck && npm run lint && npm run build
 ```
 
-- [ ] **Step 2: expo export** para provar bundle.
+- [x] **Step 2: expo export** para provar bundle.
 
 ```bash
 cd mobile && npx expo export
 ```
 
-- [ ] **Step 3: Smoke test manual** — criar empresa premium no admin, verificar tela completa + catálogo + analytics; empresa free → tela enxuta; busca prioriza premium.
+- [ ] **Step 3: Smoke test manual** — criar empresa premium no admin, verificar tela completa + catálogo + analytics; empresa free → tela enxuta; busca prioriza premium. *(REABERTO: não executado — exige admin + API + device/emulador.)*
 
-- [ ] **Step 4: Commit de fechamento** (se houver ajustes).
+- [x] **Step 4: Commit de fechamento** (se houver ajustes).
+
+---
+
+## Task 10: Melhorias do review (2026-11-10)
+
+**Files:** backend (middlewares, services, routes, models, dto, test-support), mobile (company-plan, track, my-company, domain), admin (empresas, domain).
+
+- [x] **Step 1: Rate limit anti-inflação nos endpoints de incremento** — dedup em memória por (ip, companyId): `view` 1/hora, `whatsapp-click` 5/hora (env-configurável). Testes cobrindo 429.
+- [x] **Step 2: Testes de analytics que o plano exigia** — isolamento por empresa, 404 para id malformado, 403 para terceiro, 401 sem sessão, 429 no rate limit, incrementos corretos.
+- [x] **Step 3: Gating premium no `GET /companies/:id/analytics`** — empresa sem `plan: 'premium'` → 403 (proteção server-side da feature vendida).
+- [x] **Step 4: Validação de `from`/`to`** — formato `YYYY-MM-DD` obrigatório → 400 para lixo de query.
+- [x] **Step 5: Remover `favorites` (métrica morta)** — campo nunca incrementado; sai do modelo e do summary até existir o evento.
+- [x] **Step 6: Remover `sponsored` de Coupon (campo órfão)** — domínio (3 cópias) + DTO; feature adiada para fase 2.
+- [x] **Step 7: Priorização por plano na busca do mobile** — helper compartilhado `sortCompaniesByPlan`; aplicado na tela de busca (e reutilizado na home).
+- [x] **Step 8: `prioritize=plan` no backend** — `GET /companies?prioritize=plan` ordena premium > basic > free (após destaque/nome), sem ocultar free.
+- [x] **Step 9: Dedup de `trackView` por sessão no mobile** — mesma empresa não conta 2× na mesma sessão (re-mount/StrictMode).
+- [x] **Step 10: Dashboard de analytics no mobile** — card "Desempenho (30 dias)" em Minha Empresa, visível apenas para plano premium.
+- [x] **Step 11: Admin — label de plano legível + erro explícito** — coluna "Plano" mostra Gratuito/Básico/Premium; falha do `updateCompanyPlan` não é engolida (mensagem distinta de "dados salvos"). Bônus: correção de bug — o payload de edição enviava `plan` no `PUT /:id` e recebia 422 do schema strict (editar empresa no admin estava quebrado).
+- [x] **Step 12: Gate completo** — lint/typecheck/testes nos três apps + `expo export`.
 
 ---
 
