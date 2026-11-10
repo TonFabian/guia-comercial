@@ -3,18 +3,21 @@ import { Platform, StyleSheet, View } from 'react-native';
 
 import { Glass, FontWeight, Spacing } from '@/constants/theme';
 import { useThemeColors } from '@/hooks/use-theme-colors';
+import { useThemeMode } from '@/providers/theme-provider';
 
 export default function AppTabs() {
   const colors = useThemeColors();
+  const { mode } = useThemeMode();
+  const isDark = mode === 'dark';
   return (
     <NativeTabs
       backgroundColor={Platform.select({
-        ios: Glass.tabBar,
+        ios: isDark ? Glass.tabBar : 'rgba(255,255,255,0.72)',
         default: colors.background,
       })}
       tintColor={colors.primary}
       iconColor={{ default: colors.textSecondary, selected: colors.primary }}
-      blurEffect="systemChromeMaterialDark"
+      blurEffect={isDark ? 'systemChromeMaterialDark' : 'systemChromeMaterialLight'}
       disableTransparentOnScrollEdge
       disableIndicator
       labelStyle={{
