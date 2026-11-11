@@ -16,7 +16,7 @@ import { UsuariosSection } from './components/sections/usuarios';
 import { UtilidadePublicaSection } from './components/sections/utilidade-publica';
 import { VagasSection } from './components/sections/vagas';
 import { hintStyle } from './components/styles';
-import { getCategories, getCities, getCompanies, getMe, setAuthToken } from './services/api';
+import { getCategories, getCities, getCompanies, getMe, setTokenProvider } from './services/api';
 import type { Catalog, CatalogErrors } from './types/catalog';
 
 /** Catálogo vazio — evita `undefined` enquanto os dados de referência carregam. */
@@ -36,19 +36,23 @@ export default function App() {
   const [role, setRole] = useState<'admin' | 'user' | null>(null);
   const [roleLoaded, setRoleLoaded] = useState(false);
 
-  // O token do Clerk precisa estar pronto antes de qualquer chamada autenticada.
+  // O token do Clerk expira em ~60s: registramos o provider (getToken do
+  // Clerk devolve sempre o token válido/renovado) e esperamos a primeira
+  // resolução antes de qualquer chamada autenticada.
   useEffect(() => {
     if (!isSignedIn) {
-      setAuthToken(null);
+      setTokenProvider(null);
       setAuthReady(false);
       return;
     }
 
     let cancelled = false;
     (async () => {
-      const token = await getToken();
+      setTokenProvider(() =>
+        cancelled ? Promise.resolve(null) : getToken(),
+      );
+      await getToken();
       if (cancelled) return;
-      setAuthToken(token ?? null);
       setAuthReady(true);
 
       // Role só é resolvida DEPOIS do token: /me exige Authorization.

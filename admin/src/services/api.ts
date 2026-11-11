@@ -24,9 +24,16 @@ const BASE_URL = import.meta.env.VITE_API_URL ?? '';
 /** Tamanho de página padrão das listagens do painel. */
 const DEFAULT_PAGE_SIZE = 50;
 
-let authToken: string | null = null;
-export function setAuthToken(token: string | null) {
-  authToken = token;
+let authTokenProvider: (() => Promise<string | null>) | null = null;
+
+/**
+ * Provider do token de sessão Clerk. O token de sessão do Clerk dura ~60s:
+ * cachear uma string fixa faz PUTs posteriores saírem com token expirado
+ * (401 "Não autenticado"). O provider é consultado a cada request, e o
+ * `getToken()` do Clerk devolve sempre o token válido/renovado.
+ */
+export function setTokenProvider(provider: (() => Promise<string | null>) | null) {
+  authTokenProvider = provider;
 }
 
 /** Erro lançado para respostas non-2xx da API. */
@@ -42,7 +49,10 @@ export class ApiError extends Error {
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const headers: Record<string, string> = { 'Content-Type': 'application/json', ...((init?.headers as Record<string, string>) ?? {}) };
-  if (authToken) headers['Authorization'] = `Bearer ${authToken}`;
+  if (authTokenProvider) {
+    const token = await authTokenProvider();
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+  }
   const response = await fetch(`${BASE_URL}${path}`, {
     ...init,
     headers,
