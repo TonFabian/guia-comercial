@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import type { ReactNode } from 'react';
 
 import { TableSkeleton } from './ui/loading';
@@ -25,8 +26,43 @@ export function isTextCell(cell: ReactNode): boolean {
   return typeof cell === 'string' || typeof cell === 'number';
 }
 
+/**
+ * Roda do mouse rola a tabela na horizontal quando ela tem overflow (o
+ * usuário não precisa achar a barra de scroll). Nas extremidades o scroll
+ * volta para a página, e tabelas sem overflow nunca interceptam a roda.
+ */
+function useRodaHorizontalScroll({ ativo }: { ativo: boolean }) {
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    // O wrapper só existe quando há linhas (antes disso é skeleton); por isso
+    // o efeito depende de `ativo` — no primeiro carregamento ref.current é null.
+    const alvo = ref.current;
+    if (!ativo || !alvo) return;
+
+    const aoRodar = (event: WheelEvent) => {
+      if (Math.abs(event.deltaX) >= Math.abs(event.deltaY)) return;
+      if (alvo.scrollWidth <= alvo.clientWidth) return;
+      const maximo = alvo.scrollWidth - alvo.clientWidth;
+      const antes = alvo.scrollLeft;
+      if ((event.deltaY > 0 && antes >= maximo) || (event.deltaY < 0 && antes <= 0)) return;
+      event.preventDefault();
+      alvo.scrollLeft = Math.min(maximo, Math.max(0, antes + event.deltaY));
+    };
+
+    // passive: false é obrigatório para o preventDefault funcionar
+    // (o React registra onWheel como passivo na raiz).
+    alvo.addEventListener('wheel', aoRodar, { passive: false });
+    return () => alvo.removeEventListener('wheel', aoRodar);
+  }, [ativo]);
+
+  return ref;
+}
+
 /** Tabela genérica reaproveitada por todas as seções do painel. */
 export function Table({ headers, rows, mobileRows, emptyMessage, loading }: TableProps) {
+  const scrollRef = useRodaHorizontalScroll({ ativo: rows.length > 0 });
+
   if (rows.length === 0) {
     if (loading) {
       return <TableSkeleton columns={headers.length} />;
@@ -38,7 +74,7 @@ export function Table({ headers, rows, mobileRows, emptyMessage, loading }: Tabl
     <>
       {/* Scroll horizontal quando o viewport é estreito demais para as colunas:
           sem isso as Ações são cortadas em vez de rolarem. */}
-      <div className="hidden overflow-x-auto rounded-(--radius-card) border border-border bg-surface shadow-(--shadow-card) md:block">
+      <div ref={scrollRef} className="scroll-x hidden overflow-x-auto rounded-(--radius-card) border border-border bg-surface shadow-(--shadow-card) md:block">
         <table
           className="w-full text-sm"
           style={{ minWidth: `${Math.max(headers.length * 6, 28)}rem` }}

@@ -68,6 +68,39 @@ button {
 }
 
 /*
+ * Scroll horizontal das tabelas: quase invisível — a barra só aparece no
+ * hover, mas a rolagem continua sempre disponível (roda do mouse rola a
+ * tabela na horizontal quando há overflow; ver Table).
+ */
+.scroll-x {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+
+.scroll-x:hover,
+.scroll-x:focus-within {
+  scrollbar-color: var(--color-border) transparent;
+}
+
+.scroll-x::-webkit-scrollbar {
+  height: 8px;
+}
+
+.scroll-x::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scroll-x::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 999px;
+}
+
+.scroll-x:hover::-webkit-scrollbar-thumb,
+.scroll-x:focus-within::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+}
+
+/*
  * Título global da seção (App): nas telas de formulário o h1 da própria tela
  * ("Editar/Criar ...") já tem classe form-title; o :has esconde o global,
  * evitando duplicação. Regra fora de @layer vence os utilitários do Tailwind.
