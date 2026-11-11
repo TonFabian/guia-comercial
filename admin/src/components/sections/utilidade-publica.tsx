@@ -2,20 +2,18 @@ import { useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
 
 import { useResource } from '../../hooks/use-resource';
-import {
-  createPublicUtility,
-  deletePublicUtility,
-  getPublicUtilities,
-  updatePublicUtility,
-} from '../../services/api';
+import { createPublicUtility, deletePublicUtility, getPublicUtilities, updatePublicUtility } from '../../services/api';
 import type { PublicUtilityInput } from '../../services/api';
 import type { City, PublicUtility, PublicUtilityCategory } from '../../types/domain';
 import { filterByText } from '../../utils/filter';
 import { cityLabel, citySlug } from '../../utils/labels';
-import { Pagination } from '../pagination';
+import { Button } from '../ui/button';
+import { Card } from '../ui/card';
+import { Field, Input, Select, Textarea, CheckboxField } from '../ui/input';
 import { RowActions } from '../row-actions';
 import { SearchInput } from '../search-input';
 import { Table } from '../table';
+import { Pagination } from '../pagination';
 
 export interface UtilidadePublicaSectionProps {
   cities: City[];
@@ -66,20 +64,17 @@ export function UtilidadePublicaSection({ cities, citiesError }: UtilidadePublic
   const [editingId, setEditingId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [view, setView] = useState<'list' | 'form'>('list');
 
   const visible = useMemo(
-    () =>
-      filterByText(
-        items,
-        search,
-        (utility) => `${utility.name} ${utility.description} ${utility.phone ?? ''}`,
-      ),
+    () => filterByText(items, search, (utility) => `${utility.name} ${utility.description} ${utility.phone ?? ''}`),
     [items, search],
   );
 
   function resetForm() {
     setEditingId(null);
     setForm(EMPTY_FORM);
+    setView('list');
   }
 
   function startEdit(utility: PublicUtility) {
@@ -96,6 +91,7 @@ export function UtilidadePublicaSection({ cities, citiesError }: UtilidadePublic
       order: utility.order ?? 0,
       active: utility.active,
     });
+    setView('form');
   }
 
   async function handleSubmit(event: FormEvent) {
@@ -112,7 +108,6 @@ export function UtilidadePublicaSection({ cities, citiesError }: UtilidadePublic
       name: form.name,
       description: form.description,
       category: form.category,
-      // `null` limpa o campo salvo; lista vazia limpa os detalhes.
       phone: form.phone.trim() || null,
       details,
       icon: form.icon.trim() || null,
@@ -147,109 +142,129 @@ export function UtilidadePublicaSection({ cities, citiesError }: UtilidadePublic
     }
   }
 
+  if (view === 'form') {
+    return (
+      <div className="space-y-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <button type="button" onClick={resetForm} className="text-sm text-text-muted hover:text-text">
+            ← Utilidade Pública
+          </button>
+          <div className="flex gap-2">
+            <Button variant="secondary" type="button" onClick={resetForm} disabled={saving}>
+              Cancelar
+            </Button>
+            <Button type="submit" form="utilidade-form" disabled={saving}>
+              {editingId ? 'Salvar' : 'Criar'}
+            </Button>
+          </div>
+        </div>
+
+        <h1 className="text-xl font-semibold text-text" style={{ fontFamily: 'var(--font-family-heading)' }}>
+          {editingId ? 'Editar utilidade pública' : 'Nova utilidade pública'}
+        </h1>
+
+        {citiesError && <p className="text-sm text-danger">Falha ao carregar cidades: {citiesError}</p>}
+        {error && <p className="text-sm text-danger">{error}</p>}
+        {actionError && <p className="text-sm text-danger">{actionError}</p>}
+
+        <form id="utilidade-form" onSubmit={handleSubmit} className="space-y-4">
+          <Card>
+            <h2 className="mb-3 text-sm font-semibold text-text" style={{ fontFamily: 'var(--font-family-heading)' }}>
+              Dados da utilidade
+            </h2>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Field label="Nome">
+                <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
+              </Field>
+              <Field label="Categoria">
+                <Select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value as PublicUtilityCategory })}>
+                  {CATEGORY_LABELS.map((category) => (
+                    <option key={category.value} value={category.value}>
+                      {category.label}
+                    </option>
+                  ))}
+                </Select>
+              </Field>
+              <Field label="Telefone">
+                <Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+              </Field>
+              <Field label="Ícone">
+                <Input value={form.icon} onChange={(e) => setForm({ ...form, icon: e.target.value })} />
+              </Field>
+              <Field label="Cidade">
+                <Select value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })}>
+                  <option value="">Cidade</option>
+                  {cities.map((city) => (
+                    <option key={city._id} value={city.slug}>
+                      {city.name} — {city.state}
+                    </option>
+                  ))}
+                </Select>
+              </Field>
+              <Field label="Ordem">
+                <Input type="number" value={form.order} onChange={(e) => setForm({ ...form, order: Number(e.target.value) })} />
+              </Field>
+              <div className="sm:col-span-2">
+                <Field label="Descrição">
+                  <Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} required />
+                </Field>
+              </div>
+              <div className="sm:col-span-2">
+                <Field label="Detalhes (um por linha)">
+                  <Textarea value={form.details} onChange={(e) => setForm({ ...form, details: e.target.value })} />
+                </Field>
+              </div>
+              <div className="sm:col-span-2">
+                <CheckboxField label="Ativo" checked={form.active} onChange={(e) => setForm({ ...form, active: e.target.checked })} />
+              </div>
+            </div>
+          </Card>
+        </form>
+      </div>
+    );
+  }
+
   return (
-    <>
+    <div className="space-y-4">
       {citiesError && <p className="text-sm text-danger">Falha ao carregar cidades: {citiesError}</p>}
       {error && <p className="text-sm text-danger">{error}</p>}
       {actionError && <p className="text-sm text-danger">{actionError}</p>}
 
-      <form onSubmit={handleSubmit} className="mb-4 grid gap-3 rounded-[--radius-card] border border-border bg-surface p-4 shadow-[--shadow-card] sm:grid-cols-2">
-        <input
-          placeholder="Nome"
-          value={form.name}
-          onChange={(event) => setForm({ ...form, name: event.target.value })}
-          required
-        />
-        <input
-          placeholder="Descrição"
-          value={form.description}
-          onChange={(event) => setForm({ ...form, description: event.target.value })}
-          required
-        />
-        <select
-          value={form.category}
-          onChange={(event) => setForm({ ...form, category: event.target.value as PublicUtilityCategory })}
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <SearchInput value={search} onChange={setSearch} placeholder="Buscar utilidade…" />
+        <Button
+          onClick={() => {
+            resetForm();
+            setForm(EMPTY_FORM);
+            setView('form');
+          }}
         >
-          {CATEGORY_LABELS.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-        <input
-          placeholder="Telefone"
-          value={form.phone}
-          onChange={(event) => setForm({ ...form, phone: event.target.value })}
-        />
-        <input
-          placeholder="Ícone"
-          value={form.icon}
-          onChange={(event) => setForm({ ...form, icon: event.target.value })}
-        />
-        <select value={form.city} onChange={(event) => setForm({ ...form, city: event.target.value })}>
-          <option value="">Cidade</option>
-          {cities.map((city) => (
-            <option key={city._id} value={city.slug}>
-              {city.name} — {city.state}
-            </option>
-          ))}
-        </select>
-        <input
-          type="number"
-          placeholder="Ordem"
-          value={form.order}
-          onChange={(event) => setForm({ ...form, order: Number(event.target.value) })}
-        />
-        <label className="flex items-center gap-2 text-sm text-text">
-          <input
-            type="checkbox"
-            checked={form.active}
-            onChange={(event) => setForm({ ...form, active: event.target.checked })}
-          />
-          Ativo
-        </label>
-        <button type="submit" disabled={saving}>
-          {editingId ? 'Salvar' : 'Criar'}
-        </button>
-        {editingId && (
-          <button type="button" onClick={resetForm}>
-            Cancelar
-          </button>
-        )}
-      </form>
-
-      <textarea
-        placeholder="Detalhes (um por linha)"
-        value={form.details}
-        onChange={(event) => setForm({ ...form, details: event.target.value })}
-        style={{ minWidth: 300, minHeight: 60, width: '100%', marginBottom: 12 }}
-      />
-
-      <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <SearchInput value={search} onChange={setSearch} placeholder="Buscar serviço…" />
-        {search && <span className="text-xs text-text-muted">A busca filtra os itens da página atual.</span>}
+          + Nova utilidade
+        </Button>
       </div>
+      {search && <span className="text-xs text-text-muted">{visible.length} de {items.length} utilidades.</span>}
 
       <Table
-        headers={['Nome', 'Categoria', 'Telefone', 'Cidade', 'Ordem', 'Ativo', 'Ações']}
+        headers={['Nome', 'Categoria', 'Telefone', 'Cidade', 'Ativo', 'Ações']}
         rows={visible.map((utility) => [
           utility.name,
           categoryLabel(utility.category),
           utility.phone ?? '—',
           cityLabel(utility.city),
-          utility.order ?? 0,
           utility.active ? 'Sim' : 'Não',
-          <RowActions
-            key={utility._id}
-            onEdit={() => startEdit(utility)}
-            onDelete={() => void handleDelete(utility._id)}
-          />,
+          <RowActions key={utility._id} onEdit={() => startEdit(utility)} onDelete={() => void handleDelete(utility._id)} />,
         ])}
-        emptyMessage="Nenhum serviço de utilidade pública encontrado."
+        mobileRows={visible.map((utility) => ({
+          id: utility._id,
+          primary: utility.name,
+          secondary: `${categoryLabel(utility.category)} • ${utility.phone ?? '—'} • ${cityLabel(utility.city)}`,
+          actions: <RowActions key={utility._id} onEdit={() => startEdit(utility)} onDelete={() => void handleDelete(utility._id)} />,
+        }))}
+        emptyMessage="Nenhuma utilidade encontrada."
       />
 
       <Pagination page={page} pageSize={pageSize} total={total} onChange={setPage} />
-      {loading && <p className="text-xs text-text-muted">Carregando…</p>}
-    </>
+      {loading && <p className="text-sm text-text-muted">Carregando…</p>}
+    </div>
   );
 }
