@@ -582,6 +582,7 @@ export function EventosSection({ cities, citiesError, companies, companiesTotal,
       </div>
 
       <Table
+        loading={loading}
         headers={['Nome', 'Categoria', 'Período', 'Local', 'Situação', 'Ingresso', 'Ativo', 'Ações']}
         rows={visible.map((evento) => [
           evento.name,
@@ -602,7 +603,6 @@ export function EventosSection({ cities, citiesError, companies, companiesTotal,
 
       <Pagination page={page} pageSize={pageSize} total={total} onChange={setPage} />
       <p className="text-xs text-text-muted">Os eventos encerrados aparecem na listagem para que possam ser editados ou desativados.</p>
-      {loading && <p className="text-xs text-text-muted">Carregando…</p>}
     </>
   );
 }

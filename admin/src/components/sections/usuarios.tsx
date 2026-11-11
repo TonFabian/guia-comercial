@@ -37,6 +37,7 @@ export function UsuariosSection() {
       </div>
 
       <Table
+        loading={loading}
         headers={['Nome', 'E-mail', 'Perfil', 'Cidade', 'Criado em']}
         rows={visible.map((user) => [
           userName(user),
@@ -49,7 +50,6 @@ export function UsuariosSection() {
       />
 
       <Pagination page={page} pageSize={pageSize} total={total} onChange={setPage} />
-      {loading && <p className="text-xs text-text-muted">Carregando…</p>}
     </>
   );
 }

@@ -200,6 +200,7 @@ export function CuponsSection({ companies, companiesError }: CuponsSectionProps)
       {search && <span className="text-xs text-text-muted">{visible.length} de {items.length} cupons.</span>}
 
       <Table
+        loading={loading}
         headers={['Título', 'Código', 'Desconto', 'Empresa', 'Expira', 'Ações']}
         rows={visible.map((coupon) => [
           coupon.title,
@@ -219,7 +220,6 @@ export function CuponsSection({ companies, companiesError }: CuponsSectionProps)
       />
 
       <Pagination page={page} pageSize={pageSize} total={total} onChange={setPage} />
-      {loading && <p className="text-sm text-text-muted">Carregando…</p>}
     </div>
   );
 }

@@ -1,5 +1,7 @@
 import type { ReactNode } from 'react';
 
+import { TableSkeleton } from './ui/loading';
+
 export interface MobileRow {
   id: string;
   primary: string;
@@ -14,11 +16,16 @@ export interface TableProps {
   mobileRows?: MobileRow[];
   /** Mensagem exibida quando não há linhas. */
   emptyMessage?: string;
+  /** Primeiro carregamento: skeleton no lugar da tabela vazia. */
+  loading?: boolean;
 }
 
 /** Tabela genérica reaproveitada por todas as seções do painel. */
-export function Table({ headers, rows, mobileRows, emptyMessage }: TableProps) {
+export function Table({ headers, rows, mobileRows, emptyMessage, loading }: TableProps) {
   if (rows.length === 0) {
+    if (loading) {
+      return <TableSkeleton columns={headers.length} />;
+    }
     return <p className="text-sm text-text-muted">{emptyMessage ?? 'Nenhum registro encontrado.'}</p>;
   }
 

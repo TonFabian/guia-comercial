@@ -205,6 +205,7 @@ export function VagasSection({ companies, companiesError }: VagasSectionProps) {
       {search && <span className="text-xs text-text-muted">{visible.length} de {items.length} vagas.</span>}
 
       <Table
+        loading={loading}
         headers={['Título', 'Empresa', 'Tipo', 'Localização', 'Ações']}
         rows={visible.map((job) => [
           job.title,
@@ -223,7 +224,6 @@ export function VagasSection({ companies, companiesError }: VagasSectionProps) {
       />
 
       <Pagination page={page} pageSize={pageSize} total={total} onChange={setPage} />
-      {loading && <p className="text-sm text-text-muted">Carregando…</p>}
     </div>
   );
 }

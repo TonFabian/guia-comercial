@@ -245,6 +245,7 @@ export function UtilidadePublicaSection({ cities, citiesError }: UtilidadePublic
       {search && <span className="text-xs text-text-muted">{visible.length} de {items.length} utilidades.</span>}
 
       <Table
+        loading={loading}
         headers={['Nome', 'Categoria', 'Telefone', 'Cidade', 'Ativo', 'Ações']}
         rows={visible.map((utility) => [
           utility.name,
@@ -264,7 +265,6 @@ export function UtilidadePublicaSection({ cities, citiesError }: UtilidadePublic
       />
 
       <Pagination page={page} pageSize={pageSize} total={total} onChange={setPage} />
-      {loading && <p className="text-sm text-text-muted">Carregando…</p>}
     </div>
   );
 }

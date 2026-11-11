@@ -207,6 +207,7 @@ export function AvisosSection() {
       {search && <span className="text-xs text-text-muted">A busca filtra os itens da página atual.</span>}
 
       <Table
+        loading={loading}
         headers={['Título', 'Tipo', 'Validade', 'Ativo', 'Ações']}
         rows={visible.map((notice) => [
           notice.title,
@@ -225,7 +226,6 @@ export function AvisosSection() {
       />
 
       <Pagination page={page} pageSize={pageSize} total={total} onChange={setPage} />
-      {loading && <p className="text-sm text-text-muted">Carregando…</p>}
     </div>
   );
 }

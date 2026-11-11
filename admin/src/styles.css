@@ -39,9 +39,14 @@
   font-family: var(--font-family-body);
 }
 
+/*
+ * Reset mínimo. NÃO zere margin aqui: CSS fora de @layer vence @layer
+ * utilities do Tailwind, e `* { margin: 0 }` mata TODAS as margens de
+ * utilitários (mb-*, mt-*, space-y-*) em todo o painel. O preflight do
+ * Tailwind já zera as margens dos elementos de texto.
+ */
 * {
   box-sizing: border-box;
-  margin: 0;
 }
 
 body {
@@ -192,5 +197,34 @@ code {
 @keyframes gate-spin {
   to {
     transform: rotate(360deg);
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   DotsLoader: três pontos pulsando em onda (cor do token --color-primary).
+   ------------------------------------------------------------------------- */
+
+.dots-loader {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.dots-loader span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: var(--color-primary);
+  animation: dots-pulse 1s ease-in-out infinite;
+}
+
+@keyframes dots-pulse {
+  0%, 80%, 100% {
+    opacity: 0.25;
+    transform: scale(0.8);
+  }
+  40% {
+    opacity: 1;
+    transform: scale(1);
   }
 }

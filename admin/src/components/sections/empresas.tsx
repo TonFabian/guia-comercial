@@ -393,6 +393,7 @@ export function EmpresasSection({ categories, categoriesError, cities, citiesErr
       {search && <p className="text-xs text-text-muted">A busca filtra os itens da página atual.</p>}
 
       <Table
+        loading={loading}
         headers={['Nome', 'Categoria', 'Cidade', 'Telefone', 'Plano', 'Ações']}
         rows={visible.map((company) => [
           company.name,
@@ -421,7 +422,6 @@ export function EmpresasSection({ categories, categoriesError, cities, citiesErr
       />
 
       <Pagination page={page} pageSize={pageSize} total={total} onChange={setPage} />
-      {loading && <p className="text-sm text-text-muted">Carregando…</p>}
     </div>
   );
 }

@@ -427,6 +427,7 @@ export function AtracoesSection({ cities, citiesError, companies, companiesTotal
       {search && <p className="text-xs text-text-muted">A busca filtra os itens da página atual.</p>}
 
       <Table
+        loading={loading}
         headers={['Nome', 'Categoria', 'Cidade', 'Entrada', 'Contato', 'Ativo', 'Ações']}
         rows={visible.map((spot) => [
           spot.name,
@@ -456,7 +457,6 @@ export function AtracoesSection({ cities, citiesError, companies, companiesTotal
       />
 
       <Pagination page={page} pageSize={pageSize} total={total} onChange={setPage} />
-      {loading && <p className="text-sm text-text-muted">Carregando…</p>}
     </div>
   );
 }

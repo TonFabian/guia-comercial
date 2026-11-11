@@ -181,6 +181,7 @@ export function BannersSection() {
       {search && <span className="text-xs text-text-muted">{visible.length} de {items.length} banners.</span>}
 
       <Table
+        loading={loading}
         headers={['Título', 'Subtítulo', 'Ordem', 'Ativo', 'Ações']}
         rows={visible.map((banner) => [
           banner.title,
@@ -199,7 +200,6 @@ export function BannersSection() {
       />
 
       <Pagination page={page} pageSize={pageSize} total={total} onChange={setPage} />
-      {loading && <p className="text-sm text-text-muted">Carregando…</p>}
     </div>
   );
 }

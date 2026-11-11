@@ -162,6 +162,7 @@ export function CategoriasSection() {
       {search && <span className="text-xs text-text-muted">{visible.length} de {items.length} categorias.</span>}
 
       <Table
+        loading={loading}
         headers={['Nome', 'Slug', 'Ícone', 'Ordem', 'Ações']}
         rows={visible.map((category) => [
           category.name,
@@ -180,7 +181,6 @@ export function CategoriasSection() {
       />
 
       <Pagination page={page} pageSize={pageSize} total={total} onChange={setPage} />
-      {loading && <p className="text-sm text-text-muted">Carregando…</p>}
     </div>
   );
 }
