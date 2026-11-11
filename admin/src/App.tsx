@@ -125,11 +125,11 @@ export default function App() {
   if (role !== 'admin') return <GateDenied />;
 
   return (
-    <div className="flex min-h-screen bg-bg text-text">
+    <div className="flex min-h-[100dvh] bg-bg text-text">
       <Sidebar active={section} onChange={setSection} open={menuOpen} onClose={() => setMenuOpen(false)} />
       <div className="flex min-w-0 flex-1 flex-col">
         <MobileTopbar section={section} onMenu={() => setMenuOpen(true)} />
-        <main className="min-w-0 flex-1 p-4 md:p-6" style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}>
+        <main className="min-w-0 flex-1 p-4 md:p-6" style={{ paddingBottom: 'max(4rem, calc(env(safe-area-inset-bottom) + 1.5rem))' }}>
           <h1 className="mb-4 hidden text-xl font-semibold text-text md:block" style={{ fontFamily: 'var(--font-family-heading)' }}>
             {section}
           </h1>
