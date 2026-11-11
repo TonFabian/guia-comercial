@@ -1,5 +1,25 @@
 import { useEffect, useState } from 'react';
 
+export type DeleteButtonVariant = 'danger' | 'confirm' | 'cancel';
+
+/**
+ * Classes dos estados do botão de exclusão (confirmação inline).
+ * - danger: acento vermelho, hover preenchido.
+ * - confirm: preenchimento sólido (ação confirmada).
+ * - cancel: neutro de superfície.
+ */
+export function deleteButtonClass(variant: DeleteButtonVariant): string {
+  const base =
+    'h-8 rounded-[--radius-input] px-3 text-xs font-medium transition-all duration-150 active:scale-95 focus-visible:outline-none focus-visible:ring-2';
+  if (variant === 'danger') {
+    return `${base} border border-danger/40 bg-danger/10 text-danger hover:border-danger hover:bg-danger hover:text-white focus-visible:ring-danger/50`;
+  }
+  if (variant === 'confirm') {
+    return `${base} border border-danger/40 bg-danger text-white hover:bg-danger/90 focus-visible:ring-danger/50`;
+  }
+  return `${base} border border-border bg-surface-hover text-text hover:bg-surface hover:text-text focus-visible:ring-primary/50`;
+}
+
 export interface DeleteButtonProps {
   /** Rótulo do botão inicial (padrão: "Excluir"). */
   label?: string;
@@ -23,7 +43,7 @@ export function DeleteButton({ label = 'Excluir', onConfirm }: DeleteButtonProps
 
   if (!armed) {
     return (
-      <button type="button" onClick={() => setArmed(true)}>
+      <button type="button" onClick={() => setArmed(true)} className={deleteButtonClass('danger')}>
         {label}
       </button>
     );
@@ -37,10 +57,11 @@ export function DeleteButton({ label = 'Excluir', onConfirm }: DeleteButtonProps
           setArmed(false);
           onConfirm();
         }}
+        className={deleteButtonClass('confirm')}
       >
         Confirmar
       </button>{' '}
-      <button type="button" onClick={() => setArmed(false)}>
+      <button type="button" onClick={() => setArmed(false)} className={deleteButtonClass('cancel')}>
         Cancelar
       </button>
     </>

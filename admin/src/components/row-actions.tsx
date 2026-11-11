@@ -1,3 +1,20 @@
+export type RowActionVariant = 'edit' | 'delete';
+
+/**
+ * Classes dos botões de ação da tabela (Editar/Excluir).
+ * - Editar: acento primário (amber) com hover preenchido.
+ * - Excluir: danger (vermelho) com hover preenchido.
+ * Ambos com transição suave, elevação leve no hover e feedback de clique.
+ */
+export function rowActionClass(variant: RowActionVariant): string {
+  const base =
+    'h-9 flex-1 rounded-[--radius-input] px-3 text-xs font-medium transition-all duration-150 hover:-translate-y-0.5 hover:shadow-[--shadow-card] active:translate-y-0 active:scale-95 focus-visible:outline-none focus-visible:ring-2 sm:h-8 sm:flex-none';
+  if (variant === 'edit') {
+    return `${base} border border-primary/40 bg-surface-hover text-primary hover:border-primary hover:bg-primary hover:text-[#111827] focus-visible:ring-primary/50`;
+  }
+  return `${base} border border-danger/40 bg-danger/10 text-danger hover:border-danger hover:bg-danger hover:text-white focus-visible:ring-danger/50`;
+}
+
 interface RowActionsProps {
   onEdit: () => void;
   onDelete: () => void;
@@ -6,18 +23,10 @@ interface RowActionsProps {
 export function RowActions({ onEdit, onDelete }: RowActionsProps) {
   return (
     <span className="flex flex-1 gap-2 sm:inline-flex sm:flex-none">
-      <button
-        type="button"
-        onClick={onEdit}
-        className="h-9 flex-1 rounded-[--radius-input] border border-border bg-surface-hover px-3 text-xs text-text sm:h-8 sm:flex-none"
-      >
+      <button type="button" onClick={onEdit} className={rowActionClass('edit')}>
         Editar
       </button>
-      <button
-        type="button"
-        onClick={onDelete}
-        className="h-9 flex-1 rounded-[--radius-input] border border-danger/30 bg-danger/10 px-3 text-xs text-danger sm:h-8 sm:flex-none"
-      >
+      <button type="button" onClick={onDelete} className={rowActionClass('delete')}>
         Excluir
       </button>
     </span>
