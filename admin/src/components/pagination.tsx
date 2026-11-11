@@ -1,34 +1,38 @@
-import { paginationStyle } from './styles';
-
-export interface PaginationProps {
+interface PaginationProps {
   page: number;
   pageSize: number;
   total: number;
   onChange: (page: number) => void;
 }
 
-/** Paginação server-side: o total vem do backend, os botões trocam a página. */
 export function Pagination({ page, pageSize, total, onChange }: PaginationProps) {
   const totalPages = Math.max(1, Math.ceil(total / pageSize));
-  const firstItem = total === 0 ? 0 : (page - 1) * pageSize + 1;
-  const lastItem = Math.min(page * pageSize, total);
-
   return (
-    <div style={paginationStyle}>
+    <div className="mt-4 flex items-center justify-between gap-3 text-xs text-text-muted">
       <span>
-        {total === 0
-          ? 'Nenhum item'
-          : `Mostrando ${firstItem}-${lastItem} de ${total} ${total === 1 ? 'item' : 'itens'}`}
+        Mostrando {Math.min((page - 1) * pageSize + 1, total)}–{Math.min(page * pageSize, total)} de {total} itens
       </span>
-      <button type="button" onClick={() => onChange(page - 1)} disabled={page <= 1}>
-        Anterior
-      </button>
-      <span>
-        Página {page} de {totalPages}
-      </span>
-      <button type="button" onClick={() => onChange(page + 1)} disabled={page >= totalPages}>
-        Próxima
-      </button>
+      <div className="flex items-center gap-2">
+        <button
+          type="button"
+          disabled={page <= 1}
+          onClick={() => onChange(page - 1)}
+          className="h-8 rounded-[--radius-input] border border-border bg-surface px-3 disabled:opacity-40"
+        >
+          Anterior
+        </button>
+        <span>
+          Página {page} de {totalPages}
+        </span>
+        <button
+          type="button"
+          disabled={page >= totalPages}
+          onClick={() => onChange(page + 1)}
+          className="h-8 rounded-[--radius-input] border border-border bg-surface px-3 disabled:opacity-40"
+        >
+          Próxima
+        </button>
+      </div>
     </div>
   );
 }
