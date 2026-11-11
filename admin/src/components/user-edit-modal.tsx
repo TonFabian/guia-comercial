@@ -6,7 +6,6 @@ import type { AdminUserListItem } from '../services/api';
 import { citySlug } from '../utils/labels';
 import { Button } from './ui/button';
 import { Field, Input, Select } from './ui/input';
-import { deleteButtonClass } from './delete-button';
 
 export interface UserEditModalProps {
   user: AdminUserListItem;
@@ -146,9 +145,9 @@ export function UserEditModal({ user, isSelf, onClose, onSaved }: UserEditModalP
             <Button type="submit" disabled={saving}>
               Salvar
             </Button>
-            <button type="button" onClick={onClose} className={deleteButtonClass('cancel')}>
+            <Button type="button" variant="secondary" onClick={onClose}>
               Cancelar
-            </button>
+            </Button>
           </div>
         </form>
       </div>
