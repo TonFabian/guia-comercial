@@ -1,4 +1,8 @@
 import { CityModel } from '../models/city.model.js';
+import { CompanyModel } from '../models/company.model.js';
+import { AutonomousProfessionalModel } from '../models/autonomous-professional.model.js';
+import { PushTokenModel } from '../models/push-token.model.js';
+import { ReviewModel } from '../models/review.model.js';
 import { UserModel } from '../models/user.model.js';
 import type { City, User } from '../../../shared/domain.js';
 import type { Pagination } from '../utils/http.js';
@@ -174,6 +178,53 @@ export async function removeUserByClerkId(clerkId: string): Promise<void> {
   await UserModel.deleteOne({ clerkId }).exec();
 }
 
+export async function updateUserRole(id: string, role: 'user' | 'admin'): Promise<User | null> {
+  const updated = await UserModel.findByIdAndUpdate(id, { $set: { role } }, { returnDocument: 'after' })
+    .populate('city')
+    .lean<User>();
+  return updated;
+}
+
+/**
+ * Exclui um usuário e seus registros relacionados (LGPD).
+ *
+ * Remove push tokens, avaliações e empresas/profissionais autônomos de sua
+ * propriedade. A exclusão do perfil no Clerk é best-effort (ignora erros
+ * quando a chave não está configurada ou o usuário já não existe).
+ */
+export async function deleteUser(id: string): Promise<User | null> {
+  const user = await UserModel.findById(id).lean<User>();
+  if (!user) return null;
+
+  const clerkId = user.clerkId;
+
+  // Limpeza best-effort dos registros relacionados (não bloqueia a exclusão
+  // do usuário se algum modelo não estiver disponível/mocado em testes).
+  const cleanup = async (label: string, fn: () => Promise<unknown>) => {
+    try {
+      await fn();
+    } catch (err) {
+      console.warn(`[deleteUser] falha ao limpar ${label}:`, err);
+    }
+  };
+
+  await cleanup('pushToken', async () => {
+    await PushTokenModel.deleteMany({ clerkId }).exec();
+  });
+  await cleanup('review', async () => {
+    await ReviewModel.deleteMany({ clerkId }).exec();
+  });
+  await cleanup('company', async () => {
+    await CompanyModel.deleteMany({ ownerClerkId: clerkId }).exec();
+  });
+  await cleanup('autonomousProfessional', async () => {
+    await AutonomousProfessionalModel.deleteMany({ ownerClerkId: clerkId }).exec();
+  });
+
+  await UserModel.deleteOne({ _id: id }).exec();
+
+  return user;
+}
 export async function listPushTokens(): Promise<string[]> {
   const users = await UserModel.find({ pushToken: { $exists: true, $ne: null } })
     .select({ pushToken: 1 })

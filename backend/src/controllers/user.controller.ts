@@ -1,5 +1,5 @@
 import type { Request, RequestHandler, Response } from 'express';
-import type { UpdateUserDto } from '../types/dto.js';
+import type { UpdateUserDto, UpdateUserRoleDto } from '../types/dto.js';
 
 import type { User } from '../../../shared/domain.js';
 import {
@@ -8,6 +8,8 @@ import {
   listUsers as listUsersService,
   updateUserByClerkId,
   updatePushToken,
+  updateUserRole as updateUserRoleService,
+  deleteUser as deleteUserService,
 } from '../services/user.service.js';
 import { asyncHandler, parsePagination } from '../utils/http.js';
 
@@ -112,3 +114,96 @@ export const listUsers = asyncHandler(
 function toUserJson(user: User): User {
   return { ...user, _id: String(user._id) };
 }
+
+// -----------------------------------------------------------------------------
+// Role de usuário (admin): promover/rebaixar
+// -----------------------------------------------------------------------------
+
+export interface UpdateUserRoleDeps {
+  assertAdmin: typeof assertAdmin;
+  find: typeof findUserByClerkId;
+  update: typeof updateUserRoleService;
+}
+
+export function makeUpdateUserRoleController(
+  deps: UpdateUserRoleDeps = { assertAdmin, find: findUserByClerkId, update: updateUserRoleService },
+): RequestHandler {
+  return async (req, res): Promise<void> => {
+    const actorClerkId = req.auth?.clerkId;
+    await deps.assertAdmin(actorClerkId, 'alterar role de usuário');
+
+    const id = String(req.params.id);
+    const { UserModel } = await import('../models/user.model.js');
+    const usuario = await UserModel.findById(id).lean();
+    if (!usuario) {
+      res.status(404).json({ error: 'usuário não encontrado' });
+      return;
+    }
+
+    if (actorClerkId && usuario.clerkId === actorClerkId) {
+      res.status(403).json({ error: 'não é possível alterar a própria role' });
+      return;
+    }
+
+    const { role } = req.body as UpdateUserRoleDto;
+    const updated = await deps.update(id, role);
+    if (!updated) {
+      res.status(404).json({ error: 'usuário não encontrado' });
+      return;
+    }
+    res.json({ ...updated, _id: String(updated._id) });
+  };
+}
+
+// -----------------------------------------------------------------------------
+// Exclusão de usuário (admin) — LGPD: apaga conta + registros relacionados
+// -----------------------------------------------------------------------------
+
+export interface DeleteUserDeps {
+  assertAdmin: typeof assertAdmin;
+  find: typeof findUserByClerkId;
+  remove: typeof deleteUserService;
+}
+
+export function makeDeleteUserController(
+  deps: DeleteUserDeps = { assertAdmin, find: findUserByClerkId, remove: deleteUserService },
+): RequestHandler {
+  return async (req, res): Promise<void> => {
+    const actorClerkId = req.auth?.clerkId;
+    await deps.assertAdmin(actorClerkId, 'excluir usuário');
+
+    const id = String(req.params.id);
+    const { UserModel } = await import('../models/user.model.js');
+    const usuario = await UserModel.findById(id).lean();
+    if (!usuario) {
+      res.status(404).json({ error: 'usuário não encontrado' });
+      return;
+    }
+
+    if (actorClerkId && usuario.clerkId === actorClerkId) {
+      res.status(403).json({ error: 'não é possível excluir a própria conta' });
+      return;
+    }
+
+    await deps.remove(id);
+
+    // Exclusão no Clerk é best-effort: não deve bloquear a resposta.
+    if (process.env.CLERK_SECRET_KEY) {
+      try {
+        const { createClerkClient } = await import('@clerk/backend');
+        const client = createClerkClient({
+          secretKey: process.env.CLERK_SECRET_KEY,
+          publishableKey: process.env.CLERK_PUBLISHABLE_KEY,
+        });
+        await client.users.deleteUser(usuario.clerkId);
+      } catch {
+        // ignora: o espelho local já foi removido.
+      }
+    }
+
+    res.status(204).send();
+  };
+}
+
+export const updateUserRole: RequestHandler = makeUpdateUserRoleController();
+export const deleteUser: RequestHandler = makeDeleteUserController();

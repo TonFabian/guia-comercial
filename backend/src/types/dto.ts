@@ -217,6 +217,12 @@ export const updateUserSchema = z.object({
 
 export type UpdateUserDto = z.infer<typeof updateUserSchema>;
 
+export const updateUserRoleSchema = z.object({
+  role: z.enum(['user', 'admin']),
+});
+
+export type UpdateUserRoleDto = z.infer<typeof updateUserRoleSchema>;
+
 // ---------------------------------------------------------------------------
 // Review
 // ---------------------------------------------------------------------------

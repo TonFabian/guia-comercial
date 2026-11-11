@@ -40,11 +40,12 @@ import {
   broadcastSchema,
   pushTokenSchema,
   updateUserSchema,
+  updateUserRoleSchema,
   updateTourEventSchema,
   updateTouristSpotSchema,
   validateBody,
 } from '../types/dto.js';
-import { listUsers, me, updateMe } from '../controllers/user.controller.js';
+import { listUsers, me, updateMe, updateUserRole, deleteUser } from '../controllers/user.controller.js';
 import { broadcastPush, registerPushToken } from '../controllers/push-token.controller.js';
 
 const routes = Router();
@@ -236,5 +237,9 @@ routes.use('/autonomous-professionals', autonomousProfessionals);
 // A listagem exige sessão de admin: 401 sem identidade, 403 para usuário
 // comum. Fica fora do bloco do Clerk porque a autorização mora no controller.
 routes.get('/users', listUsers);
+
+// Mutação de role e exclusão de usuário (admin).
+routes.put('/users/:id/role', validateBody(updateUserRoleSchema), updateUserRole);
+routes.delete('/users/:id', deleteUser);
 
 export default routes;
