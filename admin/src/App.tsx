@@ -129,7 +129,7 @@ export default function App() {
       <Sidebar active={section} onChange={setSection} open={menuOpen} onClose={() => setMenuOpen(false)} />
       <div className="flex min-w-0 flex-1 flex-col">
         <MobileTopbar section={section} onMenu={() => setMenuOpen(true)} />
-        <main className="min-w-0 flex-1 p-4 md:p-6">
+        <main className="min-w-0 flex-1 p-4 md:p-6" style={{ paddingBottom: 'max(1.5rem, env(safe-area-inset-bottom))' }}>
           <h1 className="mb-4 hidden text-xl font-semibold text-text md:block" style={{ fontFamily: 'var(--font-family-heading)' }}>
             {section}
           </h1>
