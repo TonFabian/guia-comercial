@@ -24,6 +24,13 @@ export function companyId(company: string | Company | undefined): string {
   return typeof company === 'string' ? company : company._id;
 }
 
+/** Rótulo legível do plano comercial (ausente → Gratuito). */
+export function planLabel(plan: Company['plan']): string {
+  if (plan === 'premium') return 'Premium';
+  if (plan === 'basic') return 'Básico';
+  return 'Gratuito';
+}
+
 /** Rótulo legível de uma cidade (pode vir populada ou só o id/slug). */
 export function cityLabel(city: string | City | undefined | null): string {
   if (!city) return '—';

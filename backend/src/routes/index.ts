@@ -20,6 +20,7 @@ import {
   makeAuthMiddleware,
   requireAuthIfConfigured,
 } from '../middlewares/auth.middleware.js';
+import { limitarView, limitarWhatsappClick } from '../middlewares/analytics-rate-limit.middleware.js';
 import { guestScrub } from '../middlewares/guest.middleware.js';
 import {
   createAutonomousProfessionalSchema,
@@ -27,6 +28,8 @@ import {
   createCategorySchema,
   createCitySchema,
   createCompanySchema,
+  updateCompanySchema,
+  updatePlanSchema,
   createCouponSchema,
   createJobSchema,
   createNoticeSchema,
@@ -89,6 +92,14 @@ const requireAuthForMutations: RequestHandler = (req, res, next) => {
     next();
     return;
   }
+  // View e clique de WhatsApp são anônimos (rate-limited): o convidado do app
+  // navega e clica sem sessão — a contagem de engajamento (plano de
+  // monetização) não pode depender de login. A defesa anti-inflação é o
+  // rate limit por IP+empresa, não a autenticação.
+  if (/^\/companies\/[^/]+\/(view|whatsapp-click)$/.test(req.path)) {
+    next();
+    return;
+  }
   return requireAuthIfConfigured(req, res, next);
 };
 routes.use(requireAuthForMutations);
@@ -112,7 +123,13 @@ companies.get('/', companyController.list);
 companies.get('/:id', companyController.getById);
 companies.get('/:id/reviews', reviewController.listReviews);
 companies.post('/:id/reviews', validateBody(createReviewSchema), reviewController.createReviewHandler);
-companies.put('/:id', validateBody(createCompanySchema.partial()), companyController.update);
+companies.put('/:id', validateBody(updateCompanySchema), companyController.update);
+companies.put('/:id/plan', requireAuthIfConfigured, validateBody(updatePlanSchema), companyController.updatePlan);
+// Rate limit anti-inflação: métrica vendida ao lojista não pode ser bombada
+// por script (view 1/empresa/IP/hora, clique 5/empresa/IP/hora).
+companies.post('/:id/view', limitarView, companyController.trackView);
+companies.post('/:id/whatsapp-click', limitarWhatsappClick, companyController.trackWhatsappClick);
+companies.get('/:id/analytics', requireAuthIfConfigured, companyController.getAnalytics);
 companies.delete('/:id', companyController.remove);
 
 // -----------------------------------------------------------------------------

@@ -1,5 +1,13 @@
 /**
- * fonte da verdade: ../shared/domain.ts (raiz do monorepo).
+ * Tipos de domínio compartilhados (ONDA 1).
+ *
+ * Este arquivo contém APENAS tipos TypeScript — sem runtime e sem imports.
+ *
+ * Convenção bidirecional: os campos de ID e datas são tipados como `string`
+ * porque JSON não tem ObjectId nem Date. Serializers em cada app convertem:
+ *  - `_id`, `category`, `company` (quando referência) → string (ObjectId hex)
+ *  - `createdAt`, `updatedAt`, `expiresAt` → string (ISO 8601)
+ * Campos de referência usam união `string | Entidade` (populate do Mongoose).
  */
 export interface Category {
   _id: string;
@@ -41,12 +49,15 @@ export interface Company {
   gallery?: string[];
   registry?: string;
   isFeatured?: boolean;
+  /** Plano comercial. Ausente/undefined → tratado como 'free'. */
+  plan?: 'free' | 'basic' | 'premium';
   rating?: number;
   ratingCount?: number;
   isVerified?: boolean;
   website?: string;
   instagram?: string;
   facebook?: string;
+  /** Horário estruturado (minutos desde a meia-noite). Preferido para consultas. */
   schedule?: { day: number; opens: number; closes: number }[];
   services?: string[];
   products?: CompanyProduct[];

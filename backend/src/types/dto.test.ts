@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { createCompanySchema, createPublicUtilitySchema, updateUserSchema } from './dto.js';
+import { createCompanySchema, updateCompanySchema, createPublicUtilitySchema, updateUserSchema } from './dto.js';
 
 const EMPRESA_BASE = {
   name: 'Barbearia Central',
@@ -62,6 +62,42 @@ describe('createCompanySchema', () => {
 
     expect(parsed.isVerified).toBeUndefined();
     expect(parsed.products).toBeUndefined();
+  });
+
+  it('aceita plan valido (free/basic/premium)', () => {
+    for (const plan of ['free', 'basic', 'premium'] as const) {
+      const result = createCompanySchema.safeParse({ ...EMPRESA_BASE, plan });
+      expect(result.success).toBe(true);
+      if (result.success) expect(result.data.plan).toBe(plan);
+    }
+  });
+
+  it('rejeita plan invalido', () => {
+    const result = createCompanySchema.safeParse({ ...EMPRESA_BASE, plan: 'gold' });
+    expect(result.success).toBe(false);
+  });
+
+  it('default de plan eh free quando ausente', () => {
+    const parsed = createCompanySchema.parse(EMPRESA_BASE);
+    expect(parsed.plan).toBe('free');
+  });
+});
+
+describe('updateCompanySchema', () => {
+  it('permite atualizacao parcial de campos publicos', () => {
+    const result = updateCompanySchema.safeParse({ name: 'Novo nome' });
+    expect(result.success).toBe(true);
+  });
+
+  it('descarta plan no update publico (sem bypass)', () => {
+    // plan nao faz parte do contrato publico: o schema omite o campo e o zod
+    // (sem strict) descarta o que vier a mais — a edicao segue sem o plano.
+    const result = updateCompanySchema.safeParse({ plan: 'basic', name: 'Novo nome' });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect('plan' in result.data).toBe(false);
+      expect(result.data.name).toBe('Novo nome');
+    }
   });
 });
 

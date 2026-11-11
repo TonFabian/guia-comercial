@@ -17,6 +17,8 @@ import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context'
 
 import { FontFamily, FontWeight, Radius, Spacing, Typography } from '@/constants/theme';
 import { openCompanyDetails } from '@/features/company/open-company';
+import { PlanBadge } from '@/features/company/plan-badge';
+import { sortCompaniesByPlan } from '@/features/company/company-plan';
 import type {
   CompanyPageFetcher,
   SearchFilters,
@@ -371,10 +373,11 @@ export default function SearchScreen() {
   const hoje = hojeISO();
 
   // Seções mescladas: empresas (vindas do deriveSearchView) + turismo.
+  // Plano do lojista prioriza a ordem (premium > basic > free) sem ocultar.
   const rawSections = useMemo(
     () =>
       buildSearchSections({
-        companies: view.items,
+        companies: sortCompaniesByPlan(view.items),
         spots,
         events,
         showSpots,
@@ -444,7 +447,10 @@ export default function SearchScreen() {
           onPress={() => openCompanyDetails(company._id)}
         >
           <View style={styles.rowBody}>
-            <Text style={styles.rowTitle}>{company.name}</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <Text style={styles.rowTitle}>{company.name}</Text>
+              <PlanBadge plan={company.plan} />
+            </View>
             <Text style={styles.rowSubtitle}>
               {categoryLabel(company.category)}
               {company.address ? ` — ${company.address}` : ''}

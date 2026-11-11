@@ -4,6 +4,7 @@ import { CategoryModel } from '../models/category.model.js';
 import { CityModel } from '../models/city.model.js';
 import { CompanyModel } from '../models/company.model.js';
 import { assertOwnerOrAdmin } from './authorization.service.js';
+import { findUserByClerkId } from './user.service.js';
 import { listAllPushTokens } from './push-token.service.js';
 import type { Company } from '../../../shared/domain.js';
 import type { CreateCompanyDto, UpdateCompanyDto } from '../types/dto.js';
@@ -33,6 +34,8 @@ export interface CompanyListFilters {
   owner?: unknown;
   /** cidade (slug ou nome) */
   city?: unknown;
+  /** 'plan': ordena premium > basic > free (sem ocultar) antes da paginação */
+  prioritize?: unknown;
 }
 
 /** Regras de dados para empresas. */
@@ -103,6 +106,37 @@ export async function listCompanies(
     query.city = found ? found._id : new Types.ObjectId().toString();
   }
 
+  const priorizar = lerTexto(filters.prioritize, { nome: 'prioritize' });
+  if (priorizar !== undefined && priorizar !== 'plan') {
+    // Valor desconhecido não é descartado em silêncio (padrão do repo: 400).
+    throw Object.assign(new Error("prioritize inválido: use 'plan'"), { statusCode: 400 });
+  }
+  const priorizarPorPlano = priorizar === 'plan';
+
+  if (priorizarPorPlano) {
+    // Ordenação por plano não é suportada como critério de sort nativo (o
+    // enum é texto): busca sem paginação, ordena em memória e pagina. O guia
+    // é local (catálogo pequeno), então o custo é aceitável. Empresas free
+    // continuam no resultado — apenas reordena, nunca oculta.
+    const todas = await CompanyModel.find(query)
+      .populate('category')
+      .populate('city')
+      .sort({ isFeatured: -1, name: 1 })
+      .limit(1000)
+      .lean();
+    const prioridade: Record<string, number> = { premium: 0, basic: 1, free: 2 };
+    const ordenadas = [...todas].sort((a, b) => {
+      const planoA = prioridade[(a as { plan?: string }).plan ?? 'free'] ?? 2;
+      const planoB = prioridade[(b as { plan?: string }).plan ?? 'free'] ?? 2;
+      if (planoA !== planoB) return planoA - planoB;
+      return 0;
+    });
+    return {
+      items: ordenadas.slice(pagination.skip, pagination.skip + pagination.limit),
+      total: ordenadas.length,
+    };
+  }
+
   const [items, total] = await Promise.all([
     CompanyModel.find(query)
       .populate('category')
@@ -122,6 +156,14 @@ export async function getCompanyById(id: string) {
 }
 
 export async function createCompany(dto: CreateCompanyDto, ownerClerkId?: string) {
+  // Plano só pode ser definido por admin. Usuário comum (dono de empresa)
+  // que criar empresa via API recebe 'free' por padrão — sem bypass.
+  if (dto.plan && dto.plan !== 'free' && process.env.CLERK_SECRET_KEY) {
+    const user = ownerClerkId ? await findUserByClerkId(ownerClerkId) : null;
+    if (user?.role !== 'admin') {
+      dto = { ...dto, plan: 'free' };
+    }
+  }
   // Resolve cidade primeiro: o nome entra na query de geocodificação (endereço
   // sozinho frequentemente não é encontrado, sem estado/cidade).
   let city: string | null | undefined;
@@ -255,6 +297,41 @@ export async function updateCompany(id: string, dto: UpdateCompanyDto, clerkId?:
     void notifyPromotion(updated?.name ?? 'Empresa', dto.promotion).catch(() => undefined);
   }
 
+  return updated;
+}
+
+export async function updateCompanyPlan(
+  id: string,
+  plan: 'free' | 'basic' | 'premium',
+  clerkId?: string,
+) {
+  if (!isObjectId(id)) {
+    throw Object.assign(new Error('id inválido'), { statusCode: 404 });
+  }
+
+  // Apenas admin pode alterar plano (sem bypass via endpoint público).
+  if (process.env.CLERK_SECRET_KEY) {
+    if (!clerkId) {
+      throw Object.assign(new Error('não autenticado'), { statusCode: 401 });
+    }
+    const user = await findUserByClerkId(clerkId);
+    if (user?.role !== 'admin') {
+      throw Object.assign(new Error('sem permissão para alterar o plano'), { statusCode: 403 });
+    }
+  }
+
+  const updated = await CompanyModel.findByIdAndUpdate(
+    id,
+    { plan },
+    { returnDocument: 'after', runValidators: true },
+  )
+    .populate('category')
+    .populate('city')
+    .lean();
+
+  if (!updated) {
+    throw Object.assign(new Error('empresa não encontrada'), { statusCode: 404 });
+  }
   return updated;
 }
 

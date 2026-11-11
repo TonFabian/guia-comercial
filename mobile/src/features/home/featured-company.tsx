@@ -8,6 +8,7 @@ import { ContactHintRow } from '@/features/home/contact-hidden-hint';
 import { useThemeColors } from '@/hooks/use-theme-colors';
 import type { Company } from '@/types/domain';
 import { categoryLabel } from '@/types/domain';
+import { PlanBadge } from '@/features/company/plan-badge';
 import { callPhone, openAddress, openWhatsApp } from '@/utils/links';
 import { cityName } from '@/utils/city';
 import { openCompanyDetails } from '../company/open-company';
@@ -35,7 +36,10 @@ export function FeaturedCompany({ company }: { company: Company | null }) {
           </View>
           <View style={styles.companyBody}>
             <Text style={styles.companyName}>{company.name}</Text>
-            <Text style={styles.companyCategory}>{categoryLabel(company.category)}</Text>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+              <Text style={styles.companyCategory}>{categoryLabel(company.category)}</Text>
+              <PlanBadge plan={company.plan} />
+            </View>
             <View style={styles.addressRow}>
               <Ionicons name="location-outline" size={14} color={colors.textSecondary} />
               <Text style={styles.companyAddress}>{company.address}</Text>

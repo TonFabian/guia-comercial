@@ -52,8 +52,10 @@ export function TabButton({ children: _children, label, icon, isFocused, ref: _r
     <Pressable
       {...props}
       style={StyleSheet.flatten([
-        styles.tabButton,
+        // O TabTrigger (asChild) injeta flexDirection: 'row' — precisa vir
+        // ANTES dos nossos estilos, ou o ícone e o label ficam lado a lado.
         (style ?? undefined) as StyleProp<ViewStyle>,
+        styles.tabButton,
       ])}>
       <Ionicons name={isFocused ? icon : `${icon}-outline`} size={22} color={color} />
       <Text style={StyleSheet.flatten([styles.tabLabel, { color }])}>{label}</Text>
@@ -78,6 +80,7 @@ const styles = StyleSheet.create({
   },
   tabButton: {
     flex: 1,
+    flexDirection: 'column',
     alignItems: 'center',
     justifyContent: 'center',
     gap: Spacing.four,

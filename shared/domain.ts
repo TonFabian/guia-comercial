@@ -50,6 +50,8 @@ export interface Company {
   gallery?: string[];
   registry?: string;
   isFeatured?: boolean;
+  /** Plano comercial. Ausente/undefined → tratado como 'free'. */
+  plan?: 'free' | 'basic' | 'premium';
   rating?: number;
   ratingCount?: number;
   isVerified?: boolean;

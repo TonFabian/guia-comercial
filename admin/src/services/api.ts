@@ -24,9 +24,16 @@ const BASE_URL = import.meta.env.VITE_API_URL ?? '';
 /** Tamanho de página padrão das listagens do painel. */
 const DEFAULT_PAGE_SIZE = 50;
 
-let authToken: string | null = null;
-export function setAuthToken(token: string | null) {
-  authToken = token;
+let authTokenProvider: (() => Promise<string | null>) | null = null;
+
+/**
+ * Provider do token de sessão Clerk. O token de sessão do Clerk dura ~60s:
+ * cachear uma string fixa faz PUTs posteriores saírem com token expirado
+ * (401 "Não autenticado"). O provider é consultado a cada request, e o
+ * `getToken()` do Clerk devolve sempre o token válido/renovado.
+ */
+export function setTokenProvider(provider: (() => Promise<string | null>) | null) {
+  authTokenProvider = provider;
 }
 
 /** Erro lançado para respostas non-2xx da API. */
@@ -42,7 +49,10 @@ export class ApiError extends Error {
 
 async function request<T>(path: string, init?: RequestInit): Promise<T> {
   const headers: Record<string, string> = { 'Content-Type': 'application/json', ...((init?.headers as Record<string, string>) ?? {}) };
-  if (authToken) headers['Authorization'] = `Bearer ${authToken}`;
+  if (authTokenProvider) {
+    const token = await authTokenProvider();
+    if (token) headers['Authorization'] = `Bearer ${token}`;
+  }
   const response = await fetch(`${BASE_URL}${path}`, {
     ...init,
     headers,
@@ -105,6 +115,18 @@ export function apiPost<T>(path: string, body: unknown): Promise<T> {
   return request<T>(path, { method: 'POST', body: JSON.stringify(body) });
 }
 
+/**
+ * Espelho local do usuário autenticado (GET /me). A role vem do backend —
+ * fonte da verdade para o gate de acesso do painel —, não do metadata do Clerk.
+ */
+export async function getMe(): Promise<User | null> {
+  try {
+    return await request<User>('/me');
+  } catch {
+    return null;
+  }
+}
+
 export function apiPut<T>(path: string, body: unknown): Promise<T> {
   return request<T>(path, { method: 'PUT', body: JSON.stringify(body) });
 }
@@ -128,6 +150,7 @@ export interface CompanyInput {
   whatsapp?: string;
   address?: string;
   promotion?: string;
+  plan?: 'free' | 'basic' | 'premium';
   schedule?: { day: number; opens: number; closes: number }[];
 }
 
@@ -409,7 +432,16 @@ export async function createCompany(body: CompanyInput): Promise<Company> {
 }
 
 export async function updateCompany(id: string, body: UpdateCompanyInput): Promise<Company> {
-  return apiPut<Company>(`/companies/${id}`, body);
+  // O plano NUNCA vai na edição de dados: só admin muda, pela rota dedicada
+  // updateCompanyPlan. O backend também descarta o campo — aqui garantimos
+  // que o cliente nem o envie (ex.: spread acidental de um Company).
+  const dadosSemPlano: UpdateCompanyInput = { ...body };
+  delete dadosSemPlano.plan;
+  return apiPut<Company>(`/companies/${id}`, dadosSemPlano);
+}
+
+export async function updateCompanyPlan(id: string, plan: 'free' | 'basic' | 'premium'): Promise<Company> {
+  return apiPut<Company>(`/companies/${id}/plan`, { plan });
 }
 
 export async function deleteCompany(id: string): Promise<void> {

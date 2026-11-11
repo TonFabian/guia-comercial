@@ -5,6 +5,8 @@ import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'rea
 import { Radius, Spacing, Typography } from '@/constants/theme';
 import { useThemeColors } from '@/hooks/use-theme-colors';
 import type { Company } from '@/types/domain';
+import { PlanBadge } from '@/features/company/plan-badge';
+import { sortCompaniesByPlan } from '@/features/company/company-plan';
 import { categoryLabel } from '@/types/domain';
 import { openWhatsApp } from '@/utils/links';
 import { SectionHeader } from './section-header';
@@ -18,6 +20,8 @@ interface Props {
 export function OtherCompanies({ companies, loading = false, error = null }: Props) {
   const colors = useThemeColors();
   const styles = makeStyles(colors);
+
+  const sorted = sortCompaniesByPlan(companies);
 
   return (
     <View style={styles.section}>
@@ -33,11 +37,11 @@ export function OtherCompanies({ companies, loading = false, error = null }: Pro
         </View>
       ) : error ? (
         <Text style={styles.empty}>{error}</Text>
-      ) : companies.length === 0 ? (
+      ) : sorted.length === 0 ? (
         <Text style={styles.empty}>Nenhuma empresa cadastrada</Text>
       ) : (
         <View style={styles.list}>
-          {companies.map((c) => (
+          {sorted.map((c) => (
             <View key={c._id} style={styles.card}>
               <TouchableOpacity
                 style={styles.cardMain}
@@ -55,6 +59,7 @@ export function OtherCompanies({ companies, loading = false, error = null }: Pro
                     {categoryLabel(c.category)}
                     {c.address ? ` · ${c.address}` : ''}
                   </Text>
+                  <PlanBadge plan={c.plan} />
                 </View>
                 <Ionicons name="chevron-forward" size={22} color={colors.textSecondary} />
               </TouchableOpacity>

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
-import { SignInButton, useAuth, useUser } from '@clerk/clerk-react';
+import { useAuth, useUser } from '@clerk/clerk-react';
 
+import { GateDenied, GateLoading, GateSignIn } from './components/auth-gate';
 import { Sidebar } from './components/sidebar';
 import type { Section } from './components/sidebar';
 import { AtracoesSection } from './components/sections/atracoes';
@@ -15,7 +16,7 @@ import { UsuariosSection } from './components/sections/usuarios';
 import { UtilidadePublicaSection } from './components/sections/utilidade-publica';
 import { VagasSection } from './components/sections/vagas';
 import { hintStyle } from './components/styles';
-import { getCategories, getCities, getCompanies, setAuthToken } from './services/api';
+import { getCategories, getCities, getCompanies, getMe, setTokenProvider } from './services/api';
 import type { Catalog, CatalogErrors } from './types/catalog';
 
 /** Catálogo vazio — evita `undefined` enquanto os dados de referência carregam. */
@@ -30,21 +31,35 @@ export default function App() {
   const [catalogErrors, setCatalogErrors] = useState<CatalogErrors>({});
   const [catalogLoading, setCatalogLoading] = useState(true);
   const [authReady, setAuthReady] = useState(false);
+  // Gate de acesso: a role vem do backend (espelho local via GET /me), não do
+  // metadata do Clerk — quem decide o que é admin é a API, nunca o frontend.
+  const [role, setRole] = useState<'admin' | 'user' | null>(null);
+  const [roleLoaded, setRoleLoaded] = useState(false);
 
-  // O token do Clerk precisa estar pronto antes de qualquer chamada autenticada.
+  // O token do Clerk expira em ~60s: registramos o provider (getToken do
+  // Clerk devolve sempre o token válido/renovado) e esperamos a primeira
+  // resolução antes de qualquer chamada autenticada.
   useEffect(() => {
     if (!isSignedIn) {
-      setAuthToken(null);
+      setTokenProvider(null);
       setAuthReady(false);
       return;
     }
 
     let cancelled = false;
     (async () => {
-      const token = await getToken();
+      setTokenProvider(() =>
+        cancelled ? Promise.resolve(null) : getToken(),
+      );
+      await getToken();
       if (cancelled) return;
-      setAuthToken(token ?? null);
       setAuthReady(true);
+
+      // Role só é resolvida DEPOIS do token: /me exige Authorization.
+      const me = await getMe();
+      if (cancelled) return;
+      setRole(me?.role ?? null);
+      setRoleLoaded(true);
     })();
 
     return () => {
@@ -100,20 +115,14 @@ export default function App() {
     void loadCatalog();
   }, [authReady, loadCatalog]);
 
-  if (!isLoaded) return <p>Carregando…</p>;
-  if (!isSignedIn) {
-    return (
-      <div className="layout">
-        <main className="content" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 16 }}>
-          <h2>Painel Administrativo</h2>
-          <p>Faça login para continuar.</p>
-          <SignInButton mode="modal">
-            <button>Entrar</button>
-          </SignInButton>
-        </main>
-      </div>
-    );
-  }
+  if (!isLoaded) return <GateLoading />;
+  if (!isSignedIn) return <GateSignIn />;
+
+  // Defesa de acesso: só role `admin` (definida no backend) abre o painel.
+  // Usuário comum logado vê tela de acesso negado — nada de listagens, nem
+  // formulários, nem tentativa de mutação.
+  if (!roleLoaded) return <GateLoading />;
+  if (role !== 'admin') return <GateDenied />;
 
   return (
     <div className="layout">
