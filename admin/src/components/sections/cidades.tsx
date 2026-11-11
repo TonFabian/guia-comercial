@@ -124,7 +124,7 @@ export function CidadesSection({ cities, citiesError, onReload }: CidadesSection
       {citiesError && <p className="text-sm text-danger">Falha ao carregar cidades: {citiesError}</p>}
       {actionError && <p className="text-sm text-danger">{actionError}</p>}
 
-      <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <SearchInput value={search} onChange={setSearch} placeholder="Buscar cidade…" />
         <Button
           onClick={() => {

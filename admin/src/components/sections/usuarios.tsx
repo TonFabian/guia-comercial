@@ -31,7 +31,7 @@ export function UsuariosSection() {
         exclusão). O perfil é mantido no Clerk e espelhado no banco pelo webhook.
       </p>
 
-      <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <SearchInput value={search} onChange={setSearch} placeholder="Buscar usuário…" />
         {search && <span className="text-xs text-text-muted">A busca filtra os itens da página atual.</span>}
       </div>

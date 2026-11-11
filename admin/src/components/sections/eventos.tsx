@@ -576,7 +576,7 @@ export function EventosSection({ cities, citiesError, companies, companiesTotal,
         </p>
       )}
 
-      <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <SearchInput value={search} onChange={setSearch} placeholder="Buscar evento…" />
         {search && <span className="text-xs text-text-muted">A busca filtra os itens da página atual.</span>}
       </div>

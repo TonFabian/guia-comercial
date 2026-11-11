@@ -7,6 +7,7 @@ import type { CompanyInput } from '../../services/api';
 import type { Category, City, Company } from '../../types/domain';
 import { filterByText } from '../../utils/filter';
 import { categoryId, categoryLabel, cityLabel, citySlug } from '../../utils/labels';
+import { formatPhone } from '../../utils/phone';
 import { Button } from '../ui/button';
 import { Card } from '../ui/card';
 import { Field, Input, Select, Textarea, CheckboxField } from '../ui/input';
@@ -377,7 +378,7 @@ export function EmpresasSection({ categories, categoriesError, cities, citiesErr
       {error && <p className="text-sm text-danger">{error}</p>}
       {actionError && <p className="text-sm text-danger">{actionError}</p>}
 
-      <div className="mb-8 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <SearchInput value={search} onChange={setSearch} placeholder="Buscar empresa…" />
         <Button
           onClick={() => {
@@ -397,7 +398,7 @@ export function EmpresasSection({ categories, categoriesError, cities, citiesErr
           company.name,
           categoryLabel(company.category),
           cityLabel(company.city),
-          company.phone ?? '—',
+          company.phone ? formatPhone(company.phone) : '—',
           <PlanChip key={company._id} plan={company.plan ?? 'free'} />,
           <RowActions
             key={`a-${company._id}`}
