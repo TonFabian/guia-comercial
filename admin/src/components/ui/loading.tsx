@@ -58,7 +58,7 @@ export function TableSkeleton({ columns, rows }: TableSkeletonProps) {
     <div
       role="status"
       aria-label="Carregando"
-      className="overflow-hidden rounded-[--radius-card] border border-border bg-surface shadow-[--shadow-card]"
+      className="overflow-hidden rounded-(--radius-card) border border-border bg-surface shadow-(--shadow-card)"
     >
       <div className="flex gap-4 border-b border-border px-4 py-3">
         {columnIndexes.map((index) => (

@@ -17,7 +17,7 @@ const VARIANTS: Record<ButtonVariant, string> = {
 export function Button({ variant = 'primary', className = '', children, ...props }: ButtonProps) {
   return (
     <button
-      className={`inline-flex h-10 items-center gap-2 rounded-[--radius-input] px-4 text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${VARIANTS[variant]} ${className}`}
+      className={`inline-flex h-10 items-center gap-2 rounded-(--radius-input) px-4 text-sm transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${VARIANTS[variant]} ${className}`}
       {...props}
     >
       {children}

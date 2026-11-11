@@ -17,7 +17,7 @@ export function Pagination({ page, pageSize, total, onChange }: PaginationProps)
           type="button"
           disabled={page <= 1}
           onClick={() => onChange(page - 1)}
-          className="h-8 rounded-[--radius-input] border border-border bg-surface px-3 disabled:opacity-40"
+          className="h-8 rounded-(--radius-input) border border-border bg-surface px-3 disabled:opacity-40"
         >
           Anterior
         </button>
@@ -28,7 +28,7 @@ export function Pagination({ page, pageSize, total, onChange }: PaginationProps)
           type="button"
           disabled={page >= totalPages}
           onClick={() => onChange(page + 1)}
-          className="h-8 rounded-[--radius-input] border border-border bg-surface px-3 disabled:opacity-40"
+          className="h-8 rounded-(--radius-input) border border-border bg-surface px-3 disabled:opacity-40"
         >
           Próxima
         </button>

@@ -49,7 +49,7 @@ export function ConfirmDialog({
       onClick={onCancel}
     >
       <div
-        className="w-full max-w-sm rounded-[--radius-card] border border-border bg-surface p-5 shadow-[--shadow-card]"
+        className="w-full max-w-sm rounded-(--radius-card) border border-border bg-surface p-5 shadow-(--shadow-card)"
         onClick={(event) => event.stopPropagation()}
       >
         <h2 className="text-base font-semibold text-text" style={{ fontFamily: 'var(--font-family-heading)' }}>

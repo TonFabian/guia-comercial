@@ -275,7 +275,7 @@ export function AtracoesSection({ cities, citiesError, companies, companiesTotal
           </div>
         </div>
 
-        <h1 className="text-xl font-semibold text-text" style={{ fontFamily: 'var(--font-family-heading)' }}>
+        <h1 className="form-title text-xl font-semibold text-text" style={{ fontFamily: 'var(--font-family-heading)' }}>
           {editingId ? 'Editar atração' : 'Nova atração'}
         </h1>
 
@@ -382,10 +382,10 @@ export function AtracoesSection({ cities, citiesError, companies, companiesTotal
             <div className="space-y-2">
               {form.schedule.map((item, index) => (
                 <div key={index} className="grid grid-cols-1 gap-2 sm:grid-cols-[60px_1fr_1fr_auto] sm:items-center">
-                  <input type="number" min={0} max={6} value={item.day} onChange={(e) => { const next = [...form.schedule]; next[index] = { ...item, day: Number(e.target.value) }; setForm({ ...form, schedule: next }); }} className="h-10 rounded-[--radius-input] border border-border bg-surface px-2 text-sm" />
-                  <input type="time" value={minutesToTime(item.opens)} onChange={(e) => { const next = [...form.schedule]; next[index] = { ...item, opens: timeToMinutes(e.target.value) }; setForm({ ...form, schedule: next }); }} className="h-10 rounded-[--radius-input] border border-border bg-surface px-2 text-sm" />
-                  <input type="time" value={minutesToTime(item.closes)} onChange={(e) => { const next = [...form.schedule]; next[index] = { ...item, closes: timeToMinutes(e.target.value) }; setForm({ ...form, schedule: next }); }} className="h-10 rounded-[--radius-input] border border-border bg-surface px-2 text-sm" />
-                  <button type="button" onClick={() => setForm({ ...form, schedule: form.schedule.filter((_, i) => i !== index) })} className="h-10 rounded-[--radius-input] border border-danger/30 bg-danger/10 px-2 text-xs text-danger">Remover</button>
+                  <input type="number" min={0} max={6} value={item.day} onChange={(e) => { const next = [...form.schedule]; next[index] = { ...item, day: Number(e.target.value) }; setForm({ ...form, schedule: next }); }} className="h-10 rounded-(--radius-input) border border-border bg-surface px-2 text-sm" />
+                  <input type="time" value={minutesToTime(item.opens)} onChange={(e) => { const next = [...form.schedule]; next[index] = { ...item, opens: timeToMinutes(e.target.value) }; setForm({ ...form, schedule: next }); }} className="h-10 rounded-(--radius-input) border border-border bg-surface px-2 text-sm" />
+                  <input type="time" value={minutesToTime(item.closes)} onChange={(e) => { const next = [...form.schedule]; next[index] = { ...item, closes: timeToMinutes(e.target.value) }; setForm({ ...form, schedule: next }); }} className="h-10 rounded-(--radius-input) border border-border bg-surface px-2 text-sm" />
+                  <button type="button" onClick={() => setForm({ ...form, schedule: form.schedule.filter((_, i) => i !== index) })} className="h-10 rounded-(--radius-input) border border-danger/30 bg-danger/10 px-2 text-xs text-danger">Remover</button>
                 </div>
               ))}
               <Button variant="secondary" type="button" onClick={() => setForm({ ...form, schedule: [...form.schedule, { day: 0, opens: 0, closes: 0 }] })}>

@@ -12,7 +12,7 @@ export type DeleteButtonVariant = 'danger' | 'confirm' | 'cancel';
  */
 export function deleteButtonClass(variant: DeleteButtonVariant): string {
   const base =
-    'h-8 rounded-[--radius-input] px-3 text-xs font-medium transition-all duration-150 active:scale-95 focus-visible:outline-none focus-visible:ring-2';
+    'h-8 rounded-(--radius-input) px-3 text-xs font-medium transition-all duration-150 active:scale-95 focus-visible:outline-none focus-visible:ring-2';
   if (variant === 'danger') {
     return `${base} border border-danger/40 bg-danger/10 text-danger hover:border-danger hover:bg-danger hover:text-white focus-visible:ring-danger/50`;
   }

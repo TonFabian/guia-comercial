@@ -85,7 +85,7 @@ export function CidadesSection({ cities, citiesError, onReload }: CidadesSection
           </div>
         </div>
 
-        <h1 className="text-xl font-semibold text-text" style={{ fontFamily: 'var(--font-family-heading)' }}>
+        <h1 className="form-title text-xl font-semibold text-text" style={{ fontFamily: 'var(--font-family-heading)' }}>
           Nova cidade
         </h1>
 

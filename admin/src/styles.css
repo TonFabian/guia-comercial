@@ -16,7 +16,7 @@
   --color-primary: #ffc107;
   --color-danger: #ef4444;
 
-  --radius-input: 8px;
+  --radius-input: 10px;
   --radius-card: 12px;
 
   --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.4);
@@ -58,7 +58,7 @@ body {
 input, select, textarea {
   background: #1d2026;
   border: 1px solid #2a2e36;
-  border-radius: 8px;
+  border-radius: var(--radius-input);
   color: #e8e8ea;
   padding: 6px 10px;
   font-size: 0.875rem;
@@ -66,6 +66,16 @@ input, select, textarea {
 button {
   cursor: pointer;
 }
+
+/*
+ * Título global da seção (App): nas telas de formulário o h1 da própria tela
+ * ("Editar/Criar ...") já tem classe form-title; o :has esconde o global,
+ * evitando duplicação. Regra fora de @layer vence os utilitários do Tailwind.
+ */
+main:has(h1.form-title) h1.section-title {
+  display: none;
+}
+
 label { color: #e8e8ea; }
 fieldset { border: 1px solid #2a2e36; border-radius: 12px; padding: 12px; }
 legend { padding: 0 6px; color: #9aa0a6; font-size: 0.75rem; }

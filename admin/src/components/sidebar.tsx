@@ -60,7 +60,7 @@ export function Sidebar({
                 onChange(section);
                 onClose();
               }}
-              className={`flex w-full items-center gap-2 rounded-[--radius-input] px-3 py-2 text-sm text-left transition-colors ${
+              className={`flex w-full items-center gap-2 rounded-(--radius-input) px-3 py-2 text-sm text-left transition-colors ${
                 active === section
                   ? 'border-l-2 border-primary bg-surface-hover text-primary'
                   : 'text-text-muted hover:bg-surface-hover hover:text-text'
@@ -83,7 +83,7 @@ export function Sidebar({
           <button
             type="button"
             onClick={() => void signOut()}
-            className="flex w-full items-center gap-2 rounded-[--radius-input] border border-border bg-surface-hover px-3 py-2 text-xs text-text-muted transition-colors hover:bg-surface hover:text-text"
+            className="flex w-full items-center gap-2 rounded-(--radius-input) border border-border bg-surface-hover px-3 py-2 text-xs text-text-muted transition-colors hover:bg-surface hover:text-text"
           >
             <span aria-hidden="true">🚪</span>
             <span>Sair</span>
@@ -115,7 +115,7 @@ export function MobileTopbar({
         type="button"
         onClick={() => void signOut()}
         aria-label="Sair"
-        className="ml-auto rounded-[--radius-input] border border-border bg-surface-hover px-2 py-1 text-xs text-text-muted transition-colors hover:bg-surface hover:text-text"
+        className="ml-auto rounded-(--radius-input) border border-border bg-surface-hover px-2 py-1 text-xs text-text-muted transition-colors hover:bg-surface hover:text-text"
       >
         Sair
       </button>

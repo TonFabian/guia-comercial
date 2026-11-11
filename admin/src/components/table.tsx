@@ -36,7 +36,7 @@ export function Table({ headers, rows, mobileRows, emptyMessage, loading }: Tabl
 
   return (
     <>
-      <div className="hidden md:block overflow-hidden rounded-[--radius-card] border border-border bg-surface shadow-[--shadow-card]">
+      <div className="hidden md:block overflow-hidden rounded-(--radius-card) border border-border bg-surface shadow-(--shadow-card)">
         <table className="w-full text-sm">
           <thead className="bg-surface-hover text-left text-xs uppercase tracking-wide text-text-muted">
             <tr>
@@ -66,7 +66,7 @@ export function Table({ headers, rows, mobileRows, emptyMessage, loading }: Tabl
           {mobileRows.map((row) => (
             <li
               key={row.id}
-              className="rounded-[--radius-card] border border-border bg-surface p-4 shadow-[--shadow-card]"
+              className="rounded-(--radius-card) border border-border bg-surface p-4 shadow-(--shadow-card)"
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0 flex-1">

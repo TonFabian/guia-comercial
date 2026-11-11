@@ -12,7 +12,7 @@ export type RowActionVariant = 'edit' | 'delete';
  */
 export function rowActionClass(variant: RowActionVariant): string {
   const base =
-    'h-9 flex-1 rounded-[--radius-input] px-3 text-xs font-medium transition-all duration-150 hover:-translate-y-0.5 hover:shadow-[--shadow-card] active:translate-y-0 active:scale-95 focus-visible:outline-none focus-visible:ring-2 sm:h-8 sm:flex-none';
+    'h-9 flex-1 rounded-(--radius-input) px-3 text-xs font-medium transition-all duration-150 hover:-translate-y-0.5 hover:shadow-(--shadow-card) active:translate-y-0 active:scale-95 focus-visible:outline-none focus-visible:ring-2 sm:h-8 sm:flex-none';
   if (variant === 'edit') {
     return `${base} border border-primary/40 bg-surface-hover text-primary hover:border-primary hover:bg-primary hover:text-[#111827] focus-visible:ring-primary/50`;
   }
