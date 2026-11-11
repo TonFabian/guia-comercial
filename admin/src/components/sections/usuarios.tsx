@@ -41,6 +41,7 @@ export function UsuariosSection() {
   }
 
   const isSelf = (user: AdminUserListItem) =>
+    Boolean(user.isSelf) ||
     Boolean(currentUser?.primaryEmailAddress?.emailAddress &&
       user.email.toLowerCase() === currentUser.primaryEmailAddress.emailAddress.toLowerCase());
 

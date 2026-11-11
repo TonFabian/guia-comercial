@@ -336,6 +336,8 @@ export type UpdateTourEventInput = Partial<TourEventInput>;
 export interface AdminUserListItem extends Pick<User, '_id' | 'email' | 'role' | 'city' | 'createdAt'> {
   /** Nome já montado pelo backend. */
   name?: string;
+  /** true quando o item é a conta do admin que fez a requisição. */
+  isSelf?: boolean;
 }
 
 // ---------------------------------------------------------------------------
