@@ -1,4 +1,9 @@
+
 export type Plan = 'free' | 'basic' | 'premium';
+
+export function PlanChip({ plan }: { plan: Plan }) {
+  return <span className={`inline-flex rounded-md px-2 py-0.5 text-xs ${planChipClass(plan)}`}>{planChipLabel(plan)}</span>;
+}
 
 /** Label do chip por plano — Premium ganha destaque de assinatura paga. */
 export function planChipLabel(plan: Plan): string {
