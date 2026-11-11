@@ -56,11 +56,13 @@ A aplicação tem **três camadas de limitação**, todas por IP (`req.ip`):
 
 | Camada | Onde | Limite padrão | Env |
 | --- | --- | --- | --- |
-| **Global** (`express-rate-limit`) | `app.ts`, montado em `/api/*` (cobre todas as rotas de API) | **100 req / 15 min** por IP (≈ 6,7 req/min) — default do código é 1000/15min quando a env não está definida | `RATE_LIMIT_WINDOW_MS` (ms), `RATE_LIMIT_MAX` |
+| **Global** (`express-rate-limit`) | `app.ts`, montado em `/api/*` (cobre todas as rotas de API) | **600 req / 15 min** por IP (≈ 40 req/min) — calibrado para navegação legítima: a home dispara ~12 GETs por carregamento, e um usuário passeando por várias telas nunca deve tomar 429. Default do código (sem env) é 1000/15min | `RATE_LIMIT_WINDOW_MS` (ms), `RATE_LIMIT_MAX` |
 | **Webhook do Clerk** | `POST /api/webhooks/clerk` (única rota fora do global, por exigir corpo bruto para a assinatura svix) | 30 req/min por IP | `WEBHOOK_RATE_LIMIT_WINDOW_MS`, `WEBHOOK_RATE_LIMIT_MAX` |
-| **Analytics anti-inflação** (dedup em memória) | `POST /api/companies/:id/view` e `POST /api/companies/:id/whatsapp-click` | `view`: **1 / empresa / IP / hora**; `whatsapp-click`: **5 / empresa / IP / hora** | `ANALYTICS_VIEW_MAX_PER_HOUR`, `ANALYTICS_CLICK_MAX_PER_HOUR` |
+- **Analytics anti-inflação** (dedup em memória) | `POST /api/companies/:id/view` e `POST /api/companies/:id/whatsapp-click` | `view`: **1 / empresa / IP / hora**; `whatsapp-click`: **5 / empresa / IP / hora** | `ANALYTICS_VIEW_MAX_PER_HOUR`, `ANALYTICS_CLICK_MAX_PER_HOUR` |
 
 Detalhes e limitações:
+
+- **Os limites de analytics NÃO limitam navegação**: os 5/hora são de *cliques de WhatsApp na mesma empresa* (e 1/hora é de *views da mesma empresa*) — métrica vendida ao lojista, onde clicar 5× na mesma empresa em 1h já é anomalia/inflação. GETs de navegação (home, busca, detalhes) passam pelo limite global, nunca por este.
 
 - **Cobertura**: a aplicação inteira sob `/api/*` está coberta pelo limite global — inclusive
   `GET /health`. As respostas de estouro são `429` com headers padrão
