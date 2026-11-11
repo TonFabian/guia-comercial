@@ -309,7 +309,7 @@ export function EmpresasSection({ categories, categoriesError, cities, citiesErr
             </h2>
             <div className="space-y-2">
               {form.schedule.map((item, index) => (
-                <div key={index} className="grid grid-cols-[60px_1fr_1fr_auto] items-center gap-2">
+                <div key={index} className="grid grid-cols-1 gap-2 sm:grid-cols-[60px_1fr_1fr_auto] sm:items-center">
                   <input
                     type="number"
                     min={0}
