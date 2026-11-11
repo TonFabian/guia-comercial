@@ -16,6 +16,7 @@ import { UsuariosSection } from './components/sections/usuarios';
 import { UtilidadePublicaSection } from './components/sections/utilidade-publica';
 import { VagasSection } from './components/sections/vagas';
 import { getCategories, getCities, getCompanies, getMe, setTokenProvider } from './services/api';
+import { PageLoader } from './components/ui/loading';
 import type { Catalog, CatalogErrors } from './types/catalog';
 
 /** Catálogo vazio — evita `undefined` enquanto os dados de referência carregam. */
@@ -130,11 +131,14 @@ export default function App() {
       <div className="flex min-w-0 flex-1 flex-col">
         <MobileTopbar section={section} onMenu={() => setMenuOpen(true)} />
         <main className="min-w-0 flex-1 p-4 md:p-6" style={{ paddingBottom: 'max(4rem, calc(env(safe-area-inset-bottom) + 1.5rem))' }}>
-          <h1 className="mb-4 hidden text-xl font-semibold text-text md:block" style={{ fontFamily: 'var(--font-family-heading)' }}>
-            {section}
-          </h1>
-          {catalogLoading && <p className="text-sm text-text-muted">Carregando dados de referência…</p>}
+          {/* Título da seção removido: cada tela exibe o próprio título,
+              evitando duplicação com o "← Seção" e o "Editar/Criar ..." do formulário. */}
+          {/* authReady evita loader eterno quando o catálogo não dispara (ex.: sem sessão).
+              Enquanto o catálogo carrega, loading centralizado na tela (mobile-first);
+              as seções ficam montadas porém ocultas — os fetches delas continuam em paralelo. */}
+          {catalogLoading && authReady && <PageLoader label="Carregando dados de referência…" />}
 
+          <div className={catalogLoading && authReady ? 'hidden' : undefined}>
           {section === 'Empresas' && (
           <EmpresasSection
             categories={catalog.categories}
@@ -192,6 +196,7 @@ export default function App() {
           />
         )}
         {section === 'Usuários' && <UsuariosSection />}
+          </div>
       </main>
       </div>
     </div>
