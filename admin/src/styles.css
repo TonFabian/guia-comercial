@@ -1,3 +1,27 @@
+@import "tailwindcss";
+
+/*
+ * Tokens do dark console — fonte única de valores (spec 2026-11-12).
+ * Consumidos como utilitários Tailwind: bg-bg, bg-surface, border-border,
+ * text-text, text-text-muted, bg-primary, radius-input, radius-card,
+ * shadow-card etc.
+ */
+@theme {
+  --color-bg: #16181d;
+  --color-surface: #1d2026;
+  --color-surface-hover: #262b33;
+  --color-border: #2a2e36;
+  --color-text: #e8e8ea;
+  --color-text-muted: #9aa0a6;
+  --color-primary: #ffc107;
+  --color-danger: #ef4444;
+
+  --radius-input: 10px;
+  --radius-card: 12px;
+
+  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
 :root {
   color-scheme: dark;
   --font-family-heading: 'Rubik Variable', system-ui, sans-serif;
@@ -15,15 +39,79 @@
   font-family: var(--font-family-body);
 }
 
+/*
+ * Reset mínimo. NÃO zere margin aqui: CSS fora de @layer vence @layer
+ * utilities do Tailwind, e `* { margin: 0 }` mata TODAS as margens de
+ * utilitários (mb-*, mt-*, space-y-*) em todo o painel. O preflight do
+ * Tailwind já zera as margens dos elementos de texto.
+ */
 * {
   box-sizing: border-box;
-  margin: 0;
 }
 
 body {
-  background: #121212;
-  color: #ffffff;
+  background: #16181d;
+  color: #e8e8ea;
 }
+
+/* Base legível para controles nativos (seções ainda em migração). */
+input, select, textarea {
+  background: #1d2026;
+  border: 1px solid #2a2e36;
+  border-radius: var(--radius-input);
+  color: #e8e8ea;
+  padding: 6px 10px;
+  font-size: 0.875rem;
+}
+button {
+  cursor: pointer;
+}
+
+/*
+ * Scroll horizontal das tabelas: quase invisível — a barra só aparece no
+ * hover, mas a rolagem continua sempre disponível (roda do mouse rola a
+ * tabela na horizontal quando há overflow; ver Table).
+ */
+.scroll-x {
+  scrollbar-width: thin;
+  scrollbar-color: transparent transparent;
+}
+
+.scroll-x:hover,
+.scroll-x:focus-within {
+  scrollbar-color: var(--color-border) transparent;
+}
+
+.scroll-x::-webkit-scrollbar {
+  height: 8px;
+}
+
+.scroll-x::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.scroll-x::-webkit-scrollbar-thumb {
+  background: transparent;
+  border-radius: 999px;
+}
+
+.scroll-x:hover::-webkit-scrollbar-thumb,
+.scroll-x:focus-within::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+}
+
+/*
+ * Título global da seção (App): nas telas de formulário o h1 da própria tela
+ * ("Editar/Criar ...") já tem classe form-title; o :has esconde o global,
+ * evitando duplicação. Regra fora de @layer vence os utilitários do Tailwind.
+ */
+main:has(h1.form-title) h1.section-title {
+  display: none;
+}
+
+label { color: #e8e8ea; }
+fieldset { border: 1px solid #2a2e36; border-radius: 12px; padding: 12px; }
+legend { padding: 0 6px; color: #9aa0a6; font-size: 0.75rem; }
 
 .layout {
   display: flex;
@@ -152,5 +240,44 @@ code {
 @keyframes gate-spin {
   to {
     transform: rotate(360deg);
+  }
+}
+
+/* ---------------------------------------------------------------------------
+   DotsLoader: três pontos pulsando em onda (cor herdada via currentcolor).
+   ------------------------------------------------------------------------- */
+
+.dots-loader {
+  display: inline-flex;
+  gap: 4px;
+  align-items: center;
+}
+
+.dots-loader span {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentcolor;
+  animation: dots-pulse 1s ease-in-out infinite;
+}
+
+/* Variante grande — PageLoader centralizado. */
+.dots-loader-lg {
+  gap: 6px;
+}
+
+.dots-loader-lg span {
+  width: 10px;
+  height: 10px;
+}
+
+@keyframes dots-pulse {
+  0%, 80%, 100% {
+    opacity: 0.25;
+    transform: scale(0.8);
+  }
+  40% {
+    opacity: 1;
+    transform: scale(1);
   }
 }

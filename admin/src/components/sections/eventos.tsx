@@ -14,8 +14,9 @@ import { spotOptionValue } from '../../utils/spot-option';
 import { Pagination } from '../pagination';
 import { RowActions } from '../row-actions';
 import { SearchInput } from '../search-input';
-import { checkLabelStyle, errorStyle, formStyle, hintStyle, toolbarStyle } from '../styles';
 import { Table } from '../table';
+import { DotsLoader } from '../ui/loading';
+import { Button } from '../ui/button';
 
 export interface EventosSectionProps {
   cities: City[];
@@ -200,6 +201,7 @@ export function EventosSection({ cities, citiesError, companies, companiesTotal,
   const [editingId, setEditingId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [view, setView] = useState<'list' | 'form'>('list');
   const hoje = hojeNaFortaleza();
 
   const visible = useMemo(
@@ -215,11 +217,21 @@ export function EventosSection({ cities, citiesError, companies, companiesTotal,
   function resetForm() {
     setEditingId(null);
     setForm(EMPTY_FORM);
+    setView('list');
+  }
+
+  /** "Novo evento": formulário em tela dedicada (mesmo padrão das Empresas). */
+  function startCreate() {
+    setEditingId(null);
+    setForm(EMPTY_FORM);
+    setActionError(null);
+    setView('form');
   }
 
   function startEdit(evento: TourEvent) {
     setEditingId(evento._id);
     setActionError(null);
+    setView('form');
     setForm({
       name: evento.name,
       slug: evento.slug,
@@ -378,15 +390,40 @@ export function EventosSection({ cities, citiesError, companies, companiesTotal,
     }
   }
 
-  return (
-    <>
-      {citiesError && <p style={errorStyle}>Falha ao carregar cidades: {citiesError}</p>}
-      {companiesError && <p style={errorStyle}>Falha ao carregar empresas: {companiesError}</p>}
-      {touristSpotsError && <p style={errorStyle}>Falha ao carregar atrações: {touristSpotsError}</p>}
-      {error && <p style={errorStyle}>{error}</p>}
-      {actionError && <p style={errorStyle}>{actionError}</p>}
+  // Formulário em tela dedicada (mesmo padrão das Empresas): a listagem fica
+  // limpa e o form só renderiza quando o usuário cria ou edita.
+  const formView = (
+    <div className="space-y-4">
+      {citiesError && <p className="text-sm text-danger">Falha ao carregar cidades: {citiesError}</p>}
+      {companiesError && <p className="text-sm text-danger">Falha ao carregar empresas: {companiesError}</p>}
+      {touristSpotsError && <p className="text-sm text-danger">Falha ao carregar atrações: {touristSpotsError}</p>}
+      {actionError && <p className="text-sm text-danger">{actionError}</p>}
 
-      <form onSubmit={handleSubmit} style={formStyle}>
+      <div className="flex flex-row items-center justify-between gap-3">
+        <button
+          type="button"
+          onClick={resetForm}
+          className="text-sm text-text-muted hover:text-text"
+        >
+          ← Eventos
+        </button>
+        <div className="flex gap-2">
+          <Button type="submit" form="evento-form" disabled={saving}>
+            {saving ? <DotsLoader size="sm" color="text-[#111827]" /> : editingId ? 'Salvar' : 'Criar'}
+          </Button>
+          <Button variant="secondary" type="button" onClick={resetForm} disabled={saving}>
+            Cancelar
+          </Button>
+        </div>
+      </div>
+      <h1 className="form-title text-xl font-semibold text-text" style={{ fontFamily: 'var(--font-family-heading)' }}>
+        {editingId ? 'Editar evento' : 'Novo evento'}
+      </h1>
+      <form
+        id="evento-form"
+        onSubmit={handleSubmit}
+        className="grid gap-3 rounded-(--radius-card) border border-border bg-surface p-4 shadow-(--shadow-card) sm:grid-cols-2"
+      >
         <input
           placeholder="Nome"
           value={form.name}
@@ -522,7 +559,7 @@ export function EventosSection({ cities, citiesError, companies, companiesTotal,
           value={form.instagram}
           onChange={(event) => setForm({ ...form, instagram: event.target.value })}
         />
-        <label style={checkLabelStyle}>
+        <label className="flex items-center gap-2 text-sm text-text">
           <input
             type="checkbox"
             checked={form.featured}
@@ -530,7 +567,7 @@ export function EventosSection({ cities, citiesError, companies, companiesTotal,
           />
           Destaque
         </label>
-        <label style={checkLabelStyle}>
+        <label className="flex items-center gap-2 text-sm text-text">
           <input
             type="checkbox"
             checked={form.active}
@@ -538,14 +575,6 @@ export function EventosSection({ cities, citiesError, companies, companiesTotal,
           />
           Ativo
         </label>
-        <button type="submit" disabled={saving}>
-          {editingId ? 'Salvar' : 'Criar'}
-        </button>
-        {editingId && (
-          <button type="button" onClick={resetForm}>
-            Cancelar
-          </button>
-        )}
         <textarea
           placeholder="Fotos (uma URL por linha)"
           value={form.photos}
@@ -561,24 +590,41 @@ export function EventosSection({ cities, citiesError, companies, companiesTotal,
         />
       </form>
       {companiesTotal > companies.length && (
-        <p style={hintStyle}>
+        <p className="text-xs text-text-muted">
           Exibindo {companies.length} de {companiesTotal} empresas — consulte a seção Empresas para o
           restante.
         </p>
       )}
       {touristSpotsTotal > touristSpots.length && (
-        <p style={hintStyle}>
+        <p className="text-xs text-text-muted">
           Exibindo {touristSpots.length} de {touristSpotsTotal} atrações — a lista do select está
           limitada; use a seção Atrações se a atração desejada não aparecer.
         </p>
       )}
+    </div>
+  );
 
-      <div style={toolbarStyle}>
+  if (view === 'form') {
+    return formView;
+  }
+
+  // Listagem: busca + criação + tabela.
+  return (
+    <div className="space-y-4">
+      {citiesError && <p className="text-sm text-danger">Falha ao carregar cidades: {citiesError}</p>}
+      {companiesError && <p className="text-sm text-danger">Falha ao carregar empresas: {companiesError}</p>}
+      {touristSpotsError && <p className="text-sm text-danger">Falha ao carregar atrações: {touristSpotsError}</p>}
+      {error && <p className="text-sm text-danger">{error}</p>}
+      {actionError && <p className="text-sm text-danger">{actionError}</p>}
+
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <SearchInput value={search} onChange={setSearch} placeholder="Buscar evento…" />
-        {search && <span style={hintStyle}>A busca filtra os itens da página atual.</span>}
+        {search && <span className="text-xs text-text-muted">A busca filtra os itens da página atual.</span>}
+        <Button onClick={startCreate}>+ Novo evento</Button>
       </div>
 
       <Table
+        loading={loading}
         headers={['Nome', 'Categoria', 'Período', 'Local', 'Situação', 'Ingresso', 'Ativo', 'Ações']}
         rows={visible.map((evento) => [
           evento.name,
@@ -594,12 +640,22 @@ export function EventosSection({ cities, citiesError, companies, companiesTotal,
             onDelete={() => void handleDelete(evento._id)}
           />,
         ])}
+        mobileRows={visible.map((evento) => ({
+          id: evento._id,
+          primary: evento.name,
+          secondary: `${categoryLabel(evento.category)} • ${evento.startDate} a ${evento.endDate} • ${situacao(evento, hoje)}`,
+          actions: (
+            <RowActions
+              onEdit={() => startEdit(evento)}
+              onDelete={() => void handleDelete(evento._id)}
+            />
+          ),
+        }))}
         emptyMessage="Nenhum evento turístico encontrado."
       />
 
       <Pagination page={page} pageSize={pageSize} total={total} onChange={setPage} />
-      <p style={hintStyle}>Os eventos encerrados aparecem na listagem para que possam ser editados ou desativados.</p>
-      {loading && <p style={hintStyle}>Carregando…</p>}
-    </>
+      <p className="text-xs text-text-muted">Os eventos encerrados aparecem na listagem para que possam ser editados ou desativados.</p>
+    </div>
   );
 }

@@ -1,7 +1,6 @@
 import type { CSSProperties } from 'react';
 
 import type { TouristSpot } from '../types/domain';
-import { hintStyle } from './styles';
 import { FontSize } from '../theme/typography';
 
 /** Ingresso do item: `''` = herda o ingresso do evento (campo ausente no payload). */
@@ -213,7 +212,7 @@ export function ScheduleEditor({ items, spots, startDate, endDate, onChange }: S
     <fieldset style={fieldsetStyle}>
       <legend>Programação</legend>
       {items.length === 0 && (
-        <p style={hintStyle}>Nenhum item — use "Adicionar item" para cadastrar as atrações por dia.</p>
+        <p className="text-xs text-text-muted">Nenhum item — use "Adicionar item" para cadastrar as atrações por dia.</p>
       )}
       {items.map((item, indice) => {
         const erros = validarItemProgramacao(item, startDate, endDate);

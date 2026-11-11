@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useAuth, useUser } from '@clerk/clerk-react';
 
 import { GateDenied, GateLoading, GateSignIn } from './components/auth-gate';
-import { Sidebar } from './components/sidebar';
+import { Sidebar, MobileTopbar } from './components/sidebar';
 import type { Section } from './components/sidebar';
 import { AtracoesSection } from './components/sections/atracoes';
 import { AvisosSection } from './components/sections/avisos';
@@ -15,8 +15,8 @@ import { EventosSection } from './components/sections/eventos';
 import { UsuariosSection } from './components/sections/usuarios';
 import { UtilidadePublicaSection } from './components/sections/utilidade-publica';
 import { VagasSection } from './components/sections/vagas';
-import { hintStyle } from './components/styles';
 import { getCategories, getCities, getCompanies, getMe, setTokenProvider } from './services/api';
+import { PageLoader } from './components/ui/loading';
 import type { Catalog, CatalogErrors } from './types/catalog';
 
 /** Catálogo vazio — evita `undefined` enquanto os dados de referência carregam. */
@@ -35,6 +35,7 @@ export default function App() {
   // metadata do Clerk — quem decide o que é admin é a API, nunca o frontend.
   const [role, setRole] = useState<'admin' | 'user' | null>(null);
   const [roleLoaded, setRoleLoaded] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   // O token do Clerk expira em ~60s: registramos o provider (getToken do
   // Clerk devolve sempre o token válido/renovado) e esperamos a primeira
@@ -125,13 +126,27 @@ export default function App() {
   if (role !== 'admin') return <GateDenied />;
 
   return (
-    <div className="layout">
-      <Sidebar active={section} onChange={setSection} />
-      <main className="content">
-        <h2>{section}</h2>
-        {catalogLoading && <p style={hintStyle}>Carregando dados de referência…</p>}
+    <div className="flex min-h-[100dvh] bg-bg text-text">
+      <Sidebar active={section} onChange={setSection} open={menuOpen} onClose={() => setMenuOpen(false)} />
+      <div className="flex min-w-0 flex-1 flex-col">
+        <MobileTopbar section={section} onMenu={() => setMenuOpen(true)} />
+        <main className="min-w-0 flex-1 p-4 md:p-6" style={{ paddingBottom: 'max(4rem, calc(env(safe-area-inset-bottom) + 1.5rem))' }}>
+          {/* Título global da seção: visível nas telas de listagem; no modo
+              formulário é escondido via CSS (:has), pois a tela de edição tem
+              o próprio "← Seção" + "Editar/Criar ..." — sem duplicação. */}
+          <h1
+            className="section-title mb-4 hidden text-xl font-semibold text-text md:block"
+            style={{ fontFamily: 'var(--font-family-heading)' }}
+          >
+            {section}
+          </h1>
+          {/* authReady evita loader eterno quando o catálogo não dispara (ex.: sem sessão).
+              Enquanto o catálogo carrega, loading centralizado na tela (mobile-first);
+              as seções ficam montadas porém ocultas — os fetches delas continuam em paralelo. */}
+          {catalogLoading && authReady && <PageLoader label="Carregando dados de referência…" />}
 
-        {section === 'Empresas' && (
+          <div className={catalogLoading && authReady ? 'hidden' : undefined}>
+          {section === 'Empresas' && (
           <EmpresasSection
             categories={catalog.categories}
             categoriesError={catalogErrors.categories ?? null}
@@ -188,7 +203,9 @@ export default function App() {
           />
         )}
         {section === 'Usuários' && <UsuariosSection />}
+          </div>
       </main>
+      </div>
     </div>
   );
 }

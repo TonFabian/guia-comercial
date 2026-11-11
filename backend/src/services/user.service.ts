@@ -1,4 +1,8 @@
 import { CityModel } from '../models/city.model.js';
+import { CompanyModel } from '../models/company.model.js';
+import { AutonomousProfessionalModel } from '../models/autonomous-professional.model.js';
+import { PushTokenModel } from '../models/push-token.model.js';
+import { ReviewModel } from '../models/review.model.js';
 import { UserModel } from '../models/user.model.js';
 import type { City, User } from '../../../shared/domain.js';
 import type { Pagination } from '../utils/http.js';
@@ -67,6 +71,8 @@ export interface AdminUserListItem {
   role: 'user' | 'admin';
   city?: string | City;
   createdAt?: string;
+  /** true quando o item é a conta do admin que fez a requisição. */
+  isSelf?: boolean;
 }
 
 /**
@@ -77,10 +83,11 @@ export interface AdminUserListItem {
  */
 export async function listUsers(
   pagination: Pagination,
+  actorClerkId?: string,
 ): Promise<{ items: AdminUserListItem[]; total: number }> {
   const [usuarios, total] = await Promise.all([
     UserModel.find({})
-      .select({ pushToken: 0, clerkId: 0, lastSid: 0, lastSignInAt: 0 })
+      .select({ pushToken: 0, lastSid: 0, lastSignInAt: 0 })
       .populate('city')
       .sort({ createdAt: -1 })
       .skip(pagination.skip)
@@ -89,11 +96,11 @@ export async function listUsers(
     UserModel.countDocuments({}),
   ]);
 
-  return { items: usuarios.map(toAdminUserListItem), total };
+  return { items: usuarios.map((u) => toAdminUserListItem(u, actorClerkId)), total };
 }
 
 /** Normaliza o documento lean no item público da listagem admin. */
-function toAdminUserListItem(user: User): AdminUserListItem {
+function toAdminUserListItem(user: User, actorClerkId?: string): AdminUserListItem {
   const nome = [user.firstName, user.lastName].filter(Boolean).join(' ');
 
   return {
@@ -103,6 +110,7 @@ function toAdminUserListItem(user: User): AdminUserListItem {
     role: user.role,
     ...(user.city ? { city: user.city } : {}),
     ...(user.createdAt ? { createdAt: user.createdAt } : {}),
+    ...(actorClerkId && user.clerkId === actorClerkId ? { isSelf: true } : {}),
   };
 }
 
@@ -174,6 +182,91 @@ export async function removeUserByClerkId(clerkId: string): Promise<void> {
   await UserModel.deleteOne({ clerkId }).exec();
 }
 
+export async function updateUserRole(id: string, role: 'user' | 'admin'): Promise<User | null> {
+  const updated = await UserModel.findByIdAndUpdate(id, { $set: { role } }, { returnDocument: 'after' })
+    .populate('city')
+    .lean<User>();
+  return updated;
+}
+
+/**
+ * Edição de perfil pelo admin (modal do painel): nome e cidade.
+ *
+ * `city` chega como slug (convenção das demais rotas) e é resolvido para o
+ * ObjectId aqui; `null` limpa a cidade do usuário.
+ */
+export async function updateUserProfile(
+  id: string,
+  data: { firstName?: string; lastName?: string; city?: string | null },
+): Promise<AdminUserListItem | null> {
+  const update: Record<string, unknown> = {};
+  if (data.firstName !== undefined) update.firstName = data.firstName;
+  if (data.lastName !== undefined) update.lastName = data.lastName;
+  if (data.city !== undefined) {
+    if (data.city === null) {
+      update.city = null;
+    } else {
+      const city = await CityModel.findOne({ slug: data.city }).lean();
+      if (!city) {
+        throw Object.assign(new Error('cidade não encontrada'), { statusCode: 404 });
+      }
+      update.city = city._id;
+    }
+  }
+
+  const updated = await UserModel.findByIdAndUpdate(id, { $set: update }, { returnDocument: 'after' })
+    .populate('city')
+    .lean<User>();
+
+  if (!updated) return null;
+  return toAdminUserListItem(updated);
+}
+
+/** Busca o documento bruto por id (controllers precisam do clerkId para defesa de self). */
+export async function findUserById(id: string): Promise<User | null> {
+  return UserModel.findById(id).lean<User>();
+}
+
+/**
+ * Exclui um usuário e seus registros relacionados (LGPD).
+ *
+ * Remove push tokens, avaliações e empresas/profissionais autônomos de sua
+ * propriedade. A exclusão do perfil no Clerk é best-effort (ignora erros
+ * quando a chave não está configurada ou o usuário já não existe).
+ */
+export async function deleteUser(id: string): Promise<User | null> {
+  const user = await UserModel.findById(id).lean<User>();
+  if (!user) return null;
+
+  const clerkId = user.clerkId;
+
+  // Limpeza best-effort dos registros relacionados (não bloqueia a exclusão
+  // do usuário se algum modelo não estiver disponível/mocado em testes).
+  const cleanup = async (label: string, fn: () => Promise<unknown>) => {
+    try {
+      await fn();
+    } catch (err) {
+      console.warn(`[deleteUser] falha ao limpar ${label}:`, err);
+    }
+  };
+
+  await cleanup('pushToken', async () => {
+    await PushTokenModel.deleteMany({ clerkId }).exec();
+  });
+  await cleanup('review', async () => {
+    await ReviewModel.deleteMany({ clerkId }).exec();
+  });
+  await cleanup('company', async () => {
+    await CompanyModel.deleteMany({ ownerClerkId: clerkId }).exec();
+  });
+  await cleanup('autonomousProfessional', async () => {
+    await AutonomousProfessionalModel.deleteMany({ ownerClerkId: clerkId }).exec();
+  });
+
+  await UserModel.deleteOne({ _id: id }).exec();
+
+  return user;
+}
 export async function listPushTokens(): Promise<string[]> {
   const users = await UserModel.find({ pushToken: { $exists: true, $ne: null } })
     .select({ pushToken: 1 })

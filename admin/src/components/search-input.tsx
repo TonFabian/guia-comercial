@@ -1,21 +1,17 @@
-import { searchInputStyle } from './styles';
-
-export interface SearchInputProps {
+interface SearchInputProps {
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
 }
 
-/** Campo de busca que filtra no cliente os itens já carregados. */
-export function SearchInput({ value, onChange, placeholder }: SearchInputProps) {
+export function SearchInput({ value, onChange, placeholder = 'Buscar…' }: SearchInputProps) {
   return (
     <input
       type="search"
-      style={searchInputStyle}
-      placeholder={placeholder ?? 'Buscar…'}
       value={value}
       onChange={(event) => onChange(event.target.value)}
-      aria-label={placeholder ?? 'Buscar'}
+      placeholder={placeholder}
+      className="h-10 w-full rounded-(--radius-input) border border-border bg-surface px-3 text-sm text-text placeholder:text-text-muted focus:outline-none focus:ring-2 focus:ring-primary/40"
     />
   );
 }

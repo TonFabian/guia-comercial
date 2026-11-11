@@ -4,13 +4,13 @@ import { StyleSheet, Text, View } from 'react-native';
 import { Spacing, Typography } from '@/constants/theme';
 import { useThemeColors } from '@/hooks/use-theme-colors';
 
+import { useAuthState } from '@/providers/auth-provider';
+
 /**
  * Texto exibido quando o dado comercial foi redigido para convidado ou
  * simplesmente não foi informado (`null` vindo do backend).
  */
 export const CONTACT_HIDDEN_HINT = 'Entre para ver o contato';
-
-import { useAuthState } from '@/providers/auth-provider';
 
 /** Linha padronizada usada no lugar de ações de contato indisponíveis. */
 export function ContactHintRow() {

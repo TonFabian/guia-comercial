@@ -6,12 +6,17 @@ import { createCompany, deleteCompany, getCompanies, updateCompany, updateCompan
 import type { CompanyInput } from '../../services/api';
 import type { Category, City, Company } from '../../types/domain';
 import { filterByText } from '../../utils/filter';
-import { categoryId, categoryLabel, cityLabel, citySlug, planLabel } from '../../utils/labels';
+import { categoryId, categoryLabel, cityLabel, citySlug } from '../../utils/labels';
+import { formatPhone, onlyDigits } from '../../utils/phone';
+import { Button } from '../ui/button';
+import { Card } from '../ui/card';
+import { Field, Input, Select, Textarea, CheckboxField } from '../ui/input';
+import { PlanChip, planChipLabel } from '../ui/plan-chip';
 import { Pagination } from '../pagination';
 import { RowActions } from '../row-actions';
 import { SearchInput } from '../search-input';
-import { checkLabelStyle, errorStyle, formStyle, hintStyle, toolbarStyle } from '../styles';
 import { Table } from '../table';
+import { DotsLoader } from '../ui/loading';
 
 export interface EmpresasSectionProps {
   categories: Category[];
@@ -52,6 +57,7 @@ const EMPTY_FORM: CompanyForm = {
   plan: 'free',
 };
 
+const DAYS = [0, 1, 2, 3, 4, 5, 6];
 
 function minutesToTime(m: number): string {
   const h = Math.floor(m / 60);
@@ -71,6 +77,7 @@ export function EmpresasSection({ categories, categoriesError, cities, citiesErr
   const [editingId, setEditingId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [view, setView] = useState<'list' | 'form'>('list');
 
   const visible = useMemo(
     () => filterByText(items, search, (company) => `${company.name} ${company.slug} ${cityLabel(company.city)}`),
@@ -80,6 +87,7 @@ export function EmpresasSection({ categories, categoriesError, cities, citiesErr
   function resetForm() {
     setEditingId(null);
     setForm(EMPTY_FORM);
+    setView('list');
   }
 
   function startEdit(company: Company) {
@@ -97,13 +105,15 @@ export function EmpresasSection({ categories, categoriesError, cities, citiesErr
       schedule: company.schedule ?? [],
       plan: company.plan ?? 'free',
     });
+    setView('form');
   }
 
   function handlePhoneChange(value: string) {
+    const digits = onlyDigits(value).slice(0, 13);
     setForm((previous) => ({
       ...previous,
-      phone: value,
-      whatsapp: previous.samePhone ? value : previous.whatsapp,
+      phone: digits,
+      whatsapp: previous.samePhone ? digits : previous.whatsapp,
     }));
   }
 
@@ -126,16 +136,14 @@ export function EmpresasSection({ categories, categoriesError, cities, citiesErr
       description: form.description,
       category: form.category,
       city: form.city || undefined,
-      phone: form.phone || undefined,
-      whatsapp: form.whatsapp || undefined,
+      phone: form.phone ? onlyDigits(form.phone) : undefined,
+      whatsapp: form.whatsapp ? onlyDigits(form.whatsapp) : undefined,
       plan: form.plan,
       schedule: form.schedule,
     };
 
     try {
       if (editingId) {
-        // `plan` NÃO vai no PUT de dados: updateCompany descarta o campo e a
-        // rota dedicada altera o plano logo após (somente admin).
         await updateCompany(editingId, payload);
         try {
           await updateCompanyPlan(editingId, form.plan);
@@ -176,183 +184,247 @@ export function EmpresasSection({ categories, categoriesError, cities, citiesErr
     }
   }
 
-  return (
-    <>
-      {categoriesError && <p style={errorStyle}>Falha ao carregar categorias: {categoriesError}</p>}
-      {citiesError && <p style={errorStyle}>Falha ao carregar cidades: {citiesError}</p>}
-      {error && <p style={errorStyle}>{error}</p>}
-      {actionError && <p style={errorStyle}>{actionError}</p>}
+  if (view === 'form') {
+    return (
+      <div className="space-y-4">
+        <div className="flex flex-row items-center justify-between gap-3">
+          <button
+            type="button"
+            onClick={resetForm}
+            className="text-sm text-text-muted hover:text-text"
+          >
+            ← Empresas
+          </button>
+          <div className="flex gap-2">
+                        <Button type="submit" form="empresa-form" disabled={saving}>
+              {saving ? <DotsLoader size="sm" color="text-[#111827]" /> : editingId ? 'Salvar' : 'Criar'}
+            </Button>
+            <Button variant="secondary" type="button" onClick={resetForm} disabled={saving}>
+              Cancelar
+            </Button>
+          </div>
+        </div>
 
-      <form onSubmit={handleSubmit} style={formStyle}>
-        <input
-          placeholder="Nome"
-          value={form.name}
-          onChange={(event) => setForm({ ...form, name: event.target.value })}
-          required
-        />
-        <input
-          placeholder="Slug"
-          value={form.slug}
-          onChange={(event) => setForm({ ...form, slug: event.target.value })}
-          required
-        />
-        <input
-          placeholder="Descrição"
-          value={form.description}
-          onChange={(event) => setForm({ ...form, description: event.target.value })}
-          required
-        />
-        <select
-          value={form.category}
-          onChange={(event) => setForm({ ...form, category: event.target.value })}
-          required
-        >
-          <option value="">Categoria</option>
-          {categories.map((category) => (
-            <option key={category._id} value={category._id}>
-              {category.name}
-            </option>
-          ))}
-        </select>
-        <select value={form.city} onChange={(event) => setForm({ ...form, city: event.target.value })}>
-          <option value="">Cidade</option>
-          {cities.map((city) => (
-            <option key={city._id} value={city.slug}>
-              {city.name} — {city.state}
-            </option>
-          ))}
-        </select>
-        <input
-          placeholder="Telefone (ligar)"
-          value={form.phone}
-          onChange={(event) => handlePhoneChange(event.target.value)}
-        />
-        <label style={checkLabelStyle}>
-          <input
-            type="checkbox"
-            checked={form.samePhone}
-            onChange={(event) => handleSamePhoneChange(event.target.checked)}
-          />
-          Usar o mesmo número para WhatsApp
-        </label>
-        <input
-          placeholder="WhatsApp"
-          value={form.whatsapp}
-          onChange={(event) => setForm({ ...form, whatsapp: event.target.value })}
-          disabled={form.samePhone}
-        />
-        <select
-          value={form.plan}
-          onChange={(event) => setForm({ ...form, plan: event.target.value as 'free' | 'basic' | 'premium' })}
-        >
-          <option value="free">Plano: Gratuito</option>
-          <option value="basic">Plano: Básico</option>
-          <option value="premium">Plano: Premium</option>
-        </select>
-        <fieldset>
-          <legend>Horário de funcionamento</legend>
-          {form.schedule.map((item, index) => (
-            <div key={index}>
-              <input
-                type="number"
-                min={0}
-                max={6}
-                value={item.day}
-                onChange={(e) => {
-                  const next = [...form.schedule];
-                  next[index] = { ...item, day: Number(e.target.value) };
-                  setForm({ ...form, schedule: next });
-                }}
-              />
-              <input
-                type="time"
-                value={minutesToTime(item.opens)}
-                onChange={(e) => {
-                  const next = [...form.schedule];
-                  next[index] = { ...item, opens: timeToMinutes(e.target.value) };
-                  setForm({ ...form, schedule: next });
-                }}
-              />
-              <input
-                type="time"
-                value={minutesToTime(item.closes)}
-                onChange={(e) => {
-                  const next = [...form.schedule];
-                  next[index] = { ...item, closes: timeToMinutes(e.target.value) };
-                  setForm({ ...form, schedule: next });
-                }}
-              />
-              <button
-                type="button"
-                onClick={() => setForm({ ...form, schedule: form.schedule.filter((_, i) => i !== index) })}
-              >
-                Remover
-              </button>
-            </div>
-          ))}
-          <button
-            type="button"
-            onClick={() => setForm({ ...form, schedule: [...form.schedule, { day: 0, opens: 0, closes: 0 }] })}
-          >
-            Adicionar dia
-          </button>
-          <button
-            type="button"
-            onClick={() =>
-              setForm({
-                ...form,
-                schedule: [0, 1, 2, 3, 4, 5, 6].map((day) => ({ day, opens: 480, closes: 1080 })),
-              })
-            }
-          >
-            Preencher semana
-          </button>
-          <button
-            type="button"
-            onClick={() =>
-              setForm({
-                ...form,
-                schedule: [0, 1, 2, 3, 4, 5, 6].map((day) => ({ day, opens: 480, closes: 1080 })),
-              })
-            }
-          >
-            Preencher semana
-          </button>
-        </fieldset>
-        <button type="submit" disabled={saving}>
-          {editingId ? 'Salvar' : 'Criar'}
-        </button>
-        {editingId && (
-          <button type="button" onClick={resetForm}>
-            Cancelar
-          </button>
+        <h1 className="form-title text-xl font-semibold text-text" style={{ fontFamily: 'var(--font-family-heading)' }}>
+          {editingId ? 'Editar empresa' : 'Nova empresa'}
+        </h1>
+
+        {(categoriesError || citiesError || actionError) && (
+          <div className="space-y-1 text-sm text-danger">
+            {categoriesError && <p>Falha ao carregar categorias: {categoriesError}</p>}
+            {citiesError && <p>Falha ao carregar cidades: {citiesError}</p>}
+            {actionError && <p>{actionError}</p>}
+          </div>
         )}
-      </form>
 
-      <div style={toolbarStyle}>
-        <SearchInput value={search} onChange={setSearch} placeholder="Buscar empresa…" />
-        {search && <span style={hintStyle}>A busca filtra os itens da página atual.</span>}
+        <form id="empresa-form" onSubmit={handleSubmit} className="space-y-4">
+          <Card>
+            <h2 className="mb-3 text-sm font-semibold text-text" style={{ fontFamily: 'var(--font-family-heading)' }}>
+              Dados básicos
+            </h2>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Field label="Nome">
+                <Input
+                  value={form.name}
+                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  required
+                />
+              </Field>
+              <Field label="Slug">
+                <Input
+                  value={form.slug}
+                  onChange={(e) => setForm({ ...form, slug: e.target.value })}
+                  required
+                />
+              </Field>
+              <Field label="Descrição">
+                <Textarea
+                  value={form.description}
+                  onChange={(e) => setForm({ ...form, description: e.target.value })}
+                  required
+                />
+              </Field>
+              <Field label="Categoria">
+                <Select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value })} required>
+                  <option value="">Categoria</option>
+                  {categories.map((category) => (
+                    <option key={category._id} value={category._id}>
+                      {category.name}
+                    </option>
+                  ))}
+                </Select>
+              </Field>
+              <Field label="Cidade">
+                <Select value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })}>
+                  <option value="">Cidade</option>
+                  {cities.map((city) => (
+                    <option key={city._id} value={city.slug}>
+                      {city.name} — {city.state}
+                    </option>
+                  ))}
+                </Select>
+              </Field>
+            </div>
+          </Card>
+
+          <Card>
+            <h2 className="mb-3 text-sm font-semibold text-text" style={{ fontFamily: 'var(--font-family-heading)' }}>
+              Contato
+            </h2>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Field label="Telefone (ligar)">
+                <Input value={formatPhone(form.phone)} onChange={(e) => handlePhoneChange(e.target.value)} />
+              </Field>
+              <Field label="WhatsApp">
+                <Input value={formatPhone(form.whatsapp)} onChange={(e) => setForm({ ...form, whatsapp: onlyDigits(e.target.value).slice(0, 13) })} disabled={form.samePhone} />
+              </Field>
+              <div className="sm:col-span-2">
+                <CheckboxField
+                  label="Usar o mesmo número para WhatsApp"
+                  checked={form.samePhone}
+                  onChange={(e) => handleSamePhoneChange(e.target.checked)}
+                />
+              </div>
+            </div>
+          </Card>
+
+          <Card>
+            <h2 className="mb-3 text-sm font-semibold text-text" style={{ fontFamily: 'var(--font-family-heading)' }}>
+              Assinatura
+            </h2>
+            <div className="flex flex-wrap items-center gap-2">
+              <PlanChip plan={form.plan} />
+              <Select
+                value={form.plan}
+                onChange={(e) => setForm({ ...form, plan: e.target.value as 'free' | 'basic' | 'premium' })}
+                className="w-40"
+              >
+                <option value="free">Plano: Gratuito</option>
+                <option value="basic">Plano: Básico</option>
+                <option value="premium">Plano: Premium</option>
+              </Select>
+            </div>
+          </Card>
+
+          <Card>
+            <h2 className="mb-3 text-sm font-semibold text-text" style={{ fontFamily: 'var(--font-family-heading)' }}>
+              Horário de funcionamento
+            </h2>
+            <div className="space-y-2">
+              {form.schedule.map((item, index) => (
+                <div key={index} className="grid grid-cols-1 gap-2 sm:grid-cols-[60px_1fr_1fr_auto] sm:items-center">
+                  <input
+                    type="number"
+                    min={0}
+                    max={6}
+                    value={item.day}
+                    onChange={(e) => {
+                      const next = [...form.schedule];
+                      next[index] = { ...item, day: Number(e.target.value) };
+                      setForm({ ...form, schedule: next });
+                    }}
+                    className="h-10 rounded-(--radius-input) border border-border bg-surface px-2 text-sm"
+                  />
+                  <input
+                    type="time"
+                    value={minutesToTime(item.opens)}
+                    onChange={(e) => {
+                      const next = [...form.schedule];
+                      next[index] = { ...item, opens: timeToMinutes(e.target.value) };
+                      setForm({ ...form, schedule: next });
+                    }}
+                    className="h-10 rounded-(--radius-input) border border-border bg-surface px-2 text-sm"
+                  />
+                  <input
+                    type="time"
+                    value={minutesToTime(item.closes)}
+                    onChange={(e) => {
+                      const next = [...form.schedule];
+                      next[index] = { ...item, closes: timeToMinutes(e.target.value) };
+                      setForm({ ...form, schedule: next });
+                    }}
+                    className="h-10 rounded-(--radius-input) border border-border bg-surface px-2 text-sm"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setForm({ ...form, schedule: form.schedule.filter((_, i) => i !== index) })}
+                    className="h-10 rounded-(--radius-input) border border-danger/30 bg-danger/10 px-2 text-xs text-danger"
+                  >
+                    Remover
+                  </button>
+                </div>
+              ))}
+              <div className="flex flex-wrap gap-2">
+                <Button variant="secondary" type="button" onClick={() => setForm({ ...form, schedule: [...form.schedule, { day: 0, opens: 0, closes: 0 }] })}>
+                  Adicionar dia
+                </Button>
+                <Button
+                  variant="secondary"
+                  type="button"
+                  onClick={() => setForm({ ...form, schedule: DAYS.map((day) => ({ day, opens: 480, closes: 1080 })) })}
+                >
+                  Preencher semana
+                </Button>
+              </div>
+            </div>
+          </Card>
+        </form>
       </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      {categoriesError && <p className="text-sm text-danger">Falha ao carregar categorias: {categoriesError}</p>}
+      {citiesError && <p className="text-sm text-danger">Falha ao carregar cidades: {citiesError}</p>}
+      {error && <p className="text-sm text-danger">{error}</p>}
+      {actionError && <p className="text-sm text-danger">{actionError}</p>}
+
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <SearchInput value={search} onChange={setSearch} placeholder="Buscar empresa…" />
+        <Button
+          onClick={() => {
+            resetForm();
+            setForm(EMPTY_FORM);
+            setView('form');
+          }}
+        >
+          + Nova empresa
+        </Button>
+      </div>
+      {search && <p className="text-xs text-text-muted">A busca filtra os itens da página atual.</p>}
 
       <Table
+        loading={loading}
         headers={['Nome', 'Categoria', 'Cidade', 'Telefone', 'Plano', 'Ações']}
         rows={visible.map((company) => [
           company.name,
           categoryLabel(company.category),
           cityLabel(company.city),
-          company.phone ?? '—',
-          planLabel(company.plan),
+          company.phone ? formatPhone(company.phone) : '—',
+          <PlanChip key={company._id} plan={company.plan ?? 'free'} />,
           <RowActions
-            key={company._id}
+            key={`a-${company._id}`}
             onEdit={() => startEdit(company)}
             onDelete={() => void handleDelete(company._id)}
           />,
         ])}
+        mobileRows={visible.map((company) => ({
+          id: company._id,
+          primary: company.name,
+          secondary: `${categoryLabel(company.category)} • ${cityLabel(company.city)} • ${planChipLabel(company.plan ?? 'free')}`,
+          actions: (
+            <RowActions
+              onEdit={() => startEdit(company)}
+              onDelete={() => void handleDelete(company._id)}
+            />
+          ),
+        }))}
         emptyMessage="Nenhuma empresa encontrada."
       />
 
       <Pagination page={page} pageSize={pageSize} total={total} onChange={setPage} />
-      {loading && <p style={hintStyle}>Carregando…</p>}
-    </>
+    </div>
   );
 }
+

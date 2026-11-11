@@ -336,6 +336,8 @@ export type UpdateTourEventInput = Partial<TourEventInput>;
 export interface AdminUserListItem extends Pick<User, '_id' | 'email' | 'role' | 'city' | 'createdAt'> {
   /** Nome já montado pelo backend. */
   name?: string;
+  /** true quando o item é a conta do admin que fez a requisição. */
+  isSelf?: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -386,6 +388,25 @@ export async function getNotices(page = 1, pageSize = DEFAULT_PAGE_SIZE): Promis
 /** Usuários do app (admin-only no backend). Somente leitura no painel. */
 export async function getUsers(page = 1, pageSize = DEFAULT_PAGE_SIZE): Promise<Paginated<AdminUserListItem>> {
   return request<Paginated<AdminUserListItem>>(`/users?${paginationQuery(page, pageSize)}`);
+}
+
+export async function updateUserRole(id: string, role: 'user' | 'admin'): Promise<AdminUserListItem> {
+  return apiPut<AdminUserListItem>(`/users/${id}/role`, { role });
+}
+
+export interface UpdateUserProfileInput {
+  firstName?: string;
+  lastName?: string;
+  /** Slug da cidade; `null` limpa (usuário sem cidade definida). */
+  city?: string | null;
+}
+
+export async function updateUserProfile(id: string, body: UpdateUserProfileInput): Promise<AdminUserListItem> {
+  return apiPut<AdminUserListItem>(`/users/${id}`, body);
+}
+
+export async function deleteUser(id: string): Promise<void> {
+  await apiDelete<void>(`/users/${id}`);
 }
 
 export async function getPublicUtilities(page = 1, pageSize = DEFAULT_PAGE_SIZE): Promise<Paginated<PublicUtility>> {

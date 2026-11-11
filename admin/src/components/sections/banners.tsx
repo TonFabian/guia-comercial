@@ -6,11 +6,14 @@ import { createBanner, deleteBanner, getBanners, updateBanner } from '../../serv
 import type { BannerInput } from '../../services/api';
 import type { Banner } from '../../types/domain';
 import { filterByText } from '../../utils/filter';
-import { Pagination } from '../pagination';
+import { Button } from '../ui/button';
+import { Card } from '../ui/card';
+import { Field, Input, CheckboxField } from '../ui/input';
 import { RowActions } from '../row-actions';
 import { SearchInput } from '../search-input';
-import { checkLabelStyle, errorStyle, formStyle, hintStyle, toolbarStyle } from '../styles';
 import { Table } from '../table';
+import { DotsLoader } from '../ui/loading';
+import { Pagination } from '../pagination';
 
 interface BannerForm {
   title: string;
@@ -37,6 +40,7 @@ export function BannersSection() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [view, setView] = useState<'list' | 'form'>('list');
 
   const visible = useMemo(
     () => filterByText(items, search, (banner) => `${banner.title} ${banner.subtitle ?? ''} ${banner.link ?? ''}`),
@@ -46,6 +50,7 @@ export function BannersSection() {
   function resetForm() {
     setEditingId(null);
     setForm(EMPTY_FORM);
+    setView('list');
   }
 
   function startEdit(banner: Banner) {
@@ -59,6 +64,7 @@ export function BannersSection() {
       order: banner.order ?? 0,
       active: banner.active ?? true,
     });
+    setView('form');
   }
 
   async function handleSubmit(event: FormEvent) {
@@ -101,81 +107,100 @@ export function BannersSection() {
     }
   }
 
-  return (
-    <>
-      {error && <p style={errorStyle}>{error}</p>}
-      {actionError && <p style={errorStyle}>{actionError}</p>}
-
-      <form onSubmit={handleSubmit} style={formStyle}>
-        <input
-          placeholder="Título"
-          value={form.title}
-          onChange={(event) => setForm({ ...form, title: event.target.value })}
-          required
-        />
-        <input
-          placeholder="Subtítulo"
-          value={form.subtitle}
-          onChange={(event) => setForm({ ...form, subtitle: event.target.value })}
-        />
-        <input
-          placeholder="URL da imagem"
-          value={form.image}
-          onChange={(event) => setForm({ ...form, image: event.target.value })}
-        />
-        <input
-          placeholder="Link"
-          value={form.link}
-          onChange={(event) => setForm({ ...form, link: event.target.value })}
-        />
-        <input
-          type="number"
-          placeholder="Ordem"
-          value={form.order}
-          onChange={(event) => setForm({ ...form, order: Number(event.target.value) })}
-        />
-        <label style={checkLabelStyle}>
-          <input
-            type="checkbox"
-            checked={form.active}
-            onChange={(event) => setForm({ ...form, active: event.target.checked })}
-          />
-          Ativo
-        </label>
-        <button type="submit" disabled={saving}>
-          {editingId ? 'Salvar' : 'Criar'}
-        </button>
-        {editingId && (
-          <button type="button" onClick={resetForm}>
-            Cancelar
+  if (view === 'form') {
+    return (
+      <div className="space-y-4">
+        <div className="flex flex-row items-center justify-between gap-3">
+          <button type="button" onClick={resetForm} className="text-sm text-text-muted hover:text-text">
+            ← Banners
           </button>
-        )}
-      </form>
+          <div className="flex gap-2">
+                        <Button type="submit" form="banner-form" disabled={saving}>
+              {saving ? <DotsLoader size="sm" color="text-[#111827]" /> : editingId ? 'Salvar' : 'Criar'}
+            </Button>
+            <Button variant="secondary" type="button" onClick={resetForm} disabled={saving}>
+              Cancelar
+            </Button>
+          </div>
+        </div>
 
-      <div style={toolbarStyle}>
-        <SearchInput value={search} onChange={setSearch} placeholder="Buscar banner…" />
-        {search && <span style={hintStyle}>A busca filtra os itens da página atual.</span>}
+        <h1 className="form-title text-xl font-semibold text-text" style={{ fontFamily: 'var(--font-family-heading)' }}>
+          {editingId ? 'Editar banner' : 'Novo banner'}
+        </h1>
+
+        {error && <p className="text-sm text-danger">{error}</p>}
+        {actionError && <p className="text-sm text-danger">{actionError}</p>}
+
+        <form id="banner-form" onSubmit={handleSubmit} className="space-y-4">
+          <Card>
+            <h2 className="mb-3 text-sm font-semibold text-text" style={{ fontFamily: 'var(--font-family-heading)' }}>
+              Dados do banner
+            </h2>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Field label="Título">
+                <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required />
+              </Field>
+              <Field label="Subtítulo">
+                <Input value={form.subtitle} onChange={(e) => setForm({ ...form, subtitle: e.target.value })} />
+              </Field>
+              <Field label="URL da imagem">
+                <Input value={form.image} onChange={(e) => setForm({ ...form, image: e.target.value })} />
+              </Field>
+              <Field label="Link">
+                <Input value={form.link} onChange={(e) => setForm({ ...form, link: e.target.value })} />
+              </Field>
+              <Field label="Ordem">
+                <Input type="number" value={form.order} onChange={(e) => setForm({ ...form, order: Number(e.target.value) })} />
+              </Field>
+              <div className="sm:col-span-2">
+                <CheckboxField label="Ativo" checked={form.active} onChange={(e) => setForm({ ...form, active: e.target.checked })} />
+              </div>
+            </div>
+          </Card>
+        </form>
       </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      {error && <p className="text-sm text-danger">{error}</p>}
+      {actionError && <p className="text-sm text-danger">{actionError}</p>}
+
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <SearchInput value={search} onChange={setSearch} placeholder="Buscar banner…" />
+        <Button
+          onClick={() => {
+            resetForm();
+            setForm(EMPTY_FORM);
+            setView('form');
+          }}
+        >
+          + Novo banner
+        </Button>
+      </div>
+      {search && <span className="text-xs text-text-muted">{visible.length} de {items.length} banners.</span>}
 
       <Table
-        headers={['Título', 'Subtítulo', 'Link', 'Ordem', 'Ativo', 'Ações']}
+        loading={loading}
+        headers={['Título', 'Subtítulo', 'Ordem', 'Ativo', 'Ações']}
         rows={visible.map((banner) => [
           banner.title,
           banner.subtitle ?? '—',
-          banner.link ?? '—',
           banner.order ?? 0,
           banner.active ? 'Sim' : 'Não',
-          <RowActions
-            key={banner._id}
-            onEdit={() => startEdit(banner)}
-            onDelete={() => void handleDelete(banner._id)}
-          />,
+          <RowActions key={banner._id} onEdit={() => startEdit(banner)} onDelete={() => void handleDelete(banner._id)} />,
         ])}
+        mobileRows={visible.map((banner) => ({
+          id: banner._id,
+          primary: banner.title,
+          secondary: `${banner.subtitle ?? '—'} • ordem ${banner.order ?? 0} • ${banner.active ? 'Ativo' : 'Inativo'}`,
+          actions: <RowActions key={banner._id} onEdit={() => startEdit(banner)} onDelete={() => void handleDelete(banner._id)} />,
+        }))}
         emptyMessage="Nenhum banner encontrado."
       />
 
       <Pagination page={page} pageSize={pageSize} total={total} onChange={setPage} />
-      {loading && <p style={hintStyle}>Carregando…</p>}
-    </>
+    </div>
   );
 }

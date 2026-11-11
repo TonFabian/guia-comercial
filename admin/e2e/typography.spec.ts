@@ -26,10 +26,17 @@ test('body usa Inter Variable e tamanho da escada', async ({ page }) => {
 test('heading usa Rubik Variable e respeita clamp', async ({ page }) => {
   await page.goto('/');
   await page.waitForLoadState('networkidle');
-  const h2 = page.locator('h2').first();
-  const ff = await h2.evaluate((e) => getComputedStyle(e).fontFamily);
+  await page.waitForTimeout(1000);
+  // Entra em uma tela de formulário, que possui o <h1> de título.
+  const editar = page.getByRole('button', { name: /editar/i }).first();
+  if (await editar.isVisible().catch(() => false)) {
+    await editar.click();
+    await page.waitForTimeout(500);
+  }
+  const heading = page.locator('h1').first();
+  const ff = await heading.evaluate((e) => getComputedStyle(e).fontFamily);
   expect(ff).toContain('Rubik Variable');
-  const fs = await h2.evaluate((e) => parseFloat(getComputedStyle(e).fontSize));
+  const fs = await heading.evaluate((e) => parseFloat(getComputedStyle(e).fontSize));
   // clamp(1.25rem, 2vw + 1rem, 1.75rem) -> 20px..28px
   expect(fs).toBeGreaterThanOrEqual(20);
   expect(fs).toBeLessThanOrEqual(28);

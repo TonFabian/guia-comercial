@@ -7,11 +7,14 @@ import type { CouponInput } from '../../services/api';
 import type { Company, Coupon } from '../../types/domain';
 import { filterByText } from '../../utils/filter';
 import { companyId, companyLabel } from '../../utils/labels';
-import { Pagination } from '../pagination';
+import { Button } from '../ui/button';
+import { Card } from '../ui/card';
+import { Field, Input, Select, Textarea } from '../ui/input';
 import { RowActions } from '../row-actions';
 import { SearchInput } from '../search-input';
-import { errorStyle, formStyle, hintStyle, toolbarStyle } from '../styles';
 import { Table } from '../table';
+import { DotsLoader } from '../ui/loading';
+import { Pagination } from '../pagination';
 
 export interface CuponsSectionProps {
   companies: Company[];
@@ -38,13 +41,14 @@ const EMPTY_FORM: CouponForm = {
   expiresAt: '',
 };
 
-export function CuponsSection({ companies, companiesTotal, companiesError }: CuponsSectionProps) {
+export function CuponsSection({ companies, companiesError }: CuponsSectionProps) {
   const { items, total, page, pageSize, loading, error, setPage, reload } = useResource<Coupon>(getCoupons);
   const [search, setSearch] = useState('');
   const [form, setForm] = useState<CouponForm>(EMPTY_FORM);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [view, setView] = useState<'list' | 'form'>('list');
 
   const visible = useMemo(
     () => filterByText(items, search, (coupon) => `${coupon.title} ${coupon.code ?? ''} ${coupon.discount ?? ''}`),
@@ -54,6 +58,7 @@ export function CuponsSection({ companies, companiesTotal, companiesError }: Cup
   function resetForm() {
     setEditingId(null);
     setForm(EMPTY_FORM);
+    setView('list');
   }
 
   function startEdit(coupon: Coupon) {
@@ -67,6 +72,7 @@ export function CuponsSection({ companies, companiesTotal, companiesError }: Cup
       company: companyId(coupon.company),
       expiresAt: coupon.expiresAt ? coupon.expiresAt.slice(0, 10) : '',
     });
+    setView('form');
   }
 
   async function handleSubmit(event: FormEvent) {
@@ -109,93 +115,112 @@ export function CuponsSection({ companies, companiesTotal, companiesError }: Cup
     }
   }
 
-  return (
-    <>
-      {companiesError && <p style={errorStyle}>Falha ao carregar empresas: {companiesError}</p>}
-      {error && <p style={errorStyle}>{error}</p>}
-      {actionError && <p style={errorStyle}>{actionError}</p>}
-
-      <form onSubmit={handleSubmit} style={formStyle}>
-        <input
-          placeholder="Título"
-          value={form.title}
-          onChange={(event) => setForm({ ...form, title: event.target.value })}
-          required
-        />
-        <input
-          placeholder="Código"
-          value={form.code}
-          onChange={(event) => setForm({ ...form, code: event.target.value })}
-          required
-        />
-        <input
-          placeholder="Desconto"
-          value={form.discount}
-          onChange={(event) => setForm({ ...form, discount: event.target.value })}
-        />
-        <select
-          value={form.company}
-          onChange={(event) => setForm({ ...form, company: event.target.value })}
-          required
-        >
-          <option value="">Empresa</option>
-          {companies.map((company) => (
-            <option key={company._id} value={company._id}>
-              {company.name}
-            </option>
-          ))}
-        </select>
-        <input
-          placeholder="Descrição"
-          value={form.description}
-          onChange={(event) => setForm({ ...form, description: event.target.value })}
-        />
-        <input
-          type="date"
-          placeholder="Validade (opcional)"
-          value={form.expiresAt}
-          onChange={(event) => setForm({ ...form, expiresAt: event.target.value })}
-        />
-        <button type="submit" disabled={saving}>
-          {editingId ? 'Salvar' : 'Criar'}
-        </button>
-        {editingId && (
-          <button type="button" onClick={resetForm}>
-            Cancelar
+  if (view === 'form') {
+    return (
+      <div className="space-y-4">
+        <div className="flex flex-row items-center justify-between gap-3">
+          <button type="button" onClick={resetForm} className="text-sm text-text-muted hover:text-text">
+            ← Cupons
           </button>
-        )}
-      </form>
-      {companiesTotal > companies.length && (
-        <p style={hintStyle}>
-          Exibindo {companies.length} de {companiesTotal} empresas — consulte a seção Empresas para o
-          restante.
-        </p>
-      )}
+          <div className="flex gap-2">
+                        <Button type="submit" form="cupom-form" disabled={saving}>
+              {saving ? <DotsLoader size="sm" color="text-[#111827]" /> : editingId ? 'Salvar' : 'Criar'}
+            </Button>
+            <Button variant="secondary" type="button" onClick={resetForm} disabled={saving}>
+              Cancelar
+            </Button>
+          </div>
+        </div>
 
-      <div style={toolbarStyle}>
-        <SearchInput value={search} onChange={setSearch} placeholder="Buscar cupom…" />
-        {search && <span style={hintStyle}>A busca filtra os itens da página atual.</span>}
+        <h1 className="form-title text-xl font-semibold text-text" style={{ fontFamily: 'var(--font-family-heading)' }}>
+          {editingId ? 'Editar cupom' : 'Novo cupom'}
+        </h1>
+
+        {companiesError && <p className="text-sm text-danger">Falha ao carregar empresas: {companiesError}</p>}
+        {error && <p className="text-sm text-danger">{error}</p>}
+        {actionError && <p className="text-sm text-danger">{actionError}</p>}
+
+        <form id="cupom-form" onSubmit={handleSubmit} className="space-y-4">
+          <Card>
+            <h2 className="mb-3 text-sm font-semibold text-text" style={{ fontFamily: 'var(--font-family-heading)' }}>
+              Dados do cupom
+            </h2>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Field label="Título">
+                <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required />
+              </Field>
+              <Field label="Código">
+                <Input value={form.code} onChange={(e) => setForm({ ...form, code: e.target.value })} required />
+              </Field>
+              <Field label="Desconto">
+                <Input value={form.discount} onChange={(e) => setForm({ ...form, discount: e.target.value })} />
+              </Field>
+              <Field label="Empresa">
+                <Select value={form.company} onChange={(e) => setForm({ ...form, company: e.target.value })} required>
+                  <option value="">Empresa</option>
+                  {companies.map((company) => (
+                    <option key={company._id} value={company._id}>
+                      {company.name}
+                    </option>
+                  ))}
+                </Select>
+              </Field>
+              <Field label="Expira em">
+                <Input type="date" value={form.expiresAt} onChange={(e) => setForm({ ...form, expiresAt: e.target.value })} />
+              </Field>
+              <div className="sm:col-span-2">
+                <Field label="Descrição">
+                  <Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+                </Field>
+              </div>
+            </div>
+          </Card>
+        </form>
       </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      {companiesError && <p className="text-sm text-danger">Falha ao carregar empresas: {companiesError}</p>}
+      {error && <p className="text-sm text-danger">{error}</p>}
+      {actionError && <p className="text-sm text-danger">{actionError}</p>}
+
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <SearchInput value={search} onChange={setSearch} placeholder="Buscar cupom…" />
+        <Button
+          onClick={() => {
+            resetForm();
+            setForm(EMPTY_FORM);
+            setView('form');
+          }}
+        >
+          + Novo cupom
+        </Button>
+      </div>
+      {search && <span className="text-xs text-text-muted">{visible.length} de {items.length} cupons.</span>}
 
       <Table
-        headers={['Título', 'Código', 'Desconto', 'Empresa', 'Validade', 'Ações']}
+        loading={loading}
+        headers={['Título', 'Código', 'Desconto', 'Empresa', 'Expira', 'Ações']}
         rows={visible.map((coupon) => [
           coupon.title,
           coupon.code ?? '—',
-          coupon.discount ? `${coupon.discount}%` : '—',
+          coupon.discount ?? '—',
           companyLabel(coupon.company),
           coupon.expiresAt ? new Date(coupon.expiresAt).toLocaleDateString() : '—',
-          <RowActions
-            key={coupon._id}
-            onEdit={() => startEdit(coupon)}
-            onDelete={() => void handleDelete(coupon._id)}
-          />,
+          <RowActions key={coupon._id} onEdit={() => startEdit(coupon)} onDelete={() => void handleDelete(coupon._id)} />,
         ])}
+        mobileRows={visible.map((coupon) => ({
+          id: coupon._id,
+          primary: coupon.title,
+          secondary: `${coupon.code ?? '—'} • ${coupon.discount ?? '—'} • ${companyLabel(coupon.company)}`,
+          actions: <RowActions key={coupon._id} onEdit={() => startEdit(coupon)} onDelete={() => void handleDelete(coupon._id)} />,
+        }))}
         emptyMessage="Nenhum cupom encontrado."
       />
 
       <Pagination page={page} pageSize={pageSize} total={total} onChange={setPage} />
-      {loading && <p style={hintStyle}>Carregando…</p>}
-    </>
+    </div>
   );
 }
