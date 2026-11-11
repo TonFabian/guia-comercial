@@ -57,11 +57,11 @@ export function ConfirmDialog({
         </h2>
         <p className="mt-2 text-sm text-text-muted">{message}</p>
         <div className="mt-5 flex justify-end gap-2">
-          <button type="button" onClick={onConfirm} className={deleteButtonClass('confirm')}>
-            {confirmLabel}
-          </button>
           <button type="button" onClick={onCancel} className={deleteButtonClass('cancel')}>
             {cancelLabel}
+          </button>
+          <button type="button" onClick={onConfirm} className={deleteButtonClass('confirm')}>
+            {confirmLabel}
           </button>
         </div>
       </div>
