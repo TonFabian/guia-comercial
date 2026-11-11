@@ -71,7 +71,7 @@ export function CidadesSection({ cities, citiesError, onReload }: CidadesSection
   if (view === 'form') {
     return (
       <div className="space-y-4">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-row items-center justify-between gap-3">
           <button type="button" onClick={() => setView('list')} className="text-sm text-text-muted hover:text-text">
             ← Cidades
           </button>

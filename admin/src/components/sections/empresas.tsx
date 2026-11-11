@@ -7,7 +7,7 @@ import type { CompanyInput } from '../../services/api';
 import type { Category, City, Company } from '../../types/domain';
 import { filterByText } from '../../utils/filter';
 import { categoryId, categoryLabel, cityLabel, citySlug } from '../../utils/labels';
-import { formatPhone } from '../../utils/phone';
+import { formatPhone, onlyDigits } from '../../utils/phone';
 import { Button } from '../ui/button';
 import { Card } from '../ui/card';
 import { Field, Input, Select, Textarea, CheckboxField } from '../ui/input';
@@ -108,10 +108,11 @@ export function EmpresasSection({ categories, categoriesError, cities, citiesErr
   }
 
   function handlePhoneChange(value: string) {
+    const digits = onlyDigits(value).slice(0, 13);
     setForm((previous) => ({
       ...previous,
-      phone: value,
-      whatsapp: previous.samePhone ? value : previous.whatsapp,
+      phone: digits,
+      whatsapp: previous.samePhone ? digits : previous.whatsapp,
     }));
   }
 
@@ -134,8 +135,8 @@ export function EmpresasSection({ categories, categoriesError, cities, citiesErr
       description: form.description,
       category: form.category,
       city: form.city || undefined,
-      phone: form.phone || undefined,
-      whatsapp: form.whatsapp || undefined,
+      phone: form.phone ? onlyDigits(form.phone) : undefined,
+      whatsapp: form.whatsapp ? onlyDigits(form.whatsapp) : undefined,
       plan: form.plan,
       schedule: form.schedule,
     };
@@ -185,7 +186,7 @@ export function EmpresasSection({ categories, categoriesError, cities, citiesErr
   if (view === 'form') {
     return (
       <div className="space-y-4">
-        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex flex-row items-center justify-between gap-3">
           <button
             type="button"
             onClick={resetForm}
@@ -271,10 +272,10 @@ export function EmpresasSection({ categories, categoriesError, cities, citiesErr
             </h2>
             <div className="grid gap-3 sm:grid-cols-2">
               <Field label="Telefone (ligar)">
-                <Input value={form.phone} onChange={(e) => handlePhoneChange(e.target.value)} />
+                <Input value={formatPhone(form.phone)} onChange={(e) => handlePhoneChange(e.target.value)} />
               </Field>
               <Field label="WhatsApp">
-                <Input value={form.whatsapp} onChange={(e) => setForm({ ...form, whatsapp: e.target.value })} disabled={form.samePhone} />
+                <Input value={formatPhone(form.whatsapp)} onChange={(e) => setForm({ ...form, whatsapp: onlyDigits(e.target.value).slice(0, 13) })} disabled={form.samePhone} />
               </Field>
               <div className="sm:col-span-2">
                 <CheckboxField
