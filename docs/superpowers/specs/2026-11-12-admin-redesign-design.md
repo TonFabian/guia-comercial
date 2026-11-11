@@ -15,10 +15,20 @@ mesmos dados, mesmos endpoints.
   bordas `#2a2e36`, sombra/elevação nos cards, item ativo da sidebar marcado
   com borda esquerda amarela. Chips de plano com peso visual (Premium em
   destaque, Gratuito discreto).
-- **Formulário de criar/editar = página dedicada** (não drawer/modal):
-  breadcrumb `← Empresas`, título, ações Salvar/Cancelar no topo, e o
-  formulário em **seções** (Dados básicos → Contato → Assinatura → Horário
-  de funcionamento). Botão de volta volta à lista.
+- **Formulário de criar/editar = página dedicada** (não drawer/modal),
+  **somente para a seção Empresas** — a única com formulário complexo hoje
+  (plano/assinatura, horário, catálogo). As outras 10 seções recebem o
+  visual novo mantendo o formulário no topo da lista; migram para página
+  dedicada em fase futura, caso os campos cresçam. Empresas usa breadcrumb
+  `← Empresas`, título, ações Salvar/Cancelar no topo e o formulário em
+  **seções** (Dados básicos → Contato → Assinatura → Horário de
+  funcionamento). Botão de volta volta à lista.
+- **Navegação por estado** (`useState` atual, sem router) — mantém "nada
+  muda funcionalmente". Refactor de extração de componentes compartilhados
+  é permitido (comportamento-preservante). `src/theme/typography.ts`
+  permanece como espelho string das CSS vars (§7); tokens de cor/raio/sombra
+  entram no `@theme` do Tailwind. Ordem de implementação: Empresas primeiro
+  (valida o padrão), depois replicar o visual nas demais.
 - **Mobile-first**: base projetada para celular, ampliando para tablet e
   desktop.
   - < 640px: sidebar vira **barra superior com menu hambúrguer** (drawer
