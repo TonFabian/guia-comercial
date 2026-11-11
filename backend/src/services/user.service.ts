@@ -71,6 +71,8 @@ export interface AdminUserListItem {
   role: 'user' | 'admin';
   city?: string | City;
   createdAt?: string;
+  /** true quando o item é a conta do admin que fez a requisição. */
+  isSelf?: boolean;
 }
 
 /**
@@ -81,10 +83,11 @@ export interface AdminUserListItem {
  */
 export async function listUsers(
   pagination: Pagination,
+  actorClerkId?: string,
 ): Promise<{ items: AdminUserListItem[]; total: number }> {
   const [usuarios, total] = await Promise.all([
     UserModel.find({})
-      .select({ pushToken: 0, clerkId: 0, lastSid: 0, lastSignInAt: 0 })
+      .select({ pushToken: 0, lastSid: 0, lastSignInAt: 0 })
       .populate('city')
       .sort({ createdAt: -1 })
       .skip(pagination.skip)
@@ -93,11 +96,11 @@ export async function listUsers(
     UserModel.countDocuments({}),
   ]);
 
-  return { items: usuarios.map(toAdminUserListItem), total };
+  return { items: usuarios.map((u) => toAdminUserListItem(u, actorClerkId)), total };
 }
 
 /** Normaliza o documento lean no item público da listagem admin. */
-function toAdminUserListItem(user: User): AdminUserListItem {
+function toAdminUserListItem(user: User, actorClerkId?: string): AdminUserListItem {
   const nome = [user.firstName, user.lastName].filter(Boolean).join(' ');
 
   return {
@@ -107,6 +110,7 @@ function toAdminUserListItem(user: User): AdminUserListItem {
     role: user.role,
     ...(user.city ? { city: user.city } : {}),
     ...(user.createdAt ? { createdAt: user.createdAt } : {}),
+    ...(actorClerkId && user.clerkId === actorClerkId ? { isSelf: true } : {}),
   };
 }
 

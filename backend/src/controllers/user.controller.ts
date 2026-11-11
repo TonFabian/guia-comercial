@@ -107,7 +107,7 @@ export const listUsers = asyncHandler(
     await assertAdmin(req.auth?.clerkId, 'listar usuários');
 
     const pagination = parsePagination(req.query.page, req.query.pageSize);
-    const { items, total } = await listUsersService(pagination);
+    const { items, total } = await listUsersService(pagination, req.auth?.clerkId);
     res.json({ items, total, page: pagination.page, pageSize: pagination.pageSize });
   },
 );
