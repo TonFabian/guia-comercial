@@ -199,6 +199,7 @@ export function EventosSection({ cities, citiesError, companies, companiesTotal,
   const [editingId, setEditingId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [view, setView] = useState<'list' | 'form'>('list');
   const hoje = hojeNaFortaleza();
 
   const visible = useMemo(
@@ -214,11 +215,13 @@ export function EventosSection({ cities, citiesError, companies, companiesTotal,
   function resetForm() {
     setEditingId(null);
     setForm(EMPTY_FORM);
+    setView('list');
   }
 
   function startEdit(evento: TourEvent) {
     setEditingId(evento._id);
     setActionError(null);
+    setView('form');
     setForm({
       name: evento.name,
       slug: evento.slug,
@@ -377,6 +380,7 @@ export function EventosSection({ cities, citiesError, companies, companiesTotal,
     }
   }
 
+  void view;
   return (
     <>
       {citiesError && <p className="text-sm text-danger">Falha ao carregar cidades: {citiesError}</p>}

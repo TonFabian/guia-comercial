@@ -12,6 +12,9 @@ import type { TouristSpotInput } from '../../services/api';
 import type { City, Company, TouristSpot, TouristSpotCategory } from '../../types/domain';
 import { filterByText } from '../../utils/filter';
 import { cityLabel, citySlug } from '../../utils/labels';
+import { Button } from '../ui/button';
+import { Card } from '../ui/card';
+import { Field, Input, Select, Textarea, CheckboxField } from '../ui/input';
 import { Pagination } from '../pagination';
 import { RowActions } from '../row-actions';
 import { SearchInput } from '../search-input';
@@ -116,18 +119,12 @@ function parseOptionalNumber(text: string): number | undefined {
   return Number.isFinite(value) ? value : undefined;
 }
 
-/**
- * Valor do select de empresas para o registro atual.
- *
- * O backend pode ter salvo id ou slug — casa com ambos para pré-preencher.
- */
 function companyOptionValue(valor: string | Company | undefined, companies: Company[]): string {
   if (!valor) return '';
   if (typeof valor !== 'string') return valor._id;
   const found = companies.find((option) => option._id === valor || option.slug === valor);
   return found ? found._id : '';
 }
-
 
 function minutesToTime(m: number): string {
   const h = Math.floor(m / 60);
@@ -148,6 +145,7 @@ export function AtracoesSection({ cities, citiesError, companies, companiesTotal
   const [editingId, setEditingId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [view, setView] = useState<'list' | 'form'>('list');
 
   const visible = useMemo(
     () =>
@@ -162,6 +160,7 @@ export function AtracoesSection({ cities, citiesError, companies, companiesTotal
   function resetForm() {
     setEditingId(null);
     setForm(EMPTY_FORM);
+    setView('list');
   }
 
   function startEdit(spot: TouristSpot) {
@@ -189,6 +188,7 @@ export function AtracoesSection({ cities, citiesError, companies, companiesTotal
       order: spot.order ?? 0,
       relatedCompany: companyOptionValue(spot.relatedCompany, companies),
     });
+    setView('form');
   }
 
   async function handleSubmit(event: FormEvent) {
@@ -216,13 +216,11 @@ export function AtracoesSection({ cities, citiesError, companies, companiesTotal
       description: form.description,
       category: form.category,
       photos: parseLines(form.photos),
-      // `null` limpa o campo salvo (padrão do backend para campos anuláveis).
       address: form.address.trim() || null,
       city: form.city || null,
       latitude,
       longitude,
       entryFee: form.entryFee,
-      // Omitir preserva o preço já salvo (regra do PUT parcial no backend).
       entryPrice: form.entryFee === 'paid' ? form.entryPrice.trim() : undefined,
       phone: form.phone.trim() || null,
       whatsapp: form.whatsapp.trim() || null,
@@ -260,172 +258,173 @@ export function AtracoesSection({ cities, citiesError, companies, companiesTotal
     }
   }
 
+  if (view === 'form') {
+    return (
+      <div className="space-y-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <button type="button" onClick={resetForm} className="text-sm text-text-muted hover:text-text">
+            ← Atrações
+          </button>
+          <div className="flex gap-2">
+            <Button variant="secondary" type="button" onClick={resetForm} disabled={saving}>
+              Cancelar
+            </Button>
+            <Button type="submit" form="atracao-form" disabled={saving}>
+              {editingId ? 'Salvar' : 'Criar'}
+            </Button>
+          </div>
+        </div>
+
+        <h1 className="text-xl font-semibold text-text" style={{ fontFamily: 'var(--font-family-heading)' }}>
+          {editingId ? 'Editar atração' : 'Nova atração'}
+        </h1>
+
+        {(citiesError || companiesError || actionError) && (
+          <div className="space-y-1 text-sm text-danger">
+            {citiesError && <p>Falha ao carregar cidades: {citiesError}</p>}
+            {companiesError && <p>Falha ao carregar empresas: {companiesError}</p>}
+            {actionError && <p>{actionError}</p>}
+          </div>
+        )}
+
+        <form id="atracao-form" onSubmit={handleSubmit} className="space-y-4">
+          <Card>
+            <h2 className="mb-3 text-sm font-semibold text-text" style={{ fontFamily: 'var(--font-family-heading)' }}>
+              Dados básicos
+            </h2>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Field label="Nome">
+                <Input value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} required />
+              </Field>
+              <Field label="Slug">
+                <Input value={form.slug} onChange={(e) => setForm({ ...form, slug: e.target.value })} required />
+              </Field>
+              <Field label="Descrição">
+                <Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} required />
+              </Field>
+              <Field label="Categoria">
+                <Select value={form.category} onChange={(e) => setForm({ ...form, category: e.target.value as TouristSpotCategory })}>
+                  {CATEGORY_LABELS.map((option) => (
+                    <option key={option.value} value={option.value}>{option.label}</option>
+                  ))}
+                </Select>
+              </Field>
+              <Field label="Endereço">
+                <Input value={form.address} onChange={(e) => setForm({ ...form, address: e.target.value })} />
+              </Field>
+              <Field label="Cidade">
+                <Select value={form.city} onChange={(e) => setForm({ ...form, city: e.target.value })}>
+                  <option value="">Cidade (vazio = todas)</option>
+                  {cities.map((city) => (
+                    <option key={city._id} value={city.slug}>{city.name} — {city.state}</option>
+                  ))}
+                </Select>
+              </Field>
+              <Field label="Latitude">
+                <Input value={form.latitude} onChange={(e) => setForm({ ...form, latitude: e.target.value })} />
+              </Field>
+              <Field label="Longitude">
+                <Input value={form.longitude} onChange={(e) => setForm({ ...form, longitude: e.target.value })} />
+              </Field>
+              <Field label="Entrada">
+                <Select value={form.entryFee} onChange={(e) => setForm({ ...form, entryFee: e.target.value as EntryFee })}>
+                  {ENTRY_FEE_LABELS.map((option) => (
+                    <option key={option.value} value={option.value}>{option.label}</option>
+                  ))}
+                </Select>
+              </Field>
+              <Field label="Preço da entrada">
+                <Input value={form.entryPrice} onChange={(e) => setForm({ ...form, entryPrice: e.target.value })} />
+              </Field>
+              <Field label="Telefone">
+                <Input value={form.phone} onChange={(e) => setForm({ ...form, phone: e.target.value })} />
+              </Field>
+              <Field label="WhatsApp">
+                <Input value={form.whatsapp} onChange={(e) => setForm({ ...form, whatsapp: e.target.value })} />
+              </Field>
+              <Field label="Site">
+                <Input value={form.website} onChange={(e) => setForm({ ...form, website: e.target.value })} />
+              </Field>
+              <Field label="Instagram">
+                <Input value={form.instagram} onChange={(e) => setForm({ ...form, instagram: e.target.value })} />
+              </Field>
+              <Field label="Empresa relacionada">
+                <Select value={form.relatedCompany} onChange={(e) => setForm({ ...form, relatedCompany: e.target.value })}>
+                  <option value="">Empresa relacionada</option>
+                  {companies.map((company) => (
+                    <option key={company._id} value={company._id}>{company.name}</option>
+                  ))}
+                </Select>
+              </Field>
+              <Field label="Ordem">
+                <Input type="number" value={form.order} onChange={(e) => setForm({ ...form, order: Number(e.target.value) })} />
+              </Field>
+              <div className="flex items-center gap-4">
+                <CheckboxField label="Destaque" checked={form.featured} onChange={(e) => setForm({ ...form, featured: e.target.checked })} />
+                <CheckboxField label="Ativo" checked={form.active} onChange={(e) => setForm({ ...form, active: e.target.checked })} />
+              </div>
+            </div>
+          </Card>
+
+          <Card>
+            <h2 className="mb-3 text-sm font-semibold text-text" style={{ fontFamily: 'var(--font-family-heading)' }}>
+              Fotos
+            </h2>
+            <Field label="Fotos (uma URL por linha)">
+              <Textarea value={form.photos} onChange={(e) => setForm({ ...form, photos: e.target.value })} />
+            </Field>
+          </Card>
+
+          <Card>
+            <h2 className="mb-3 text-sm font-semibold text-text" style={{ fontFamily: 'var(--font-family-heading)' }}>
+              Horário estruturado (schedule)
+            </h2>
+            <div className="space-y-2">
+              {form.schedule.map((item, index) => (
+                <div key={index} className="grid grid-cols-1 gap-2 sm:grid-cols-[60px_1fr_1fr_auto] sm:items-center">
+                  <input type="number" min={0} max={6} value={item.day} onChange={(e) => { const next = [...form.schedule]; next[index] = { ...item, day: Number(e.target.value) }; setForm({ ...form, schedule: next }); }} className="h-10 rounded-[--radius-input] border border-border bg-surface px-2 text-sm" />
+                  <input type="time" value={minutesToTime(item.opens)} onChange={(e) => { const next = [...form.schedule]; next[index] = { ...item, opens: timeToMinutes(e.target.value) }; setForm({ ...form, schedule: next }); }} className="h-10 rounded-[--radius-input] border border-border bg-surface px-2 text-sm" />
+                  <input type="time" value={minutesToTime(item.closes)} onChange={(e) => { const next = [...form.schedule]; next[index] = { ...item, closes: timeToMinutes(e.target.value) }; setForm({ ...form, schedule: next }); }} className="h-10 rounded-[--radius-input] border border-border bg-surface px-2 text-sm" />
+                  <button type="button" onClick={() => setForm({ ...form, schedule: form.schedule.filter((_, i) => i !== index) })} className="h-10 rounded-[--radius-input] border border-danger/30 bg-danger/10 px-2 text-xs text-danger">Remover</button>
+                </div>
+              ))}
+              <Button variant="secondary" type="button" onClick={() => setForm({ ...form, schedule: [...form.schedule, { day: 0, opens: 0, closes: 0 }] })}>
+                Adicionar dia
+              </Button>
+            </div>
+          </Card>
+        </form>
+
+        {companiesTotal > companies.length && (
+          <p className="text-xs text-text-muted">
+            Exibindo {companies.length} de {companiesTotal} empresas — consulte a seção Empresas para o
+            restante.
+          </p>
+        )}
+      </div>
+    );
+  }
+
   return (
-    <>
+    <div className="space-y-4">
       {citiesError && <p className="text-sm text-danger">Falha ao carregar cidades: {citiesError}</p>}
       {companiesError && <p className="text-sm text-danger">Falha ao carregar empresas: {companiesError}</p>}
       {error && <p className="text-sm text-danger">{error}</p>}
       {actionError && <p className="text-sm text-danger">{actionError}</p>}
 
-      <form onSubmit={handleSubmit} className="mb-4 grid gap-3 rounded-[--radius-card] border border-border bg-surface p-4 shadow-[--shadow-card] sm:grid-cols-2">
-        <input
-          placeholder="Nome"
-          value={form.name}
-          onChange={(event) => setForm({ ...form, name: event.target.value })}
-          required
-        />
-        <input
-          placeholder="Slug (ex.: praca-dos-girassois)"
-          value={form.slug}
-          onChange={(event) => setForm({ ...form, slug: event.target.value })}
-          required
-        />
-        <textarea
-          placeholder="Descrição"
-          value={form.description}
-          onChange={(event) => setForm({ ...form, description: event.target.value })}
-          required
-          style={{ minWidth: 300, minHeight: 60 }}
-        />
-        <select
-          value={form.category}
-          onChange={(event) => setForm({ ...form, category: event.target.value as TouristSpotCategory })}
-        >
-          {CATEGORY_LABELS.map((option) => (
-            <option key={option.value} value={option.value}>
-              {option.label}
-            </option>
-          ))}
-        </select>
-        <input
-          placeholder="Endereço"
-          value={form.address}
-          onChange={(event) => setForm({ ...form, address: event.target.value })}
-        />
-        <select value={form.city} onChange={(event) => setForm({ ...form, city: event.target.value })}>
-          <option value="">Cidade (vazio = todas)</option>
-          {cities.map((city) => (
-            <option key={city._id} value={city.slug}>
-              {city.name} — {city.state}
-            </option>
-          ))}
-        </select>
-        <input
-          placeholder="Latitude (ex.: -3.718)"
-          value={form.latitude}
-          onChange={(event) => setForm({ ...form, latitude: event.target.value })}
-        />
-        <input
-          placeholder="Longitude (ex.: -38.5)"
-          value={form.longitude}
-          onChange={(event) => setForm({ ...form, longitude: event.target.value })}
-        />
-        <select
-          value={form.entryFee}
-          onChange={(event) => setForm({ ...form, entryFee: event.target.value as EntryFee })}
-        >
-          {ENTRY_FEE_LABELS.map((option) => (
-            <option key={option.value} value={option.value}>
-              Entrada: {option.label}
-            </option>
-          ))}
-        </select>
-        <input
-          placeholder="Preço da entrada (obrigatório se pago)"
-          value={form.entryPrice}
-          onChange={(event) => setForm({ ...form, entryPrice: event.target.value })}
-        />
-        <input
-          placeholder="Telefone"
-          value={form.phone}
-          onChange={(event) => setForm({ ...form, phone: event.target.value })}
-        />
-        <input
-          placeholder="WhatsApp"
-          value={form.whatsapp}
-          onChange={(event) => setForm({ ...form, whatsapp: event.target.value })}
-        />
-        <input
-          placeholder="Site"
-          value={form.website}
-          onChange={(event) => setForm({ ...form, website: event.target.value })}
-        />
-        <input
-          placeholder="Instagram"
-          value={form.instagram}
-          onChange={(event) => setForm({ ...form, instagram: event.target.value })}
-        />
-        <select
-          value={form.relatedCompany}
-          onChange={(event) => setForm({ ...form, relatedCompany: event.target.value })}
-        >
-          <option value="">Empresa relacionada</option>
-          {companies.map((company) => (
-            <option key={company._id} value={company._id}>
-              {company.name}
-            </option>
-          ))}
-        </select>
-        <input
-          type="number"
-          placeholder="Ordem"
-          value={form.order}
-          onChange={(event) => setForm({ ...form, order: Number(event.target.value) })}
-        />
-        <label className="flex items-center gap-2 text-sm text-text">
-          <input
-            type="checkbox"
-            checked={form.featured}
-            onChange={(event) => setForm({ ...form, featured: event.target.checked })}
-          />
-          Destaque
-        </label>
-        <label className="flex items-center gap-2 text-sm text-text">
-          <input
-            type="checkbox"
-            checked={form.active}
-            onChange={(event) => setForm({ ...form, active: event.target.checked })}
-          />
-          Ativo
-        </label>
-        <button type="submit" disabled={saving}>
-          {editingId ? 'Salvar' : 'Criar'}
-        </button>
-        {editingId && (
-          <button type="button" onClick={resetForm}>
-            Cancelar
-          </button>
-        )}
-        <textarea
-          placeholder="Fotos (uma URL por linha)"
-          value={form.photos}
-          onChange={(event) => setForm({ ...form, photos: event.target.value })}
-          style={{ minWidth: 300, minHeight: 60, width: '100%' }}
-        />
-         <fieldset>
-           <legend>Horário estruturado (schedule)</legend>
-           {form.schedule.map((item, index) => (
-             <div key={index}>
-               <input type="number" min={0} max={6} value={item.day} onChange={(e) => { const next = [...form.schedule]; next[index] = { ...item, day: Number(e.target.value) }; setForm({ ...form, schedule: next }); }} />
-               <input type="time" value={minutesToTime(item.opens)} onChange={(e) => { const next = [...form.schedule]; next[index] = { ...item, opens: timeToMinutes(e.target.value) }; setForm({ ...form, schedule: next }); }} />
-               <input type="time" value={minutesToTime(item.closes)} onChange={(e) => { const next = [...form.schedule]; next[index] = { ...item, closes: timeToMinutes(e.target.value) }; setForm({ ...form, schedule: next }); }} />
-               <button type="button" onClick={() => setForm({ ...form, schedule: form.schedule.filter((_, i) => i !== index) })}>Remover</button>
-             </div>
-           ))}
-           <button type="button" onClick={() => setForm({ ...form, schedule: [...form.schedule, { day: 0, opens: 0, closes: 0 }] })}>Adicionar dia</button>
-         </fieldset>
-      </form>
-      {companiesTotal > companies.length && (
-        <p className="text-xs text-text-muted">
-          Exibindo {companies.length} de {companiesTotal} empresas — consulte a seção Empresas para o
-          restante.
-        </p>
-      )}
-
-      <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <SearchInput value={search} onChange={setSearch} placeholder="Buscar atração…" />
-        {search && <span className="text-xs text-text-muted">A busca filtra os itens da página atual.</span>}
+        <Button
+          onClick={() => {
+            resetForm();
+            setForm(EMPTY_FORM);
+            setView('form');
+          }}
+        >
+          + Nova atração
+        </Button>
       </div>
+      {search && <p className="text-xs text-text-muted">A busca filtra os itens da página atual.</p>}
 
       <Table
         headers={['Nome', 'Categoria', 'Cidade', 'Entrada', 'Contato', 'Ativo', 'Ações']}
@@ -442,11 +441,22 @@ export function AtracoesSection({ cities, citiesError, companies, companiesTotal
             onDelete={() => void handleDelete(spot._id)}
           />,
         ])}
+        mobileRows={visible.map((spot) => ({
+          id: spot._id,
+          primary: spot.name,
+          secondary: `${categoryLabel(spot.category)} • ${cityLabel(spot.city)} • ${entryLabel(spot)}`,
+          actions: (
+            <RowActions
+              onEdit={() => startEdit(spot)}
+              onDelete={() => void handleDelete(spot._id)}
+            />
+          ),
+        }))}
         emptyMessage="Nenhuma atração turística encontrada."
       />
 
       <Pagination page={page} pageSize={pageSize} total={total} onChange={setPage} />
-      {loading && <p className="text-xs text-text-muted">Carregando…</p>}
-    </>
+      {loading && <p className="text-sm text-text-muted">Carregando…</p>}
+    </div>
   );
 }
