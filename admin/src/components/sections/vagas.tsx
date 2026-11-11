@@ -7,10 +7,13 @@ import type { JobInput } from '../../services/api';
 import type { Company, Job } from '../../types/domain';
 import { filterByText } from '../../utils/filter';
 import { companyId, companyLabel } from '../../utils/labels';
-import { Pagination } from '../pagination';
+import { Button } from '../ui/button';
+import { Card } from '../ui/card';
+import { Field, Input, Select, Textarea } from '../ui/input';
 import { RowActions } from '../row-actions';
 import { SearchInput } from '../search-input';
 import { Table } from '../table';
+import { Pagination } from '../pagination';
 
 export interface VagasSectionProps {
   companies: Company[];
@@ -41,13 +44,14 @@ const JOB_TYPES = [
   { value: 'PJ', label: 'PJ' },
 ];
 
-export function VagasSection({ companies, companiesTotal, companiesError }: VagasSectionProps) {
+export function VagasSection({ companies, companiesError }: VagasSectionProps) {
   const { items, total, page, pageSize, loading, error, setPage, reload } = useResource<Job>(getJobs);
   const [search, setSearch] = useState('');
   const [form, setForm] = useState<JobForm>(EMPTY_FORM);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [view, setView] = useState<'list' | 'form'>('list');
 
   const visible = useMemo(
     () => filterByText(items, search, (job) => `${job.title} ${job.location ?? ''} ${job.type ?? ''}`),
@@ -57,6 +61,7 @@ export function VagasSection({ companies, companiesTotal, companiesError }: Vaga
   function resetForm() {
     setEditingId(null);
     setForm(EMPTY_FORM);
+    setView('list');
   }
 
   function startEdit(job: Job) {
@@ -69,6 +74,7 @@ export function VagasSection({ companies, companiesTotal, companiesError }: Vaga
       location: job.location ?? '',
       type: job.type ?? 'CLT',
     });
+    setView('form');
   }
 
   async function handleSubmit(event: FormEvent) {
@@ -110,87 +116,114 @@ export function VagasSection({ companies, companiesTotal, companiesError }: Vaga
     }
   }
 
+  if (view === 'form') {
+    return (
+      <div className="space-y-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <button type="button" onClick={resetForm} className="text-sm text-text-muted hover:text-text">
+            ← Vagas
+          </button>
+          <div className="flex gap-2">
+            <Button variant="secondary" type="button" onClick={resetForm} disabled={saving}>
+              Cancelar
+            </Button>
+            <Button type="submit" form="vaga-form" disabled={saving}>
+              {editingId ? 'Salvar' : 'Criar'}
+            </Button>
+          </div>
+        </div>
+
+        <h1 className="text-xl font-semibold text-text" style={{ fontFamily: 'var(--font-family-heading)' }}>
+          {editingId ? 'Editar vaga' : 'Nova vaga'}
+        </h1>
+
+        {companiesError && <p className="text-sm text-danger">Falha ao carregar empresas: {companiesError}</p>}
+        {error && <p className="text-sm text-danger">{error}</p>}
+        {actionError && <p className="text-sm text-danger">{actionError}</p>}
+
+        <form id="vaga-form" onSubmit={handleSubmit} className="space-y-4">
+          <Card>
+            <h2 className="mb-3 text-sm font-semibold text-text" style={{ fontFamily: 'var(--font-family-heading)' }}>
+              Dados da vaga
+            </h2>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Field label="Título">
+                <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required />
+              </Field>
+              <Field label="Empresa">
+                <Select value={form.company} onChange={(e) => setForm({ ...form, company: e.target.value })} required>
+                  <option value="">Empresa</option>
+                  {companies.map((company) => (
+                    <option key={company._id} value={company._id}>
+                      {company.name}
+                    </option>
+                  ))}
+                </Select>
+              </Field>
+              <Field label="Localização">
+                <Input value={form.location} onChange={(e) => setForm({ ...form, location: e.target.value })} />
+              </Field>
+              <Field label="Tipo">
+                <Select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value })}>
+                  {JOB_TYPES.map((jobType) => (
+                    <option key={jobType.value} value={jobType.value}>
+                      {jobType.label}
+                    </option>
+                  ))}
+                </Select>
+              </Field>
+              <div className="sm:col-span-2">
+                <Field label="Descrição">
+                  <Textarea value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
+                </Field>
+              </div>
+            </div>
+          </Card>
+        </form>
+      </div>
+    );
+  }
+
   return (
-    <>
+    <div className="space-y-4">
       {companiesError && <p className="text-sm text-danger">Falha ao carregar empresas: {companiesError}</p>}
       {error && <p className="text-sm text-danger">{error}</p>}
       {actionError && <p className="text-sm text-danger">{actionError}</p>}
 
-      <form onSubmit={handleSubmit} className="mb-4 grid gap-3 rounded-[--radius-card] border border-border bg-surface p-4 shadow-[--shadow-card] sm:grid-cols-2">
-        <input
-          placeholder="Título"
-          value={form.title}
-          onChange={(event) => setForm({ ...form, title: event.target.value })}
-          required
-        />
-        <select
-          value={form.company}
-          onChange={(event) => setForm({ ...form, company: event.target.value })}
-          required
-        >
-          <option value="">Empresa</option>
-          {companies.map((company) => (
-            <option key={company._id} value={company._id}>
-              {company.name}
-            </option>
-          ))}
-        </select>
-        <input
-          placeholder="Descrição"
-          value={form.description}
-          onChange={(event) => setForm({ ...form, description: event.target.value })}
-        />
-        <input
-          placeholder="Localização"
-          value={form.location}
-          onChange={(event) => setForm({ ...form, location: event.target.value })}
-        />
-        <select value={form.type} onChange={(event) => setForm({ ...form, type: event.target.value })}>
-          {JOB_TYPES.map((jobType) => (
-            <option key={jobType.value} value={jobType.value}>
-              {jobType.label}
-            </option>
-          ))}
-        </select>
-        <button type="submit" disabled={saving}>
-          {editingId ? 'Salvar' : 'Criar'}
-        </button>
-        {editingId && (
-          <button type="button" onClick={resetForm}>
-            Cancelar
-          </button>
-        )}
-      </form>
-      {companiesTotal > companies.length && (
-        <p className="text-xs text-text-muted">
-          Exibindo {companies.length} de {companiesTotal} empresas — consulte a seção Empresas para o
-          restante.
-        </p>
-      )}
-
-      <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <SearchInput value={search} onChange={setSearch} placeholder="Buscar vaga…" />
-        {search && <span className="text-xs text-text-muted">A busca filtra os itens da página atual.</span>}
+        <Button
+          onClick={() => {
+            resetForm();
+            setForm(EMPTY_FORM);
+            setView('form');
+          }}
+        >
+          + Nova vaga
+        </Button>
       </div>
+      {search && <span className="text-xs text-text-muted">{visible.length} de {items.length} vagas.</span>}
 
       <Table
-        headers={['Título', 'Empresa', 'Localização', 'Tipo', 'Ações']}
+        headers={['Título', 'Empresa', 'Tipo', 'Localização', 'Ações']}
         rows={visible.map((job) => [
           job.title,
           companyLabel(job.company),
-          job.location ?? '—',
           job.type ?? '—',
-          <RowActions
-            key={job._id}
-            onEdit={() => startEdit(job)}
-            onDelete={() => void handleDelete(job._id)}
-          />,
+          job.location ?? '—',
+          <RowActions key={job._id} onEdit={() => startEdit(job)} onDelete={() => void handleDelete(job._id)} />,
         ])}
+        mobileRows={visible.map((job) => ({
+          id: job._id,
+          primary: job.title,
+          secondary: `${companyLabel(job.company)} • ${job.type ?? '—'} • ${job.location ?? '—'}`,
+          actions: <RowActions key={job._id} onEdit={() => startEdit(job)} onDelete={() => void handleDelete(job._id)} />,
+        }))}
         emptyMessage="Nenhuma vaga encontrada."
       />
 
       <Pagination page={page} pageSize={pageSize} total={total} onChange={setPage} />
-      {loading && <p className="text-xs text-text-muted">Carregando…</p>}
-    </>
+      {loading && <p className="text-sm text-text-muted">Carregando…</p>}
+    </div>
   );
 }
