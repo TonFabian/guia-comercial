@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
 
 import { useResource } from '../../hooks/use-resource';
+import { toast } from 'sonner';
 import { createCompany, deleteCompany, getCompanies, updateCompany, updateCompanyPlan } from '../../services/api';
 import type { CompanyInput } from '../../services/api';
 import type { Category, City, Company } from '../../types/domain';
@@ -166,9 +167,11 @@ export function EmpresasSection({ categories, categoriesError, cities, citiesErr
       }
       resetForm();
       setPage(1);
+      toast.success('Salvo com sucesso.');
       reload();
     } catch (err) {
       setActionError(err instanceof Error ? err.message : String(err));
+      toast.error(err instanceof Error ? err.message : String(err));
     } finally {
       setSaving(false);
     }
@@ -178,9 +181,11 @@ export function EmpresasSection({ categories, categoriesError, cities, citiesErr
     setActionError(null);
     try {
       await deleteCompany(id);
+      toast.success('Excluído com sucesso.');
       reload();
     } catch (err) {
       setActionError(err instanceof Error ? err.message : String(err));
+      toast.error(err instanceof Error ? err.message : String(err));
     }
   }
 

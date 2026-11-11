@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
 
 import { useResource } from '../../hooks/use-resource';
+import { toast } from 'sonner';
 import { createPublicUtility, deletePublicUtility, getPublicUtilities, updatePublicUtility } from '../../services/api';
 import type { PublicUtilityInput } from '../../services/api';
 import type { City, PublicUtility, PublicUtilityCategory } from '../../types/domain';
@@ -125,9 +126,11 @@ export function UtilidadePublicaSection({ cities, citiesError }: UtilidadePublic
       }
       resetForm();
       setPage(1);
+      toast.success('Salvo com sucesso.');
       reload();
     } catch (err) {
       setActionError(err instanceof Error ? err.message : String(err));
+      toast.error(err instanceof Error ? err.message : String(err));
     } finally {
       setSaving(false);
     }
@@ -137,9 +140,11 @@ export function UtilidadePublicaSection({ cities, citiesError }: UtilidadePublic
     setActionError(null);
     try {
       await deletePublicUtility(id);
+      toast.success('Excluído com sucesso.');
       reload();
     } catch (err) {
       setActionError(err instanceof Error ? err.message : String(err));
+      toast.error(err instanceof Error ? err.message : String(err));
     }
   }
 

@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
 
 import { useResource } from '../../hooks/use-resource';
+import { toast } from 'sonner';
 import { createCoupon, deleteCoupon, getCoupons, updateCoupon } from '../../services/api';
 import type { CouponInput } from '../../services/api';
 import type { Company, Coupon } from '../../types/domain';
@@ -97,9 +98,11 @@ export function CuponsSection({ companies, companiesError }: CuponsSectionProps)
       }
       resetForm();
       setPage(1);
+      toast.success('Salvo com sucesso.');
       reload();
     } catch (err) {
       setActionError(err instanceof Error ? err.message : String(err));
+      toast.error(err instanceof Error ? err.message : String(err));
     } finally {
       setSaving(false);
     }
@@ -109,9 +112,11 @@ export function CuponsSection({ companies, companiesError }: CuponsSectionProps)
     setActionError(null);
     try {
       await deleteCoupon(id);
+      toast.success('Excluído com sucesso.');
       reload();
     } catch (err) {
       setActionError(err instanceof Error ? err.message : String(err));
+      toast.error(err instanceof Error ? err.message : String(err));
     }
   }
 

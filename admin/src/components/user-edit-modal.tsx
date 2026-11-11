@@ -4,6 +4,7 @@ import { useEffect, useState } from 'react';
 import type { AdminUserListItem } from '../services/api';
 import { getCities, updateUserProfile, updateUserRole } from '../services/api';
 import { citySlug } from '../utils/labels';
+import { toast } from 'sonner';
 import { Button } from './ui/button';
 import { Field, Input, Select } from './ui/input';
 import { DotsLoader } from './ui/loading';
@@ -79,10 +80,12 @@ export function UserEditModal({ user, isSelf, onClose, onSaved }: UserEditModalP
         await updateUserRole(user._id, role);
       }
 
+      toast.success('Salvo com sucesso.');
       onSaved();
       onClose();
     } catch (err) {
       setError(err instanceof Error ? err.message : String(err));
+      toast.error(err instanceof Error ? err.message : String(err));
     } finally {
       setSaving(false);
     }

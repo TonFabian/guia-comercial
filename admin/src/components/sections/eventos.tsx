@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
 
 import { useResource } from '../../hooks/use-resource';
+import { toast } from 'sonner';
 import { createEvent, deleteEvent, getEvents, getTouristSpots, updateEvent } from '../../services/api';
 import type { TourEventInput } from '../../services/api';
 import type { City, Company, TourEvent, TourEventCategory, TourEventScheduleItem, TouristSpot } from '../../types/domain';
@@ -372,9 +373,11 @@ export function EventosSection({ cities, citiesError, companies, companiesTotal,
       }
       resetForm();
       setPage(1);
+      toast.success('Salvo com sucesso.');
       reload();
     } catch (err) {
       setActionError(err instanceof Error ? err.message : String(err));
+      toast.error(err instanceof Error ? err.message : String(err));
     } finally {
       setSaving(false);
     }
@@ -384,9 +387,11 @@ export function EventosSection({ cities, citiesError, companies, companiesTotal,
     setActionError(null);
     try {
       await deleteEvent(id);
+      toast.success('Excluído com sucesso.');
       reload();
     } catch (err) {
       setActionError(err instanceof Error ? err.message : String(err));
+      toast.error(err instanceof Error ? err.message : String(err));
     }
   }
 

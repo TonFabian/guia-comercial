@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
 
 import { useResource } from '../../hooks/use-resource';
+import { toast } from 'sonner';
 import { createNotice, deleteNotice, getNotices, updateNotice } from '../../services/api';
 import type { NoticeInput, NoticeType } from '../../services/api';
 import type { Notice } from '../../types/domain';
@@ -99,9 +100,11 @@ export function AvisosSection() {
       }
       resetForm();
       setPage(1);
+      toast.success('Salvo com sucesso.');
       reload();
     } catch (err) {
       setActionError(err instanceof Error ? err.message : String(err));
+      toast.error(err instanceof Error ? err.message : String(err));
     } finally {
       setSaving(false);
     }
@@ -111,9 +114,11 @@ export function AvisosSection() {
     setActionError(null);
     try {
       await deleteNotice(id);
+      toast.success('Excluído com sucesso.');
       reload();
     } catch (err) {
       setActionError(err instanceof Error ? err.message : String(err));
+      toast.error(err instanceof Error ? err.message : String(err));
     }
   }
 

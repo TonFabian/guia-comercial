@@ -1,9 +1,7 @@
-import { useCallback, useEffect, useState } from 'react';
 import { useAuth, useUser } from '@clerk/clerk-react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { GateDenied, GateLoading, GateSignIn } from './components/auth-gate';
-import { Sidebar, MobileTopbar } from './components/sidebar';
-import type { Section } from './components/sidebar';
 import { AtracoesSection } from './components/sections/atracoes';
 import { AvisosSection } from './components/sections/avisos';
 import { BannersSection } from './components/sections/banners';
@@ -15,8 +13,11 @@ import { EventosSection } from './components/sections/eventos';
 import { UsuariosSection } from './components/sections/usuarios';
 import { UtilidadePublicaSection } from './components/sections/utilidade-publica';
 import { VagasSection } from './components/sections/vagas';
-import { getCategories, getCities, getCompanies, getMe, setTokenProvider } from './services/api';
+import type { Section } from './components/sidebar';
+import { MobileTopbar, Sidebar } from './components/sidebar';
+import { Toaster } from 'sonner';
 import { PageLoader } from './components/ui/loading';
+import { getCategories, getCities, getCompanies, getMe, setTokenProvider } from './services/api';
 import type { Catalog, CatalogErrors } from './types/catalog';
 
 /** Catálogo vazio — evita `undefined` enquanto os dados de referência carregam. */
@@ -204,6 +205,7 @@ export default function App() {
         )}
         {section === 'Usuários' && <UsuariosSection />}
           </div>
+      <Toaster theme="dark" position="bottom-right" richColors closeButton />
       </main>
       </div>
     </div>

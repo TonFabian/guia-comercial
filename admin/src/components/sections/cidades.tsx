@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import { toast } from 'sonner';
 import type { FormEvent } from 'react';
 
 import { createCity, deleteCity } from '../../services/api';
@@ -54,6 +55,7 @@ export function CidadesSection({ cities, citiesError, onReload }: CidadesSection
       onReload();
     } catch (err) {
       setActionError(err instanceof Error ? err.message : String(err));
+      toast.error(err instanceof Error ? err.message : String(err));
     } finally {
       setSaving(false);
     }
@@ -66,6 +68,7 @@ export function CidadesSection({ cities, citiesError, onReload }: CidadesSection
       onReload();
     } catch (err) {
       setActionError(err instanceof Error ? err.message : String(err));
+      toast.error(err instanceof Error ? err.message : String(err));
     }
   }
 

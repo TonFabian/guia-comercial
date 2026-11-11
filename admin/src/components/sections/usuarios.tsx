@@ -3,6 +3,7 @@ import { useMemo, useState } from 'react';
 import { useUser } from '@clerk/clerk-react';
 
 import { useResource } from '../../hooks/use-resource';
+import { toast } from 'sonner';
 import type { AdminUserListItem } from '../../services/api';
 import { deleteUser, getUsers } from '../../services/api';
 import { filterByText } from '../../utils/filter';
@@ -34,9 +35,11 @@ export function UsuariosSection() {
     setActionError(null);
     try {
       await deleteUser(id);
+      toast.success('Excluído com sucesso.');
       reload();
     } catch (err) {
       setActionError(err instanceof Error ? err.message : String(err));
+      toast.error(err instanceof Error ? err.message : String(err));
     }
   }
 

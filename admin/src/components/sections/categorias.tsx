@@ -2,6 +2,7 @@ import { useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
 
 import { useResource } from '../../hooks/use-resource';
+import { toast } from 'sonner';
 import { createCategory, deleteCategory, getCategories, updateCategory } from '../../services/api';
 import type { CategoryInput } from '../../services/api';
 import type { Category } from '../../types/domain';
@@ -76,9 +77,11 @@ export function CategoriasSection() {
       }
       resetForm();
       setPage(1);
+      toast.success('Salvo com sucesso.');
       reload();
     } catch (err) {
       setActionError(err instanceof Error ? err.message : String(err));
+      toast.error(err instanceof Error ? err.message : String(err));
     } finally {
       setSaving(false);
     }
@@ -88,9 +91,11 @@ export function CategoriasSection() {
     setActionError(null);
     try {
       await deleteCategory(id);
+      toast.success('Excluído com sucesso.');
       reload();
     } catch (err) {
       setActionError(err instanceof Error ? err.message : String(err));
+      toast.error(err instanceof Error ? err.message : String(err));
     }
   }
 
