@@ -52,6 +52,7 @@ export function CidadesSection({ cities, citiesError, onReload }: CidadesSection
       await createCity(payload);
       setForm(EMPTY_FORM);
       setView('list');
+      toast.success('Salvo com sucesso.');
       onReload();
     } catch (err) {
       setActionError(err instanceof Error ? err.message : String(err));
@@ -65,6 +66,7 @@ export function CidadesSection({ cities, citiesError, onReload }: CidadesSection
     setActionError(null);
     try {
       await deleteCity(id);
+      toast.success('Excluído com sucesso.');
       onReload();
     } catch (err) {
       setActionError(err instanceof Error ? err.message : String(err));
