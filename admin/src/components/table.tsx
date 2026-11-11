@@ -50,21 +50,27 @@ export function Table({ headers, rows, mobileRows, emptyMessage }: TableProps) {
       </div>
 
       {mobileRows && mobileRows.length > 0 && (
-        <ul className="space-y-2 md:hidden">
+        <ul className="space-y-3 md:hidden">
           {mobileRows.map((row) => (
             <li
               key={row.id}
-              className="rounded-[--radius-card] border border-border bg-surface p-3 shadow-[--shadow-card]"
+              className="rounded-[--radius-card] border border-border bg-surface p-4 shadow-[--shadow-card]"
             >
-              <div className="flex items-start justify-between gap-2">
-                <div className="min-w-0">
-                  <div className="truncate text-sm font-semibold text-text">{row.primary}</div>
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0 flex-1">
+                  <div className="text-base font-semibold text-text" style={{ fontFamily: 'var(--font-family-heading)' }}>
+                    {row.primary}
+                  </div>
                   {row.secondary && (
-                    <div className="mt-0.5 text-xs text-text-muted">{row.secondary}</div>
+                    <div className="mt-1 text-xs leading-relaxed text-text-muted">{row.secondary}</div>
                   )}
                 </div>
-                {row.actions && <div className="flex shrink-0 gap-1">{row.actions}</div>}
               </div>
+              {row.actions && (
+                <div className="mt-3 flex gap-2 border-t border-border pt-3">
+                  {row.actions}
+                </div>
+              )}
             </li>
           ))}
         </ul>
