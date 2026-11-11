@@ -23,7 +23,7 @@ import { NoticeModel } from '../models/notice.model.js';
 import { PublicUtilityModel } from '../models/public-utility.model.js';
 import { TouristSpotModel } from '../models/tourist-spot.model.js';
 import { TourEventModel } from '../models/event.model.js';
-import { montarEventosTuristicos } from './seed-turismo.js';
+import { montarEventosTuristicos, montarEventosTuristicosTeresina } from './seed-turismo.js';
 
 const shouldReset = process.argv.includes('--reset');
 
@@ -113,6 +113,7 @@ async function seed(): Promise<void> {
 
   const cidades = [
     { name: 'Castelo do Piauí', slug: 'castelo-do-piaui', state: 'PI' },
+    { name: 'Teresina', slug: 'teresina', state: 'PI' },
   ];
   const inseridasCidades = await insertIfMissing(CityModel, cidades, 'slug');
   console.log(`Cidades inseridas: ${inseridasCidades}`);
@@ -310,6 +311,94 @@ async function seed(): Promise<void> {
       ],
       services: ['Pronto atendimento', 'Emergência', 'Ambulatório'],
     },
+    {
+      name: 'Escola Saber & Crescer',
+      slug: 'escola-saber-crescer',
+      description: 'Escola particular de educação infantil e ensino fundamental, com atividades extracurriculares e aulas de reforço.',
+      category: categoriaPorSlug.get('servicos'),
+      phone: '+55 86 3333-1001',
+      whatsapp: '+55 86 3333-1001',
+      address: 'Rua das Acácias, 410 — Bairro Novo',
+      city: casteloId,
+      rating: 4.6,
+      ratingCount: 92,
+      isVerified: true,
+      instagram: '@escolasabercrescer',
+      schedule: [
+        { day: 1, opens: 420, closes: 1020 },
+        { day: 2, opens: 420, closes: 1020 },
+        { day: 3, opens: 420, closes: 1020 },
+        { day: 4, opens: 420, closes: 1020 },
+        { day: 5, opens: 420, closes: 1020 },
+      ],
+      services: ['Educação infantil', 'Ensino fundamental', 'Reforço escolar'],
+    },
+    {
+      name: 'Banco do Nordeste — Agência Castelo',
+      slug: 'banco-do-nordeste-castelo',
+      description: 'Agência do Banco do Nordeste com atendimento a pessoa física e jurídica, crédito rural e microcrédito.',
+      category: categoriaPorSlug.get('servicos'),
+      phone: '+55 86 3333-2000',
+      address: 'Av. Getúlio Vargas, 120 — Centro',
+      city: casteloId,
+      rating: 4.1,
+      ratingCount: 156,
+      isVerified: true,
+      schedule: [
+        { day: 1, opens: 540, closes: 1020 },
+        { day: 2, opens: 540, closes: 1020 },
+        { day: 3, opens: 540, closes: 1020 },
+        { day: 4, opens: 540, closes: 1020 },
+        { day: 5, opens: 540, closes: 1020 },
+      ],
+      services: ['Conta corrente', 'Crédito rural', 'Microcrédito'],
+    },
+    {
+      name: 'Mercado Central Teresina',
+      slug: 'mercado-central-teresina',
+      description: 'Mercado público de Teresina com artesanato, comidas típicas e produtos regionais.',
+      category: categoriaPorSlug.get('alimentacao'),
+      phone: '+55 86 3222-1000',
+      whatsapp: '+55 86 3222-1000',
+      address: 'Praça Saraiva, s/n — Centro',
+      city: cidadePorSlug.get('teresina'),
+      rating: 4.4,
+      ratingCount: 890,
+      isVerified: true,
+      instagram: '@mercadocentralthe',
+      schedule: [
+        { day: 0, opens: 420, closes: 1080 },
+        { day: 1, opens: 420, closes: 1080 },
+        { day: 2, opens: 420, closes: 1080 },
+        { day: 3, opens: 420, closes: 1080 },
+        { day: 4, opens: 420, closes: 1080 },
+        { day: 5, opens: 420, closes: 1080 },
+        { day: 6, opens: 420, closes: 1080 },
+      ],
+      services: ['Artesanato', 'Comida típica', 'Produtos regionais'],
+    },
+    {
+      name: 'Clínica Saúde & Vida',
+      slug: 'clinica-saude-vida-teresina',
+      description: 'Clínica médica multiespecialidade em Teresina, com consultas e exames.',
+      category: categoriaPorSlug.get('saude'),
+      phone: '+55 86 3222-2000',
+      whatsapp: '+55 86 3222-2000',
+      address: 'Av. Frei Serafim, 1500 — Centro',
+      city: cidadePorSlug.get('teresina'),
+      rating: 4.7,
+      ratingCount: 230,
+      isVerified: true,
+      website: 'https://clinicasaudevida.com.br',
+      schedule: [
+        { day: 1, opens: 480, closes: 1080 },
+        { day: 2, opens: 480, closes: 1080 },
+        { day: 3, opens: 480, closes: 1080 },
+        { day: 4, opens: 480, closes: 1080 },
+        { day: 5, opens: 480, closes: 1080 },
+      ],
+      services: ['Clínica geral', 'Cardiologia', 'Pediatria'],
+    },
   ];
   let empresaPorSlug = new Map();
   if (!casteloId) {
@@ -367,6 +456,25 @@ async function seed(): Promise<void> {
       discount: '30%',
       description: 'Válido para o primeiro corte na Barbearia Central.',
     },
+    {
+      title: '10% OFF em material de construção',
+      company: empresaPorSlug.get('construtora-alicerce'),
+      code: 'ALICERCE10',
+      discount: '10%',
+      description: 'Desconto em compras acima de R$ 500 na Construtora Alicerce.',
+    },
+    {
+      title: 'Frete grátis na Drogaria Popular',
+      company: empresaPorSlug.get('drogaria-popular'),
+      code: 'FRETEGRATIS',
+      description: 'Entrega gratuita para pedidos acima de R$ 30.',
+    },
+    {
+      title: 'Café da manhã cortesia',
+      company: empresaPorSlug.get('mercado-central-teresina'),
+      code: 'CAFEGRATIS',
+      description: 'Café da manhã cortesia na compra de qualquer produto regional.',
+    },
   ];
 
   const inseridosCupons = await insertIfMissing(CouponModel, cupons, 'code');
@@ -400,6 +508,20 @@ async function seed(): Promise<void> {
       description: 'Agendamento de clientes e gestão da agenda da barbearia.',
       location: 'Centro, Castelo do Piauí',
       type: 'Meio período',
+    },
+    {
+      title: 'Professor(a) de Reforço',
+      company: empresaPorSlug.get('escola-saber-crescer'),
+      description: 'Reforço escolar para ensino fundamental, matemática e português.',
+      location: 'Bairro Novo, Castelo do Piauí',
+      type: 'Meio período',
+    },
+    {
+      title: 'Atendente de Caixa',
+      company: empresaPorSlug.get('mercado-central-teresina'),
+      description: 'Operação de caixa e atendimento ao cliente no mercado central.',
+      location: 'Centro, Teresina',
+      type: 'CLT',
     },
   ];
 
@@ -461,6 +583,18 @@ async function seed(): Promise<void> {
       title: 'Coleta de lixo — feriado',
       body: 'No feriado do dia 15, a coleta de lixo será antecipada para o dia 14. Deixe o lixo na calçada até as 07h.',
       type: 'general',
+      active: true,
+    },
+    {
+      title: 'Feira do Rio Poti — inscrições abertas',
+      body: 'Artesãos e produtores podem se inscrever para a Feira do Rio Poti até o dia 20. Vagas limitadas.',
+      type: 'event',
+      active: true,
+    },
+    {
+      title: 'Corte de energia programado',
+      body: 'Manutenção na rede elétrica no bairro Novo, dia 18, das 09h às 13h.',
+      type: 'alert',
       active: true,
     },
   ];
@@ -586,6 +720,34 @@ async function seed(): Promise<void> {
       active: true,
       order: 4,
     },
+    {
+      name: 'Encontro dos Rios (Poti e Parnaíba)',
+      slug: 'encontro-dos-rios-poti-parnaiba',
+      description:
+        'Ponto turístico onde o Rio Poti encontra o Rio Parnaíba, com mirante e área de lazer.',
+      category: 'nature',
+      address: 'Zona Norte, Teresina',
+      city: cidadePorSlug.get('teresina'),
+      latitude: -5.05,
+      longitude: -42.8,
+      entryFee: 'free',
+      featured: true,
+      active: true,
+      order: 1,
+    },
+    {
+      name: 'Parque da Cidadania',
+      slug: 'parque-da-cidadania-teresina',
+      description: 'Parque urbano com trilhas, lago e área de convivência no centro de Teresina.',
+      category: 'park',
+      address: 'Centro, Teresina',
+      city: cidadePorSlug.get('teresina'),
+      latitude: -5.089,
+      longitude: -42.802,
+      entryFee: 'free',
+      active: true,
+      order: 2,
+    },
   ];
 
   // Eventos com datas dinâmicas: o festival fica no futuro (aparece como
@@ -622,7 +784,29 @@ async function seed(): Promise<void> {
     );
 
     const inseridosEventos = await insertIfMissing(TourEventModel, eventos, 'slug');
-    console.log(`Eventos turísticos inseridos: ${inseridosEventos}`);
+    console.log(`Eventos turísticos inseridos (Castelo): ${inseridosEventos}`);
+
+    // Eventos de Teresina (segunda cidade) — usa as atrações de Teresina já
+    // inseridas acima (os ids vêm do mesmo mapa de slugs).
+    const teresinaId = cidadePorSlug.get('teresina');
+    if (teresinaId) {
+      const eventosTeresina = montarEventosTuristicosTeresina(
+        {
+          inicioFestival: formatarDataISO(inicioFestival),
+          segundoDiaFestival: formatarDataISO(segundoDiaFestival),
+          fimFestival: formatarDataISO(fimFestival),
+          inicioFeira: formatarDataISO(inicioFeira),
+        },
+        teresinaId,
+        idsDasAtracoes,
+      );
+      const inseridosEventosTeresina = await insertIfMissing(
+        TourEventModel,
+        eventosTeresina,
+        'slug',
+      );
+      console.log(`Eventos turísticos inseridos (Teresina): ${inseridosEventosTeresina}`);
+    }
   }
 }
 
