@@ -44,12 +44,12 @@ import { CompanyGallery } from './company-gallery';
 import { CompanyProducts } from './company-products';
 import { companyPlan, hasFeature } from './company-plan';
 import { getOpeningStatus, type OpeningStatus } from './opening-hours';
+import { falarSobreServicoNoWhatsApp } from './service-contact';
 import { useCompanyDetail } from './use-company-detail';
 import { trackView, trackWhatsappClick } from '@/features/analytics/track';
 
 const WHATSAPP_MESSAGE =
   'Olá, vi sua empresa no aplicativo *Guia de Castelo do Piauí* e gostaria de mais informações!';
-const SERVICE_WHATSAPP_PREFIX = 'Olá, tenho interesse no serviço de';
 
 const HERO_HEIGHT = 230;
 const LOGO_SIZE = 68;
@@ -195,7 +195,7 @@ export function CompanyDetailScreen({ companyId }: { companyId: string }) {
       return;
     }
 
-    void openWhatsApp(whatsapp, `${SERVICE_WHATSAPP_PREFIX} ${serviceName}`);
+    falarSobreServicoNoWhatsApp({ companyId: company?._id, whatsapp, serviceName });
   }
 
   return (
