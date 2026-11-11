@@ -6,10 +6,13 @@ import { createNotice, deleteNotice, getNotices, updateNotice } from '../../serv
 import type { NoticeInput, NoticeType } from '../../services/api';
 import type { Notice } from '../../types/domain';
 import { filterByText } from '../../utils/filter';
-import { Pagination } from '../pagination';
+import { Button } from '../ui/button';
+import { Card } from '../ui/card';
+import { Field, Input, Select, Textarea, CheckboxField } from '../ui/input';
 import { RowActions } from '../row-actions';
 import { SearchInput } from '../search-input';
 import { Table } from '../table';
+import { Pagination } from '../pagination';
 
 interface NoticeForm {
   title: string;
@@ -46,6 +49,7 @@ export function AvisosSection() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [view, setView] = useState<'list' | 'form'>('list');
 
   const visible = useMemo(
     () => filterByText(items, search, (notice) => `${notice.title} ${notice.body}`),
@@ -55,6 +59,7 @@ export function AvisosSection() {
   function resetForm() {
     setEditingId(null);
     setForm(EMPTY_FORM);
+    setView('list');
   }
 
   function startEdit(notice: Notice) {
@@ -68,6 +73,7 @@ export function AvisosSection() {
       expiresAt: notice.expiresAt ? notice.expiresAt.slice(0, 16) : '',
       active: notice.active,
     });
+    setView('form');
   }
 
   async function handleSubmit(event: FormEvent) {
@@ -110,69 +116,95 @@ export function AvisosSection() {
     }
   }
 
+  if (view === 'form') {
+    return (
+      <div className="space-y-4">
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <button type="button" onClick={resetForm} className="text-sm text-text-muted hover:text-text">
+            ← Avisos
+          </button>
+          <div className="flex gap-2">
+            <Button variant="secondary" type="button" onClick={resetForm} disabled={saving}>
+              Cancelar
+            </Button>
+            <Button type="submit" form="aviso-form" disabled={saving}>
+              {editingId ? 'Salvar' : 'Criar'}
+            </Button>
+          </div>
+        </div>
+
+        <h1 className="text-xl font-semibold text-text" style={{ fontFamily: 'var(--font-family-heading)' }}>
+          {editingId ? 'Editar aviso' : 'Novo aviso'}
+        </h1>
+
+        {error && <p className="text-sm text-danger">{error}</p>}
+        {actionError && <p className="text-sm text-danger">{actionError}</p>}
+
+        <form id="aviso-form" onSubmit={handleSubmit} className="space-y-4">
+          <Card>
+            <h2 className="mb-3 text-sm font-semibold text-text" style={{ fontFamily: 'var(--font-family-heading)' }}>
+              Conteúdo
+            </h2>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Field label="Título">
+                <Input value={form.title} onChange={(e) => setForm({ ...form, title: e.target.value })} required />
+              </Field>
+              <Field label="Tipo">
+                <Select value={form.type} onChange={(e) => setForm({ ...form, type: e.target.value as NoticeType })}>
+                  {NOTICE_TYPES.map((noticeType) => (
+                    <option key={noticeType.value} value={noticeType.value}>
+                      {noticeType.label}
+                    </option>
+                  ))}
+                </Select>
+              </Field>
+              <div className="sm:col-span-2">
+                <Field label="Texto do aviso">
+                  <Textarea value={form.body} onChange={(e) => setForm({ ...form, body: e.target.value })} required />
+                </Field>
+              </div>
+            </div>
+          </Card>
+
+          <Card>
+            <h2 className="mb-3 text-sm font-semibold text-text" style={{ fontFamily: 'var(--font-family-heading)' }}>
+              Validade
+            </h2>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Field label="Início (opcional)">
+                <Input type="datetime-local" value={form.startsAt} onChange={(e) => setForm({ ...form, startsAt: e.target.value })} />
+              </Field>
+              <Field label="Expira em (opcional)">
+                <Input type="datetime-local" value={form.expiresAt} onChange={(e) => setForm({ ...form, expiresAt: e.target.value })} />
+              </Field>
+              <div className="sm:col-span-2">
+                <CheckboxField label="Ativo" checked={form.active} onChange={(e) => setForm({ ...form, active: e.target.checked })} />
+              </div>
+            </div>
+          </Card>
+        </form>
+      </div>
+    );
+  }
+
   return (
-    <>
+    <div className="space-y-4">
       {error && <p className="text-sm text-danger">{error}</p>}
       {actionError && <p className="text-sm text-danger">{actionError}</p>}
 
-      <form onSubmit={handleSubmit} className="mb-4 grid gap-3 rounded-[--radius-card] border border-border bg-surface p-4 shadow-[--shadow-card] sm:grid-cols-2">
-        <input
-          placeholder="Título"
-          value={form.title}
-          onChange={(event) => setForm({ ...form, title: event.target.value })}
-          required
-        />
-        <textarea
-          placeholder="Texto do aviso"
-          value={form.body}
-          onChange={(event) => setForm({ ...form, body: event.target.value })}
-          required
-          style={{ minWidth: 300, minHeight: 60 }}
-        />
-        <select
-          value={form.type}
-          onChange={(event) => setForm({ ...form, type: event.target.value as NoticeType })}
-        >
-          {NOTICE_TYPES.map((noticeType) => (
-            <option key={noticeType.value} value={noticeType.value}>
-              {noticeType.label}
-            </option>
-          ))}
-        </select>
-        <input
-          type="datetime-local"
-          placeholder="Início (opcional)"
-          value={form.startsAt}
-          onChange={(event) => setForm({ ...form, startsAt: event.target.value })}
-        />
-        <input
-          type="datetime-local"
-          placeholder="Expira em (opcional)"
-          value={form.expiresAt}
-          onChange={(event) => setForm({ ...form, expiresAt: event.target.value })}
-        />
-        <label className="flex items-center gap-2 text-sm text-text">
-          <input
-            type="checkbox"
-            checked={form.active}
-            onChange={(event) => setForm({ ...form, active: event.target.checked })}
-          />
-          Ativo
-        </label>
-        <button type="submit" disabled={saving}>
-          {editingId ? 'Salvar' : 'Criar'}
-        </button>
-        {editingId && (
-          <button type="button" onClick={resetForm}>
-            Cancelar
-          </button>
-        )}
-      </form>
-
-      <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <SearchInput value={search} onChange={setSearch} placeholder="Buscar aviso…" />
-        {search && <span className="text-xs text-text-muted">A busca filtra os itens da página atual.</span>}
+        <Button
+          onClick={() => {
+            resetForm();
+            setForm(EMPTY_FORM);
+            setView('form');
+          }}
+        >
+          + Novo aviso
+        </Button>
       </div>
+      {search && <span className="text-xs text-text-muted">A busca filtra os itens da página atual.</span>}
 
       <Table
         headers={['Título', 'Tipo', 'Validade', 'Ativo', 'Ações']}
@@ -181,17 +213,19 @@ export function AvisosSection() {
           noticeTypeLabel(notice.type),
           notice.expiresAt ? new Date(notice.expiresAt).toLocaleString() : '—',
           notice.active ? 'Sim' : 'Não',
-          <RowActions
-            key={notice._id}
-            onEdit={() => startEdit(notice)}
-            onDelete={() => void handleDelete(notice._id)}
-          />,
+          <RowActions key={notice._id} onEdit={() => startEdit(notice)} onDelete={() => void handleDelete(notice._id)} />,
         ])}
+        mobileRows={visible.map((notice) => ({
+          id: notice._id,
+          primary: notice.title,
+          secondary: `${noticeTypeLabel(notice.type)} • ${notice.active ? 'Ativo' : 'Inativo'} • ${notice.expiresAt ? new Date(notice.expiresAt).toLocaleString() : 'sem expiração'}`,
+          actions: <RowActions key={notice._id} onEdit={() => startEdit(notice)} onDelete={() => void handleDelete(notice._id)} />,
+        }))}
         emptyMessage="Nenhum aviso encontrado."
       />
 
       <Pagination page={page} pageSize={pageSize} total={total} onChange={setPage} />
-      {loading && <p className="text-xs text-text-muted">Carregando…</p>}
-    </>
+      {loading && <p className="text-sm text-text-muted">Carregando…</p>}
+    </div>
   );
 }
