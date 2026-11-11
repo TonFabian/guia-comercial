@@ -325,6 +325,8 @@ cd admin   && npm run lint && npm run typecheck && npm test && npm run build
 
 - **TDD** no backend: todo endpoint novo nasce com o teste do supertest
   falhando, depois o código, depois o refactor.
+- **Rate limiting em três camadas** (global `/api/*`, webhook do Clerk e
+  anti-inflação de analytics) — detalhes em `backend/README.md`.
 - Cobertura de teste hoje: **441 testes no backend** (30 arquivos, incluindo
   a varredura de segurança de 107 testes em `src/routes/security.test.ts`),
   **180 testes no mobile** (17 arquivos) e **11 testes no admin** (1 arquivo
