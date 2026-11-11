@@ -7,7 +7,6 @@ import { filterByText } from '../../utils/filter';
 import { cityLabel } from '../../utils/labels';
 import { Pagination } from '../pagination';
 import { SearchInput } from '../search-input';
-import { errorStyle, hintStyle, toolbarStyle } from '../styles';
 import { Table } from '../table';
 
 function userName(user: AdminUserListItem): string {
@@ -25,16 +24,16 @@ export function UsuariosSection() {
 
   return (
     <>
-      {error && <p style={errorStyle}>{error}</p>}
+      {error && <p className="text-sm text-danger">{error}</p>}
 
-      <p style={hintStyle}>
+      <p className="text-xs text-text-muted">
         Somente leitura: o backend não expõe endpoints de escrita de usuários (criação, edição ou
         exclusão). O perfil é mantido no Clerk e espelhado no banco pelo webhook.
       </p>
 
-      <div style={toolbarStyle}>
+      <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <SearchInput value={search} onChange={setSearch} placeholder="Buscar usuário…" />
-        {search && <span style={hintStyle}>A busca filtra os itens da página atual.</span>}
+        {search && <span className="text-xs text-text-muted">A busca filtra os itens da página atual.</span>}
       </div>
 
       <Table
@@ -50,7 +49,7 @@ export function UsuariosSection() {
       />
 
       <Pagination page={page} pageSize={pageSize} total={total} onChange={setPage} />
-      {loading && <p style={hintStyle}>Carregando…</p>}
+      {loading && <p className="text-xs text-text-muted">Carregando…</p>}
     </>
   );
 }

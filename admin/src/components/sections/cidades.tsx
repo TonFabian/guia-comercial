@@ -7,7 +7,6 @@ import type { City } from '../../types/domain';
 import { filterByText } from '../../utils/filter';
 import { DeleteButton } from '../delete-button';
 import { SearchInput } from '../search-input';
-import { errorStyle, formStyle, hintStyle, toolbarStyle } from '../styles';
 import { Table } from '../table';
 
 export interface CidadesSectionProps {
@@ -66,10 +65,10 @@ export function CidadesSection({ cities, citiesError, onReload }: CidadesSection
 
   return (
     <>
-      {citiesError && <p style={errorStyle}>Falha ao carregar cidades: {citiesError}</p>}
-      {actionError && <p style={errorStyle}>{actionError}</p>}
+      {citiesError && <p className="text-sm text-danger">Falha ao carregar cidades: {citiesError}</p>}
+      {actionError && <p className="text-sm text-danger">{actionError}</p>}
 
-      <form onSubmit={handleSubmit} style={formStyle}>
+      <form onSubmit={handleSubmit} className="mb-4 grid gap-3 rounded-[--radius-card] border border-border bg-surface p-4 shadow-[--shadow-card] sm:grid-cols-2">
         <input
           placeholder="Nome"
           value={form.name}
@@ -92,14 +91,14 @@ export function CidadesSection({ cities, citiesError, onReload }: CidadesSection
           Criar
         </button>
       </form>
-      <p style={hintStyle}>
+      <p className="text-xs text-text-muted">
         O backend expõe apenas criação e exclusão de cidades (não há rota de atualização), por isso esta
         seção não oferece edição.
       </p>
 
-      <div style={toolbarStyle}>
+      <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <SearchInput value={search} onChange={setSearch} placeholder="Buscar cidade…" />
-        {search && <span style={hintStyle}>{visible.length} de {cities.length} cidades.</span>}
+        {search && <span className="text-xs text-text-muted">{visible.length} de {cities.length} cidades.</span>}
       </div>
 
       <Table

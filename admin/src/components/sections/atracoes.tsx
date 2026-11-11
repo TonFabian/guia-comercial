@@ -15,7 +15,6 @@ import { cityLabel, citySlug } from '../../utils/labels';
 import { Pagination } from '../pagination';
 import { RowActions } from '../row-actions';
 import { SearchInput } from '../search-input';
-import { checkLabelStyle, errorStyle, formStyle, hintStyle, toolbarStyle } from '../styles';
 import { Table } from '../table';
 
 export interface AtracoesSectionProps {
@@ -263,12 +262,12 @@ export function AtracoesSection({ cities, citiesError, companies, companiesTotal
 
   return (
     <>
-      {citiesError && <p style={errorStyle}>Falha ao carregar cidades: {citiesError}</p>}
-      {companiesError && <p style={errorStyle}>Falha ao carregar empresas: {companiesError}</p>}
-      {error && <p style={errorStyle}>{error}</p>}
-      {actionError && <p style={errorStyle}>{actionError}</p>}
+      {citiesError && <p className="text-sm text-danger">Falha ao carregar cidades: {citiesError}</p>}
+      {companiesError && <p className="text-sm text-danger">Falha ao carregar empresas: {companiesError}</p>}
+      {error && <p className="text-sm text-danger">{error}</p>}
+      {actionError && <p className="text-sm text-danger">{actionError}</p>}
 
-      <form onSubmit={handleSubmit} style={formStyle}>
+      <form onSubmit={handleSubmit} className="mb-4 grid gap-3 rounded-[--radius-card] border border-border bg-surface p-4 shadow-[--shadow-card] sm:grid-cols-2">
         <input
           placeholder="Nome"
           value={form.name}
@@ -373,7 +372,7 @@ export function AtracoesSection({ cities, citiesError, companies, companiesTotal
           value={form.order}
           onChange={(event) => setForm({ ...form, order: Number(event.target.value) })}
         />
-        <label style={checkLabelStyle}>
+        <label className="flex items-center gap-2 text-sm text-text">
           <input
             type="checkbox"
             checked={form.featured}
@@ -381,7 +380,7 @@ export function AtracoesSection({ cities, citiesError, companies, companiesTotal
           />
           Destaque
         </label>
-        <label style={checkLabelStyle}>
+        <label className="flex items-center gap-2 text-sm text-text">
           <input
             type="checkbox"
             checked={form.active}
@@ -417,15 +416,15 @@ export function AtracoesSection({ cities, citiesError, companies, companiesTotal
          </fieldset>
       </form>
       {companiesTotal > companies.length && (
-        <p style={hintStyle}>
+        <p className="text-xs text-text-muted">
           Exibindo {companies.length} de {companiesTotal} empresas — consulte a seção Empresas para o
           restante.
         </p>
       )}
 
-      <div style={toolbarStyle}>
+      <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <SearchInput value={search} onChange={setSearch} placeholder="Buscar atração…" />
-        {search && <span style={hintStyle}>A busca filtra os itens da página atual.</span>}
+        {search && <span className="text-xs text-text-muted">A busca filtra os itens da página atual.</span>}
       </div>
 
       <Table
@@ -447,7 +446,7 @@ export function AtracoesSection({ cities, citiesError, companies, companiesTotal
       />
 
       <Pagination page={page} pageSize={pageSize} total={total} onChange={setPage} />
-      {loading && <p style={hintStyle}>Carregando…</p>}
+      {loading && <p className="text-xs text-text-muted">Carregando…</p>}
     </>
   );
 }

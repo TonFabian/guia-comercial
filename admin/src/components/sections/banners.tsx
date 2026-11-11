@@ -9,7 +9,6 @@ import { filterByText } from '../../utils/filter';
 import { Pagination } from '../pagination';
 import { RowActions } from '../row-actions';
 import { SearchInput } from '../search-input';
-import { checkLabelStyle, errorStyle, formStyle, hintStyle, toolbarStyle } from '../styles';
 import { Table } from '../table';
 
 interface BannerForm {
@@ -103,10 +102,10 @@ export function BannersSection() {
 
   return (
     <>
-      {error && <p style={errorStyle}>{error}</p>}
-      {actionError && <p style={errorStyle}>{actionError}</p>}
+      {error && <p className="text-sm text-danger">{error}</p>}
+      {actionError && <p className="text-sm text-danger">{actionError}</p>}
 
-      <form onSubmit={handleSubmit} style={formStyle}>
+      <form onSubmit={handleSubmit} className="mb-4 grid gap-3 rounded-[--radius-card] border border-border bg-surface p-4 shadow-[--shadow-card] sm:grid-cols-2">
         <input
           placeholder="Título"
           value={form.title}
@@ -134,7 +133,7 @@ export function BannersSection() {
           value={form.order}
           onChange={(event) => setForm({ ...form, order: Number(event.target.value) })}
         />
-        <label style={checkLabelStyle}>
+        <label className="flex items-center gap-2 text-sm text-text">
           <input
             type="checkbox"
             checked={form.active}
@@ -152,9 +151,9 @@ export function BannersSection() {
         )}
       </form>
 
-      <div style={toolbarStyle}>
+      <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <SearchInput value={search} onChange={setSearch} placeholder="Buscar banner…" />
-        {search && <span style={hintStyle}>A busca filtra os itens da página atual.</span>}
+        {search && <span className="text-xs text-text-muted">A busca filtra os itens da página atual.</span>}
       </div>
 
       <Table
@@ -175,7 +174,7 @@ export function BannersSection() {
       />
 
       <Pagination page={page} pageSize={pageSize} total={total} onChange={setPage} />
-      {loading && <p style={hintStyle}>Carregando…</p>}
+      {loading && <p className="text-xs text-text-muted">Carregando…</p>}
     </>
   );
 }

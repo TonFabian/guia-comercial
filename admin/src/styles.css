@@ -49,6 +49,22 @@ body {
   color: #e8e8ea;
 }
 
+/* Base legível para controles nativos (seções ainda em migração). */
+input, select, textarea {
+  background: #1d2026;
+  border: 1px solid #2a2e36;
+  border-radius: 8px;
+  color: #e8e8ea;
+  padding: 6px 10px;
+  font-size: 0.875rem;
+}
+button {
+  cursor: pointer;
+}
+label { color: #e8e8ea; }
+fieldset { border: 1px solid #2a2e36; border-radius: 12px; padding: 12px; }
+legend { padding: 0 6px; color: #9aa0a6; font-size: 0.75rem; }
+
 .layout {
   display: flex;
   min-height: 100vh;

@@ -9,7 +9,6 @@ import { filterByText } from '../../utils/filter';
 import { Pagination } from '../pagination';
 import { RowActions } from '../row-actions';
 import { SearchInput } from '../search-input';
-import { errorStyle, formStyle, hintStyle, toolbarStyle } from '../styles';
 import { Table } from '../table';
 
 interface CategoryForm {
@@ -90,10 +89,10 @@ export function CategoriasSection() {
 
   return (
     <>
-      {error && <p style={errorStyle}>{error}</p>}
-      {actionError && <p style={errorStyle}>{actionError}</p>}
+      {error && <p className="text-sm text-danger">{error}</p>}
+      {actionError && <p className="text-sm text-danger">{actionError}</p>}
 
-      <form onSubmit={handleSubmit} style={formStyle}>
+      <form onSubmit={handleSubmit} className="mb-4 grid gap-3 rounded-[--radius-card] border border-border bg-surface p-4 shadow-[--shadow-card] sm:grid-cols-2">
         <input
           placeholder="Nome"
           value={form.name}
@@ -126,11 +125,11 @@ export function CategoriasSection() {
           </button>
         )}
       </form>
-      <p style={hintStyle}>O slug deve estar em kebab-case (ex.: restaurantes).</p>
+      <p className="text-xs text-text-muted">O slug deve estar em kebab-case (ex.: restaurantes).</p>
 
-      <div style={toolbarStyle}>
+      <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <SearchInput value={search} onChange={setSearch} placeholder="Buscar categoria…" />
-        {search && <span style={hintStyle}>A busca filtra os itens da página atual.</span>}
+        {search && <span className="text-xs text-text-muted">A busca filtra os itens da página atual.</span>}
       </div>
 
       <Table
@@ -150,7 +149,7 @@ export function CategoriasSection() {
       />
 
       <Pagination page={page} pageSize={pageSize} total={total} onChange={setPage} />
-      {loading && <p style={hintStyle}>Carregando…</p>}
+      {loading && <p className="text-xs text-text-muted">Carregando…</p>}
     </>
   );
 }

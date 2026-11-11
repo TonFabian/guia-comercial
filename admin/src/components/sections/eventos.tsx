@@ -14,7 +14,6 @@ import { spotOptionValue } from '../../utils/spot-option';
 import { Pagination } from '../pagination';
 import { RowActions } from '../row-actions';
 import { SearchInput } from '../search-input';
-import { checkLabelStyle, errorStyle, formStyle, hintStyle, toolbarStyle } from '../styles';
 import { Table } from '../table';
 
 export interface EventosSectionProps {
@@ -380,13 +379,13 @@ export function EventosSection({ cities, citiesError, companies, companiesTotal,
 
   return (
     <>
-      {citiesError && <p style={errorStyle}>Falha ao carregar cidades: {citiesError}</p>}
-      {companiesError && <p style={errorStyle}>Falha ao carregar empresas: {companiesError}</p>}
-      {touristSpotsError && <p style={errorStyle}>Falha ao carregar atrações: {touristSpotsError}</p>}
-      {error && <p style={errorStyle}>{error}</p>}
-      {actionError && <p style={errorStyle}>{actionError}</p>}
+      {citiesError && <p className="text-sm text-danger">Falha ao carregar cidades: {citiesError}</p>}
+      {companiesError && <p className="text-sm text-danger">Falha ao carregar empresas: {companiesError}</p>}
+      {touristSpotsError && <p className="text-sm text-danger">Falha ao carregar atrações: {touristSpotsError}</p>}
+      {error && <p className="text-sm text-danger">{error}</p>}
+      {actionError && <p className="text-sm text-danger">{actionError}</p>}
 
-      <form onSubmit={handleSubmit} style={formStyle}>
+      <form onSubmit={handleSubmit} className="mb-4 grid gap-3 rounded-[--radius-card] border border-border bg-surface p-4 shadow-[--shadow-card] sm:grid-cols-2">
         <input
           placeholder="Nome"
           value={form.name}
@@ -522,7 +521,7 @@ export function EventosSection({ cities, citiesError, companies, companiesTotal,
           value={form.instagram}
           onChange={(event) => setForm({ ...form, instagram: event.target.value })}
         />
-        <label style={checkLabelStyle}>
+        <label className="flex items-center gap-2 text-sm text-text">
           <input
             type="checkbox"
             checked={form.featured}
@@ -530,7 +529,7 @@ export function EventosSection({ cities, citiesError, companies, companiesTotal,
           />
           Destaque
         </label>
-        <label style={checkLabelStyle}>
+        <label className="flex items-center gap-2 text-sm text-text">
           <input
             type="checkbox"
             checked={form.active}
@@ -561,21 +560,21 @@ export function EventosSection({ cities, citiesError, companies, companiesTotal,
         />
       </form>
       {companiesTotal > companies.length && (
-        <p style={hintStyle}>
+        <p className="text-xs text-text-muted">
           Exibindo {companies.length} de {companiesTotal} empresas — consulte a seção Empresas para o
           restante.
         </p>
       )}
       {touristSpotsTotal > touristSpots.length && (
-        <p style={hintStyle}>
+        <p className="text-xs text-text-muted">
           Exibindo {touristSpots.length} de {touristSpotsTotal} atrações — a lista do select está
           limitada; use a seção Atrações se a atração desejada não aparecer.
         </p>
       )}
 
-      <div style={toolbarStyle}>
+      <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <SearchInput value={search} onChange={setSearch} placeholder="Buscar evento…" />
-        {search && <span style={hintStyle}>A busca filtra os itens da página atual.</span>}
+        {search && <span className="text-xs text-text-muted">A busca filtra os itens da página atual.</span>}
       </div>
 
       <Table
@@ -598,8 +597,8 @@ export function EventosSection({ cities, citiesError, companies, companiesTotal,
       />
 
       <Pagination page={page} pageSize={pageSize} total={total} onChange={setPage} />
-      <p style={hintStyle}>Os eventos encerrados aparecem na listagem para que possam ser editados ou desativados.</p>
-      {loading && <p style={hintStyle}>Carregando…</p>}
+      <p className="text-xs text-text-muted">Os eventos encerrados aparecem na listagem para que possam ser editados ou desativados.</p>
+      {loading && <p className="text-xs text-text-muted">Carregando…</p>}
     </>
   );
 }
