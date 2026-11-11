@@ -59,6 +59,7 @@ function getWebRecognitionConstructor(): WebRecognitionConstructor | null {
  */
 function loadNativeVoice(): NativeVoice | null {
   try {
+    // eslint-disable-next-line @typescript-eslint/no-require-imports
     const module = require('@react-native-voice/voice') as { default?: NativeVoice };
     return module.default ?? null;
   } catch {

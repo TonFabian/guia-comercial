@@ -244,7 +244,7 @@ code {
 }
 
 /* ---------------------------------------------------------------------------
-   DotsLoader: três pontos pulsando em onda (cor do token --color-primary).
+   DotsLoader: três pontos pulsando em onda (cor herdada via currentcolor).
    ------------------------------------------------------------------------- */
 
 .dots-loader {
@@ -257,7 +257,7 @@ code {
   width: 6px;
   height: 6px;
   border-radius: 50%;
-  background: var(--color-primary);
+  background: currentcolor;
   animation: dots-pulse 1s ease-in-out infinite;
 }
 

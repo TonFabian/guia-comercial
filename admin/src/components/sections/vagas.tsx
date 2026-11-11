@@ -126,7 +126,7 @@ export function VagasSection({ companies, companiesError }: VagasSectionProps) {
           </button>
           <div className="flex gap-2">
                         <Button type="submit" form="vaga-form" disabled={saving}>
-              {saving ? <DotsLoader size="sm" /> : editingId ? 'Salvar' : 'Criar'}
+              {saving ? <DotsLoader size="sm" color="text-[#111827]" /> : editingId ? 'Salvar' : 'Criar'}
             </Button>
             <Button variant="secondary" type="button" onClick={resetForm} disabled={saving}>
               Cancelar

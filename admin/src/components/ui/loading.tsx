@@ -28,11 +28,11 @@ export function dotsLoaderClass(size: DotsLoaderSize = 'sm'): string {
 }
 
 /** Três pontos pulsando com atraso escalonado. */
-function Dots({ size = 'sm' }: { size?: DotsLoaderSize }) {
+function Dots({ size = 'sm', color }: { size?: DotsLoaderSize; color?: string }) {
   return (
     <span aria-hidden="true" className={dotsLoaderClass(size)}>
       {[0, 1, 2].map((index) => (
-        <span key={index} style={{ animationDelay: `${dotDelayMs(index)}ms` }} />
+        <span key={index} className={color} style={{ animationDelay: `${dotDelayMs(index)}ms` }} />
       ))}
     </span>
   );
@@ -81,14 +81,16 @@ interface DotsLoaderProps {
   label?: string;
   /** sm (inline) ou lg (PageLoader). */
   size?: DotsLoaderSize;
+  /** Cor customizada do texto (classe Tailwind). Se omitido, usa text-text-muted. */
+  color?: string;
 }
 
 /** Três pontos pulsando — indicador compacto para carregamentos inline. */
-export function DotsLoader({ label, size = 'sm' }: DotsLoaderProps) {
+export function DotsLoader({ label, size = 'sm', color = 'text-text-muted' }: DotsLoaderProps) {
   return (
-    <span role="status" aria-label={label ?? 'Carregando'} className="inline-flex items-center gap-2 text-sm text-text-muted">
-      <Dots size={size} />
-      {label && <span>{label}</span>}
+    <span role="status" aria-label={label ?? 'Carregando'} className="inline-flex items-center gap-2 text-sm">
+      <Dots size={size} color={color} />
+      {label && <span className={color}>{label}</span>}
     </span>
   );
 }
@@ -96,17 +98,19 @@ export function DotsLoader({ label, size = 'sm' }: DotsLoaderProps) {
 interface PageLoaderProps {
   /** Texto explicativo abaixo dos dots. */
   label?: string;
+  /** Cor customizada do texto (classe Tailwind). Se omitido, usa text-primary. */
+  color?: string;
 }
 
 /**
  * Loading centralizado na área útil do painel (mobile-first): ocupa a altura
  * da viewport e centra dots grandes + label, em qualquer largura de tela.
  */
-export function PageLoader({ label }: PageLoaderProps) {
+export function PageLoader({ label, color = 'text-primary' }: PageLoaderProps) {
   return (
     <div role="status" aria-label={label ?? 'Carregando'} className="flex min-h-[60dvh] w-full flex-col items-center justify-center gap-4">
-      <Dots size="lg" />
-      {label && <p className="text-sm text-text-muted">{label}</p>}
+      <Dots size="lg" color={color} />
+      {label && <p className={`text-sm ${color}`}>{label}</p>}
     </div>
   );
 }

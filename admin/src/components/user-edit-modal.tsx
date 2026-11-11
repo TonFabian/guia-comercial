@@ -144,7 +144,7 @@ export function UserEditModal({ user, isSelf, onClose, onSaved }: UserEditModalP
 
           <div className="mt-2 flex justify-end gap-2">
             <Button type="submit" disabled={saving}>
-              {saving ? <DotsLoader size="sm" /> : 'Salvar'}
+              {saving ? <DotsLoader size="sm" color="text-[#111827]" /> : 'Salvar'}
             </Button>
             <Button type="button" variant="secondary" onClick={onClose}>
               Cancelar
