@@ -1,3 +1,7 @@
+import { useState } from 'react';
+
+import { ConfirmDialog } from './ui/confirm-dialog';
+
 export type RowActionVariant = 'edit' | 'delete';
 
 /**
@@ -21,14 +25,31 @@ interface RowActionsProps {
 }
 
 export function RowActions({ onEdit, onDelete }: RowActionsProps) {
+  // Dupla confirmação: 1º clique abre o modal; a exclusão só ocorre no
+  // "Confirmar" do modal (nunca no clique da tabela).
+  const [confirming, setConfirming] = useState(false);
+
   return (
-    <span className="flex flex-1 gap-2 sm:inline-flex sm:flex-none">
-      <button type="button" onClick={onEdit} className={rowActionClass('edit')}>
-        Editar
-      </button>
-      <button type="button" onClick={onDelete} className={rowActionClass('delete')}>
-        Excluir
-      </button>
-    </span>
+    <>
+      <span className="flex flex-1 gap-2 sm:inline-flex sm:flex-none">
+        <button type="button" onClick={onEdit} className={rowActionClass('edit')}>
+          Editar
+        </button>
+        <button type="button" onClick={() => setConfirming(true)} className={rowActionClass('delete')}>
+          Excluir
+        </button>
+      </span>
+      <ConfirmDialog
+        open={confirming}
+        title="Excluir registro"
+        message="Esta ação é permanente e não pode ser desfeita. Deseja realmente excluir este registro?"
+        confirmLabel="Confirmar"
+        onConfirm={() => {
+          setConfirming(false);
+          onDelete();
+        }}
+        onCancel={() => setConfirming(false)}
+      />
+    </>
   );
 }

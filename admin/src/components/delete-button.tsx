@@ -1,4 +1,6 @@
-import { useEffect, useState } from 'react';
+import { useState } from 'react';
+
+import { ConfirmDialog } from './ui/confirm-dialog';
 
 export type DeleteButtonVariant = 'danger' | 'confirm' | 'cancel';
 
@@ -27,43 +29,31 @@ export interface DeleteButtonProps {
 }
 
 /**
- * Botão de exclusão com confirmação em linha.
+ * Botão de exclusão com confirmação em modal customizado.
  *
- * Evita `window.confirm`: a confirmação fica visível no próprio fluxo da tela
- * e o erro da API aparece no estado da seção, sem diálogo do navegador.
+ * Dupla confirmação: 1º clique abre o modal (Tailwind puro, sem
+ * window.confirm); a exclusão só ocorre no "Confirmar" do modal. Erros da
+ * API aparecem no estado da seção, sem diálogo do navegador.
  */
 export function DeleteButton({ label = 'Excluir', onConfirm }: DeleteButtonProps) {
-  const [armed, setArmed] = useState(false);
-
-  useEffect(() => {
-    if (!armed) return;
-    const timer = window.setTimeout(() => setArmed(false), 5000);
-    return () => window.clearTimeout(timer);
-  }, [armed]);
-
-  if (!armed) {
-    return (
-      <button type="button" onClick={() => setArmed(true)} className={deleteButtonClass('danger')}>
-        {label}
-      </button>
-    );
-  }
+  const [open, setOpen] = useState(false);
 
   return (
     <>
-      <button
-        type="button"
-        onClick={() => {
-          setArmed(false);
+      <button type="button" onClick={() => setOpen(true)} className={deleteButtonClass('danger')}>
+        {label}
+      </button>
+      <ConfirmDialog
+        open={open}
+        title="Excluir registro"
+        message="Esta ação é permanente e não pode ser desfeita. Deseja realmente excluir este registro?"
+        confirmLabel="Confirmar"
+        onConfirm={() => {
+          setOpen(false);
           onConfirm();
         }}
-        className={deleteButtonClass('confirm')}
-      >
-        Confirmar
-      </button>{' '}
-      <button type="button" onClick={() => setArmed(false)} className={deleteButtonClass('cancel')}>
-        Cancelar
-      </button>
+        onCancel={() => setOpen(false)}
+      />
     </>
   );
 }
