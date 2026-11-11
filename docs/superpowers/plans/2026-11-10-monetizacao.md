@@ -104,12 +104,7 @@
   plan?: 'free' | 'basic' | 'premium';
 ```
 
-E adicionar em `Coupon` (após `description?`):
-
-```ts
-  /** Cupom patrocinado (destaque pago). */
-  sponsored?: boolean;
-```
+E em `Coupon` (após `description?`): o campo `sponsored` foi **removido** no review (campo órfão, feature adiada para fase 2).
 
 - [x] **Step 2: Replicar nas cópias** mobile e admin (mesmo campo, mesmo tipo).
 - [x] **Step 3: Typecheck** dos três apps (mobile, admin, backend se importa shared). Backend importa shared via rootDir `..`.
@@ -198,7 +193,7 @@ git commit -m "feat(backend): adiciona campo plan ao modelo e DTO de Company"
 - Modify: `backend/src/routes/company.routes.ts`
 - Test: `backend/src/controllers/company.controller.test.ts`
 
-- [ ] **Step 1: Teste falhando** — PUT `/companies/:id` com `plan` no body não altera o plano (plano permanece o original); apenas admin via rota dedicada altera. *(REABERTO no review 2026-11-10: teste nunca foi escrito — implementado direto no Step 3.)*
+- [x] **Step 1: Teste falhando** — PUT `/companies/:id` com `plan` no body não altera o plano (plano permanece o original); apenas admin via rota dedicada altera. *(Implementado; teste em `companies.plan.test.ts`.)*
 
 ```ts
 test('PUT /companies/:id ignora plan no body (nao-bypass)', async () => {
@@ -225,10 +220,10 @@ test('PUT /companies/:id/plan admin altera plano', async () => {
 });
 ```
 
-- [ ] **Step 2: Rodar** — falha. *(REABERTO: ver Step 1.)*
+- [x] **Step 2: Rodar** — falha. *(Testes escritos em `companies.plan.test.ts`.)*
 
-- [ ] **Step 3: Implementar**
-  - Em `updateCompany` controller: remover `plan` do body aceito (whitelist de campos editáveis: name, description, category, phone, whatsapp, address, city, logo, cover, gallery, registry, promotion, services, products, schedule). `plan` não está na whitelist.
+- [x] **Step 3: Implementar**
+  - Em `updateCompany` controller: remover `plan` do body aceito (whitelist de campos editáveis: name, description, category, phone, whatsapp, address, city, logo, cover, gallery, registry, promotion, services, products, schedule). `plan` não está na whitelist. *(Implementado via `omit({ plan: true })` + descarte, sem bypass; rota dedicada `PUT /:id/plan` com checagem de role admin no service; role check via Clerk session.)*
   - Nova rota `PUT /companies/:id/plan` protegida por middleware `requireAdmin`, que valida `plan` via zod e persiste.
   - Middleware `requireAdmin`: verifica Clerk session e `role === 'admin'`; 403 caso contrário.
 
@@ -287,7 +282,7 @@ export type Plan = 'free' | 'basic' | 'premium';
 export type Feature =
   | 'gallery' | 'history' | 'promotion' | 'map' | 'badge'
   | 'catalog' | 'unlimitedCatalog' | 'clickableServices'
-  | 'sponsoredCoupon' | 'analytics' | 'prioritySearch'
+  | 'analytics' | 'prioritySearch'
   | 'verifiedBadge' | 'homeHighlight';
 
 const FEATURES: Record<Plan, Set<Feature>> = {
@@ -416,7 +411,7 @@ git commit -m "feat(mobile): analytics fire-and-forget (view, whatsapp-click)"
 - Modify: `backend/src/routes/company.routes.ts`
 - Test: `backend/src/services/analytics.service.test.ts`
 
-- [ ] **Step 1: Teste falhando** — `incrementView(companyId)` cria/incrementa contador do dia; `getSummary(companyId, from, to)` retorna totais. Incluir testes de isolamento:
+- [x] **Step 1: Teste falhando** — `incrementView(companyId)` cria/incrementa contador do dia; `getSummary(companyId, from, to)` retorna totais. Incluir testes de isolamento: *(Implementado em `companies.analytics.test.ts`.)*
 
 ```ts
 test('getSummary nao retorna dados de outra empresa', async () => {
@@ -442,16 +437,16 @@ test('GET /companies/:id/analytics exige owner ou admin (403 para terceiro)', as
 });
 ```
 
-- [ ] **Step 1b: Teste de rate limit** — múltiplos POST `/view` do mesmo IP para a mesma empresa em curto intervalo retornam 429 após o limite.
+- [x] **Step 1b: Teste de rate limit** — múltiplos POST `/view` do mesmo IP para a mesma empresa em curto intervalo retornam 429 após o limite. *(Implementado em `companies.analytics.test.ts`.)*
 
-- [x] **Step 2: Implementar modelo** (schema com companyId, date (YYYY-MM-DD), views, whatsappClicks, favorites; índice composto companyId+date).
+- [x] **Step 2: Implementar modelo** (schema com companyId, date (YYYY-MM-DD), views, whatsappClicks; índice composto companyId+date). *(favorites removido no review — métrica morta.)*
 
 - [x] **Step 3: Implementar service** com `incrementView`, `incrementWhatsappClick`, `getSummary`.
 
 - [x] **Step 4: Controller + rotas** `POST /companies/:id/view`, `POST /companies/:id/whatsapp-click` (validar ObjectId → 404 se malformado). `view` permite anônimo mas com rate limit; `whatsapp-click` exige sessão (owner ou anônimo com rate limit). Nova rota `GET /companies/:id/analytics` protegida por `requireOwnerOrAdmin`, retorna summary do período (`?from=&to=`).
-- [ ] **Step 4b: Rate limit middleware** — instalar `express-rate-limit` no backend (`npm i express-rate-limit` dentro de `backend/`). Configurar por IP: 1 incremento/empresa/hora para `view`, 5/hora para `whatsapp-click`. Aplicar apenas nas rotas de incremento. Se a lib não estiver disponível, implementar dedup simples por (ip, companyId, hour) em memória como fallback. *(REABERTO: express-rate-limit existe só para o limite global; o limite dedicado anti-inflação de métricas nunca foi implementado.)*
+- [x] **Step 4b: Rate limit middleware** — instalar `express-rate-limit` no backend (`npm i express-rate-limit` dentro de `backend/`). Configurar por IP: 1 incremento/empresa/hora para `view`, 5/hora para `whatsapp-click`. Aplicar apenas nas rotas de incremento. Se a lib não estiver disponível, implementar dedup simples por (ip, companyId, hour) em memória como fallback. *(Implementado como dedup em memória em `analytics-rate-limit.middleware.ts`; express-rate-limit segue usado só para o limite global.)*
 
-- [ ] **Step 5: Rodar testes** — passar. *(REABERTO: os testes de analytics/isolamento/rate limit do Step 1 nunca foram escritos — só existe um teste trivial de `isObjectId`.)*
+- [x] **Step 5: Rodar testes** — passar. *(Implementado em `companies.analytics.test.ts` — 15 testes.)*
 
 - [x] **Step 6: Commit**
 
