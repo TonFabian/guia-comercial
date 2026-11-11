@@ -2,7 +2,7 @@ import { SignInButton, SignOutButton } from '@clerk/clerk-react';
 
 export function GateLoading() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-bg p-6">
+    <div className="flex min-h-[100dvh] items-center justify-center bg-bg p-6">
       <div className="flex w-full max-w-md flex-col items-center gap-3 rounded-[--radius-card] border border-border bg-surface p-10 text-center shadow-[--shadow-card]">
         <div className="h-7 w-7 animate-spin rounded-full border-[3px] border-primary/25 border-t-primary" />
         <h1 className="text-xl font-semibold text-primary" style={{ fontFamily: 'var(--font-family-heading)' }}>
@@ -16,7 +16,7 @@ export function GateLoading() {
 
 export function GateDenied() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-bg p-6">
+    <div className="flex min-h-[100dvh] items-center justify-center bg-bg p-6">
       <div className="flex w-full max-w-md flex-col items-center gap-3 rounded-[--radius-card] border border-border bg-surface p-10 text-center shadow-[--shadow-card]">
         <div className="text-3xl">🔒</div>
         <h1 className="text-xl font-semibold text-primary" style={{ fontFamily: 'var(--font-family-heading)' }}>
@@ -35,7 +35,7 @@ export function GateDenied() {
 
 export function GateSignIn() {
   return (
-    <div className="flex min-h-screen items-center justify-center bg-bg p-6">
+    <div className="flex min-h-[100dvh] items-center justify-center bg-bg p-6">
       <div className="flex w-full max-w-md flex-col items-center gap-3 rounded-[--radius-card] border border-border bg-surface p-10 text-center shadow-[--shadow-card]">
         <div className="text-3xl">🔐</div>
         <h1 className="text-xl font-semibold text-primary" style={{ fontFamily: 'var(--font-family-heading)' }}>
