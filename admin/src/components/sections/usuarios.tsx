@@ -3,14 +3,15 @@ import { useMemo, useState } from 'react';
 import { useUser } from '@clerk/clerk-react';
 
 import { useResource } from '../../hooks/use-resource';
-import { getUsers, updateUserRole, deleteUser } from '../../services/api';
 import type { AdminUserListItem } from '../../services/api';
+import { deleteUser, getUsers } from '../../services/api';
 import { filterByText } from '../../utils/filter';
 import { cityLabel } from '../../utils/labels';
+import { DeleteButton } from '../delete-button';
 import { Pagination } from '../pagination';
 import { SearchInput } from '../search-input';
 import { Table } from '../table';
-import { DeleteButton } from '../delete-button';
+import { UserEditModal } from '../user-edit-modal';
 
 function userName(user: AdminUserListItem): string {
   return user.name ?? user.email;
@@ -22,36 +23,20 @@ export function UsuariosSection() {
   const { user: currentUser } = useUser();
   const [search, setSearch] = useState('');
   const [actionError, setActionError] = useState<string | null>(null);
-  const [busyId, setBusyId] = useState<string | null>(null);
+  const [editing, setEditing] = useState<AdminUserListItem | null>(null);
 
   const visible = useMemo(
     () => filterByText(items, search, (user) => `${userName(user)} ${user.email} ${user.role}`),
     [items, search],
   );
 
-  async function handleToggleRole(user: AdminUserListItem) {
-    setActionError(null);
-    setBusyId(user._id);
-    try {
-      await updateUserRole(user._id, user.role === 'admin' ? 'user' : 'admin');
-      reload();
-    } catch (err) {
-      setActionError(err instanceof Error ? err.message : String(err));
-    } finally {
-      setBusyId(null);
-    }
-  }
-
   async function handleDelete(id: string) {
     setActionError(null);
-    setBusyId(id);
     try {
       await deleteUser(id);
       reload();
     } catch (err) {
       setActionError(err instanceof Error ? err.message : String(err));
-    } finally {
-      setBusyId(null);
     }
   }
 
@@ -61,13 +46,14 @@ export function UsuariosSection() {
 
   return (
     <>
-      {error && <p className="text-sm text-danger">{error}</p>}
-      {actionError && <p className="text-sm text-danger">{actionError}</p>}
+      {error && <p className="text-sm mb-4 text-danger">{error}</p>}
+      {actionError && <p className="text-sm mb-4 text-danger">{actionError}</p>}
 
-      <p className="text-xs text-text-muted">
-        Administradores podem promover usuários a admin, remover essa permissão
-        (exceto a própria conta) e excluir contas — a exclusão remove também os
-        registros relacionados (LGPD).
+      <p className="text-xs mb-4 text-text-muted">
+        Administradores podem editar perfil (nome, cidade e permissão), e
+        excluir contas — a exclusão remove também os registros relacionados
+        (LGPD). A própria conta não pode ter a permissão alterada nem ser
+        excluída.
       </p>
 
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
@@ -87,12 +73,10 @@ export function UsuariosSection() {
           <span key={user._id} className="flex flex-1 gap-2 sm:inline-flex sm:flex-none">
             <button
               type="button"
-              disabled={busyId === user._id || isSelf(user)}
-              onClick={() => void handleToggleRole(user)}
-              className="h-8 flex-1 rounded-(--radius-input) border border-primary/40 bg-surface-hover px-3 text-xs font-medium text-primary transition-all duration-150 hover:-translate-y-0.5 hover:border-primary hover:bg-primary hover:text-[#111827] active:translate-y-0 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 disabled:cursor-not-allowed disabled:opacity-50 sm:h-8 sm:flex-none"
-              title={isSelf(user) ? 'Não é possível alterar a própria role' : undefined}
+              onClick={() => setEditing(user)}
+              className="h-8 flex-1 rounded-(--radius-input) border border-primary/40 bg-surface-hover px-3 text-xs font-medium text-primary transition-all duration-150 hover:-translate-y-0.5 hover:border-primary hover:bg-primary hover:text-[#111827] active:translate-y-0 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50 sm:h-8 sm:flex-none"
             >
-              {user.role === 'admin' ? 'Rebaixar' : 'Promover'}
+              Editar
             </button>
             <DeleteButton
               label="Excluir"
@@ -104,6 +88,15 @@ export function UsuariosSection() {
       />
 
       <Pagination page={page} pageSize={pageSize} total={total} onChange={setPage} />
+
+      {editing && (
+        <UserEditModal
+          user={editing}
+          isSelf={isSelf(editing)}
+          onClose={() => setEditing(null)}
+          onSaved={reload}
+        />
+      )}
     </>
   );
 }

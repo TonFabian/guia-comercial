@@ -392,6 +392,17 @@ export async function updateUserRole(id: string, role: 'user' | 'admin'): Promis
   return apiPut<AdminUserListItem>(`/users/${id}/role`, { role });
 }
 
+export interface UpdateUserProfileInput {
+  firstName?: string;
+  lastName?: string;
+  /** Slug da cidade; `null` limpa (usuário sem cidade definida). */
+  city?: string | null;
+}
+
+export async function updateUserProfile(id: string, body: UpdateUserProfileInput): Promise<AdminUserListItem> {
+  return apiPut<AdminUserListItem>(`/users/${id}`, body);
+}
+
 export async function deleteUser(id: string): Promise<void> {
   await apiDelete<void>(`/users/${id}`);
 }
