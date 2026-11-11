@@ -213,10 +213,11 @@ describe('POST /api/companies/:id/whatsapp-click', () => {
     expect(modeloAnalytics.documents[0].whatsappClicks).toBe(1);
   });
 
-  it('sem sessão → 401 (plano: anônimo só incrementa view)', async () => {
+  it('sem sessão (visitante) também registra o clique — rate limit é a defesa', async () => {
     const response = await request(app).post(`/api/companies/${ID_PREMIUM}/whatsapp-click`);
 
-    expect(response.status).toBe(401);
+    expect(response.status).toBe(204);
+    expect(modeloAnalytics.documents[0].whatsappClicks).toBe(1);
   });
 
   it('sexto clique do mesmo IP na mesma empresa → 429', async () => {
