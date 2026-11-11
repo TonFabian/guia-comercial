@@ -42,6 +42,7 @@ import { CompanyFreeDetailScreen } from './company-free-detail-screen';
 import { companyDetailVariant } from './company-free-view';
 import { CompanyGallery } from './company-gallery';
 import { CompanyProducts } from './company-products';
+import { PlanBadge } from './plan-badge';
 import { companyPlan, hasFeature } from './company-plan';
 import { getOpeningStatus, type OpeningStatus } from './opening-hours';
 import { falarSobreServicoNoWhatsApp } from './service-contact';
@@ -265,6 +266,8 @@ export function CompanyDetailScreen({ companyId }: { companyId: string }) {
                 <Text style={styles.featuredTagText}>Destaque</Text>
               </View>
             ) : null}
+
+            <PlanBadge plan={companyPlan(company)} />
           </View>
 
           {details.promotion ? (

@@ -49,6 +49,18 @@ export function companyPlan(company: Company): Plan {
   return 'free';
 }
 
+/** Rótulo legível do plano para exibição nas telas. */
+export function planLabel(plan: Plan): string {
+  switch (plan) {
+    case 'premium':
+      return 'Premium';
+    case 'basic':
+      return 'Básico';
+    default:
+      return 'Gratuito';
+  }
+}
+
 export function hasFeature(plan: Plan, feature: Feature): boolean {
   return FEATURES[plan].has(feature);
 }

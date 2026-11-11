@@ -5,6 +5,7 @@ import { ActivityIndicator, StyleSheet, Text, TouchableOpacity, View } from 'rea
 import { Radius, Spacing, Typography } from '@/constants/theme';
 import { useThemeColors } from '@/hooks/use-theme-colors';
 import type { Company } from '@/types/domain';
+import { PlanBadge } from '@/features/company/plan-badge';
 import { sortCompaniesByPlan } from '@/features/company/company-plan';
 import { categoryLabel } from '@/types/domain';
 import { openWhatsApp } from '@/utils/links';
@@ -58,6 +59,7 @@ export function OtherCompanies({ companies, loading = false, error = null }: Pro
                     {categoryLabel(c.category)}
                     {c.address ? ` · ${c.address}` : ''}
                   </Text>
+                  <PlanBadge plan={c.plan} />
                 </View>
                 <Ionicons name="chevron-forward" size={22} color={colors.textSecondary} />
               </TouchableOpacity>

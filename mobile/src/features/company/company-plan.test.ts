@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { companyPlan, hasFeature, sortCompaniesByPlan } from './company-plan';
+import { companyPlan, hasFeature, planLabel, sortCompaniesByPlan } from './company-plan';
 import type { Company } from '@/types/domain';
 
 const base: Company = { _id: '1', name: 'X', slug: 'x', description: 'd', category: 'c' };
@@ -54,5 +54,13 @@ describe('company-plan', () => {
 
     const ordenadas = sortCompaniesByPlan([desconhecida, livre]);
     expect(ordenadas.map((c) => c._id)).toEqual(['3', '2']);
+  });
+
+  describe('planLabel', () => {
+    it('retorna rótulos legíveis', () => {
+      expect(planLabel('premium')).toBe('Premium');
+      expect(planLabel('basic')).toBe('Básico');
+      expect(planLabel('free')).toBe('Gratuito');
+    });
   });
 });
