@@ -76,11 +76,11 @@ export function CidadesSection({ cities, citiesError, onReload }: CidadesSection
             ← Cidades
           </button>
           <div className="flex gap-2">
+                        <Button type="submit" form="cidade-form" disabled={saving}>
+              Criar
+            </Button>
             <Button variant="secondary" type="button" onClick={() => setView('list')} disabled={saving}>
               Cancelar
-            </Button>
-            <Button type="submit" form="cidade-form" disabled={saving}>
-              Criar
             </Button>
           </div>
         </div>

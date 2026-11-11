@@ -101,11 +101,11 @@ export function CategoriasSection() {
             ← Categorias
           </button>
           <div className="flex gap-2">
+                        <Button type="submit" form="categoria-form" disabled={saving}>
+              {editingId ? 'Salvar' : 'Criar'}
+            </Button>
             <Button variant="secondary" type="button" onClick={resetForm} disabled={saving}>
               Cancelar
-            </Button>
-            <Button type="submit" form="categoria-form" disabled={saving}>
-              {editingId ? 'Salvar' : 'Criar'}
             </Button>
           </div>
         </div>

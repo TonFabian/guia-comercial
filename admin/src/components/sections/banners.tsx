@@ -114,11 +114,11 @@ export function BannersSection() {
             ← Banners
           </button>
           <div className="flex gap-2">
+                        <Button type="submit" form="banner-form" disabled={saving}>
+              {editingId ? 'Salvar' : 'Criar'}
+            </Button>
             <Button variant="secondary" type="button" onClick={resetForm} disabled={saving}>
               Cancelar
-            </Button>
-            <Button type="submit" form="banner-form" disabled={saving}>
-              {editingId ? 'Salvar' : 'Criar'}
             </Button>
           </div>
         </div>
