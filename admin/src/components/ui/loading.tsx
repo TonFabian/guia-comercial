@@ -20,6 +20,24 @@ export function dotDelayMs(index: number): number {
   return Math.max(index, 0) * 150;
 }
 
+export type DotsLoaderSize = 'sm' | 'lg';
+
+/** Classe dos dots por tamanho — lg é usado no PageLoader centralizado. */
+export function dotsLoaderClass(size: DotsLoaderSize = 'sm'): string {
+  return size === 'lg' ? 'dots-loader dots-loader-lg' : 'dots-loader';
+}
+
+/** Três pontos pulsando com atraso escalonado. */
+function Dots({ size = 'sm' }: { size?: DotsLoaderSize }) {
+  return (
+    <span aria-hidden="true" className={dotsLoaderClass(size)}>
+      {[0, 1, 2].map((index) => (
+        <span key={index} style={{ animationDelay: `${dotDelayMs(index)}ms` }} />
+      ))}
+    </span>
+  );
+}
+
 /** Bloco de shimmer reutilizável. */
 export function Skeleton({ className = '' }: { className?: string }) {
   return <div aria-hidden="true" className={`${skeletonClass()} ${className}`} />;
@@ -61,18 +79,34 @@ export function TableSkeleton({ columns, rows }: TableSkeletonProps) {
 interface DotsLoaderProps {
   /** Texto opcional ao lado dos dots (ex.: "Carregando dados de referência…"). */
   label?: string;
+  /** sm (inline) ou lg (PageLoader). */
+  size?: DotsLoaderSize;
 }
 
 /** Três pontos pulsando — indicador compacto para carregamentos inline. */
-export function DotsLoader({ label }: DotsLoaderProps) {
+export function DotsLoader({ label, size = 'sm' }: DotsLoaderProps) {
   return (
     <span role="status" aria-label={label ?? 'Carregando'} className="inline-flex items-center gap-2 text-sm text-text-muted">
-      <span aria-hidden="true" className="dots-loader">
-        {[0, 1, 2].map((index) => (
-          <span key={index} style={{ animationDelay: `${dotDelayMs(index)}ms` }} />
-        ))}
-      </span>
+      <Dots size={size} />
       {label && <span>{label}</span>}
     </span>
+  );
+}
+
+interface PageLoaderProps {
+  /** Texto explicativo abaixo dos dots. */
+  label?: string;
+}
+
+/**
+ * Loading centralizado na área útil do painel (mobile-first): ocupa a altura
+ * da viewport e centra dots grandes + label, em qualquer largura de tela.
+ */
+export function PageLoader({ label }: PageLoaderProps) {
+  return (
+    <div role="status" aria-label={label ?? 'Carregando'} className="flex min-h-[60dvh] w-full flex-col items-center justify-center gap-4">
+      <Dots size="lg" />
+      {label && <p className="text-sm text-text-muted">{label}</p>}
+    </div>
   );
 }

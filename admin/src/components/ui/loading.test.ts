@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { dotDelayMs, skeletonClass, tableSkeletonRowCount } from './loading';
+import { dotDelayMs, dotsLoaderClass, skeletonClass, tableSkeletonRowCount } from './loading';
 
 describe('loading helpers', () => {
   it('skeleton usa shimmer (animate-pulse) e token de superfície do tema', () => {
@@ -22,5 +22,14 @@ describe('loading helpers', () => {
     expect(dotDelayMs(0)).toBe(0);
     expect(dotDelayMs(1)).toBeGreaterThan(dotDelayMs(0));
     expect(dotDelayMs(2)).toBeGreaterThan(dotDelayMs(1));
+  });
+
+  it('dots no tamanho padrão não usam a variante grande', () => {
+    expect(dotsLoaderClass()).toContain('dots-loader');
+    expect(dotsLoaderClass()).not.toContain('dots-loader-lg');
+  });
+
+  it('dots no tamanho lg usam a variante grande (PageLoader centralizado)', () => {
+    expect(dotsLoaderClass('lg')).toContain('dots-loader-lg');
   });
 });

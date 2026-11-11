@@ -20,6 +20,11 @@ export interface TableProps {
   loading?: boolean;
 }
 
+/** Célula de texto puro (string/número) recebe ellipsis; elementos (chips, ações) passam direto. */
+export function isTextCell(cell: ReactNode): boolean {
+  return typeof cell === 'string' || typeof cell === 'number';
+}
+
 /** Tabela genérica reaproveitada por todas as seções do painel. */
 export function Table({ headers, rows, mobileRows, emptyMessage, loading }: TableProps) {
   if (rows.length === 0) {
@@ -47,7 +52,7 @@ export function Table({ headers, rows, mobileRows, emptyMessage, loading }: Tabl
               <tr key={rowIndex} className="border-t border-border hover:bg-surface-hover/40">
                 {row.map((cell, cellIndex) => (
                   <td key={cellIndex} className="px-4 py-3">
-                    {cell}
+                    {isTextCell(cell) ? <span className="block max-w-[16rem] truncate">{cell}</span> : cell}
                   </td>
                 ))}
               </tr>
@@ -65,11 +70,11 @@ export function Table({ headers, rows, mobileRows, emptyMessage, loading }: Tabl
             >
               <div className="flex items-start justify-between gap-3">
                 <div className="min-w-0 flex-1">
-                  <div className="text-base font-semibold text-text" style={{ fontFamily: 'var(--font-family-heading)' }}>
+                  <div className="truncate text-base font-semibold text-text" style={{ fontFamily: 'var(--font-family-heading)' }}>
                     {row.primary}
                   </div>
                   {row.secondary && (
-                    <div className="mt-1 text-xs leading-relaxed text-text-muted">{row.secondary}</div>
+                    <div className="mt-1 line-clamp-2 text-xs leading-relaxed text-text-muted">{row.secondary}</div>
                   )}
                 </div>
               </div>
