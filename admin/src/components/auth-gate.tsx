@@ -1,58 +1,53 @@
 import { SignInButton, SignOutButton } from '@clerk/clerk-react';
 
-/**
- * Telas de gate do painel: carregando sessão/role, acesso restrito e login.
- * Renderizam tela cheia centrada, fora do layout do painel — nada de seções
- * parcialmente montadas enquanto o acesso ainda não foi decidido.
- */
-
-interface GateProps {
-  title: string;
-  text: string;
-  icon?: string;
-  children?: React.ReactNode;
-}
-
-function GateCard({ title, text, icon, children }: GateProps) {
+export function GateLoading() {
   return (
-    <div className="gate">
-      <div className="gate-card">
-        {icon && <div className="gate-icon">{icon}</div>}
-        <div className="gate-title">{title}</div>
-        <p className="gate-text">{text}</p>
-        {children}
+    <div className="flex min-h-screen items-center justify-center bg-bg p-6">
+      <div className="flex w-full max-w-md flex-col items-center gap-3 rounded-[--radius-card] border border-border bg-surface p-10 text-center shadow-[--shadow-card]">
+        <div className="h-7 w-7 animate-spin rounded-full border-[3px] border-primary/25 border-t-primary" />
+        <h1 className="text-xl font-semibold text-primary" style={{ fontFamily: 'var(--font-family-heading)' }}>
+          Carregando
+        </h1>
+        <p className="text-sm text-text-muted">Verificando sua sessão e permissões…</p>
       </div>
     </div>
   );
 }
 
-/** Sessão/role ainda não resolvidas. */
-export function GateLoading() {
-  return (
-    <GateCard title="Carregando" text="Verificando sua sessão e permissões…">
-      <div className="gate-spinner" aria-hidden="true" />
-    </GateCard>
-  );
-}
-
-/** Usuário autenticado, mas sem role admin no backend. */
 export function GateDenied() {
   return (
-    <GateCard title="Acesso restrito" icon="🔒" text="Este painel é exclusivo de administradores da plataforma.">
-      <SignOutButton>
-        <button>Sair</button>
-      </SignOutButton>
-    </GateCard>
+    <div className="flex min-h-screen items-center justify-center bg-bg p-6">
+      <div className="flex w-full max-w-md flex-col items-center gap-3 rounded-[--radius-card] border border-border bg-surface p-10 text-center shadow-[--shadow-card]">
+        <div className="text-3xl">🔒</div>
+        <h1 className="text-xl font-semibold text-primary" style={{ fontFamily: 'var(--font-family-heading)' }}>
+          Acesso restrito
+        </h1>
+        <p className="text-sm text-text-muted">Este painel é exclusivo de administradores da plataforma.</p>
+        <SignOutButton>
+          <button className="mt-2 inline-flex h-10 items-center gap-2 rounded-[--radius-input] bg-surface-hover px-4 text-sm text-text">
+            Sair
+          </button>
+        </SignOutButton>
+      </div>
+    </div>
   );
 }
 
-/** Sem sessão: convite ao login. */
 export function GateSignIn() {
   return (
-    <GateCard title="Painel Administrativo" icon="🔐" text="Faça login para continuar.">
-      <SignInButton mode="modal">
-        <button>Entrar</button>
-      </SignInButton>
-    </GateCard>
+    <div className="flex min-h-screen items-center justify-center bg-bg p-6">
+      <div className="flex w-full max-w-md flex-col items-center gap-3 rounded-[--radius-card] border border-border bg-surface p-10 text-center shadow-[--shadow-card]">
+        <div className="text-3xl">🔐</div>
+        <h1 className="text-xl font-semibold text-primary" style={{ fontFamily: 'var(--font-family-heading)' }}>
+          Painel Administrativo
+        </h1>
+        <p className="text-sm text-text-muted">Faça login para continuar.</p>
+        <SignInButton mode="modal">
+          <button className="mt-2 inline-flex h-10 items-center gap-2 rounded-[--radius-input] bg-primary px-4 text-sm font-semibold text-[#111827]">
+            Entrar
+          </button>
+        </SignInButton>
+      </div>
+    </div>
   );
 }

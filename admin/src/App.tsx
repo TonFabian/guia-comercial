@@ -2,7 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useAuth, useUser } from '@clerk/clerk-react';
 
 import { GateDenied, GateLoading, GateSignIn } from './components/auth-gate';
-import { Sidebar } from './components/sidebar';
+import { Sidebar, MobileTopbar } from './components/sidebar';
 import type { Section } from './components/sidebar';
 import { AtracoesSection } from './components/sections/atracoes';
 import { AvisosSection } from './components/sections/avisos';
@@ -15,7 +15,6 @@ import { EventosSection } from './components/sections/eventos';
 import { UsuariosSection } from './components/sections/usuarios';
 import { UtilidadePublicaSection } from './components/sections/utilidade-publica';
 import { VagasSection } from './components/sections/vagas';
-import { hintStyle } from './components/styles';
 import { getCategories, getCities, getCompanies, getMe, setTokenProvider } from './services/api';
 import type { Catalog, CatalogErrors } from './types/catalog';
 
@@ -35,6 +34,7 @@ export default function App() {
   // metadata do Clerk — quem decide o que é admin é a API, nunca o frontend.
   const [role, setRole] = useState<'admin' | 'user' | null>(null);
   const [roleLoaded, setRoleLoaded] = useState(false);
+  const [menuOpen, setMenuOpen] = useState(false);
 
   // O token do Clerk expira em ~60s: registramos o provider (getToken do
   // Clerk devolve sempre o token válido/renovado) e esperamos a primeira
@@ -125,13 +125,17 @@ export default function App() {
   if (role !== 'admin') return <GateDenied />;
 
   return (
-    <div className="layout">
-      <Sidebar active={section} onChange={setSection} />
-      <main className="content">
-        <h2>{section}</h2>
-        {catalogLoading && <p style={hintStyle}>Carregando dados de referência…</p>}
+    <div className="flex min-h-screen bg-bg text-text">
+      <Sidebar active={section} onChange={setSection} open={menuOpen} onClose={() => setMenuOpen(false)} />
+      <div className="flex min-w-0 flex-1 flex-col">
+        <MobileTopbar section={section} onMenu={() => setMenuOpen(true)} />
+        <main className="min-w-0 flex-1 p-4 md:p-6">
+          <h1 className="mb-4 hidden text-xl font-semibold text-text md:block" style={{ fontFamily: 'var(--font-family-heading)' }}>
+            {section}
+          </h1>
+          {catalogLoading && <p className="text-sm text-text-muted">Carregando dados de referência…</p>}
 
-        {section === 'Empresas' && (
+          {section === 'Empresas' && (
           <EmpresasSection
             categories={catalog.categories}
             categoriesError={catalogErrors.categories ?? null}
@@ -189,6 +193,7 @@ export default function App() {
         )}
         {section === 'Usuários' && <UsuariosSection />}
       </main>
+      </div>
     </div>
   );
 }
