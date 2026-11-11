@@ -50,7 +50,7 @@ export function Table({ headers, rows, mobileRows, emptyMessage }: TableProps) {
       </div>
 
       {mobileRows && mobileRows.length > 0 && (
-        <ul className="space-y-4 md:hidden">
+        <ul className="space-y-6 md:hidden">
           {mobileRows.map((row) => (
             <li
               key={row.id}
