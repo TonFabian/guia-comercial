@@ -388,6 +388,14 @@ export async function getUsers(page = 1, pageSize = DEFAULT_PAGE_SIZE): Promise<
   return request<Paginated<AdminUserListItem>>(`/users?${paginationQuery(page, pageSize)}`);
 }
 
+export async function updateUserRole(id: string, role: 'user' | 'admin'): Promise<AdminUserListItem> {
+  return apiPut<AdminUserListItem>(`/users/${id}/role`, { role });
+}
+
+export async function deleteUser(id: string): Promise<void> {
+  await apiDelete<void>(`/users/${id}`);
+}
+
 export async function getPublicUtilities(page = 1, pageSize = DEFAULT_PAGE_SIZE): Promise<Paginated<PublicUtility>> {
   return request<Paginated<PublicUtility>>(`/public-utilities?${paginationQuery(page, pageSize)}`);
 }
