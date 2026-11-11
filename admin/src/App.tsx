@@ -1,7 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useAuth, useUser } from '@clerk/clerk-react';
 
-// import { GateDenied, GateLoading, GateSignIn } from './components/auth-gate';
+import { GateDenied, GateLoading, GateSignIn } from './components/auth-gate';
 import { Sidebar, MobileTopbar } from './components/sidebar';
 import type { Section } from './components/sidebar';
 import { AtracoesSection } from './components/sections/atracoes';
@@ -116,12 +116,14 @@ export default function App() {
     void loadCatalog();
   }, [authReady, loadCatalog]);
 
-  // TOUR TEMPORÁRIO: bypass de auth para inspeção visual (reverter depois).
-  void isLoaded; void role; void roleLoaded;
-  // if (!isLoaded) return <GateLoading />;
-  // if (!isSignedIn) return <GateSignIn />;
-  // if (!roleLoaded) return <GateLoading />;
-  // if (role !== 'admin') return <GateDenied />;
+  if (!isLoaded) return <GateLoading />;
+  if (!isSignedIn) return <GateSignIn />;
+
+  // Defesa de acesso: só role `admin` (definida no backend) abre o painel.
+  // Usuário comum logado vê tela de acesso negado — nada de listagens, nem
+  // formulários, nem tentativa de mutação.
+  if (!roleLoaded) return <GateLoading />;
+  if (role !== 'admin') return <GateDenied />;
 
   return (
     <div className="flex min-h-[100dvh] bg-bg text-text">
