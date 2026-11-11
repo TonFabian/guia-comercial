@@ -85,6 +85,26 @@ export function UsuariosSection() {
             />
           </span>,
         ])}
+        mobileRows={visible.map((user) => ({
+          id: user._id,
+          primary: userName(user),
+          secondary: `${user.email} • ${user.role === 'admin' ? 'Administrador' : 'Usuário'} • ${cityLabel(user.city)}`,
+          actions: (
+            <span className="flex flex-1 gap-2">
+              <button
+                type="button"
+                onClick={() => setEditing(user)}
+                className="h-8 flex-1 rounded-(--radius-input) border border-primary/40 bg-surface-hover px-3 text-xs font-medium text-primary transition-all duration-150 hover:-translate-y-0.5 hover:border-primary hover:bg-primary hover:text-[#111827] active:translate-y-0 active:scale-95 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/50"
+              >
+                Editar
+              </button>
+              <DeleteButton
+                label="Excluir"
+                onConfirm={() => void handleDelete(user._id)}
+              />
+            </span>
+          ),
+        }))}
         emptyMessage="Nenhum usuário encontrado."
       />
 

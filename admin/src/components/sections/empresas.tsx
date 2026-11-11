@@ -16,6 +16,7 @@ import { Pagination } from '../pagination';
 import { RowActions } from '../row-actions';
 import { SearchInput } from '../search-input';
 import { Table } from '../table';
+import { DotsLoader } from '../ui/loading';
 
 export interface EmpresasSectionProps {
   categories: Category[];
@@ -196,7 +197,7 @@ export function EmpresasSection({ categories, categoriesError, cities, citiesErr
           </button>
           <div className="flex gap-2">
                         <Button type="submit" form="empresa-form" disabled={saving}>
-              {editingId ? 'Salvar' : 'Criar'}
+              {saving ? <DotsLoader size="sm" /> : editingId ? 'Salvar' : 'Criar'}
             </Button>
             <Button variant="secondary" type="button" onClick={resetForm} disabled={saving}>
               Cancelar

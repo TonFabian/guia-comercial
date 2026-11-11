@@ -12,6 +12,7 @@ import { Field, Input, Select, Textarea, CheckboxField } from '../ui/input';
 import { RowActions } from '../row-actions';
 import { SearchInput } from '../search-input';
 import { Table } from '../table';
+import { DotsLoader } from '../ui/loading';
 import { Pagination } from '../pagination';
 
 interface NoticeForm {
@@ -125,7 +126,7 @@ export function AvisosSection() {
           </button>
           <div className="flex gap-2">
                         <Button type="submit" form="aviso-form" disabled={saving}>
-              {editingId ? 'Salvar' : 'Criar'}
+              {saving ? <DotsLoader size="sm" /> : editingId ? 'Salvar' : 'Criar'}
             </Button>
             <Button variant="secondary" type="button" onClick={resetForm} disabled={saving}>
               Cancelar

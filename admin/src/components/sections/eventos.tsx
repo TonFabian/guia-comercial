@@ -15,6 +15,7 @@ import { Pagination } from '../pagination';
 import { RowActions } from '../row-actions';
 import { SearchInput } from '../search-input';
 import { Table } from '../table';
+import { DotsLoader } from '../ui/loading';
 import { Button } from '../ui/button';
 
 export interface EventosSectionProps {
@@ -408,7 +409,7 @@ export function EventosSection({ cities, citiesError, companies, companiesTotal,
         </button>
         <div className="flex gap-2">
           <Button type="submit" form="evento-form" disabled={saving}>
-            {editingId ? 'Salvar' : 'Criar'}
+            {saving ? <DotsLoader size="sm" /> : editingId ? 'Salvar' : 'Criar'}
           </Button>
           <Button variant="secondary" type="button" onClick={resetForm} disabled={saving}>
             Cancelar
@@ -639,6 +640,17 @@ export function EventosSection({ cities, citiesError, companies, companiesTotal,
             onDelete={() => void handleDelete(evento._id)}
           />,
         ])}
+        mobileRows={visible.map((evento) => ({
+          id: evento._id,
+          primary: evento.name,
+          secondary: `${categoryLabel(evento.category)} • ${evento.startDate} a ${evento.endDate} • ${situacao(evento, hoje)}`,
+          actions: (
+            <RowActions
+              onEdit={() => startEdit(evento)}
+              onDelete={() => void handleDelete(evento._id)}
+            />
+          ),
+        }))}
         emptyMessage="Nenhum evento turístico encontrado."
       />
 

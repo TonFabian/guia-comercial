@@ -1,11 +1,12 @@
-import { useEffect, useState } from 'react';
 import type { FormEvent } from 'react';
+import { useEffect, useState } from 'react';
 
-import { getCities, updateUserProfile, updateUserRole } from '../services/api';
 import type { AdminUserListItem } from '../services/api';
+import { getCities, updateUserProfile, updateUserRole } from '../services/api';
 import { citySlug } from '../utils/labels';
 import { Button } from './ui/button';
 import { Field, Input, Select } from './ui/input';
+import { DotsLoader } from './ui/loading';
 
 export interface UserEditModalProps {
   user: AdminUserListItem;
@@ -109,19 +110,19 @@ export function UserEditModal({ user, isSelf, onClose, onSaved }: UserEditModalP
           </Field>
 
           <Field label="E-mail">
-            <Input value={user.email} disabled readOnly />
+            <Input value={user.email} disabled readOnly title="Propriedade identificadora - não editável" />
           </Field>
 
           <div className="grid gap-3 sm:grid-cols-2">
             <Field label="Perfil">
-              <Select value={role} onChange={(e) => setRole(e.target.value as 'user' | 'admin')} disabled={isSelf}>
+              <Select value={role} onChange={(e) => setRole(e.target.value as 'user' | 'admin')} disabled={isSelf} title={isSelf ? "Você não pode alterar o próprio perfil" : "Perfil do usuário"}>
                 <option value="user">Usuário</option>
                 <option value="admin">Administrador</option>
               </Select>
             </Field>
 
             <Field label="Cidade">
-              <Select value={city} onChange={(e) => setCity(e.target.value)}>
+              <Select value={city} onChange={(e) => setCity(e.target.value)} title="Cidade do usuário">
                 <option value="">Sem cidade</option>
                 {cities.map((c) => (
                   <option key={c.slug} value={c.slug}>
@@ -143,7 +144,7 @@ export function UserEditModal({ user, isSelf, onClose, onSaved }: UserEditModalP
 
           <div className="mt-2 flex justify-end gap-2">
             <Button type="submit" disabled={saving}>
-              Salvar
+              {saving ? <DotsLoader size="sm" /> : 'Salvar'}
             </Button>
             <Button type="button" variant="secondary" onClick={onClose}>
               Cancelar

@@ -11,6 +11,7 @@ import { Field, Input } from '../ui/input';
 import { DeleteButton } from '../delete-button';
 import { SearchInput } from '../search-input';
 import { Table } from '../table';
+import { DotsLoader } from '../ui/loading';
 
 export interface CidadesSectionProps {
   cities: City[];
@@ -77,7 +78,7 @@ export function CidadesSection({ cities, citiesError, onReload }: CidadesSection
           </button>
           <div className="flex gap-2">
                         <Button type="submit" form="cidade-form" disabled={saving}>
-              Criar
+              {saving ? <DotsLoader size="sm" /> : 'Criar'}
             </Button>
             <Button variant="secondary" type="button" onClick={() => setView('list')} disabled={saving}>
               Cancelar

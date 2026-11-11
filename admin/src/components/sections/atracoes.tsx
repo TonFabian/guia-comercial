@@ -1,24 +1,25 @@
-import { useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
+import { useMemo, useState } from 'react';
 
 import { useResource } from '../../hooks/use-resource';
+import type { TouristSpotInput } from '../../services/api';
 import {
   createTouristSpot,
   deleteTouristSpot,
   getTouristSpots,
   updateTouristSpot,
 } from '../../services/api';
-import type { TouristSpotInput } from '../../services/api';
 import type { City, Company, TouristSpot, TouristSpotCategory } from '../../types/domain';
 import { filterByText } from '../../utils/filter';
 import { cityLabel, citySlug } from '../../utils/labels';
-import { Button } from '../ui/button';
-import { Card } from '../ui/card';
-import { Field, Input, Select, Textarea, CheckboxField } from '../ui/input';
 import { Pagination } from '../pagination';
 import { RowActions } from '../row-actions';
 import { SearchInput } from '../search-input';
 import { Table } from '../table';
+import { DotsLoader } from '../ui/loading';
+import { Button } from '../ui/button';
+import { Card } from '../ui/card';
+import { CheckboxField, Field, Input, Select, Textarea } from '../ui/input';
 
 export interface AtracoesSectionProps {
   cities: City[];
@@ -266,8 +267,8 @@ export function AtracoesSection({ cities, citiesError, companies, companiesTotal
             ← Atrações
           </button>
           <div className="flex gap-2">
-                        <Button type="submit" form="atracao-form" disabled={saving}>
-              {editingId ? 'Salvar' : 'Criar'}
+            <Button type="submit" form="atracao-form" disabled={saving}>
+              {saving ? <DotsLoader size="sm" /> : editingId ? 'Salvar' : 'Criar'}
             </Button>
             <Button variant="secondary" type="button" onClick={resetForm} disabled={saving}>
               Cancelar
