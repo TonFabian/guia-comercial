@@ -96,3 +96,61 @@ body {
 code {
   color: #ffc107;
 }
+
+/* ---------------------------------------------------------------------------
+   Telas de gate (carregando sessão / acesso restrito): tela cheia centrada,
+   sem layout do painel — nada de seções parcialmente renderizadas.
+   ------------------------------------------------------------------------- */
+
+.gate {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.gate-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+  text-align: center;
+  background: #1e1e1e;
+  border: 1px solid #2e2e2e;
+  border-radius: 16px;
+  padding: 40px 48px;
+  max-width: 420px;
+}
+
+.gate-title {
+  font-family: var(--font-family-heading);
+  font-size: var(--font-size-xg);
+  line-height: var(--line-height-xg);
+  color: #ffc107;
+}
+
+.gate-text {
+  font-size: var(--font-size-sm);
+  line-height: var(--line-height-sm);
+  color: #9ca3af;
+}
+
+.gate-icon {
+  font-size: 2rem;
+}
+
+.gate-spinner {
+  width: 28px;
+  height: 28px;
+  border: 3px solid rgba(255, 193, 7, 0.25);
+  border-top-color: #ffc107;
+  border-radius: 50%;
+  animation: gate-spin 0.8s linear infinite;
+}
+
+@keyframes gate-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
-import { SignInButton, SignOutButton, useAuth, useUser } from '@clerk/clerk-react';
+import { useAuth, useUser } from '@clerk/clerk-react';
 
+import { GateDenied, GateLoading, GateSignIn } from './components/auth-gate';
 import { Sidebar } from './components/sidebar';
 import type { Section } from './components/sidebar';
 import { AtracoesSection } from './components/sections/atracoes';
@@ -110,38 +111,14 @@ export default function App() {
     void loadCatalog();
   }, [authReady, loadCatalog]);
 
-  if (!isLoaded) return <p>Carregando…</p>;
-  if (!isSignedIn) {
-    return (
-      <div className="layout">
-        <main className="content" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 16 }}>
-          <h2>Painel Administrativo</h2>
-          <p>Faça login para continuar.</p>
-          <SignInButton mode="modal">
-            <button>Entrar</button>
-          </SignInButton>
-        </main>
-      </div>
-    );
-  }
+  if (!isLoaded) return <GateLoading />;
+  if (!isSignedIn) return <GateSignIn />;
 
   // Defesa de acesso: só role `admin` (definida no backend) abre o painel.
   // Usuário comum logado vê tela de acesso negado — nada de listagens, nem
   // formulários, nem tentativa de mutação.
-  if (!roleLoaded) return <p>Carregando…</p>;
-  if (role !== 'admin') {
-    return (
-      <div className="layout">
-        <main className="content" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 16 }}>
-          <h2>Acesso restrito</h2>
-          <p>Este painel é exclusivo de administradores da plataforma.</p>
-          <SignOutButton>
-            <button>Sair</button>
-          </SignOutButton>
-        </main>
-      </div>
-    );
-  }
+  if (!roleLoaded) return <GateLoading />;
+  if (role !== 'admin') return <GateDenied />;
 
   return (
     <div className="layout">
