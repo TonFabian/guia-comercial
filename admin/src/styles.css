@@ -1,3 +1,27 @@
+@import "tailwindcss";
+
+/*
+ * Tokens do dark console — fonte única de valores (spec 2026-11-12).
+ * Consumidos como utilitários Tailwind: bg-bg, bg-surface, border-border,
+ * text-text, text-text-muted, bg-primary, radius-input, radius-card,
+ * shadow-card etc.
+ */
+@theme {
+  --color-bg: #16181d;
+  --color-surface: #1d2026;
+  --color-surface-hover: #262b33;
+  --color-border: #2a2e36;
+  --color-text: #e8e8ea;
+  --color-text-muted: #9aa0a6;
+  --color-primary: #ffc107;
+  --color-danger: #ef4444;
+
+  --radius-input: 8px;
+  --radius-card: 12px;
+
+  --shadow-card: 0 2px 8px rgba(0, 0, 0, 0.4);
+}
+
 :root {
   color-scheme: dark;
   --font-family-heading: 'Rubik Variable', system-ui, sans-serif;
@@ -21,8 +45,8 @@
 }
 
 body {
-  background: #121212;
-  color: #ffffff;
+  background: #16181d;
+  color: #e8e8ea;
 }
 
 .layout {
