@@ -89,11 +89,15 @@ describe('updateCompanySchema', () => {
     expect(result.success).toBe(true);
   });
 
-  it('ignora/rejeita plan no update publico (sem bypass)', () => {
-    // plan nao faz parte do contrato publico: deve ser rejeitado (strict)
-    // ou ao menos nao persistido. Aqui exigimos rejeicao para falhar cedo.
-    const result = updateCompanySchema.safeParse({ plan: 'basic' });
-    expect(result.success).toBe(false);
+  it('descarta plan no update publico (sem bypass)', () => {
+    // plan nao faz parte do contrato publico: o schema omite o campo e o zod
+    // (sem strict) descarta o que vier a mais — a edicao segue sem o plano.
+    const result = updateCompanySchema.safeParse({ plan: 'basic', name: 'Novo nome' });
+    expect(result.success).toBe(true);
+    if (result.success) {
+      expect('plan' in result.data).toBe(false);
+      expect(result.data.name).toBe('Novo nome');
+    }
   });
 });
 

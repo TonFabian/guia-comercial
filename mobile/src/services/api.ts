@@ -438,7 +438,11 @@ export async function getEventById(id: string): Promise<TourEvent | null> {
 
 export async function updateCompany(id: string, body: Partial<Company>): Promise<Company | null> {
   if (!isApiConfigured()) return null;
-  const payload = await request<Company>(`/companies/${encodeURIComponent(id)}`, { method: 'PUT', body });
+  // O plano NUNCA sai numa edição: só admin muda, pela rota dedicada
+  // (/companies/:id/plan). O backend também descarta o campo — esta remoção
+  // garante que o cliente nem o envie (ex.: spread acidental de um Company).
+  const { plan: _planoDescartado, ...dadosSemPlano } = body;
+  const payload = await request<Company>(`/companies/${encodeURIComponent(id)}`, { method: 'PUT', body: dadosSemPlano });
   if (!payload) return null;
   return Array.isArray(payload) ? (payload[0] ?? null) : (payload as Company);
 }

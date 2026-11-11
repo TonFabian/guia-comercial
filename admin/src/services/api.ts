@@ -410,7 +410,12 @@ export async function createCompany(body: CompanyInput): Promise<Company> {
 }
 
 export async function updateCompany(id: string, body: UpdateCompanyInput): Promise<Company> {
-  return apiPut<Company>(`/companies/${id}`, body);
+  // O plano NUNCA vai na edição de dados: só admin muda, pela rota dedicada
+  // updateCompanyPlan. O backend também descarta o campo — aqui garantimos
+  // que o cliente nem o envie (ex.: spread acidental de um Company).
+  const dadosSemPlano: UpdateCompanyInput = { ...body };
+  delete dadosSemPlano.plan;
+  return apiPut<Company>(`/companies/${id}`, dadosSemPlano);
 }
 
 export async function updateCompanyPlan(id: string, plan: 'free' | 'basic' | 'premium'): Promise<Company> {

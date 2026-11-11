@@ -135,16 +135,16 @@ beforeEach(() => {
 });
 
 describe('Autorização do plano (Task 2b)', () => {
-  it('PUT /companies/:id com plan no body → 422 (schema strict omitiu plan)', async () => {
+  it('PUT /companies/:id com plan no body DESCARTA o campo e salva o resto', async () => {
     const response = await request(app)
       .put(`/api/companies/${ID_EMPRESA}`)
       .set('Authorization', 'Bearer token_dono')
       .send({ plan: 'premium', name: 'Novo Nome' });
 
-    expect(response.status).toBe(422);
+    expect(response.status).toBe(200);
     const empresa = modeloEmpresas.documents[0];
-    expect(empresa.plan).toBe('free');
-    expect(empresa.name).toBe('Pizzaria do Dono');
+    expect(empresa.plan).toBe('free'); // plano intocado: só admin muda
+    expect(empresa.name).toBe('Novo Nome'); // demais campos seguem
   });
 
   it('PUT /companies/:id/plan sem ser admin → 403 e plano intacto', async () => {

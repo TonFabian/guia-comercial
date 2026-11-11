@@ -134,10 +134,9 @@ export function EmpresasSection({ categories, categoriesError, cities, citiesErr
 
     try {
       if (editingId) {
-        // `plan` NÃO vai no PUT de dados: o schema público rejeita o campo
-        // (422, sem bypass). O plano é alterado pela rota dedicada logo após.
-        const dadosDaEmpresa: CompanyInput = { ...payload, plan: undefined };
-        await updateCompany(editingId, dadosDaEmpresa);
+        // `plan` NÃO vai no PUT de dados: updateCompany descarta o campo e a
+        // rota dedicada altera o plano logo após (somente admin).
+        await updateCompany(editingId, payload);
         try {
           await updateCompanyPlan(editingId, form.plan);
         } catch (err) {

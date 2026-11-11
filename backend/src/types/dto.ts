@@ -129,9 +129,12 @@ export type CreateCompanyDto = z.infer<typeof createCompanySchema>;
 /**
  * Schema de atualização pública da empresa. `plan` é deliberadamente OMITIDO:
  * o plano só pode ser alterado por admin via rota dedicada (ver Task 2b).
+ * Sem `.strict()`: o zod DESCARTA campos desconhecidos — se `plan` vier no
+ * body, é jogado fora e a edição segue com os campos válidos (o usuário
+ * nunca altera o plano numa edição; proteção real: campo não chega ao Model).
  * Isso impede bypass de monetização pelo endpoint público.
  */
-export const updateCompanySchema = createCompanySchema.omit({ plan: true }).partial().strict();
+export const updateCompanySchema = createCompanySchema.omit({ plan: true }).partial();
 
 export type UpdateCompanyDto = z.infer<typeof updateCompanySchema>;
 
