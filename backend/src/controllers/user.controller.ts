@@ -1,5 +1,5 @@
 import type { Request, RequestHandler, Response } from 'express';
-import type { UpdateUserDto, UpdateUserRoleDto } from '../types/dto.js';
+import type { UpdateUserAdminDto, UpdateUserDto, UpdateUserRoleDto } from '../types/dto.js';
 
 import type { User } from '../../../shared/domain.js';
 import {
@@ -9,6 +9,8 @@ import {
   updateUserByClerkId,
   updatePushToken,
   updateUserRole as updateUserRoleService,
+  updateUserProfile as updateUserProfileService,
+  findUserById as findUserByIdService,
   deleteUser as deleteUserService,
 } from '../services/user.service.js';
 import { asyncHandler, parsePagination } from '../utils/http.js';
@@ -116,37 +118,50 @@ function toUserJson(user: User): User {
 }
 
 // -----------------------------------------------------------------------------
+// Gestão de usuários pelo admin (role, perfil e exclusão LGPD)
+// -----------------------------------------------------------------------------
+
+/** Defesa de self: localiza o alvo por id e compara o clerkId do ator. */
+async function localizarAlvo(
+  deps: { find: typeof findUserByIdService },
+  id: string,
+  actorClerkId: string | undefined,
+): Promise<{ usuario: User | null; erro?: { status: number; mensagem: string } }> {
+  const usuario = await deps.find(id);
+  if (!usuario) {
+    return { usuario: null, erro: { status: 404, mensagem: 'usuário não encontrado' } };
+  }
+  if (actorClerkId && usuario.clerkId === actorClerkId) {
+    return { usuario, erro: { status: 403, mensagem: 'ação não permitida na própria conta' } };
+  }
+  return { usuario };
+}
+
+// -----------------------------------------------------------------------------
 // Role de usuário (admin): promover/rebaixar
 // -----------------------------------------------------------------------------
 
 export interface UpdateUserRoleDeps {
   assertAdmin: typeof assertAdmin;
-  find: typeof findUserByClerkId;
+  find: typeof findUserByIdService;
   update: typeof updateUserRoleService;
 }
 
 export function makeUpdateUserRoleController(
-  deps: UpdateUserRoleDeps = { assertAdmin, find: findUserByClerkId, update: updateUserRoleService },
+  deps: UpdateUserRoleDeps = { assertAdmin, find: findUserByIdService, update: updateUserRoleService },
 ): RequestHandler {
   return async (req, res): Promise<void> => {
     const actorClerkId = req.auth?.clerkId;
     await deps.assertAdmin(actorClerkId, 'alterar role de usuário');
 
-    const id = String(req.params.id);
-    const { UserModel } = await import('../models/user.model.js');
-    const usuario = await UserModel.findById(id).lean();
-    if (!usuario) {
-      res.status(404).json({ error: 'usuário não encontrado' });
-      return;
-    }
-
-    if (actorClerkId && usuario.clerkId === actorClerkId) {
-      res.status(403).json({ error: 'não é possível alterar a própria role' });
+    const alvo = await localizarAlvo(deps, String(req.params.id), actorClerkId);
+    if (alvo.erro) {
+      res.status(alvo.erro.status).json({ error: alvo.erro.mensagem });
       return;
     }
 
     const { role } = req.body as UpdateUserRoleDto;
-    const updated = await deps.update(id, role);
+    const updated = await deps.update(String(req.params.id), role);
     if (!updated) {
       res.status(404).json({ error: 'usuário não encontrado' });
       return;
@@ -156,36 +171,74 @@ export function makeUpdateUserRoleController(
 }
 
 // -----------------------------------------------------------------------------
-// Exclusão de usuário (admin) — LGPD: apaga conta + registros relacionados
+// Perfil de usuário (admin): nome e cidade (modal de edição do painel)
 // -----------------------------------------------------------------------------
 
-export interface DeleteUserDeps {
+export interface UpdateUserProfileDeps {
   assertAdmin: typeof assertAdmin;
-  find: typeof findUserByClerkId;
-  remove: typeof deleteUserService;
+  find: typeof findUserByIdService;
+  update: typeof updateUserProfileService;
 }
 
-export function makeDeleteUserController(
-  deps: DeleteUserDeps = { assertAdmin, find: findUserByClerkId, remove: deleteUserService },
+export function makeUpdateUserProfileController(
+  deps: UpdateUserProfileDeps = {
+    assertAdmin,
+    find: findUserByIdService,
+    update: updateUserProfileService,
+  },
 ): RequestHandler {
   return async (req, res): Promise<void> => {
     const actorClerkId = req.auth?.clerkId;
-    await deps.assertAdmin(actorClerkId, 'excluir usuário');
+    await deps.assertAdmin(actorClerkId, 'editar perfil de usuário');
 
+    // Editar o PRÓPRIO perfil é permitido (cidade/nome não são escalonamento
+    // de privilégio); a defesa de self vale para a role e para a exclusão.
     const id = String(req.params.id);
-    const { UserModel } = await import('../models/user.model.js');
-    const usuario = await UserModel.findById(id).lean();
+    const usuario = await deps.find(id);
     if (!usuario) {
       res.status(404).json({ error: 'usuário não encontrado' });
       return;
     }
 
-    if (actorClerkId && usuario.clerkId === actorClerkId) {
-      res.status(403).json({ error: 'não é possível excluir a própria conta' });
+    try {
+      const updated = await deps.update(id, req.body as UpdateUserAdminDto);
+      if (!updated) {
+        res.status(404).json({ error: 'usuário não encontrado' });
+        return;
+      }
+      res.json(updated);
+    } catch (err) {
+      const status = (err as { statusCode?: number }).statusCode ?? 500;
+      const mensagem = err instanceof Error ? err.message : 'falha ao atualizar perfil';
+      res.status(status).json({ error: mensagem });
+    }
+  };
+}
+
+// -----------------------------------------------------------------------------
+// Exclusão de usuário (admin) — LGPD: apaga conta + registros relacionados
+// -----------------------------------------------------------------------------
+
+export interface DeleteUserDeps {
+  assertAdmin: typeof assertAdmin;
+  find: typeof findUserByIdService;
+  remove: typeof deleteUserService;
+}
+
+export function makeDeleteUserController(
+  deps: DeleteUserDeps = { assertAdmin, find: findUserByIdService, remove: deleteUserService },
+): RequestHandler {
+  return async (req, res): Promise<void> => {
+    const actorClerkId = req.auth?.clerkId;
+    await deps.assertAdmin(actorClerkId, 'excluir usuário');
+
+    const alvo = await localizarAlvo(deps, String(req.params.id), actorClerkId);
+    if (alvo.erro || !alvo.usuario) {
+      res.status(alvo.erro?.status ?? 404).json({ error: alvo.erro?.mensagem ?? 'usuário não encontrado' });
       return;
     }
 
-    await deps.remove(id);
+    await deps.remove(String(req.params.id));
 
     // Exclusão no Clerk é best-effort: não deve bloquear a resposta.
     if (process.env.CLERK_SECRET_KEY) {
@@ -195,7 +248,7 @@ export function makeDeleteUserController(
           secretKey: process.env.CLERK_SECRET_KEY,
           publishableKey: process.env.CLERK_PUBLISHABLE_KEY,
         });
-        await client.users.deleteUser(usuario.clerkId);
+        await client.users.deleteUser(alvo.usuario.clerkId);
       } catch {
         // ignora: o espelho local já foi removido.
       }
@@ -206,4 +259,5 @@ export function makeDeleteUserController(
 }
 
 export const updateUserRole: RequestHandler = makeUpdateUserRoleController();
+export const updateUserProfile: RequestHandler = makeUpdateUserProfileController();
 export const deleteUser: RequestHandler = makeDeleteUserController();

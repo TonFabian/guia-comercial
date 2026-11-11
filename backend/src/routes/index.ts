@@ -41,11 +41,12 @@ import {
   pushTokenSchema,
   updateUserSchema,
   updateUserRoleSchema,
+  updateUserAdminSchema,
   updateTourEventSchema,
   updateTouristSpotSchema,
   validateBody,
 } from '../types/dto.js';
-import { listUsers, me, updateMe, updateUserRole, deleteUser } from '../controllers/user.controller.js';
+import { listUsers, me, updateMe, updateUserRole, updateUserProfile, deleteUser } from '../controllers/user.controller.js';
 import { broadcastPush, registerPushToken } from '../controllers/push-token.controller.js';
 
 const routes = Router();
@@ -240,6 +241,7 @@ routes.get('/users', listUsers);
 
 // Mutação de role e exclusão de usuário (admin).
 routes.put('/users/:id/role', validateBody(updateUserRoleSchema), updateUserRole);
+routes.put('/users/:id', validateBody(updateUserAdminSchema), updateUserProfile);
 routes.delete('/users/:id', deleteUser);
 
 export default routes;

@@ -223,6 +223,16 @@ export const updateUserRoleSchema = z.object({
 
 export type UpdateUserRoleDto = z.infer<typeof updateUserRoleSchema>;
 
+/** Edição de perfil pelo admin (modal do painel). `city` é o slug ou null. */
+export const updateUserAdminSchema = z.object({
+  firstName: z.string().trim().min(1).max(80).optional(),
+  lastName: z.string().trim().max(80).optional(),
+  /** Slug da cidade; `null` limpa (usuário sem cidade definida). */
+  city: z.string().trim().min(1).nullable().optional(),
+});
+
+export type UpdateUserAdminDto = z.infer<typeof updateUserAdminSchema>;
+
 // ---------------------------------------------------------------------------
 // Review
 // ---------------------------------------------------------------------------

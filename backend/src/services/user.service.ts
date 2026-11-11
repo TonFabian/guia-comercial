@@ -186,6 +186,44 @@ export async function updateUserRole(id: string, role: 'user' | 'admin'): Promis
 }
 
 /**
+ * Edição de perfil pelo admin (modal do painel): nome e cidade.
+ *
+ * `city` chega como slug (convenção das demais rotas) e é resolvido para o
+ * ObjectId aqui; `null` limpa a cidade do usuário.
+ */
+export async function updateUserProfile(
+  id: string,
+  data: { firstName?: string; lastName?: string; city?: string | null },
+): Promise<AdminUserListItem | null> {
+  const update: Record<string, unknown> = {};
+  if (data.firstName !== undefined) update.firstName = data.firstName;
+  if (data.lastName !== undefined) update.lastName = data.lastName;
+  if (data.city !== undefined) {
+    if (data.city === null) {
+      update.city = null;
+    } else {
+      const city = await CityModel.findOne({ slug: data.city }).lean();
+      if (!city) {
+        throw Object.assign(new Error('cidade não encontrada'), { statusCode: 404 });
+      }
+      update.city = city._id;
+    }
+  }
+
+  const updated = await UserModel.findByIdAndUpdate(id, { $set: update }, { returnDocument: 'after' })
+    .populate('city')
+    .lean<User>();
+
+  if (!updated) return null;
+  return toAdminUserListItem(updated);
+}
+
+/** Busca o documento bruto por id (controllers precisam do clerkId para defesa de self). */
+export async function findUserById(id: string): Promise<User | null> {
+  return UserModel.findById(id).lean<User>();
+}
+
+/**
  * Exclui um usuário e seus registros relacionados (LGPD).
  *
  * Remove push tokens, avaliações e empresas/profissionais autônomos de sua
