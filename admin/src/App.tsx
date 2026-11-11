@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useState } from 'react';
-import { SignInButton, useAuth, useUser } from '@clerk/clerk-react';
+import { SignInButton, SignOutButton, useAuth, useUser } from '@clerk/clerk-react';
 
 import { Sidebar } from './components/sidebar';
 import type { Section } from './components/sidebar';
@@ -15,7 +15,7 @@ import { UsuariosSection } from './components/sections/usuarios';
 import { UtilidadePublicaSection } from './components/sections/utilidade-publica';
 import { VagasSection } from './components/sections/vagas';
 import { hintStyle } from './components/styles';
-import { getCategories, getCities, getCompanies, setAuthToken } from './services/api';
+import { getCategories, getCities, getCompanies, getMe, setAuthToken } from './services/api';
 import type { Catalog, CatalogErrors } from './types/catalog';
 
 /** Catálogo vazio — evita `undefined` enquanto os dados de referência carregam. */
@@ -30,6 +30,10 @@ export default function App() {
   const [catalogErrors, setCatalogErrors] = useState<CatalogErrors>({});
   const [catalogLoading, setCatalogLoading] = useState(true);
   const [authReady, setAuthReady] = useState(false);
+  // Gate de acesso: a role vem do backend (espelho local via GET /me), não do
+  // metadata do Clerk — quem decide o que é admin é a API, nunca o frontend.
+  const [role, setRole] = useState<'admin' | 'user' | null>(null);
+  const [roleLoaded, setRoleLoaded] = useState(false);
 
   // O token do Clerk precisa estar pronto antes de qualquer chamada autenticada.
   useEffect(() => {
@@ -45,6 +49,12 @@ export default function App() {
       if (cancelled) return;
       setAuthToken(token ?? null);
       setAuthReady(true);
+
+      // Role só é resolvida DEPOIS do token: /me exige Authorization.
+      const me = await getMe();
+      if (cancelled) return;
+      setRole(me?.role ?? null);
+      setRoleLoaded(true);
     })();
 
     return () => {
@@ -110,6 +120,24 @@ export default function App() {
           <SignInButton mode="modal">
             <button>Entrar</button>
           </SignInButton>
+        </main>
+      </div>
+    );
+  }
+
+  // Defesa de acesso: só role `admin` (definida no backend) abre o painel.
+  // Usuário comum logado vê tela de acesso negado — nada de listagens, nem
+  // formulários, nem tentativa de mutação.
+  if (!roleLoaded) return <p>Carregando…</p>;
+  if (role !== 'admin') {
+    return (
+      <div className="layout">
+        <main className="content" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', flexDirection: 'column', gap: 16 }}>
+          <h2>Acesso restrito</h2>
+          <p>Este painel é exclusivo de administradores da plataforma.</p>
+          <SignOutButton>
+            <button>Sair</button>
+          </SignOutButton>
         </main>
       </div>
     );

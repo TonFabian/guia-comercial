@@ -105,6 +105,18 @@ export function apiPost<T>(path: string, body: unknown): Promise<T> {
   return request<T>(path, { method: 'POST', body: JSON.stringify(body) });
 }
 
+/**
+ * Espelho local do usuário autenticado (GET /me). A role vem do backend —
+ * fonte da verdade para o gate de acesso do painel —, não do metadata do Clerk.
+ */
+export async function getMe(): Promise<User | null> {
+  try {
+    return await request<User>('/me');
+  } catch {
+    return null;
+  }
+}
+
 export function apiPut<T>(path: string, body: unknown): Promise<T> {
   return request<T>(path, { method: 'PUT', body: JSON.stringify(body) });
 }
