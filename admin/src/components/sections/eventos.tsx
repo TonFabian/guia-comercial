@@ -15,6 +15,7 @@ import { Pagination } from '../pagination';
 import { RowActions } from '../row-actions';
 import { SearchInput } from '../search-input';
 import { Table } from '../table';
+import { Button } from '../ui/button';
 
 export interface EventosSectionProps {
   cities: City[];
@@ -218,6 +219,14 @@ export function EventosSection({ cities, citiesError, companies, companiesTotal,
     setView('list');
   }
 
+  /** "Novo evento": formulário em tela dedicada (mesmo padrão das Empresas). */
+  function startCreate() {
+    setEditingId(null);
+    setForm(EMPTY_FORM);
+    setActionError(null);
+    setView('form');
+  }
+
   function startEdit(evento: TourEvent) {
     setEditingId(evento._id);
     setActionError(null);
@@ -380,16 +389,40 @@ export function EventosSection({ cities, citiesError, companies, companiesTotal,
     }
   }
 
-  void view;
-  return (
-    <>
+  // Formulário em tela dedicada (mesmo padrão das Empresas): a listagem fica
+  // limpa e o form só renderiza quando o usuário cria ou edita.
+  const formView = (
+    <div className="space-y-4">
       {citiesError && <p className="text-sm text-danger">Falha ao carregar cidades: {citiesError}</p>}
       {companiesError && <p className="text-sm text-danger">Falha ao carregar empresas: {companiesError}</p>}
       {touristSpotsError && <p className="text-sm text-danger">Falha ao carregar atrações: {touristSpotsError}</p>}
-      {error && <p className="text-sm text-danger">{error}</p>}
       {actionError && <p className="text-sm text-danger">{actionError}</p>}
 
-      <form onSubmit={handleSubmit} className="mb-4 grid gap-3 rounded-(--radius-card) border border-border bg-surface p-4 shadow-(--shadow-card) sm:grid-cols-2">
+      <div className="flex flex-row items-center justify-between gap-3">
+        <button
+          type="button"
+          onClick={resetForm}
+          className="text-sm text-text-muted hover:text-text"
+        >
+          ← Eventos
+        </button>
+        <div className="flex gap-2">
+          <Button type="submit" form="evento-form" disabled={saving}>
+            {editingId ? 'Salvar' : 'Criar'}
+          </Button>
+          <Button variant="secondary" type="button" onClick={resetForm} disabled={saving}>
+            Cancelar
+          </Button>
+        </div>
+      </div>
+      <h1 className="form-title text-xl font-semibold text-text" style={{ fontFamily: 'var(--font-family-heading)' }}>
+        {editingId ? 'Editar evento' : 'Novo evento'}
+      </h1>
+      <form
+        id="evento-form"
+        onSubmit={handleSubmit}
+        className="grid gap-3 rounded-(--radius-card) border border-border bg-surface p-4 shadow-(--shadow-card) sm:grid-cols-2"
+      >
         <input
           placeholder="Nome"
           value={form.name}
@@ -541,14 +574,6 @@ export function EventosSection({ cities, citiesError, companies, companiesTotal,
           />
           Ativo
         </label>
-        <button type="submit" disabled={saving}>
-          {editingId ? 'Salvar' : 'Criar'}
-        </button>
-        {editingId && (
-          <button type="button" onClick={resetForm}>
-            Cancelar
-          </button>
-        )}
         <textarea
           placeholder="Fotos (uma URL por linha)"
           value={form.photos}
@@ -575,10 +600,26 @@ export function EventosSection({ cities, citiesError, companies, companiesTotal,
           limitada; use a seção Atrações se a atração desejada não aparecer.
         </p>
       )}
+    </div>
+  );
+
+  if (view === 'form') {
+    return formView;
+  }
+
+  // Listagem: busca + criação + tabela.
+  return (
+    <div className="space-y-4">
+      {citiesError && <p className="text-sm text-danger">Falha ao carregar cidades: {citiesError}</p>}
+      {companiesError && <p className="text-sm text-danger">Falha ao carregar empresas: {companiesError}</p>}
+      {touristSpotsError && <p className="text-sm text-danger">Falha ao carregar atrações: {touristSpotsError}</p>}
+      {error && <p className="text-sm text-danger">{error}</p>}
+      {actionError && <p className="text-sm text-danger">{actionError}</p>}
 
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <SearchInput value={search} onChange={setSearch} placeholder="Buscar evento…" />
         {search && <span className="text-xs text-text-muted">A busca filtra os itens da página atual.</span>}
+        <Button onClick={startCreate}>+ Novo evento</Button>
       </div>
 
       <Table
@@ -603,6 +644,6 @@ export function EventosSection({ cities, citiesError, companies, companiesTotal,
 
       <Pagination page={page} pageSize={pageSize} total={total} onChange={setPage} />
       <p className="text-xs text-text-muted">Os eventos encerrados aparecem na listagem para que possam ser editados ou desativados.</p>
-    </>
+    </div>
   );
 }

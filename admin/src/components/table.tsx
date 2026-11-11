@@ -36,12 +36,17 @@ export function Table({ headers, rows, mobileRows, emptyMessage, loading }: Tabl
 
   return (
     <>
-      <div className="hidden md:block overflow-hidden rounded-(--radius-card) border border-border bg-surface shadow-(--shadow-card)">
-        <table className="w-full text-sm">
+      {/* Scroll horizontal quando o viewport é estreito demais para as colunas:
+          sem isso as Ações são cortadas em vez de rolarem. */}
+      <div className="hidden overflow-x-auto rounded-(--radius-card) border border-border bg-surface shadow-(--shadow-card) md:block">
+        <table
+          className="w-full text-sm"
+          style={{ minWidth: `${Math.max(headers.length * 6, 28)}rem` }}
+        >
           <thead className="bg-surface-hover text-left text-xs uppercase tracking-wide text-text-muted">
             <tr>
               {headers.map((header) => (
-                <th key={header} className="px-4 py-3 font-medium">
+                <th key={header} className="whitespace-nowrap px-4 py-3 font-medium">
                   {header}
                 </th>
               ))}
