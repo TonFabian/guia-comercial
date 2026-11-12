@@ -58,7 +58,7 @@ const CONTEUDO: Record<
   },
   expired: {
     subject: (empresa) => `Seu plano expirou — empresa ${empresa}`,
-    pushTitle: (empresa: string, _plano?: string, _vence?: string) => `${empresa}: plano expirado`,
+    pushTitle: (empresa: string) => `${empresa}: plano expirado`,
     pushBody: (empresa) =>
       `O plano da empresa ${empresa} expirou e a página voltou ao formato gratuito. Renove com a equipe do guia para recuperar os benefícios.`,
   },
