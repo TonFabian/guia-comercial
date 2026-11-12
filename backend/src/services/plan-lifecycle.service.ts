@@ -5,6 +5,7 @@ import { PlanNotificationModel } from '../models/plan-notification.model.js';
 import { UserModel } from '../models/user.model.js';
 
 import { sendEmail } from './email.service.js';
+import { buildPlanEmail } from './email-templates.js';
 import { planLabel } from './plan-label.js';
 import { sendPushToUser } from './push.service.js';
 import { todayInBrasilia } from '../utils/event-date.js';
@@ -39,26 +40,19 @@ const CONTEUDO: Record<
   Exclude<PlanAction, null>,
   {
     subject: (empresa: string, plano: string, vence: string) => string;
-    corpo: (empresa: string, plano: string, vence: string) => string;
     push: (empresa: string, plano: string, vence: string) => string;
   }
 > = {
   'expiring-7d': {
     subject: (empresa, plano) => `Seu plano ${plano} vence em 7 dias — empresa ${empresa}`,
-    corpo: (empresa, plano, vence) =>
-      `<p>Olá!</p><p>O plano <strong>${plano}</strong> da empresa <strong>${empresa}</strong> vence em 7 dias (${vence}). Renove com a equipe do guia para manter os benefícios.</p>`,
     push: (empresa, plano) => `${empresa}: seu plano ${plano} vence em 7 dias — renove com a equipe do guia`,
   },
   'expiring-1d': {
     subject: (empresa, plano) => `Seu plano ${plano} vence amanhã — empresa ${empresa}`,
-    corpo: (empresa, plano, vence) =>
-      `<p>Olá!</p><p>O plano <strong>${plano}</strong> da empresa <strong>${empresa}</strong> vence amanhã (${vence}).</p>`,
     push: (empresa, plano) => `${empresa}: seu plano ${plano} vence amanhã`,
   },
   expired: {
     subject: (empresa) => `Seu plano expirou — empresa ${empresa}`,
-    corpo: (empresa) =>
-      `<p>Olá!</p><p>O plano da empresa <strong>${empresa}</strong> expirou e a página voltou ao formato gratuito. Renove com a equipe do guia.</p>`,
     push: (empresa) => `${empresa}: seu plano expirou — renove com a equipe do guia`,
   },
 };
@@ -99,7 +93,7 @@ export async function runPlanLifecycle(hoje: string): Promise<ResultadoCiclo> {
     notificadas += 1;
 
     const dono = empresa.ownerClerkId
-      ? await UserModel.findOne({ clerkId: empresa.ownerClerkId }).lean<{ email?: string } | null>().exec()
+      ? await UserModel.findOne({ clerkId: empresa.ownerClerkId }).lean<{ name?: string; email?: string } | null>().exec()
       : null;
     if (dono?.email) {
       const rotulo = planLabel(empresa.plan);
@@ -109,7 +103,13 @@ export async function runPlanLifecycle(hoje: string): Promise<ResultadoCiclo> {
       await sendEmail({
         to: dono.email,
         subject: conteudo.subject(nome, rotulo, vence),
-        html: conteudo.corpo(nome, rotulo, vence),
+        html: buildPlanEmail(acao, {
+          ownerName: dono.name ?? '',
+          companyName: nome,
+          planLabel: rotulo,
+          expiresAt: vence,
+          ctaHref: process.env.APP_PUBLIC_URL ?? '#',
+        }),
       }).catch(() => undefined);
       if (empresa.ownerClerkId) {
         await sendPushToUser(empresa.ownerClerkId, conteudo.push(nome, rotulo, vence), 'Guia Comercial').catch(() => undefined);
