@@ -461,8 +461,14 @@ export async function updateCompany(id: string, body: UpdateCompanyInput): Promi
   return apiPut<Company>(`/companies/${id}`, dadosSemPlano);
 }
 
-export async function updateCompanyPlan(id: string, plan: 'free' | 'basic' | 'premium'): Promise<Company> {
-  return apiPut<Company>(`/companies/${id}/plan`, { plan });
+export interface UpdateCompanyPlanPayload {
+  plan: 'free' | 'basic' | 'premium';
+  planStartedAt?: string | null;
+  planExpiresAt?: string | null;
+}
+
+export async function updateCompanyPlan(id: string, payload: UpdateCompanyPlanPayload): Promise<Company> {
+  return apiPut<Company>(`/companies/${id}/plan`, payload);
 }
 
 export async function deleteCompany(id: string): Promise<void> {
