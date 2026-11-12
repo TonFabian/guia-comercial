@@ -230,3 +230,18 @@ describe('Vigencia do plano (Task 4)', () => {
     expect(modeloEmpresas.documents[0].plan).toBe('premium');
   });
 });
+
+
+describe('Guard anti-escalada (Task 5)', () => {
+  it('PUT publico do dono descarta plan/planStartedAt/planExpiresAt', async () => {
+    const res = await request(app)
+      .put('/api/companies/' + ID_EMPRESA)
+      .set('Authorization', 'Bearer token_dono')
+      .send({ description: 'Texto novo do dono', plan: 'premium', planStartedAt: '2026-11-01', planExpiresAt: '2026-12-31' });
+    expect(res.status).toBe(200);
+    expect(res.body.description).toBe('Texto novo do dono');
+    expect(res.body.plan).toBe('free');
+    expect(res.body.planStartedAt).toBeUndefined();
+    expect(res.body.planExpiresAt).toBeUndefined();
+  });
+});
