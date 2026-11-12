@@ -71,4 +71,10 @@ describe('buildPlanEmail — layout com marca', () => {
     expect(html).toContain('#FFC107');
     expect(html).toContain('#121212');
   });
+
+  it('rodapé tem divisor visível mas leve (não escuro como o primeiro draft)', () => {
+    const html = buildPlanEmail('expiring-7d', base);
+    expect(html).toContain('border-top:1px solid #D4D4D8');
+    expect(html).not.toContain('#2E2E2E');
+  });
 });

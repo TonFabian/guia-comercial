@@ -25,7 +25,7 @@ const CORES = {
   textoClaro: '#FFFFFF',
   textoSuave: '#9CA3AF',
   fundoCorpo: '#F4F4F5',
-  divisoria: '#E4E4E7',
+  divisoria: '#D4D4D8',
 } as const;
 
 interface ConteudoDoEmail {
