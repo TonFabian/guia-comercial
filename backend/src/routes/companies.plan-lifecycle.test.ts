@@ -81,6 +81,7 @@ describe('runPlanLifecycle', () => {
     expect(res.notificadas).toBe(1);
     expect(enviadosEmail).toHaveLength(1);
     expect(enviadosPush).toHaveLength(1);
+    expect((enviadosPush[0] as { body: string }).body).toContain('destaque');
     expect(JSON.stringify(enviadosEmail[0])).toContain('7 dias');
   });
 

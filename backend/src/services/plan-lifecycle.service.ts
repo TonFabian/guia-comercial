@@ -40,20 +40,27 @@ const CONTEUDO: Record<
   Exclude<PlanAction, null>,
   {
     subject: (empresa: string, plano: string, vence: string) => string;
-    push: (empresa: string, plano: string, vence: string) => string;
+    pushTitle: (empresa: string, plano: string, vence: string) => string;
+    pushBody: (empresa: string, plano: string, vence: string) => string;
   }
 > = {
   'expiring-7d': {
     subject: (empresa, plano) => `Seu plano ${plano} vence em 7 dias — empresa ${empresa}`,
-    push: (empresa, plano) => `${empresa}: seu plano ${plano} vence em 7 dias — renove com a equipe do guia`,
+    pushTitle: (empresa, plano) => `${empresa}: plano ${plano} vence em 7 dias`,
+    pushBody: (empresa, plano, vence) =>
+      `Seu plano ${plano} vence em 7 dias (dia ${vence}). Renove com a equipe do guia para manter destaque, prioridade na busca, badge e analytics.`,
   },
   'expiring-1d': {
     subject: (empresa, plano) => `Seu plano ${plano} vence amanhã — empresa ${empresa}`,
-    push: (empresa, plano) => `${empresa}: seu plano ${plano} vence amanhã`,
+    pushTitle: (empresa, plano) => `${empresa}: plano ${plano} vence amanhã`,
+    pushBody: (empresa, plano, vence) =>
+      `Seu plano ${plano} vence amanhã (dia ${vence}). Renove hoje para não perder os benefícios.`,
   },
   expired: {
     subject: (empresa) => `Seu plano expirou — empresa ${empresa}`,
-    push: (empresa) => `${empresa}: seu plano expirou — renove com a equipe do guia`,
+    pushTitle: (empresa: string, _plano?: string, _vence?: string) => `${empresa}: plano expirado`,
+    pushBody: (empresa) =>
+      `O plano da empresa ${empresa} expirou e a página voltou ao formato gratuito. Renove com a equipe do guia para recuperar os benefícios.`,
   },
 };
 
@@ -112,7 +119,11 @@ export async function runPlanLifecycle(hoje: string): Promise<ResultadoCiclo> {
         }),
       }).catch(() => undefined);
       if (empresa.ownerClerkId) {
-        await sendPushToUser(empresa.ownerClerkId, conteudo.push(nome, rotulo, vence), 'Guia Comercial').catch(() => undefined);
+        await sendPushToUser(
+          empresa.ownerClerkId,
+          conteudo.pushTitle(nome, rotulo, vence),
+          conteudo.pushBody(nome, rotulo, vence),
+        ).catch(() => undefined);
       }
     }
 
