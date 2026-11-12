@@ -141,6 +141,9 @@ export default function EventDetailScreen() {
           >
             <Text style={styles.backText}>← Voltar</Text>
           </Pressable>
+          <Text style={styles.title} numberOfLines={1} ellipsizeMode="tail">
+            {evento.name}
+          </Text>
         </View>
 
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
@@ -169,7 +172,6 @@ export default function EventDetailScreen() {
             <View style={[styles.selo, { backgroundColor: selo.fundo }]}>
               <Text style={[styles.seloText, { color: colors[selo.cor] }]}>{selo.texto}</Text>
             </View>
-            <Text style={styles.title}>{evento.name}</Text>
             <Text style={styles.meta}>
               {labelCategoriaEvento(evento.category)}
               {cityName(evento.city) ? ` · 📍 ${cityName(evento.city)}` : ''}
@@ -309,6 +311,8 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
       flex: 1,
     },
     topBar: {
+      flexDirection: 'row',
+      alignItems: 'center',
       paddingHorizontal: Spacing.three,
       paddingVertical: Spacing.two,
     },
@@ -353,14 +357,15 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
       fontWeight: FontWeight.heavy,
     },
     title: {
-      color: colors.text,
-      ...Typography.h2,
-      fontFamily: FontFamily.heading800,
-      fontWeight: FontWeight.heavy,
       position: 'absolute',
       left: 0,
       right: 0,
       textAlign: 'center',
+      paddingHorizontal: 80,
+      color: colors.text,
+      ...Typography.h3,
+      fontFamily: FontFamily.heading800,
+      fontWeight: FontWeight.heavy,
     },
     meta: {
       color: colors.textSecondary,

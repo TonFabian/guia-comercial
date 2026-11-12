@@ -107,6 +107,9 @@ export default function TouristSpotDetailScreen() {
       <SafeAreaView style={styles.safeArea} edges={['top']}>
         <View style={styles.topBar}>
           <TopBackButton onPress={() => router.back()} />
+          <Text style={styles.title} numberOfLines={1} ellipsizeMode="tail">
+            {spot.name}
+          </Text>
         </View>
 
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
@@ -132,9 +135,6 @@ export default function TouristSpotDetailScreen() {
           </View>
 
           <View style={styles.headerGroup}>
-            <Text style={styles.title} numberOfLines={1} ellipsizeMode="tail">
-              {spot.name}
-            </Text>
             <View style={styles.tag}>
               <Text style={styles.tagText}>{labelCategoriaAtracao(spot.category)}</Text>
             </View>
@@ -212,6 +212,8 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
       flex: 1,
     },
     topBar: {
+      flexDirection: 'row',
+      alignItems: 'center',
       paddingHorizontal: Spacing.three,
       paddingVertical: Spacing.two,
     },
@@ -246,14 +248,15 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
       marginBottom: Spacing.three,
     },
     title: {
+      position: 'absolute',
+      left: 0,
+      right: 0,
+      textAlign: 'center',
+      paddingHorizontal: 80,
       color: colors.text,
-      ...Typography.h2,
+      ...Typography.h3,
       fontFamily: FontFamily.heading800,
       fontWeight: FontWeight.heavy,
-      textAlign: 'center',
-      // Título centralizado na própria linha: sem position absolute (estava
-      // ancorado na tela e caindo sobre a descrição) e com ellipsis para
-      // nomes longos não estourarem o layout.
     },
     tag: {
       alignSelf: 'flex-start',
