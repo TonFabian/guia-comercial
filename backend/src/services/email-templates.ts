@@ -28,6 +28,12 @@ const CORES = {
   divisoria: '#D4D4D8',
 } as const;
 
+// Design System do app: headings em Rubik, body em Inter (§6.3).
+// Em e-mail, importamos do Google Fonts e mantemos fallbacks web-safe,
+// pois nem todo cliente de e-mail carrega fontes externas.
+const FONTE_HEADING = "'Rubik', 'Helvetica Neue', Arial, sans-serif";
+const FONTE_BODY = "'Inter', 'Helvetica Neue', Arial, sans-serif";
+
 interface ConteudoDoEmail {
   destaque: string;
   corpo: string[];
@@ -117,25 +123,28 @@ export function buildPlanEmail(kind: PlanEmailKind, input: PlanEmailInput): stri
 
   return `<!DOCTYPE html>
 <html lang="pt-BR">
-<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Guia Comercial</title></head>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Guia Comercial</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Rubik:wght@600;700;800&display=swap" rel="stylesheet"></head>
 <body style="margin:0;padding:0;background:${CORES.fundoCorpo};">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background:${CORES.fundoCorpo};padding:24px 0;">
 <tr><td align="center">
-  <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;font-family:Arial,Helvetica,sans-serif;">
+  <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;font-family:${FONTE_BODY};">
     <!-- Faixa de marca -->
     <tr><td style="background:${CORES.fundoEscuro};padding:40px 40px 32px 40px;border-radius:16px 16px 0 0;">
       <table role="presentation" cellpadding="0" cellspacing="0"><tr>
         <td style="background:${CORES.primario};border-radius:10px;padding:10px 16px;">
-          <span style="color:${CORES.fundoEscuro};font-size:22px;font-weight:bold;letter-spacing:1px;">Guia&nbsp;Comercial</span>
+          <span style="color:${CORES.fundoEscuro};font-size:22px;font-weight:bold;letter-spacing:1px;font-family:${FONTE_HEADING};">Guia&nbsp;Comercial</span>
         </td>
       </tr></table>
-      <div style="color:${CORES.textoClaro};font-size:28px;font-weight:bold;line-height:36px;padding-top:28px;">${destaque}</div>
+      <div style="color:${CORES.textoClaro};font-size:28px;font-weight:bold;line-height:36px;padding-top:28px;font-family:${FONTE_HEADING};">${destaque}</div>
     </td></tr>
     <!-- Corpo -->
     <tr><td style="background:${CORES.textoClaro};padding:36px 40px 32px 40px;">
-      <div style="color:${CORES.fundoEscuro};font-size:20px;font-weight:bold;padding-bottom:12px;">${saudacao}</div>
+      <div style="color:${CORES.fundoEscuro};font-size:20px;font-weight:bold;padding-bottom:12px;font-family:${FONTE_HEADING};">${saudacao}</div>
       <div style="color:#3F3F46;font-size:15px;line-height:24px;">${texto(conteudo.corpo, input)}</div>
-      ${conteudo.beneficiosTitulo ? `<div style="color:${CORES.fundoEscuro};font-size:15px;font-weight:bold;padding-top:16px;">${conteudo.beneficiosTitulo}</div>
+      ${conteudo.beneficiosTitulo ? `<div style="color:${CORES.fundoEscuro};font-size:15px;font-weight:bold;padding-top:16px;font-family:${FONTE_HEADING};">${conteudo.beneficiosTitulo}</div>
       <table role="presentation" cellpadding="0" cellspacing="0">${listaBeneficios(input.planLabel)}</table>` : ''}
       <table role="presentation" cellpadding="0" cellspacing="0" style="padding-top:28px;"><tr>
         <td style="background:${CORES.primario};border-radius:28px;">
