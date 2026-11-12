@@ -177,3 +177,56 @@ describe('Autorização do plano (Task 2b)', () => {
     expect(modeloEmpresas.documents[0].plan).toBe('free');
   });
 });
+
+
+describe('Vigencia do plano (Task 4)', () => {
+  it('admin define datas de vigencia junto do plano', async () => {
+    const res = await request(app)
+      .put('/api/companies/' + ID_EMPRESA + '/plan')
+      .set('Authorization', 'Bearer token_admin')
+      .send({ plan: 'premium', planStartedAt: '2026-11-01', planExpiresAt: '2026-12-31' });
+    expect(res.status).toBe(200);
+    expect(res.body.planStartedAt).toBe('2026-11-01');
+    expect(res.body.planExpiresAt).toBe('2026-12-31');
+  });
+
+  it('null no body limpa a data (sem vencimento)', async () => {
+    await request(app)
+      .put('/api/companies/' + ID_EMPRESA + '/plan')
+      .set('Authorization', 'Bearer token_admin')
+      .send({ plan: 'premium', planStartedAt: '2026-11-01', planExpiresAt: '2026-12-31' });
+    const res = await request(app)
+      .put('/api/companies/' + ID_EMPRESA + '/plan')
+      .set('Authorization', 'Bearer token_admin')
+      .send({ plan: 'premium', planExpiresAt: null });
+    expect(res.status).toBe(200);
+    expect(res.body.planExpiresAt).toBeUndefined();
+  });
+
+  it('campos ausentes no body mantem as datas gravadas (undefined = mantem)', async () => {
+    await request(app)
+      .put('/api/companies/' + ID_EMPRESA + '/plan')
+      .set('Authorization', 'Bearer token_admin')
+      .send({ plan: 'premium', planStartedAt: '2026-11-01', planExpiresAt: '2026-12-31' });
+    const res = await request(app)
+      .put('/api/companies/' + ID_EMPRESA + '/plan')
+      .set('Authorization', 'Bearer token_admin')
+      .send({ plan: 'basic' });
+    expect(res.status).toBe(200);
+    expect(res.body.planStartedAt).toBe('2026-11-01');
+    expect(res.body.planExpiresAt).toBe('2026-12-31');
+  });
+
+  it('fim anterior ao inicio GRAVADO -> 422', async () => {
+    await request(app)
+      .put('/api/companies/' + ID_EMPRESA + '/plan')
+      .set('Authorization', 'Bearer token_admin')
+      .send({ plan: 'premium', planStartedAt: '2026-11-01', planExpiresAt: '2026-12-31' });
+    const res = await request(app)
+      .put('/api/companies/' + ID_EMPRESA + '/plan')
+      .set('Authorization', 'Bearer token_admin')
+      .send({ plan: 'premium', planExpiresAt: '2026-10-31' });
+    expect(res.status).toBe(422);
+    expect(modeloEmpresas.documents[0].plan).toBe('premium');
+  });
+});
