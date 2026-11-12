@@ -99,14 +99,15 @@ export async function runPlanLifecycle(hoje: string): Promise<ResultadoCiclo> {
     if (!ganhouClaim) continue;
     notificadas += 1;
 
+    const rotulo = planLabel(empresa.plan);
+    const vence = empresa.planExpiresAt.split('-').reverse().join('/');
+    const nome = empresa.name ?? 'Sua empresa';
+    const conteudo = CONTEUDO[acao];
+
     const dono = empresa.ownerClerkId
       ? await UserModel.findOne({ clerkId: empresa.ownerClerkId }).lean<{ name?: string; email?: string } | null>().exec()
       : null;
     if (dono?.email) {
-      const rotulo = planLabel(empresa.plan);
-      const vence = empresa.planExpiresAt.split('-').reverse().join('/');
-      const nome = empresa.name ?? 'Sua empresa';
-      const conteudo = CONTEUDO[acao];
       await sendEmail({
         to: dono.email,
         subject: conteudo.subject(nome, rotulo, vence),
@@ -118,13 +119,14 @@ export async function runPlanLifecycle(hoje: string): Promise<ResultadoCiclo> {
           ctaHref: process.env.APP_PUBLIC_URL ?? '#',
         }),
       }).catch(() => undefined);
-      if (empresa.ownerClerkId) {
-        await sendPushToUser(
-          empresa.ownerClerkId,
-          conteudo.pushTitle(nome, rotulo, vence),
-          conteudo.pushBody(nome, rotulo, vence),
-        ).catch(() => undefined);
-      }
+    }
+    // Push é independente do e-mail: dono pode não ter e-mail mas ter token.
+    if (empresa.ownerClerkId) {
+      await sendPushToUser(
+        empresa.ownerClerkId,
+        conteudo.pushTitle(nome, rotulo, vence),
+        conteudo.pushBody(nome, rotulo, vence),
+      ).catch(() => undefined);
     }
 
     if (acao === 'expired') {
