@@ -102,10 +102,12 @@ export default function JobDetailScreen() {
         <ScrollView showsVerticalScrollIndicator={false} contentContainerStyle={styles.content}>
           <View style={styles.topBar}>
             <TopBackButton onPress={() => router.back()} />
+            <Text style={styles.title} numberOfLines={1} ellipsizeMode="tail">
+              {job.title}
+            </Text>
           </View>
 
           <View style={styles.header}>
-            <Text style={styles.title}>{job.title}</Text>
             <View style={styles.typeBadge}>
               <Text style={styles.typeBadgeText}>{jobTypeLabel(job.type)}</Text>
             </View>
@@ -195,7 +197,7 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     notFoundTitle: {
       color: colors.text,
-      ...Typography.h4,
+      ...Typography.h3,
       fontFamily: FontFamily.heading700,
       fontWeight: FontWeight.bold,
     },
@@ -239,8 +241,9 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
       left: 0,
       right: 0,
       textAlign: 'center',
+      paddingHorizontal: 80,
       color: colors.text,
-      ...Typography.h2,
+      ...Typography.h3,
     },
     typeBadge: {
       alignSelf: 'flex-start',
