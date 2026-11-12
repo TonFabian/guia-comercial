@@ -19,15 +19,32 @@ describe('buildPlanEmail — layout com marca', () => {
     expect(html).toContain('Guia Comercial');
   });
 
+  it('D-7 premium: lista os benefícios que a renovação mantém', () => {
+    const html = buildPlanEmail('expiring-7d', base);
+    expect(html).toContain('continua com');
+    expect(html).toContain('Destaque na tela inicial');
+    expect(html).toContain('Desempenho dos últimos 30 dias');
+    expect(html).toContain('Prioridade na busca');
+  });
+
+  it('D-7 básico: lista os benefícios do plano básico (sem itens de premium)', () => {
+    const html = buildPlanEmail('expiring-7d', { ...base, planLabel: 'Básico' });
+    expect(html).toContain('Galeria de fotos');
+    expect(html).toContain('Promoções');
+    expect(html).not.toContain('Desempenho dos últimos 30 dias');
+  });
+
   it('D-1: fala em "vence amanhã"', () => {
     const html = buildPlanEmail('expiring-1d', base);
     expect(html).toContain('vence <strong>amanhã</strong>');
   });
 
-  it('expired: fala em "expirou" e rebaixamento', () => {
+  it('expired: fala em "expirou" e rebaixamento, e lista o que a renovação recupera', () => {
     const html = buildPlanEmail('expired', base);
     expect(html).toContain('expirou');
     expect(html).toContain('formato gratuito');
+    expect(html).toContain('Ao renovar, você volta a ter');
+    expect(html).toContain('Selo verificado');
   });
 
   it('tem botão de ação com o link informado', () => {
