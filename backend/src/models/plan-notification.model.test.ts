@@ -12,7 +12,7 @@ describe('plan-notification.model', () => {
   });
 
   it('kind só aceita os três tipos de aviso', () => {
-    const kind = PlanNotificationModel.schema.path('kind');
+    const kind = PlanNotificationModel.schema.path('kind') as { enumValues?: string[] } | undefined;
     expect(kind?.enumValues).toEqual(['expiring-7d', 'expiring-1d', 'expired']);
   });
 });
