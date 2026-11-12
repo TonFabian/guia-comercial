@@ -138,10 +138,37 @@ export const updateCompanySchema = createCompanySchema.omit({ plan: true }).part
 
 export type UpdateCompanyDto = z.infer<typeof updateCompanySchema>;
 
-/** Schema dedicado para alteração de plano (rota admin-only). */
-export const updatePlanSchema = z.object({
-  plan: z.enum(['free', 'basic', 'premium']),
-});
+// Data pura no formato YYYY-MM-DD (o `isoDate` deste arquivo é datetime e não
+// serve para startDate/endDate: a comparação de vigência é de string).
+// Movido acima de updatePlanSchema (TDZ: const); ehDataDeCalendario é
+// function declaration (hoisted), então o refine resolve sem importação.
+export const dataDiaSchema = z
+  .string()
+  .regex(/^\d{4}-\d{2}-\d{2}$/, 'data deve estar no formato YYYY-MM-DD')
+  .refine((valor) => ehDataDeCalendario(valor), 'data inválida (ex.: 2026-11-05)');
+
+/** Schema dedicado para alteração de plano/vigência (rota admin-only).
+ * `undefined` no body = mantém a data gravada; `null` = limpa (sem vencimento). */
+export const updatePlanSchema = z
+  .object({
+    plan: z.enum(['free', 'basic', 'premium']),
+    planStartedAt: dataDiaSchema.nullable().optional(),
+    planExpiresAt: dataDiaSchema.nullable().optional(),
+  })
+  .superRefine((payload, ctx) => {
+    const { planStartedAt, planExpiresAt } = payload;
+    if (
+      typeof planStartedAt === 'string' &&
+      typeof planExpiresAt === 'string' &&
+      planExpiresAt < planStartedAt
+    ) {
+      ctx.addIssue({
+        code: 'custom',
+        path: ['planExpiresAt'],
+        message: 'data de vencimento não pode ser anterior à data de início',
+      });
+    }
+  });
 
 export type UpdatePlanDto = z.infer<typeof updatePlanSchema>;
 
@@ -416,12 +443,6 @@ const tourEventCategorySchema = z.enum([
 ]);
 
 // Data pura no formato YYYY-MM-DD (o `isoDate` deste arquivo é datetime e não
-// serve para startDate/endDate: a comparação de vigência é de string).
-const dataDiaSchema = z
-  .string()
-  .regex(/^\d{4}-\d{2}-\d{2}$/, 'data deve estar no formato YYYY-MM-DD')
-  .refine((valor) => ehDataDeCalendario(valor), 'data inválida (ex.: 2026-11-05)');
-
 const horaSchema = z
   .string()
   .regex(/^([01]\d|2[0-3]):[0-5]\d$/, 'horário deve estar no formato HH:mm');
