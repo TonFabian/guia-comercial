@@ -120,7 +120,7 @@ function ticketLabel(evento: TourEvent): string {
 }
 
 /**
- * Situação do evento comparada com hoje em America/Fortaleza.
+ * Situação do evento comparada com hoje no fuso de Brasília.
  *
  * As datas são strings YYYY-MM-DD: a ordem lexicográfica É a ordem
  * cronológica — não use `new Date(iso)` para decidir.
@@ -131,9 +131,9 @@ function situacao(evento: TourEvent, hoje: string): string {
   return 'Acontece agora';
 }
 
-/** Data de hoje em America/Fortaleza, no formato YYYY-MM-DD (en-CA produz esse formato). */
-function hojeNaFortaleza(): string {
-  return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Fortaleza' }).format(new Date());
+/** Data de hoje no fuso de Brasília (identificador canônico America/Sao_Paulo), formato YYYY-MM-DD (en-CA produz esse formato). */
+function hojeEmBrasilia(): string {
+  return new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Sao_Paulo' }).format(new Date());
 }
 
 /** Lista de URLs digitadas em textarea (uma por linha). */
@@ -203,7 +203,7 @@ export function EventosSection({ cities, citiesError, companies, companiesTotal,
   const [actionError, setActionError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [view, setView] = useState<'list' | 'form'>('list');
-  const hoje = hojeNaFortaleza();
+  const hoje = hojeEmBrasilia();
 
   const visible = useMemo(
     () =>

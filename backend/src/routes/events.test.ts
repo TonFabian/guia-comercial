@@ -92,7 +92,7 @@ const modeloPontos = TouristSpotModel as unknown as MemoryModel;
 const modeloUsuarios = UserModel as unknown as MemoryModel;
 const modeloTokens = PushTokenModel as unknown as MemoryModel;
 
-// Relógio fixo: 12:00Z de 05/11/2026 = 09:00 de Fortaleza (UTC-3), logo
+// Relógio fixo: 12:00Z de 05/11/2026 = 09:00 de Brasília (UTC-3), logo
 // "hoje" no backend é 2026-11-05.
 const hoje = '2026-11-05';
 const ontem = '2026-11-04';

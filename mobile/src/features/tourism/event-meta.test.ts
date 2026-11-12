@@ -43,8 +43,8 @@ describe('hojeISO', () => {
     vi.useRealTimers();
   });
 
-  it('segue o fuso de Fortaleza, não o do dispositivo (en-CA → YYYY-MM-DD)', () => {
-    // 01:30Z de 06/11 = 22:30 de 05/11 em Fortaleza (UTC-3): o "hoje" do guia
+  it('segue o fuso de Brasília, não o do dispositivo (en-CA → YYYY-MM-DD)', () => {
+    // 01:30Z de 06/11 = 22:30 de 05/11 em Brasília (UTC-3): o "hoje" do guia
     // ainda é 05/11, mesmo que o relógio universal já esteja no dia seguinte.
     vi.useFakeTimers();
     vi.setSystemTime(new Date('2026-11-06T01:30:00Z'));

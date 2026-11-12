@@ -45,13 +45,15 @@ export function formatarPeriodoEvento(startDate: string, endDate: string): strin
 export type EstadoEvento = 'em-breve' | 'agora' | 'encerrado';
 
 /**
- * "Hoje" no fuso do guia (America/Fortaleza, igual ao backend/admin) como
+ * "Hoje" no fuso do guia (horário de Brasília, igual ao backend/admin) como
  * `YYYY-MM-DD`. Usa `Intl` em vez do relógio do dispositivo: perto da
  * meia-noite um app em fuso à frente/atrás desincronizaria do servidor.
+ * America/Sao_Paulo é o identificador canônico IANA desse fuso (o link
+ * America/Brasilia não está no ICU do runtime).
  */
 export function hojeISO(): string {
   return new Intl.DateTimeFormat('en-CA', {
-    timeZone: 'America/Fortaleza',
+    timeZone: 'America/Sao_Paulo',
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',

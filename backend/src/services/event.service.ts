@@ -6,7 +6,7 @@ import { TourEventModel } from '../models/event.model.js';
 import { TouristSpotModel } from '../models/tourist-spot.model.js';
 import { assertAdmin } from './user.service.js';
 import { listAllPushTokens } from './push-token.service.js';
-import { todayInFortaleza } from '../utils/event-date.js';
+import { todayInBrasilia } from '../utils/event-date.js';
 import { escapeRegex } from '../utils/regex.js';
 import { lerBooleano, lerEnum, lerTexto } from '../utils/query.js';
 import type {
@@ -84,9 +84,9 @@ export async function listTourEvents(
   const incluirPassados = lerBooleano(filters.includePast, 'includePast');
   if (incluirPassados !== true) {
     // Vigência por DATA (spec D9): endDate é string YYYY-MM-DD e compara com
-    // o dia de Fortaleza também como string — $gte de strings é seguro no
+    // o dia de Brasília também como string — $gte de strings é seguro no
     // formato fixo, e NUNCA se mistura data pura com datetime ISO.
-    query.endDate = { $gte: todayInFortaleza() };
+    query.endDate = { $gte: todayInBrasilia() };
   }
 
   const termo = lerTexto(filters.q, { nome: 'q' });
@@ -156,7 +156,7 @@ export async function createTourEvent(
     // Push apenas no CREATE (spec D11) e apenas de evento PUBLICADO E VIGENTE:
     // anunciar rascunho (active=false) ou evento já vencido é push
     // irreversível de conteúdo invisível. Falha de push não quebra o POST.
-    if (criado.active && criado.endDate >= todayInFortaleza()) {
+    if (criado.active && criado.endDate >= todayInBrasilia()) {
       void notifyNewEvent(criado.name, dto.city).catch(() => undefined);
     }
 

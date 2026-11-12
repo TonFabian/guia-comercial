@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { isEventVisibleOn, todayInFortaleza } from './event-date.js';
+import { isEventVisibleOn, todayInBrasilia } from './event-date.js';
 
 describe('isEventVisibleOn', () => {
   it('mantém o evento visível no próprio dia de encerramento', () => {
@@ -16,19 +16,19 @@ describe('isEventVisibleOn', () => {
   });
 });
 
-describe('todayInFortaleza', () => {
-  it('converte um instante UTC no dia de Fortaleza em YYYY-MM-DD', () => {
-    // 12:00Z = 09:00 de Fortaleza no mesmo dia.
-    expect(todayInFortaleza(new Date('2026-11-05T12:00:00Z'))).toBe('2026-11-05');
+describe('todayInBrasilia', () => {
+  it('converte um instante UTC no dia de Brasília em YYYY-MM-DD', () => {
+    // 12:00Z = 09:00 de Brasília no mesmo dia.
+    expect(todayInBrasilia(new Date('2026-11-05T12:00:00Z'))).toBe('2026-11-05');
   });
 
-  it('recua um dia quando o instante ainda é a noite anterior em Fortaleza', () => {
-    // 02:00Z = 23:00 de 04/11 em Fortaleza (UTC-3).
-    expect(todayInFortaleza(new Date('2026-11-05T02:00:00Z'))).toBe('2026-11-04');
+  it('recua um dia quando o instante ainda é a noite anterior em Brasília', () => {
+    // 02:00Z = 23:00 de 04/11 em Brasília (UTC-3).
+    expect(todayInBrasilia(new Date('2026-11-05T02:00:00Z'))).toBe('2026-11-04');
   });
 
   it('recua um dia no fim do mês', () => {
-    // 01:00Z de 01/12 = 22:00 de 30/11 em Fortaleza.
-    expect(todayInFortaleza(new Date('2026-12-01T01:00:00Z'))).toBe('2026-11-30');
+    // 01:00Z de 01/12 = 22:00 de 30/11 em Brasília.
+    expect(todayInBrasilia(new Date('2026-12-01T01:00:00Z'))).toBe('2026-11-30');
   });
 });
