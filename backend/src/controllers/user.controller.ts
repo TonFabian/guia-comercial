@@ -14,6 +14,7 @@ import {
   deleteUser as deleteUserService,
 } from '../services/user.service.js';
 import { asyncHandler, parsePagination } from '../utils/http.js';
+import { lerTexto } from '../utils/query.js';
 
 export interface UpdateMeDeps {
   update: typeof updateUserByClerkId;
@@ -107,7 +108,8 @@ export const listUsers = asyncHandler(
     await assertAdmin(req.auth?.clerkId, 'listar usuários');
 
     const pagination = parsePagination(req.query.page, req.query.pageSize);
-    const { items, total } = await listUsersService(pagination, req.auth?.clerkId);
+    const search = lerTexto(req.query.search, { nome: 'search' });
+    const { items, total } = await listUsersService(pagination, req.auth?.clerkId, search);
     res.json({ items, total, page: pagination.page, pageSize: pagination.pageSize });
   },
 );
