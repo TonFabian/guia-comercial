@@ -1,11 +1,14 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { touchSession } from './user.service.js';
+import { assertAdminEstrito, touchSession } from './user.service.js';
 
-const { updateOneMock } = vi.hoisted(() => ({ updateOneMock: vi.fn() }));
+const { updateOneMock, findOneMock } = vi.hoisted(() => ({
+  updateOneMock: vi.fn(),
+  findOneMock: vi.fn(),
+}));
 
 vi.mock('../models/user.model.js', () => ({
-  UserModel: { updateOne: updateOneMock },
+  UserModel: { updateOne: updateOneMock, findOne: findOneMock },
 }));
 
 interface DocumentoSessao {
@@ -59,5 +62,46 @@ describe('touchSession', () => {
     expect(documento.lastSid).toBe('sess_2');
     expect(documento.lastSignInAt).toBeDefined();
     expect(Date.parse(documento.lastSignInAt ?? '')).not.toBeNaN();
+  });
+});
+
+function cadeiaUsuario(valor: unknown) {
+  return {
+    populate: () => ({ lean: () => ({ exec: () => Promise.resolve(valor) }) }),
+  };
+}
+
+describe('assertAdminEstrito', () => {
+  beforeEach(() => {
+    findOneMock.mockReset();
+    vi.unstubAllEnvs();
+  });
+
+  it('sem CLERK_SECRET_KEY → 401', async () => {
+    delete process.env.CLERK_SECRET_KEY;
+    await expect(assertAdminEstrito('user_1', 'recurso')).rejects.toMatchObject({
+      statusCode: 401,
+    });
+  });
+
+  it('com Clerk e sem clerkId → 401', async () => {
+    vi.stubEnv('CLERK_SECRET_KEY', 'sk_test_placeholder');
+    await expect(assertAdminEstrito(undefined, 'recurso')).rejects.toMatchObject({
+      statusCode: 401,
+    });
+  });
+
+  it('usuário comum → 403', async () => {
+    vi.stubEnv('CLERK_SECRET_KEY', 'sk_test_placeholder');
+    findOneMock.mockReturnValue(cadeiaUsuario({ role: 'user' }));
+    await expect(assertAdminEstrito('user_comum', 'recurso')).rejects.toMatchObject({
+      statusCode: 403,
+    });
+  });
+
+  it('admin → resolve', async () => {
+    vi.stubEnv('CLERK_SECRET_KEY', 'sk_test_placeholder');
+    findOneMock.mockReturnValue(cadeiaUsuario({ role: 'admin' }));
+    await expect(assertAdminEstrito('user_admin', 'recurso')).resolves.toBeUndefined();
   });
 });
