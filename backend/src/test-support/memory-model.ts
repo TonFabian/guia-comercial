@@ -54,6 +54,13 @@ export interface MemoryModel {
   findByIdAndDelete(id: string): MemoryQuery;
   findOneAndUpdate(filtro: MemoryFilter, atualizacao: MemoryUpdate, opcoes?: unknown): MemoryQuery;
   updateOne(filtro: MemoryFilter, atualizacao: MemoryUpdate): MemoryQuery;
+  updateMany(filtro: MemoryFilter, atualizacao: MemoryUpdate): {
+    exec(): Promise<{ matchedCount: number; modifiedCount: number }>;
+    then<TResult1 = { matchedCount: number; modifiedCount: number }, TResult2 = never>(
+      onfulfilled?: ((value: { matchedCount: number; modifiedCount: number }) => TResult1 | PromiseLike<TResult1>) | null,
+      onrejected?: ((reason: unknown) => TResult2 | PromiseLike<TResult2>) | null,
+    ): PromiseLike<TResult1 | TResult2>;
+  };
   deleteOne(filtro: MemoryFilter): Promise<{ deletedCount: number }>;
   aggregate(pipeline?: MemoryDocument[]): {
     exec(): Promise<MemoryDocument[]>;
@@ -292,6 +299,28 @@ export function criarModeloEmMemoria(opcoesDoModelo: MemoryModelOptions = {}): M
       });
     },
 
+    updateMany(filtro: MemoryFilter, atualizacao: MemoryUpdate) {
+      const executar = async () => {
+        const casados = documents.filter((documento) => casarDocumento(documento, filtro));
+        let modifiedCount = 0;
+        for (const alvo of casados) {
+          aplicarAtualizacao(alvo, atualizacao);
+          modifiedCount += 1;
+        }
+        return { matchedCount: casados.length, modifiedCount };
+      };
+      const consulta = {
+        exec: executar,
+        then<TResult1 = { matchedCount: number; modifiedCount: number }, TResult2 = never>(
+          onfulfilled?: ((value: { matchedCount: number; modifiedCount: number }) => TResult1 | PromiseLike<TResult1>) | null,
+          onrejected?: ((reason: unknown) => TResult2 | PromiseLike<TResult2>) | null,
+        ): PromiseLike<TResult1 | TResult2> {
+          return executar().then(onfulfilled, onrejected);
+        },
+      };
+      return consulta;
+    },
+
     async deleteOne(filtro: MemoryFilter = {}) {
       const indice = documents.findIndex((documento) => casarDocumento(documento, filtro));
       if (indice === -1) return { deletedCount: 0 };
@@ -513,6 +542,8 @@ function casarValor(valor: unknown, condicao: unknown): boolean {
       '$ne' in operadores ||
       '$gte' in operadores ||
       '$gt' in operadores ||
+      '$lte' in operadores ||
+      '$lt' in operadores ||
       '$exists' in operadores ||
       '$or' in operadores ||
       '$and' in operadores;
@@ -524,18 +555,33 @@ function casarValor(valor: unknown, condicao: unknown): boolean {
     if ('$ne' in operadores) {
       return !valoresIguais(valor, operadores.$ne);
     }
+    const compararLimites = (a: unknown, b: unknown): number | null => {
+      if (a instanceof Date || b instanceof Date) {
+        const ta = a instanceof Date ? a.getTime() : new Date(a as string | number).getTime();
+        const tb = b instanceof Date ? b.getTime() : new Date(b as string | number).getTime();
+        if (Number.isNaN(ta) || Number.isNaN(tb)) return null;
+        return ta - tb;
+      }
+      if (typeof a === 'number' && typeof b === 'number') return a - b;
+      if (typeof a === 'string' && typeof b === 'string') return a < b ? -1 : a > b ? 1 : 0;
+      return null;
+    };
+
     if ('$gte' in operadores) {
-      const limite = operadores.$gte;
-      // A regra de eventos compara strings YYYY-MM-DD: a ordem lexicográfica
-      // é correta no formato fixo (nunca misture data com datetime ISO).
-      if (typeof valor === 'string' && typeof limite === 'string') return valor >= limite;
-      if (typeof valor === 'number' && typeof limite === 'number') return valor >= limite;
-      return false;
+      const cmp = compararLimites(valor, operadores.$gte);
+      return cmp !== null && cmp >= 0;
     }
     if ('$gt' in operadores) {
-      const limite = operadores.$gt;
-      if (typeof valor === 'number' && typeof limite === 'number') return valor > limite;
-      return false;
+      const cmp = compararLimites(valor, operadores.$gt);
+      return cmp !== null && cmp > 0;
+    }
+    if ('$lte' in operadores) {
+      const cmp = compararLimites(valor, operadores.$lte);
+      return cmp !== null && cmp <= 0;
+    }
+    if ('$lt' in operadores) {
+      const cmp = compararLimites(valor, operadores.$lt);
+      return cmp !== null && cmp < 0;
     }
     if ('$exists' in operadores) {
       return (valor !== undefined) === Boolean(operadores.$exists);

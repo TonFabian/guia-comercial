@@ -1,6 +1,8 @@
 import { Types, isValidObjectId } from 'mongoose';
 
 import type { PushCampaignSegment } from '../../../shared/domain.js';
+import { PushCampaignModel } from '../models/push-campaign.model.js';
+import { sendPushToTokens } from './push.service.js';
 import { CompanyModel } from '../models/company.model.js';
 import { PushTokenModel } from '../models/push-token.model.js';
 import { UserModel } from '../models/user.model.js';
@@ -175,4 +177,101 @@ export async function resolverSegmento(
     default:
       return { tokens: [], targeted: 0 };
   }
+}
+
+export async function reivindicarEnvio(id: string): Promise<boolean> {
+  const resultado = await PushCampaignModel.findOneAndUpdate(
+    { _id: id, status: { $in: ['draft', 'scheduled'] } },
+    { $set: { status: 'sending', sendingStartedAt: new Date() } },
+  );
+  return resultado !== null && resultado !== undefined;
+}
+
+export async function enviarCampanha(id: string): Promise<void> {
+  const reivindicou = await reivindicarEnvio(id);
+  if (!reivindicou) return;
+
+  try {
+    const campanha = await PushCampaignModel.findById(id);
+    if (!campanha) throw new Error('Campanha não encontrada');
+
+    const { tokens, targeted } = await resolverSegmento(
+      campanha.segment as PushCampaignSegment,
+    );
+
+    const stats = {
+      targeted,
+      sent: 0,
+      failed: 0,
+      deadTokens: 0,
+    };
+
+    if (tokens.length === 0) {
+      await PushCampaignModel.findOneAndUpdate(
+        { _id: id },
+        { $set: { status: 'sent', sentAt: new Date(), receipts: [], stats, error: undefined } },
+      );
+      return;
+    }
+
+    const opcoes: { data?: Record<string, string>; image?: string } = {};
+    if (campanha.imageUrl) opcoes.image = String(campanha.imageUrl);
+    if (campanha.deepLink) opcoes.data = { url: String(campanha.deepLink) };
+
+    const resultado =
+      Object.keys(opcoes).length > 0
+        ? await sendPushToTokens(tokens, String(campanha.title), String(campanha.body), opcoes)
+        : await sendPushToTokens(tokens, String(campanha.title), String(campanha.body));
+
+    const receipts: Array<{ id: string; token: string }> = [];
+    for (let i = 0; i < resultado.tickets.length; i++) {
+      const ticket = resultado.tickets[i];
+      if (ticket.status === 'ok') {
+        stats.sent += 1;
+        receipts.push({ id: ticket.id, token: tokens[i] });
+      } else if (ticket.details?.error !== 'DeviceNotRegistered') {
+        stats.failed += 1;
+      }
+    }
+
+    if (resultado.tickets.length < tokens.length) {
+      stats.failed += tokens.length - resultado.tickets.length;
+    }
+
+    stats.deadTokens = resultado.mortos.length;
+
+    await PushCampaignModel.findOneAndUpdate(
+      { _id: id },
+      { $set: { status: 'sent', sentAt: new Date(), receipts, stats, error: undefined } },
+    );
+  } catch (erro) {
+    const mensagem = erro instanceof Error ? erro.message : String(erro);
+    await PushCampaignModel.findOneAndUpdate(
+      { _id: id },
+      { $set: { status: 'failed', error: mensagem } },
+    );
+    throw erro;
+  }
+}
+
+export async function agendarCampanhasPendentes(agora: Date): Promise<void> {
+  const campanhas = await PushCampaignModel.find({
+    status: 'scheduled',
+    scheduledFor: { $lte: agora },
+  } as Record<string, unknown>);
+  for (const campanha of campanhas as Array<{ _id: unknown }>) {
+    try {
+      await enviarCampanha(String(campanha._id));
+    } catch {
+      // falha de uma campanha não interrompe as demais
+    }
+  }
+}
+
+export async function recuperarCampanhasTravadas(agora: Date): Promise<void> {
+  const limite = new Date(agora.getTime() - 30 * 60 * 1000);
+  await PushCampaignModel.updateMany(
+    { status: 'sending', sendingStartedAt: { $lte: limite }, sentAt: { $exists: false } } as Record<string, unknown>,
+    { $set: { status: 'failed', error: 'envio interrompido' } },
+  );
 }
