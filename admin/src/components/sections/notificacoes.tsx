@@ -32,6 +32,7 @@ import { Field, Input, Select, Textarea } from '../ui/input';
 import { SearchInput } from '../search-input';
 import { Table } from '../table';
 import { DotsLoader } from '../ui/loading';
+import { ConfirmDialog } from '../ui/confirm-dialog';
 import { Pagination } from '../pagination';
 
 interface CampaignForm {
@@ -125,6 +126,7 @@ export function NotificacoesSection() {
   const [search, setSearch] = useState('');
   const [actionError, setActionError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
   const [form, setForm] = useState<CampaignForm>(EMPTY_FORM);
 
@@ -327,6 +329,7 @@ export function NotificacoesSection() {
   }
 
   async function handleDelete(id: string) {
+    setSaving(true);
     setActionError(null);
     try {
       await deletePushCampaign(id);
@@ -341,6 +344,8 @@ export function NotificacoesSection() {
       const msg = err instanceof Error ? err.message : String(err);
       setActionError(msg);
       toast.error(msg);
+    } finally {
+      setSaving(false);
     }
   }
 
@@ -441,7 +446,7 @@ export function NotificacoesSection() {
                 <button
                   type="button"
                   disabled={saving}
-                  onClick={() => void handleDelete(campaign._id)}
+                  onClick={() => setPendingDeleteId(campaign._id)}
                   className="h-8 flex-1 rounded-(--radius-input) border border-danger/40 bg-surface-hover px-3 text-xs font-medium text-danger sm:flex-none disabled:opacity-50"
                 >
                   Excluir
@@ -486,7 +491,7 @@ export function NotificacoesSection() {
                   <button
                     type="button"
                     disabled={saving}
-                    onClick={() => void handleDelete(campaign._id)}
+                    onClick={() => setPendingDeleteId(campaign._id)}
                     className="h-8 flex-1 rounded-(--radius-input) border border-danger/40 bg-surface-hover px-3 text-xs font-medium text-danger disabled:opacity-50"
                   >
                     Excluir
@@ -499,6 +504,18 @@ export function NotificacoesSection() {
         />
 
         <Pagination page={page} pageSize={pageSize} total={total} onChange={setPage} />
+        <ConfirmDialog
+          open={pendingDeleteId !== null}
+          title="Excluir campanha"
+          message="Esta ação é permanente e não pode ser desfeita. Deseja realmente excluir esta campanha?"
+          confirmLabel="Confirmar"
+          onConfirm={() => {
+            const id = pendingDeleteId;
+            setPendingDeleteId(null);
+            if (id) void handleDelete(id);
+          }}
+          onCancel={() => setPendingDeleteId(null)}
+        />
       </div>
     );
   }
@@ -533,7 +550,7 @@ export function NotificacoesSection() {
             {active && (active.status === 'draft' || active.status === 'failed') && (
               <Button
                 variant="secondary"
-                onClick={() => void handleDelete(active._id)}
+                onClick={() => setPendingDeleteId(active._id)}
                 disabled={saving}
               >
                 Excluir
@@ -615,6 +632,18 @@ export function NotificacoesSection() {
             </Card>
           </div>
         )}
+        <ConfirmDialog
+          open={pendingDeleteId !== null}
+          title="Excluir campanha"
+          message="Esta ação é permanente e não pode ser desfeita. Deseja realmente excluir esta campanha?"
+          confirmLabel="Confirmar"
+          onConfirm={() => {
+            const id = pendingDeleteId;
+            setPendingDeleteId(null);
+            if (id) void handleDelete(id);
+          }}
+          onCancel={() => setPendingDeleteId(null)}
+        />
       </div>
     );
   }
