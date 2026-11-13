@@ -54,6 +54,7 @@ export interface MemoryModel {
   findByIdAndDelete(id: string): MemoryQuery;
   findOneAndUpdate(filtro: MemoryFilter, atualizacao: MemoryUpdate, opcoes?: unknown): MemoryQuery;
   updateOne(filtro: MemoryFilter, atualizacao: MemoryUpdate): MemoryQuery;
+  deleteOne(filtro: MemoryFilter): Promise<{ deletedCount: number }>;
   create(
     documento: MemoryDocument | MemoryDocument[],
   ): Promise<MemoryDocument | MemoryDocument[]>;
@@ -250,6 +251,13 @@ export function criarModeloEmMemoria(opcoesDoModelo: MemoryModelOptions = {}): M
         aplicarAtualizacao(alvo, atualizacao);
         return { matchedCount: 1, modifiedCount: 1 };
       });
+    },
+
+    async deleteOne(filtro: MemoryFilter = {}) {
+      const indice = documents.findIndex((documento) => casarDocumento(documento, filtro));
+      if (indice === -1) return { deletedCount: 0 };
+      documents.splice(indice, 1);
+      return { deletedCount: 1 };
     },
 
     async create(documento: MemoryDocument | MemoryDocument[]) {
