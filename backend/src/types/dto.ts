@@ -2,6 +2,8 @@ import { z } from 'zod';
 
 import type { Request, Response, NextFunction } from 'express';
 
+import { ehDeepLinkValido } from '../utils/deep-link.js';
+
 // ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
@@ -608,6 +610,87 @@ export const broadcastSchema = z.object({
 });
 
 export type BroadcastDto = z.infer<typeof broadcastSchema>;
+
+// ---------------------------------------------------------------------------
+// Push Campaign (Push Center)
+// ---------------------------------------------------------------------------
+
+export const createCampaignSchema = z
+  .object({
+    title: z.string().trim().min(3).max(64),
+    body: z.string().trim().min(3).max(280),
+    imageUrl: z.string().trim().url().regex(/^https:\/\//).optional(),
+    deepLink: z
+      .string()
+      .trim()
+      .refine(ehDeepLinkValido, { message: 'rota de deep link não permitida' })
+      .optional(),
+    segment: z.object({
+      kind: z.enum(['broadcast', 'user', 'users', 'city', 'plan', 'favorites']),
+      userIds: z.array(z.string().regex(/^[0-9a-f]{24}$/)).max(500).optional(),
+      cityId: z.string().regex(/^[0-9a-f]{24}$/).optional(),
+      plan: z.enum(['basic', 'premium']).optional(),
+      companyId: z.string().regex(/^[0-9a-f]{24}$/).optional(),
+    }),
+    scheduledFor: z.string().datetime().optional(),
+  })
+  .superRefine((valor, ctx): void => {
+    const segmento = valor.segment;
+    if (!segmento) return;
+    switch (segmento.kind) {
+      case 'user':
+        if (!segmento.userIds || segmento.userIds.length !== 1) {
+          ctx.addIssue({
+            code: 'custom',
+            message: 'segmento "user" exige exatamente 1 userId',
+            path: ['segment', 'userIds'],
+          });
+        }
+        break;
+      case 'users':
+        if (!segmento.userIds || segmento.userIds.length < 1 || segmento.userIds.length > 500) {
+          ctx.addIssue({
+            code: 'custom',
+            message: 'segmento "users" exige entre 1 e 500 userIds',
+            path: ['segment', 'userIds'],
+          });
+        }
+        break;
+      case 'city':
+        if (!segmento.cityId) {
+          ctx.addIssue({
+            code: 'custom',
+            message: 'segmento "city" exige cityId',
+            path: ['segment', 'cityId'],
+          });
+        }
+        break;
+      case 'plan':
+        if (!segmento.plan) {
+          ctx.addIssue({
+            code: 'custom',
+            message: 'segmento "plan" exige plan',
+            path: ['segment', 'plan'],
+          });
+        }
+        break;
+      case 'favorites':
+        if (!segmento.companyId) {
+          ctx.addIssue({
+            code: 'custom',
+            message: 'segmento "favorites" exige companyId',
+            path: ['segment', 'companyId'],
+          });
+        }
+        break;
+      case 'broadcast':
+        break;
+    }
+  });
+
+export type CreateCampaignDto = z.infer<typeof createCampaignSchema>;
+
+export const updateCampaignStatusSchema = z.object({ action: z.literal('cancel') });
 
 // Em atualização parcial, os campos ausentes presumem os valores já salvos: as
 // regras cruzadas (endDate x startDate, ticket paid x ticketPrice) são
