@@ -30,7 +30,7 @@ export const criarCampanha = asyncHandler(async (req: Request, res: Response): P
     segment: body.segment,
     status,
     scheduledFor: body.scheduledFor ? body.scheduledFor : undefined,
-    createdByClerkId: req.auth?.clerkId ?? 'legado',
+    createdByClerkId: req.auth!.clerkId,
     stats: { targeted: 0, sent: 0, failed: 0, deadTokens: 0 },
   });
 

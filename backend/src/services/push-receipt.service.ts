@@ -103,9 +103,14 @@ async function processarCampanha(campanha: CampanhaComReceipts, agora: Date): Pr
   }
 
   let fetchFalhou = false;
+  let restantes: ParReceipt[] = [...pares];
 
   for (let inicio = 0; inicio < pares.length; inicio += TAMANHO_LOTE) {
-    const lote = pares.slice(inicio, inicio + TAMANHO_LOTE);
+    // pula lotes já persistidos em execuções anteriores
+    const loteOriginal = pares.slice(inicio, inicio + TAMANHO_LOTE);
+    const lote = loteOriginal.filter((par) => restantes.some((r) => r.id === par.id));
+    if (lote.length === 0) continue;
+
     const ids = lote.map((par) => par.id);
 
     let resposta: unknown;
@@ -146,15 +151,18 @@ async function processarCampanha(campanha: CampanhaComReceipts, agora: Date): Pr
       ? (dadosRaw as Record<string, unknown>)
       : {};
 
+    const processados = new Set<string>();
     for (const par of lote) {
       const receipt = dados[par.id];
       if (!receipt || typeof receipt !== 'object') {
         console.warn(`[push-receipts] receipt ausente, descartando: ${par.id}`);
+        processados.add(par.id);
         continue;
       }
 
       const registro = receipt as { status?: unknown; details?: { error?: unknown } };
       if (registro.status === 'ok') {
+        processados.add(par.id);
         continue;
       }
 
@@ -172,14 +180,18 @@ async function processarCampanha(campanha: CampanhaComReceipts, agora: Date): Pr
       } else {
         console.warn(`[push-receipts] receipt com erro (${erroDetalhe ?? registro.status}), descartando: ${par.id}`);
       }
+      processados.add(par.id);
       // par sai da lista em qualquer caso
     }
+
+    restantes = restantes.filter((par) => !processados.has(par.id));
+
+    // Persistência do progresso por lote: sobrevive a falha posterior.
+    await PushCampaignModel.findOneAndUpdate(
+      { _id: id } as Record<string, unknown>,
+      { $set: { receipts: restantes, stats } } as Record<string, unknown>,
+    );
   }
 
   if (fetchFalhou) return;
-
-  await PushCampaignModel.findOneAndUpdate(
-    { _id: id } as Record<string, unknown>,
-    { $set: { receipts: [], stats } } as Record<string, unknown>,
-  );
 }
