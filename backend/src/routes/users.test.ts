@@ -195,4 +195,75 @@ describe('GET /api/users', () => {
     expect(usuario.city).toBe('000000000000000000000020');
     expect(usuario.createdAt).toBe('2026-01-01T10:00:00.000Z');
   });
+
+  it('filtra os usuários pela busca no nome (?search=)', async () => {
+    const response = await request(app)
+      .get(`/api/users?search=${encodeURIComponent('MARIA')}`)
+      .set('Authorization', 'Bearer token_admin');
+
+    expect(response.status).toBe(200);
+    expect(response.body.total).toBe(1);
+    expect(response.body.items).toHaveLength(1);
+    expect(response.body.items[0].email).toBe('maria@example.com');
+  });
+
+  it('filtra os usuários pela busca no sobrenome (?search=)', async () => {
+    const response = await request(app)
+      .get(`/api/users?search=${encodeURIComponent('Perfil')}`)
+      .set('Authorization', 'Bearer token_admin');
+
+    expect(response.status).toBe(200);
+    expect(response.body.total).toBe(1);
+    expect(response.body.items[0].email).toBe('user_admin@example.com');
+  });
+
+  it('filtra os usuários pela busca no e-mail (?search=)', async () => {
+    const response = await request(app)
+      .get(`/api/users?search=${encodeURIComponent('maria@example.com')}`)
+      .set('Authorization', 'Bearer token_admin');
+
+    expect(response.status).toBe(200);
+    expect(response.body.total).toBe(1);
+    expect(response.body.items[0].email).toBe('maria@example.com');
+  });
+
+  it('devolve lista vazia quando a busca não casa nada (?search=)', async () => {
+    const response = await request(app)
+      .get(`/api/users?search=${encodeURIComponent('palavra-que-nao-existe')}`)
+      .set('Authorization', 'Bearer token_admin');
+
+    expect(response.status).toBe(200);
+    expect(response.body.total).toBe(0);
+    expect(response.body.items).toHaveLength(0);
+  });
+
+  it('não filtra quando a busca vem vazia (?search=)', async () => {
+    const response = await request(app)
+      .get('/api/users?search=')
+      .set('Authorization', 'Bearer token_admin');
+
+    expect(response.status).toBe(200);
+    expect(response.body.total).toBe(2);
+    expect(response.body.items).toHaveLength(2);
+  });
+
+  it('o total da busca (?search=) reflete o resultado filtrado, não a coleção', async () => {
+    const response = await request(app)
+      .get(`/api/users?search=${encodeURIComponent('example.com')}&page=1&pageSize=1`)
+      .set('Authorization', 'Bearer token_admin');
+
+    expect(response.status).toBe(200);
+    expect(response.body.total).toBe(2);
+    expect(response.body.items).toHaveLength(1);
+  });
+
+  it('não derruba a consulta quando a busca traz caractere especial (?search=)', async () => {
+    const response = await request(app)
+      .get(`/api/users?search=${encodeURIComponent('admin(')}`)
+      .set('Authorization', 'Bearer token_admin');
+
+    expect(response.status).toBe(200);
+    expect(response.body.total).toBe(0);
+    expect(response.body.items).toHaveLength(0);
+  });
 });

@@ -1,6 +1,13 @@
 import { describe, expect, it } from 'vitest';
 
-import { createCompanySchema, updateCompanySchema, createPublicUtilitySchema, updateUserSchema } from './dto.js';
+import {
+  createCompanySchema,
+  updateCompanySchema,
+  createPublicUtilitySchema,
+  updateUserSchema,
+  createCampaignSchema,
+  updateCampaignStatusSchema,
+} from './dto.js';
 
 const EMPRESA_BASE = {
   name: 'Barbearia Central',
@@ -212,5 +219,109 @@ describe('updatePlanSchema — datas de vigencia', () => {
   it('rejeita fim anterior ao inicio quando ambos vem no body', () => {
     const r = updatePlanSchema.safeParse({ plan: 'basic', planStartedAt: '2026-12-01', planExpiresAt: '2026-11-30' });
     expect(r.success).toBe(false);
+  });
+});
+
+describe('createCampaignSchema', () => {
+  const SEGMENTO_BROADCAST = { kind: 'broadcast' } as const;
+  const BASE = {
+    title: 'Promoção',
+    body: 'Venha conferir',
+    segment: SEGMENTO_BROADCAST,
+  };
+
+  it('aceita campanha mínima de broadcast', () => {
+    const result = createCampaignSchema.safeParse(BASE);
+    expect(result.success).toBe(true);
+  });
+
+  it('rejeita title curto (<3) e longo (>64)', () => {
+    expect(createCampaignSchema.safeParse({ ...BASE, title: 'ab' }).success).toBe(false);
+    expect(createCampaignSchema.safeParse({ ...BASE, title: 'a'.repeat(65) }).success).toBe(false);
+  });
+
+  it('rejeita body curto (<3) e longo (>280)', () => {
+    expect(createCampaignSchema.safeParse({ ...BASE, body: 'ab' }).success).toBe(false);
+    expect(createCampaignSchema.safeParse({ ...BASE, body: 'a'.repeat(281) }).success).toBe(false);
+  });
+
+  it('rejeita imageUrl http://', () => {
+    const result = createCampaignSchema.safeParse({ ...BASE, imageUrl: 'http://x.com/img.png' });
+    expect(result.success).toBe(false);
+  });
+
+  it('aceita imageUrl https://', () => {
+    const result = createCampaignSchema.safeParse({ ...BASE, imageUrl: 'https://x.com/img.png' });
+    expect(result.success).toBe(true);
+  });
+
+  it('deepLink aceita /company/abc123 e rejeita inválidos', () => {
+    expect(createCampaignSchema.safeParse({ ...BASE, deepLink: '/company/abc123' }).success).toBe(true);
+    expect(createCampaignSchema.safeParse({ ...BASE, deepLink: '/coupon/x' }).success).toBe(false);
+    expect(createCampaignSchema.safeParse({ ...BASE, deepLink: '/company/x/y' }).success).toBe(false);
+    expect(createCampaignSchema.safeParse({ ...BASE, deepLink: '//' }).success).toBe(false);
+    expect(createCampaignSchema.safeParse({ ...BASE, deepLink: 'javascript:alert(1)' }).success).toBe(false);
+  });
+
+  it('user exige userIds.length === 1', () => {
+    const ok = createCampaignSchema.safeParse({
+      ...BASE,
+      segment: { kind: 'user', userIds: ['507f1f77bcf86cd799439011'] },
+    });
+    expect(ok.success).toBe(true);
+    const bad = createCampaignSchema.safeParse({
+      ...BASE,
+      segment: { kind: 'user', userIds: ['507f1f77bcf86cd799439011', '507f1f77bcf86cd799439012'] },
+    });
+    expect(bad.success).toBe(false);
+    const none = createCampaignSchema.safeParse({
+      ...BASE,
+      segment: { kind: 'user' },
+    });
+    expect(none.success).toBe(false);
+  });
+
+  it('users exige 1..500 userIds', () => {
+    const one = createCampaignSchema.safeParse({
+      ...BASE,
+      segment: { kind: 'users', userIds: ['507f1f77bcf86cd799439011'] },
+    });
+    expect(one.success).toBe(true);
+    const tooMany = createCampaignSchema.safeParse({
+      ...BASE,
+      segment: { kind: 'users', userIds: Array.from({ length: 501 }, () => '507f1f77bcf86cd799439011') },
+    });
+    expect(tooMany.success).toBe(false);
+  });
+
+  it('city/plan/favorites exigem seu campo', () => {
+    expect(
+      createCampaignSchema.safeParse({ ...BASE, segment: { kind: 'city', cityId: '507f1f77bcf86cd799439011' } }).success,
+    ).toBe(true);
+    expect(createCampaignSchema.safeParse({ ...BASE, segment: { kind: 'city' } }).success).toBe(false);
+
+    expect(
+      createCampaignSchema.safeParse({ ...BASE, segment: { kind: 'plan', plan: 'basic' } }).success,
+    ).toBe(true);
+    expect(createCampaignSchema.safeParse({ ...BASE, segment: { kind: 'plan' } }).success).toBe(false);
+
+    expect(
+      createCampaignSchema.safeParse({ ...BASE, segment: { kind: 'favorites', companyId: '507f1f77bcf86cd799439011' } }).success,
+    ).toBe(true);
+    expect(createCampaignSchema.safeParse({ ...BASE, segment: { kind: 'favorites' } }).success).toBe(false);
+  });
+
+  it('scheduledFor datetime ISO válido', () => {
+    const result = createCampaignSchema.safeParse({ ...BASE, scheduledFor: '2026-12-01T10:00:00.000Z' });
+    expect(result.success).toBe(true);
+  });
+});
+
+describe('updateCampaignStatusSchema', () => {
+  it('aceita cancel', () => {
+    expect(updateCampaignStatusSchema.safeParse({ action: 'cancel' }).success).toBe(true);
+  });
+  it('rejeita outro action', () => {
+    expect(updateCampaignStatusSchema.safeParse({ action: 'send' }).success).toBe(false);
   });
 });

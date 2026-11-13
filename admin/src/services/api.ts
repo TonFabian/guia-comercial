@@ -12,6 +12,9 @@ import type {
   Paginated,
   PublicUtility,
   PublicUtilityCategory,
+  PushCampaign,
+  PushCampaignSegment,
+  PushCampaignSummary,
   TourEvent,
   TourEventCategory,
   TouristSpot,
@@ -386,8 +389,14 @@ export async function getNotices(page = 1, pageSize = DEFAULT_PAGE_SIZE): Promis
 }
 
 /** Usuários do app (admin-only no backend). Somente leitura no painel. */
-export async function getUsers(page = 1, pageSize = DEFAULT_PAGE_SIZE): Promise<Paginated<AdminUserListItem>> {
-  return request<Paginated<AdminUserListItem>>(`/users?${paginationQuery(page, pageSize)}`);
+export async function getUsers(
+  page = 1,
+  pageSize = DEFAULT_PAGE_SIZE,
+  search?: string,
+): Promise<Paginated<AdminUserListItem>> {
+  const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
+  if (search && search.trim()) params.set('search', search.trim());
+  return request<Paginated<AdminUserListItem>>(`/users?${params.toString()}`);
 }
 
 export async function updateUserRole(id: string, role: 'user' | 'admin'): Promise<AdminUserListItem> {
@@ -442,6 +451,46 @@ export async function getCities(): Promise<City[]> {
   const payload = await request<City[] | Paginated<City>>('/cities');
   if (Array.isArray(payload)) return payload;
   return payload.items;
+}
+
+// ---------------------------------------------------------------------------
+// Campanhas de push (Push Center)
+// ---------------------------------------------------------------------------
+
+export async function getPushCampaigns(
+  page = 1,
+  pageSize = DEFAULT_PAGE_SIZE,
+): Promise<Paginated<PushCampaignSummary>> {
+  return request<Paginated<PushCampaignSummary>>(`/notifications/campaigns?${paginationQuery(page, pageSize)}`);
+}
+
+export async function getPushCampaign(id: string): Promise<PushCampaign> {
+  return request<PushCampaign>(`/notifications/campaigns/${id}`);
+}
+
+export interface CreatePushCampaignInput {
+  title: string;
+  body: string;
+  imageUrl?: string;
+  deepLink?: string;
+  segment: PushCampaignSegment;
+  scheduledFor?: string;
+}
+
+export async function createPushCampaign(input: CreatePushCampaignInput): Promise<PushCampaign> {
+  return apiPost<PushCampaign>('/notifications/campaigns', input);
+}
+
+export async function sendPushCampaignNow(id: string): Promise<PushCampaign> {
+  return apiPost<PushCampaign>(`/notifications/campaigns/${id}/send-now`, {});
+}
+
+export async function cancelPushCampaign(id: string): Promise<PushCampaign> {
+  return apiPost<PushCampaign>(`/notifications/campaigns/${id}/cancel`, { action: 'cancel' });
+}
+
+export async function deletePushCampaign(id: string): Promise<void> {
+  await apiDelete<void>(`/notifications/campaigns/${id}`);
 }
 
 // ---------------------------------------------------------------------------

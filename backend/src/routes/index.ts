@@ -12,6 +12,7 @@ import * as eventController from '../controllers/event.controller.js';
 import { health } from '../controllers/health.controller.js';
 import * as jobController from '../controllers/job.controller.js';
 import * as noticeController from '../controllers/notice.controller.js';
+import * as pushCampaignController from '../controllers/push-campaign.controller.js';
 import * as publicUtilityController from '../controllers/public-utility.controller.js';
 import * as touristSpotController from '../controllers/tourist-spot.controller.js';
 import * as reviewController from '../controllers/review.controller.js';
@@ -21,6 +22,7 @@ import {
   requireAuthIfConfigured,
 } from '../middlewares/auth.middleware.js';
 import { limitarView, limitarWhatsappClick, limitarFavorite } from '../middlewares/analytics-rate-limit.middleware.js';
+import { limitarCampanha } from '../middlewares/campaign-rate-limit.middleware.js';
 import { guestScrub } from '../middlewares/guest.middleware.js';
 import {
   createAutonomousProfessionalSchema,
@@ -38,6 +40,8 @@ import {
   createTourEventSchema,
   createTouristSpotSchema,
   broadcastSchema,
+  createCampaignSchema,
+  updateCampaignStatusSchema,
   pushTokenSchema,
   updateUserSchema,
   updateUserRoleSchema,
@@ -247,5 +251,16 @@ routes.get('/users', listUsers);
 routes.put('/users/:id/role', validateBody(updateUserRoleSchema), updateUserRole);
 routes.put('/users/:id', validateBody(updateUserAdminSchema), updateUserProfile);
 routes.delete('/users/:id', deleteUser);
+
+// -----------------------------------------------------------------------------
+// Push Center (admin) — rotas sempre registradas (fora do bloco do Clerk).
+// O guard assertAdminEstrito (no controller) devolve 401 em modo legado.
+// -----------------------------------------------------------------------------
+routes.post('/notifications/campaigns', limitarCampanha, validateBody(createCampaignSchema), pushCampaignController.criarCampanha);
+routes.post('/notifications/campaigns/:id/send-now', pushCampaignController.enviarAgora);
+routes.post('/notifications/campaigns/:id/cancel', validateBody(updateCampaignStatusSchema), pushCampaignController.cancelarCampanha);
+routes.get('/notifications/campaigns', pushCampaignController.listarCampanhas);
+routes.get('/notifications/campaigns/:id', pushCampaignController.detalharCampanha);
+routes.delete('/notifications/campaigns/:id', pushCampaignController.excluirCampanha);
 
 export default routes;

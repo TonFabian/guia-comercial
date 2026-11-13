@@ -54,6 +54,21 @@ export interface MemoryModel {
   findByIdAndDelete(id: string): MemoryQuery;
   findOneAndUpdate(filtro: MemoryFilter, atualizacao: MemoryUpdate, opcoes?: unknown): MemoryQuery;
   updateOne(filtro: MemoryFilter, atualizacao: MemoryUpdate): MemoryQuery;
+  updateMany(filtro: MemoryFilter, atualizacao: MemoryUpdate): {
+    exec(): Promise<{ matchedCount: number; modifiedCount: number }>;
+    then<TResult1 = { matchedCount: number; modifiedCount: number }, TResult2 = never>(
+      onfulfilled?: ((value: { matchedCount: number; modifiedCount: number }) => TResult1 | PromiseLike<TResult1>) | null,
+      onrejected?: ((reason: unknown) => TResult2 | PromiseLike<TResult2>) | null,
+    ): PromiseLike<TResult1 | TResult2>;
+  };
+  deleteOne(filtro: MemoryFilter): Promise<{ deletedCount: number }>;
+  aggregate(pipeline?: MemoryDocument[]): {
+    exec(): Promise<MemoryDocument[]>;
+    then<TResult1 = MemoryDocument[], TResult2 = never>(
+      onfulfilled?: ((value: MemoryDocument[]) => TResult1 | PromiseLike<TResult1>) | null,
+      onrejected?: ((reason: unknown) => TResult2 | PromiseLike<TResult2>) | null,
+    ): PromiseLike<TResult1 | TResult2>;
+  };
   create(
     documento: MemoryDocument | MemoryDocument[],
   ): Promise<MemoryDocument | MemoryDocument[]>;
@@ -118,6 +133,38 @@ class MemoryQueryImpl implements MemoryQuery {
   }
 }
 
+const modelosRegistrados: MemoryModel[] = [];
+
+
+function clonarDocumento(documento: MemoryDocument): MemoryDocument {
+  return JSON.parse(JSON.stringify(documento));
+}
+
+function escolherModeloEstrangeiro(
+  origem: MemoryDocument[],
+  foreignField: string,
+): MemoryModel | undefined {
+  const candidatos = modelosRegistrados.filter((modelo) => modelo.documents !== origem);
+  let escolhido = candidatos.find(
+    (modelo) =>
+      modelo.documents.length > 0 &&
+      modelo.documents.some((documento) => foreignField in documento) &&
+      modelo.documents.some(
+        (documento) =>
+          'preferences' in documento ||
+          'city' in documento ||
+          'favorites' in documento ||
+          'role' in documento,
+      ),
+  );
+  if (!escolhido) {
+    escolhido = candidatos.find((modelo) =>
+      modelo.documents.some((documento) => foreignField in documento),
+    );
+  }
+  return escolhido;
+}
+
 /** Cria um modelo Mongoose falso, com a mesma interface usada pelos services. */
 export function criarModeloEmMemoria(opcoesDoModelo: MemoryModelOptions = {}): MemoryModel {
   const documents: MemoryDocument[] = [];
@@ -169,7 +216,7 @@ export function criarModeloEmMemoria(opcoesDoModelo: MemoryModelOptions = {}): M
     return new MemoryQueryImpl(estado);
   }
 
-  return {
+  const modeloCriado = {
     documents,
 
     find(filtro: MemoryFilter = {}) {
@@ -252,6 +299,91 @@ export function criarModeloEmMemoria(opcoesDoModelo: MemoryModelOptions = {}): M
       });
     },
 
+    updateMany(filtro: MemoryFilter, atualizacao: MemoryUpdate) {
+      const executar = async () => {
+        const casados = documents.filter((documento) => casarDocumento(documento, filtro));
+        let modifiedCount = 0;
+        for (const alvo of casados) {
+          aplicarAtualizacao(alvo, atualizacao);
+          modifiedCount += 1;
+        }
+        return { matchedCount: casados.length, modifiedCount };
+      };
+      const consulta = {
+        exec: executar,
+        then<TResult1 = { matchedCount: number; modifiedCount: number }, TResult2 = never>(
+          onfulfilled?: ((value: { matchedCount: number; modifiedCount: number }) => TResult1 | PromiseLike<TResult1>) | null,
+          onrejected?: ((reason: unknown) => TResult2 | PromiseLike<TResult2>) | null,
+        ): PromiseLike<TResult1 | TResult2> {
+          return executar().then(onfulfilled, onrejected);
+        },
+      };
+      return consulta;
+    },
+
+    async deleteOne(filtro: MemoryFilter = {}) {
+      const indice = documents.findIndex((documento) => casarDocumento(documento, filtro));
+      if (indice === -1) return { deletedCount: 0 };
+      documents.splice(indice, 1);
+      return { deletedCount: 1 };
+    },
+
+    aggregate(pipeline: MemoryDocument[] = []) {
+      const executar = async (): Promise<MemoryDocument[]> => {
+        let docs = documents.map((documento) => clonarDocumento(documento));
+        for (const etapa of pipeline) {
+          if ('$match' in etapa) {
+            docs = docs.filter((documento) => casarDocumento(documento, etapa.$match as MemoryFilter));
+          } else if ('$lookup' in etapa) {
+            const lookup = etapa.$lookup as {
+              from: string;
+              localField: string;
+              foreignField: string;
+              as: string;
+            };
+            const modeloEstrangeiro = escolherModeloEstrangeiro(documents, lookup.foreignField);
+            docs = docs.map((documento) => {
+              const valorLocal = documento[lookup.localField];
+              const casados = modeloEstrangeiro
+                ? modeloEstrangeiro.documents.filter((estrangeiro) =>
+                    valoresIguais(estrangeiro[lookup.foreignField], valorLocal),
+                  )
+                : [];
+              return {
+                ...documento,
+                [lookup.as]: casados.map((estrangeiro) => clonarDocumento(estrangeiro)),
+              };
+            });
+          } else if ('$unwind' in etapa) {
+            const campo = String(etapa.$unwind).replace(/^\$/, '');
+            const resultado: MemoryDocument[] = [];
+            for (const documento of docs) {
+              const valor = documento[campo];
+              const lista = Array.isArray(valor) ? valor : [valor];
+              for (const item of lista) {
+                resultado.push({ ...documento, [campo]: item });
+              }
+            }
+            docs = resultado;
+          } else if ('$project' in etapa) {
+            docs = docs.map((documento) => projetar(documento, etapa.$project as Record<string, number>));
+          }
+        }
+        return docs;
+      };
+
+      const consulta = {
+        exec: executar,
+        then<TResult1 = MemoryDocument[], TResult2 = never>(
+          onfulfilled?: ((value: MemoryDocument[]) => TResult1 | PromiseLike<TResult1>) | null,
+          onrejected?: ((reason: unknown) => TResult2 | PromiseLike<TResult2>) | null,
+        ): PromiseLike<TResult1 | TResult2> {
+          return executar().then(onfulfilled, onrejected);
+        },
+      };
+      return consulta;
+    },
+
     async create(documento: MemoryDocument | MemoryDocument[]) {
       if (Array.isArray(documento)) {
         const criados = documento.map((item) => {
@@ -274,6 +406,8 @@ export function criarModeloEmMemoria(opcoesDoModelo: MemoryModelOptions = {}): M
       return documents.some((documento) => casarDocumento(documento, filtro));
     },
   };
+  modelosRegistrados.push(modeloCriado);
+  return modeloCriado;
 }
 
 /** Aplica ordenação, paginação e projeção sobre os documentos casados. */
@@ -368,6 +502,15 @@ function aplicarAtualizacao(
   }
 }
 
+function obterCampo(objeto: unknown, caminho: string): unknown {
+  return caminho.split('.').reduce((atual, parte) => {
+    if (atual && typeof atual === 'object') {
+      return (atual as Record<string, unknown>)[parte];
+    }
+    return undefined;
+  }, objeto);
+}
+
 function casarDocumento(
   documento: MemoryDocument,
   filtro: MemoryFilter,
@@ -381,7 +524,7 @@ function casarDocumento(
       const alternativas = (condicao as MemoryFilter[]) ?? [];
       return alternativas.every((alternativa) => casarDocumento(documento, alternativa));
     }
-    return casarValor(documento[campo], condicao);
+    return casarValor(obterCampo(documento, campo), condicao);
   });
 }
 
@@ -394,30 +537,61 @@ function casarValor(valor: unknown, condicao: unknown): boolean {
 
   if (condicao !== null && typeof condicao === 'object' && !Array.isArray(condicao)) {
     const operadores = condicao as Record<string, unknown>;
-    if ('$in' in operadores) {
+    const temOperadorMongo =
+      '$in' in operadores ||
+      '$ne' in operadores ||
+      '$gte' in operadores ||
+      '$gt' in operadores ||
+      '$lte' in operadores ||
+      '$lt' in operadores ||
+      '$exists' in operadores ||
+      '$or' in operadores ||
+      '$and' in operadores;
+    if (temOperadorMongo) {
+      if ('$in' in operadores) {
       const lista = (operadores.$in as unknown[]) ?? [];
       return lista.some((item) => valoresIguais(valor, item));
     }
     if ('$ne' in operadores) {
       return !valoresIguais(valor, operadores.$ne);
     }
+    const compararLimites = (a: unknown, b: unknown): number | null => {
+      if (a instanceof Date || b instanceof Date) {
+        const ta = a instanceof Date ? a.getTime() : new Date(a as string | number).getTime();
+        const tb = b instanceof Date ? b.getTime() : new Date(b as string | number).getTime();
+        if (Number.isNaN(ta) || Number.isNaN(tb)) return null;
+        return ta - tb;
+      }
+      if (typeof a === 'number' && typeof b === 'number') return a - b;
+      if (typeof a === 'string' && typeof b === 'string') return a < b ? -1 : a > b ? 1 : 0;
+      return null;
+    };
+
     if ('$gte' in operadores) {
-      const limite = operadores.$gte;
-      // A regra de eventos compara strings YYYY-MM-DD: a ordem lexicográfica
-      // é correta no formato fixo (nunca misture data com datetime ISO).
-      if (typeof valor === 'string' && typeof limite === 'string') return valor >= limite;
-      if (typeof valor === 'number' && typeof limite === 'number') return valor >= limite;
-      return false;
+      const cmp = compararLimites(valor, operadores.$gte);
+      return cmp !== null && cmp >= 0;
     }
     if ('$gt' in operadores) {
-      const limite = operadores.$gt;
-      if (typeof valor === 'number' && typeof limite === 'number') return valor > limite;
-      return false;
+      const cmp = compararLimites(valor, operadores.$gt);
+      return cmp !== null && cmp > 0;
+    }
+    if ('$lte' in operadores) {
+      const cmp = compararLimites(valor, operadores.$lte);
+      return cmp !== null && cmp <= 0;
+    }
+    if ('$lt' in operadores) {
+      const cmp = compararLimites(valor, operadores.$lt);
+      return cmp !== null && cmp < 0;
     }
     if ('$exists' in operadores) {
       return (valor !== undefined) === Boolean(operadores.$exists);
     }
     return false;
+  }
+  }
+
+  if (Array.isArray(valor) && !(condicao !== null && typeof condicao === 'object' && !Array.isArray(condicao))) {
+    return valor.some((item) => valoresIguais(item, condicao));
   }
 
   return valoresIguais(valor, condicao);

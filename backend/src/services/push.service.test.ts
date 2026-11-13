@@ -1,9 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-const { find, aggregate } = vi.hoisted(() => ({ find: vi.fn(), aggregate: vi.fn() }));
+const { find, aggregate, deleteOne } = vi.hoisted(() => ({
+  find: vi.fn(),
+  aggregate: vi.fn(),
+  deleteOne: vi.fn().mockResolvedValue({ deletedCount: 1 }),
+}));
 
 vi.mock('../models/push-token.model.js', () => ({
-  PushTokenModel: { find, aggregate },
+  PushTokenModel: { find, aggregate, deleteOne },
 }));
 
 import { sendPushToCity, sendPushToTokens, sendPushToUser } from './push.service.js';
@@ -40,7 +44,10 @@ describe('sendPushToTokens', () => {
 
   it('falha de rede: warn e NÃO lança', async () => {
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('boom')));
-    await expect(sendPushToTokens(['x'], 'T', 'B')).resolves.toBeUndefined();
+    await expect(sendPushToTokens(['x'], 'T', 'B')).resolves.toEqual({
+      tickets: [{ status: 'error', message: 'falha de rede', details: undefined }],
+      mortos: [],
+    });
   });
 });
 

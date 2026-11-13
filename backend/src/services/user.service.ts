@@ -6,6 +6,7 @@ import { ReviewModel } from '../models/review.model.js';
 import { UserModel } from '../models/user.model.js';
 import type { City, User } from '../../../shared/domain.js';
 import type { Pagination } from '../utils/http.js';
+import { escapeRegex } from '../utils/regex.js';
 
 /** Acesso a dados do espelho local de usuários do Clerk. */
 
@@ -63,6 +64,34 @@ export async function assertAdmin(
   throw Object.assign(new Error(`sem permissão para ${recurso}`), { statusCode: 403 });
 }
 
+/**
+ * Variante fail-closed de `assertAdmin`: no modo legado (sem
+ * `CLERK_SECRET_KEY`) NÃO libera — exige sessão autenticada com role admin.
+ *
+ * Usada por fluxos administrativos sensíveis (ex.: centro de push) que não
+ * podem rodar abertos mesmo em desenvolvimento.
+ *
+ * 401 sem Clerk configurado OU sem identidade; 403 quando o espelho existe
+ * mas não é admin.
+ */
+export async function assertAdminEstrito(
+  clerkId: string | undefined,
+  recurso: string,
+): Promise<void> {
+  if (!process.env.CLERK_SECRET_KEY) {
+    throw Object.assign(new Error('Não autenticado'), { statusCode: 401 });
+  }
+
+  if (!clerkId) {
+    throw Object.assign(new Error('Não autenticado'), { statusCode: 401 });
+  }
+
+  const user = await findUserByClerkId(clerkId);
+  if (user?.role !== 'admin') {
+    throw Object.assign(new Error(`sem permissão para ${recurso}`), { statusCode: 403 });
+  }
+}
+
 /** Item da listagem de usuários do painel admin (sem dados sensíveis). */
 export interface AdminUserListItem {
   _id: string;
@@ -84,16 +113,26 @@ export interface AdminUserListItem {
 export async function listUsers(
   pagination: Pagination,
   actorClerkId?: string,
+  search?: string,
 ): Promise<{ items: AdminUserListItem[]; total: number }> {
+  // Filtro opcional por nome/sobrenome/e-mail (case-insensitive), aplicado
+  // antes de skip/limit para que a paginação reflita o total filtrado.
+  const filtro: Record<string, unknown> = {};
+  const termo = typeof search === 'string' ? search.trim() : '';
+  if (termo.length > 0) {
+    const regex = new RegExp(escapeRegex(termo), 'i');
+    filtro.$or = [{ firstName: regex }, { lastName: regex }, { email: regex }];
+  }
+
   const [usuarios, total] = await Promise.all([
-    UserModel.find({})
+    UserModel.find(filtro)
       .select({ pushToken: 0, lastSid: 0, lastSignInAt: 0 })
       .populate('city')
       .sort({ createdAt: -1 })
       .skip(pagination.skip)
       .limit(pagination.limit)
       .lean<User[]>(),
-    UserModel.countDocuments({}),
+    UserModel.countDocuments(filtro),
   ]);
 
   return { items: usuarios.map((u) => toAdminUserListItem(u, actorClerkId)), total };
