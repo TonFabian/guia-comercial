@@ -30,6 +30,7 @@ import {
 } from '@/constants/theme';
 import { FavoritesProvider } from '@/features/favorites/favorites-provider';
 import { AuthProvider } from '@/providers/auth-provider';
+import { NotificationsProvider } from '@/providers/notifications-provider';
 import { ThemeProvider, useThemeMode } from '@/providers/theme-provider';
 import { useThemeColors } from '@/hooks/use-theme-colors';
 
@@ -78,12 +79,14 @@ function ThemedStack() {
         <FavoritesProvider>
           <AnimatedSplashOverlay />
           <AppCanvas>
-            <Stack
-              screenOptions={{
-                headerShown: false,
-                contentStyle: { backgroundColor: colors.background },
-              }}
-            />
+            <NotificationsProvider>
+              <Stack
+                screenOptions={{
+                  headerShown: false,
+                  contentStyle: { backgroundColor: colors.background },
+                }}
+              />
+            </NotificationsProvider>
           </AppCanvas>
         </FavoritesProvider>
       </AuthProviders>
