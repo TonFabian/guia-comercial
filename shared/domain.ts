@@ -320,3 +320,42 @@ export interface TourEvent {
   createdAt?: string;
   updatedAt?: string;
 }
+
+/** Segmento de destinatários de uma campanha de push. */
+export interface PushCampaignSegment {
+  kind: 'broadcast' | 'user' | 'users' | 'city' | 'plan' | 'favorites';
+  userIds?: string[];
+  cityId?: string;
+  plan?: 'basic' | 'premium';
+  companyId?: string;
+}
+
+/** Estatísticas de entrega de uma campanha de push. */
+export interface PushCampaignStats {
+  targeted: number;
+  sent: number;
+  failed: number;
+  deadTokens: number;
+}
+
+/** Campanha de push notification administrativa. */
+export interface PushCampaign {
+  _id: string;
+  title: string;
+  body: string;
+  imageUrl?: string;
+  deepLink?: string;
+  segment: PushCampaignSegment;
+  status: 'draft' | 'scheduled' | 'sending' | 'sent' | 'failed';
+  scheduledFor?: string;       // ISO UTC
+  sendingStartedAt?: string;
+  sentAt?: string;
+  receipts?: { id: string; token: string }[];
+  stats: PushCampaignStats;
+  error?: string;
+  createdByClerkId: string;
+  createdAt: string;
+}
+
+/** Item da listagem (sem receipts — payload grande e inútil na lista). */
+export type PushCampaignSummary = Omit<PushCampaign, 'receipts'>;
