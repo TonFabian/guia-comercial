@@ -68,18 +68,22 @@ export async function resolverSegmento(
             .exec()) as UsuarioComPreferencia[])
         : [];
 
-      const usuariosAtivos = usuarios.filter((usuario) => usuario.preferences?.notifications !== false);
-      const clerkIds = clerkIdsUnicos(usuariosAtivos.map((usuario) => usuario.clerkId));
+      const optOut = conjuntoOptOut(usuarios);
+      const todosClerkIds = clerkIdsUnicos(usuarios.map((usuario) => usuario.clerkId));
 
-      const tokensDocs = clerkIds.length
-        ? ((await PushTokenModel.find({ clerkId: { $in: clerkIds } })
+      const tokensDocs = todosClerkIds.length
+        ? ((await PushTokenModel.find({ clerkId: { $in: todosClerkIds } })
             .select({ token: 1, clerkId: 1 })
             .lean()
             .exec()) as TokenComDono[])
         : [];
 
-      const tokens = tokensDocs.map((documento) => documento.token);
-      return { tokens: [...new Set(tokens)], targeted: tokens.length };
+      const tokensAntes = tokensDocs.map((documento) => documento.token);
+      const tokensDepois = tokensDocs
+        .filter((documento) => !documento.clerkId || !optOut.has(documento.clerkId))
+        .map((documento) => documento.token);
+
+      return { tokens: [...new Set(tokensDepois)], targeted: tokensAntes.length };
     }
 
     case 'city': {
@@ -112,11 +116,12 @@ export async function resolverSegmento(
         : [];
       const optOut = conjuntoOptOut(usuarios);
 
+      const tokensAntes = agregados.map((documento) => documento.token);
       const tokensFiltrados = agregados
         .filter((documento) => !optOut.has(documento.clerkId ?? ''))
         .map((documento) => documento.token);
 
-      return { tokens: [...new Set(tokensFiltrados)], targeted: tokensFiltrados.length };
+      return { tokens: [...new Set(tokensFiltrados)], targeted: tokensAntes.length };
     }
 
     case 'plan': {
@@ -138,17 +143,19 @@ export async function resolverSegmento(
         : [];
       const optOut = conjuntoOptOut(usuarios);
 
-      const clerkIdsAtivos = todosClerkIds.filter((clerkId) => !optOut.has(clerkId));
-
-      const tokensDocs = clerkIdsAtivos.length
-        ? ((await PushTokenModel.find({ clerkId: { $in: clerkIdsAtivos } })
+      const tokensDocs = todosClerkIds.length
+        ? ((await PushTokenModel.find({ clerkId: { $in: todosClerkIds } })
             .select({ token: 1, clerkId: 1 })
             .lean()
             .exec()) as TokenComDono[])
         : [];
 
-      const tokens = tokensDocs.map((documento) => documento.token);
-      return { tokens: [...new Set(tokens)], targeted: tokens.length };
+      const tokensAntes = tokensDocs.map((documento) => documento.token);
+      const tokensDepois = tokensDocs
+        .filter((documento) => !documento.clerkId || !optOut.has(documento.clerkId))
+        .map((documento) => documento.token);
+
+      return { tokens: [...new Set(tokensDepois)], targeted: tokensAntes.length };
     }
 
     case 'favorites': {
@@ -160,18 +167,22 @@ export async function resolverSegmento(
         .lean()
         .exec()) as UsuarioComPreferencia[];
 
-      const usuariosAtivos = usuarios.filter((usuario) => usuario.preferences?.notifications !== false);
-      const clerkIds = clerkIdsUnicos(usuariosAtivos.map((usuario) => usuario.clerkId));
+      const optOut = conjuntoOptOut(usuarios);
+      const todosClerkIds = clerkIdsUnicos(usuarios.map((usuario) => usuario.clerkId));
 
-      const tokensDocs = clerkIds.length
-        ? ((await PushTokenModel.find({ clerkId: { $in: clerkIds } })
+      const tokensDocs = todosClerkIds.length
+        ? ((await PushTokenModel.find({ clerkId: { $in: todosClerkIds } })
             .select({ token: 1, clerkId: 1 })
             .lean()
             .exec()) as TokenComDono[])
         : [];
 
-      const tokens = tokensDocs.map((documento) => documento.token);
-      return { tokens: [...new Set(tokens)], targeted: tokens.length };
+      const tokensAntes = tokensDocs.map((documento) => documento.token);
+      const tokensDepois = tokensDocs
+        .filter((documento) => !documento.clerkId || !optOut.has(documento.clerkId))
+        .map((documento) => documento.token);
+
+      return { tokens: [...new Set(tokensDepois)], targeted: tokensAntes.length };
     }
 
     default:
@@ -229,7 +240,7 @@ export async function enviarCampanha(id: string): Promise<void> {
       if (ticket.status === 'ok') {
         stats.sent += 1;
         receipts.push({ id: ticket.id, token: tokens[i] });
-      } else if (ticket.details?.error !== 'DeviceNotRegistered') {
+      } else {
         stats.failed += 1;
       }
     }
