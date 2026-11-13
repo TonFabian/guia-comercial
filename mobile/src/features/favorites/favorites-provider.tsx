@@ -9,6 +9,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useRef, use
 import type { ReactNode } from 'react';
 
 import { getCompanyById, getMe, updateMe } from '@/services/api';
+import { trackFavorite, trackUnfavorite } from '@/features/analytics/track';
 import { useAuthState } from '@/providers/auth-provider';
 import type { Company } from '@/types/domain';
 
@@ -150,7 +151,12 @@ export function FavoritesProvider({ children }: { children: ReactNode }) {
   const toggleFavorite = useCallback((company: Company) => {
     setFavorites((current) => {
       const exists = current.some((item) => item._id === company._id);
-      if (exists) return current.filter((item) => item._id !== company._id);
+      if (exists) {
+        // Métrica premium: o decremento acompanha o toggle real do usuário.
+        trackUnfavorite(company._id);
+        return current.filter((item) => item._id !== company._id);
+      }
+      trackFavorite(company._id);
       return [company, ...current];
     });
   }, []);

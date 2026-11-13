@@ -5,7 +5,7 @@
  * subconjunto de operações usado pelos services (`find`, `findOne`,
  * `findById`, `findByIdAndUpdate`, `findByIdAndDelete`, `findOneAndUpdate`,
  * `updateOne`, `create`, `countDocuments`, `exists`) com os operadores de
- * filtro `$in`, `$ne`, `$gte`, `$exists`, `$or` e `$and`.
+ * filtro `$in`, `$ne`, `$gte`, `$gt`, `$exists`, `$or` e `$and`.
  *
  * Com `criarModeloEmMemoria({ unicos: [campo] })`, campos com índice único
  * disparam erro de chave duplicada (code 11000, mesmo formato do Mongo) na
@@ -407,6 +407,11 @@ function casarValor(valor: unknown, condicao: unknown): boolean {
       // é correta no formato fixo (nunca misture data com datetime ISO).
       if (typeof valor === 'string' && typeof limite === 'string') return valor >= limite;
       if (typeof valor === 'number' && typeof limite === 'number') return valor >= limite;
+      return false;
+    }
+    if ('$gt' in operadores) {
+      const limite = operadores.$gt;
+      if (typeof valor === 'number' && typeof limite === 'number') return valor > limite;
       return false;
     }
     if ('$exists' in operadores) {

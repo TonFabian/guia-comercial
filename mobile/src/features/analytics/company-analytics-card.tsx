@@ -22,6 +22,10 @@ export function CompanyAnalyticsCard({ summary }: { summary: CompanyAnalyticsSum
           <Text style={styles.value}>{summary.whatsappClicks}</Text>
           <Text style={styles.label}>Cliques no WhatsApp</Text>
         </View>
+        <View style={styles.metric}>
+          <Text style={styles.value}>{summary.favorites}</Text>
+          <Text style={styles.label}>Favoritos</Text>
+        </View>
       </View>
     </View>
   );

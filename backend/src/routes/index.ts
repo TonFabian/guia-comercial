@@ -20,7 +20,7 @@ import {
   makeAuthMiddleware,
   requireAuthIfConfigured,
 } from '../middlewares/auth.middleware.js';
-import { limitarView, limitarWhatsappClick } from '../middlewares/analytics-rate-limit.middleware.js';
+import { limitarView, limitarWhatsappClick, limitarFavorite } from '../middlewares/analytics-rate-limit.middleware.js';
 import { guestScrub } from '../middlewares/guest.middleware.js';
 import {
   createAutonomousProfessionalSchema,
@@ -131,6 +131,10 @@ companies.put('/:id/plan', requireAuthIfConfigured, validateBody(updatePlanSchem
 // por script (view 1/empresa/IP/hora, clique 5/empresa/IP/hora).
 companies.post('/:id/view', limitarView, companyController.trackView);
 companies.post('/:id/whatsapp-click', limitarWhatsappClick, companyController.trackWhatsappClick);
+// Favorito exige sessão (o requireAuthForMutations já cobre POST/DELETE fora
+// da allowlist anônima) — a métrica conta o toggle real do usuário logado.
+companies.post('/:id/favorite', limitarFavorite, companyController.trackFavorite);
+companies.delete('/:id/favorite', limitarFavorite, companyController.untrackFavorite);
 companies.get('/:id/analytics', requireAuthIfConfigured, companyController.getAnalytics);
 companies.delete('/:id', companyController.remove);
 

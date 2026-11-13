@@ -31,12 +31,34 @@ export async function incrementWhatsappClick(companyId: string): Promise<void> {
   );
 }
 
+export async function incrementFavorite(companyId: string): Promise<void> {
+  if (!isValidObjectId(companyId)) return;
+  const date = todayUtc();
+  await CompanyAnalyticsModel.updateOne(
+    { companyId, date },
+    { $inc: { favorites: 1 } },
+    { upsert: true },
+  );
+}
+
+/** Desfavoritar nunca deixa o contador negativo: só decrementa quando há
+ * favorito contado no dia (o $inc roda com filtro `favorites > 0`). */
+export async function decrementFavorite(companyId: string): Promise<void> {
+  if (!isValidObjectId(companyId)) return;
+  const date = todayUtc();
+  await CompanyAnalyticsModel.updateOne(
+    { companyId, date, favorites: { $gt: 0 } },
+    { $inc: { favorites: -1 } },
+  );
+}
+
 export interface AnalyticsSummary {
   companyId: string;
   from: string;
   to: string;
   views: number;
   whatsappClicks: number;
+  favorites: number;
 }
 
 const DATA_ISO = /^\d{4}-\d{2}-\d{2}$/;
@@ -63,11 +85,13 @@ export async function getSummary(
   }).lean();
   let views = 0;
   let whatsappClicks = 0;
+  let favorites = 0;
   for (const d of docs) {
     views += d.views ?? 0;
     whatsappClicks += d.whatsappClicks ?? 0;
+    favorites += d.favorites ?? 0;
   }
-  return { companyId, from, to, views, whatsappClicks };
+  return { companyId, from, to, views, whatsappClicks, favorites };
 }
 
 export async function companyExists(companyId: string): Promise<boolean> {

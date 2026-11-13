@@ -453,6 +453,7 @@ export interface CompanyAnalyticsSummary {
   to: string;
   views: number;
   whatsappClicks: number;
+  favorites: number;
 }
 
 /**

@@ -237,6 +237,110 @@ describe('POST /api/companies/:id/whatsapp-click', () => {
   });
 });
 
+describe('POST /api/companies/:id/favorite', () => {
+  it('usuário autenticado incrementa favorito do dia', async () => {
+    const response = await request(app)
+      .post(`/api/companies/${ID_PREMIUM}/favorite`)
+      .set('Authorization', 'Bearer token_outro');
+
+    expect(response.status).toBe(204);
+    expect(modeloAnalytics.documents[0].favorites).toBe(1);
+  });
+
+  it('sem sessão → 401 (favorito é de usuário identificado)', async () => {
+    const response = await request(app).post(`/api/companies/${ID_PREMIUM}/favorite`);
+
+    expect(response.status).toBe(401);
+    expect(modeloAnalytics.documents).toHaveLength(0);
+  });
+
+  it('empresa inexistente → 404', async () => {
+    const response = await request(app)
+      .post('/api/companies/000000000000000000000999/favorite')
+      .set('Authorization', 'Bearer token_outro');
+
+    expect(response.status).toBe(404);
+  });
+
+  it('id malformado → 404 (não 500)', async () => {
+    const response = await request(app)
+      .post('/api/companies/nao-e-id/favorite')
+      .set('Authorization', 'Bearer token_outro');
+
+    expect(response.status).toBe(404);
+  });
+
+  it('mesmo IP pode favoritar empresa diferente (limite é por empresa)', async () => {
+    const outra = await request(app)
+      .post(`/api/companies/${ID_FREE}/favorite`)
+      .set('Authorization', 'Bearer token_outro');
+
+    expect(outra.status).toBe(204);
+  });
+
+  it('exceder o limite por empresa/IP → 429 e contador intacto', async () => {
+    // Restaura manualmente: vi.unstubAllEnvs aqui apagaria os stubs do Clerk
+    // usados pelos testes seguintes deste arquivo.
+    const anterior = process.env.ANALYTICS_FAVORITE_MAX_PER_HOUR;
+    process.env.ANALYTICS_FAVORITE_MAX_PER_HOUR = '1';
+    try {
+      const primeira = await request(app)
+        .post(`/api/companies/${ID_PREMIUM}/favorite`)
+        .set('Authorization', 'Bearer token_outro');
+      expect(primeira.status).toBe(204);
+
+      const segunda = await request(app)
+        .post(`/api/companies/${ID_PREMIUM}/favorite`)
+        .set('Authorization', 'Bearer token_outro');
+
+      expect(segunda.status).toBe(429);
+      expect(modeloAnalytics.documents[0].favorites).toBe(1);
+    } finally {
+      if (anterior === undefined) delete process.env.ANALYTICS_FAVORITE_MAX_PER_HOUR;
+      else process.env.ANALYTICS_FAVORITE_MAX_PER_HOUR = anterior;
+    }
+  });
+});
+
+describe('DELETE /api/companies/:id/favorite', () => {
+  it('usuário autenticado decrementa favorito do dia', async () => {
+    await request(app)
+      .post(`/api/companies/${ID_PREMIUM}/favorite`)
+      .set('Authorization', 'Bearer token_outro');
+
+    const response = await request(app)
+      .delete(`/api/companies/${ID_PREMIUM}/favorite`)
+      .set('Authorization', 'Bearer token_outro');
+
+    expect(response.status).toBe(204);
+    expect(modeloAnalytics.documents[0].favorites).toBe(0);
+  });
+
+  it('desfavoritar sem favorito prévio não deixa negativo', async () => {
+    const response = await request(app)
+      .delete(`/api/companies/${ID_PREMIUM}/favorite`)
+      .set('Authorization', 'Bearer token_outro');
+
+    expect(response.status).toBe(204);
+    expect(modeloAnalytics.documents).toHaveLength(0);
+  });
+
+  it('sem sessão → 401', async () => {
+    const response = await request(app).delete(`/api/companies/${ID_PREMIUM}/favorite`);
+
+    expect(response.status).toBe(401);
+    expect(modeloAnalytics.documents).toHaveLength(0);
+  });
+
+  it('id malformado → 404 (não 500)', async () => {
+    const response = await request(app)
+      .delete('/api/companies/nao-e-id/favorite')
+      .set('Authorization', 'Bearer token_outro');
+
+    expect(response.status).toBe(404);
+  });
+});
+
 describe('GET /api/companies/:id/analytics', () => {
   it('dono premium recebe o resumo do período', async () => {
     await request(app).post(`/api/companies/${ID_PREMIUM}/view`);
@@ -252,6 +356,20 @@ describe('GET /api/companies/:id/analytics', () => {
     expect(response.body.companyId).toBe(ID_PREMIUM);
     expect(response.body.views).toBe(1);
     expect(response.body.whatsappClicks).toBe(1);
+    expect(response.body.favorites).toBe(0);
+  });
+
+  it('favoritos aparecem no resumo do período', async () => {
+    await request(app)
+      .post(`/api/companies/${ID_PREMIUM}/favorite`)
+      .set('Authorization', 'Bearer token_outro');
+
+    const response = await request(app)
+      .get(`/api/companies/${ID_PREMIUM}/analytics`)
+      .set('Authorization', 'Bearer token_dono');
+
+    expect(response.status).toBe(200);
+    expect(response.body.favorites).toBe(1);
   });
 
   it('terceiro (não dono, não admin) → 403', async () => {

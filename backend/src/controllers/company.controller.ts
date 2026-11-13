@@ -83,6 +83,28 @@ export const trackWhatsappClick = asyncHandler(async (req: Request, res: Respons
   res.status(204).end();
 });
 
+export const trackFavorite = asyncHandler(async (req: Request, res: Response): Promise<void> => {
+  throwIfInvalidId(String(req.params.id));
+  const exists = await analyticsService.companyExists(String(req.params.id));
+  if (!exists) {
+    res.status(404).json({ error: 'empresa não encontrada' });
+    return;
+  }
+  await analyticsService.incrementFavorite(String(req.params.id));
+  res.status(204).end();
+});
+
+export const untrackFavorite = asyncHandler(async (req: Request, res: Response): Promise<void> => {
+  throwIfInvalidId(String(req.params.id));
+  const exists = await analyticsService.companyExists(String(req.params.id));
+  if (!exists) {
+    res.status(404).json({ error: 'empresa não encontrada' });
+    return;
+  }
+  await analyticsService.decrementFavorite(String(req.params.id));
+  res.status(204).end();
+});
+
 export const getAnalytics = asyncHandler(async (req: Request, res: Response): Promise<void> => {
   throwIfInvalidId(String(req.params.id));
   const company = await companyService.getCompanyById(String(req.params.id));

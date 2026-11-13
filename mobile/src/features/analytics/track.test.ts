@@ -3,6 +3,8 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 describe('track de analytics', () => {
   let trackView: (companyId: string) => void;
   let trackWhatsappClick: (companyId: string) => void;
+  let trackFavorite: (companyId: string) => void;
+  let trackUnfavorite: (companyId: string) => void;
   let fetchMock: ReturnType<typeof vi.fn>;
 
   beforeEach(async () => {
@@ -11,7 +13,7 @@ describe('track de analytics', () => {
     fetchMock = vi.fn(() => Promise.resolve(new Response(null, { status: 204 })));
     vi.stubGlobal('fetch', fetchMock);
 
-    ({ trackView, trackWhatsappClick } = await import('./track'));
+    ({ trackView, trackWhatsappClick, trackFavorite, trackUnfavorite } = await import('./track'));
   });
 
   afterEach(() => {
@@ -34,5 +36,34 @@ describe('track de analytics', () => {
     const chamadas = fetchMock.mock.calls as unknown as [string, RequestInit][];
     const views = chamadas.filter(([url]) => url.includes('/companies/xyz/view'));
     expect(views).toHaveLength(1);
+  });
+
+  it('favoritar dispara POST /favorite', async () => {
+    trackFavorite('fav1');
+    await Promise.resolve();
+
+    const chamadas = fetchMock.mock.calls as unknown as [string, RequestInit][];
+    expect(chamadas.some(([url, init]) => url.includes('/companies/fav1/favorite') && init.method === 'POST')).toBe(true);
+  });
+
+  it('desfavoritar dispara DELETE /favorite', async () => {
+    trackUnfavorite('fav1');
+    await Promise.resolve();
+
+    const chamadas = fetchMock.mock.calls as unknown as [string, RequestInit][];
+    expect(chamadas.some(([url, init]) => url.includes('/companies/fav1/favorite') && init.method === 'DELETE')).toBe(true);
+  });
+
+  it('sem API configurada: trackFavorite/trackUnfavorite não chamam rede', async () => {
+    vi.resetModules();
+    vi.stubEnv('EXPO_PUBLIC_API_URL', undefined);
+    ({ trackFavorite, trackUnfavorite } = await import('./track'));
+    fetchMock.mockClear();
+
+    trackFavorite('x');
+    trackUnfavorite('x');
+    await Promise.resolve();
+
+    expect(fetchMock).not.toHaveBeenCalled();
   });
 });

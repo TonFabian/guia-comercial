@@ -17,3 +17,14 @@ export function trackView(companyId: string): void {
 export function trackWhatsappClick(companyId: string): void {
   post(`/companies/${companyId}/whatsapp-click`);
 }
+
+/** Favoritar/desfavoritar conta no analytics do dia (exige sessão no backend:
+ * sem login o POST retorna 401 e é silenciosamente ignorado). */
+export function trackFavorite(companyId: string): void {
+  post(`/companies/${companyId}/favorite`);
+}
+
+export function trackUnfavorite(companyId: string): void {
+  if (!API) return;
+  void fetch(`${API}/companies/${companyId}/favorite`, { method: 'DELETE' }).catch(() => {});
+}
