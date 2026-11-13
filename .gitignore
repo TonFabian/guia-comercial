@@ -78,3 +78,10 @@ REFACTORING_NOTES.md
 
 # Nenhum pacote na raiz do monorepo
 package-lock.json
+
+# Logs de dev locais
+dev.log
+dev.err
+dev2.log
+dev2.err
+me-debug.log
