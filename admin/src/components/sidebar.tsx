@@ -2,7 +2,7 @@ import { useClerk, useUser } from '@clerk/clerk-react';
 
 export const SECTIONS = [
   'Empresas', 'Categorias', 'Cidades', 'Banners', 'Cupons', 'Vagas', 'Avisos',
-  'Utilidade Pública', 'Atrações', 'Eventos', 'Usuários',
+  'Utilidade Pública', 'Atrações', 'Eventos', 'Notificações', 'Usuários',
 ] as const;
 
 export type Section = (typeof SECTIONS)[number];
@@ -10,7 +10,7 @@ export type Section = (typeof SECTIONS)[number];
 const ICONS: Record<Section, string> = {
   Empresas: '🏢', Categorias: '🏷️', Cidades: '📍', Banners: '🖼️', Cupons: '🎟️',
   Vagas: '💼', Avisos: '📢', 'Utilidade Pública': '🏥', Atrações: '🗺️',
-  Eventos: '📅', Usuários: '👤',
+  Eventos: '📅', Notificações: '🔔', Usuários: '👤',
 };
 
 export function Sidebar({

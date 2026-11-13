@@ -10,6 +10,7 @@ import { CidadesSection } from './components/sections/cidades';
 import { CuponsSection } from './components/sections/cupons';
 import { EmpresasSection } from './components/sections/empresas';
 import { EventosSection } from './components/sections/eventos';
+import { NotificacoesSection } from './components/sections/notificacoes';
 import { UsuariosSection } from './components/sections/usuarios';
 import { UtilidadePublicaSection } from './components/sections/utilidade-publica';
 import { VagasSection } from './components/sections/vagas';
@@ -203,6 +204,7 @@ export default function App() {
             companiesError={catalogErrors.companyOptions ?? null}
           />
         )}
+        {section === 'Notificações' && <NotificacoesSection />}
         {section === 'Usuários' && <UsuariosSection />}
           </div>
       <Toaster theme="dark" position="bottom-right" richColors closeButton />
