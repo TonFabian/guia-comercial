@@ -42,7 +42,7 @@ export function limparRateLimitCampanhas(): void {
 }
 
 function chave(req: Request): string {
-  const id = req.auth?.clerkId ?? req.ip ?? req.socket?.remoteAddress ?? 'desconhecido';
+  const id = req.auth?.clerkId ?? req.ip;
   return `campanha:${id}`;
 }
 

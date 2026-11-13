@@ -54,6 +54,9 @@ export async function sendPushToTokens(
 
       if (!ok || statusHttp < 200 || statusHttp >= 300) {
         console.warn(`[push] API do Expo respondeu ${statusHttp} para ${lote.length} mensagem(ns)`);
+        for (let indice = 0; indice < lote.length; indice++) {
+          tickets.push({ status: 'error', message: `HTTP ${statusHttp}`, details: undefined });
+        }
         continue;
       }
 
@@ -62,6 +65,9 @@ export async function sendPushToTokens(
         json = typeof resposta.json === 'function' ? await resposta.json() : resposta;
       } catch (erro) {
         console.warn('[push] resposta inválida da API do Expo:', erro instanceof Error ? erro.message : erro);
+        for (let indice = 0; indice < lote.length; indice++) {
+          tickets.push({ status: 'error', message: 'resposta inválida', details: undefined });
+        }
         continue;
       }
 
@@ -70,7 +76,10 @@ export async function sendPushToTokens(
 
       for (let indice = 0; indice < lote.length; indice++) {
         const ticketBruto = listaTickets[indice];
-        if (!ticketBruto || typeof ticketBruto !== 'object') continue;
+        if (!ticketBruto || typeof ticketBruto !== 'object') {
+          tickets.push({ status: 'error', message: 'ticket inválido', details: undefined });
+          continue;
+        }
 
         const ticket = ticketBruto as {
           status?: string;
@@ -101,6 +110,9 @@ export async function sendPushToTokens(
       }
     } catch (erro) {
       console.warn('[push] falha de rede ao enviar notificações:', erro instanceof Error ? erro.message : erro);
+       for (let indice = 0; indice < lote.length; indice++) {
+         tickets.push({ status: 'error', message: 'falha de rede', details: undefined });
+       }
     }
   }
 

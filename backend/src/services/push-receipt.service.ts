@@ -103,7 +103,6 @@ async function processarCampanha(campanha: CampanhaComReceipts, agora: Date): Pr
   }
 
   let fetchFalhou = false;
-  const restantes: ParReceipt[] = [];
 
   for (let inicio = 0; inicio < pares.length; inicio += TAMANHO_LOTE) {
     const lote = pares.slice(inicio, inicio + TAMANHO_LOTE);
@@ -181,6 +180,6 @@ async function processarCampanha(campanha: CampanhaComReceipts, agora: Date): Pr
 
   await PushCampaignModel.findOneAndUpdate(
     { _id: id } as Record<string, unknown>,
-    { $set: { receipts: restantes, stats } } as Record<string, unknown>,
+    { $set: { receipts: [], stats } } as Record<string, unknown>,
   );
 }

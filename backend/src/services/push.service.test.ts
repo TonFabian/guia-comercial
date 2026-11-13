@@ -44,7 +44,10 @@ describe('sendPushToTokens', () => {
 
   it('falha de rede: warn e NÃO lança', async () => {
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('boom')));
-    await expect(sendPushToTokens(['x'], 'T', 'B')).resolves.toEqual({ tickets: [], mortos: [] });
+    await expect(sendPushToTokens(['x'], 'T', 'B')).resolves.toEqual({
+      tickets: [{ status: 'error', message: 'falha de rede', details: undefined }],
+      mortos: [],
+    });
   });
 });
 

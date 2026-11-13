@@ -3,6 +3,7 @@ import {
   useNavigationContainerRef,
   useRouter,
   useRootNavigationState,
+  type Href,
 } from 'expo-router';
 import { useEffect, useRef } from 'react';
 import type { ReactNode } from 'react';
@@ -54,7 +55,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
     handledIds.current.add(id);
     const pronto = navigationRef?.isReady?.() ?? isReady;
     if (pronto) {
-      router.push(url as never);
+      router.push(url as Href);
     } else {
       pendingUrl.current = url;
     }
@@ -84,19 +85,14 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Hook equivalente (cobertura de export / cold start reativo).
-  const lastResponse = Notifications.useLastNotificationResponse();
-  useEffect(() => {
-    tratarResposta(lastResponse);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [lastResponse]);
-
   // Flush do deep link pendente quando o navegador fica pronto.
   useEffect(() => {
     if (isReady && pendingUrl.current) {
       const url = pendingUrl.current;
       pendingUrl.current = null;
-      router.push(url as never);
+      if (ehDeepLinkValido(url)) {
+        router.push(url as Href);
+      }
     }
   }, [isReady, router]);
 
