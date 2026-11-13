@@ -191,6 +191,25 @@ async function ensureMirror(deps: AuthDeps, clerkId: string): Promise<void> {
 
   // `city` precisa estar populado (objeto City) para consultas por cidade.
   const cityOk = Boolean(existing?.city && typeof existing.city === 'object');
+
+  // Reconcilia a role de admin quando o e-mail está em ADMIN_EMAILS, mesmo
+  // que o espelho já exista (caso contrário, um admin adicionado depois do
+  // primeiro login nunca teria a role atualizada — acesso restrito eterno).
+  const adminEmails = (process.env.ADMIN_EMAILS ?? '')
+    .split(',')
+    .map((e) => e.trim().toLowerCase())
+    .filter(Boolean);
+  if (
+    existing &&
+    cityOk &&
+    existing.email &&
+    adminEmails.includes(existing.email.toLowerCase()) &&
+    existing.role !== 'admin'
+  ) {
+    await deps.upsert(clerkId, { role: 'admin' });
+    return;
+  }
+
   if (existing && cityOk) {
     return;
   }
