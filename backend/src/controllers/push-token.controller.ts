@@ -2,6 +2,7 @@ import type { Request, Response } from 'express';
 
 import { assertAdmin } from '../services/user.service.js';
 import { listAllPushTokens, upsertPushToken } from '../services/push-token.service.js';
+import { sendPushToTokens } from '../services/push.service.js';
 import type { BroadcastDto, PushTokenDto } from '../types/dto.js';
 
 export async function registerPushToken(req: Request, res: Response): Promise<void> {
@@ -43,20 +44,6 @@ export async function broadcastPush(req: Request, res: Response): Promise<void> 
   // title/body já validados e limitados pelo `broadcastSchema` (zod).
   const { title, body } = req.body as BroadcastDto;
   const tokens = await listAllPushTokens();
-  if (tokens.length === 0) {
-    res.json({ sent: 0 });
-    return;
-  }
-  const messages = tokens.map((to) => ({ to, title, body: body ?? '' }));
-  try {
-    const response = await fetch('https://exp.host/--/api/v2/push/send', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(messages),
-    });
-    const data = await response.json();
-    res.json({ sent: tokens.length, result: data });
-  } catch {
-    res.status(500).json({ error: 'Falha ao enviar notificações' });
-  }
+  await sendPushToTokens(tokens, title, body ?? '');
+  res.json({ sent: tokens.length });
 }

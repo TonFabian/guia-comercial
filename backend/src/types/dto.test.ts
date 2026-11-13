@@ -180,3 +180,37 @@ describe('createPublicUtilitySchema', () => {
     expect(result.success).toBe(false);
   });
 });
+
+
+import { updatePlanSchema } from '../types/dto';
+
+describe('updatePlanSchema — datas de vigencia', () => {
+  it('aceita datas no formato YYYY-MM-DD', () => {
+    const r = updatePlanSchema.safeParse({ plan: 'premium', planStartedAt: '2026-11-01', planExpiresAt: '2026-12-31' });
+    expect(r.success).toBe(true);
+  });
+
+  it('rejeita formato invalido', () => {
+    const r = updatePlanSchema.safeParse({ plan: 'premium', planExpiresAt: '31/12/2026' });
+    expect(r.success).toBe(false);
+  });
+
+  it('rejeita data de calendario inexistente (2026-02-30)', () => {
+    const r = updatePlanSchema.safeParse({ plan: 'premium', planExpiresAt: '2026-02-30' });
+    expect(r.success).toBe(false);
+  });
+
+  it('null limpa a data; ausente (undefined) mantem', () => {
+    const limpa = updatePlanSchema.safeParse({ plan: 'free', planExpiresAt: null });
+    expect(limpa.success).toBe(true);
+    if (limpa.success) expect(limpa.data.planExpiresAt).toBeNull();
+    const mantem = updatePlanSchema.safeParse({ plan: 'premium' });
+    expect(mantem.success).toBe(true);
+    if (mantem.success) expect(mantem.data.planExpiresAt).toBeUndefined();
+  });
+
+  it('rejeita fim anterior ao inicio quando ambos vem no body', () => {
+    const r = updatePlanSchema.safeParse({ plan: 'basic', planStartedAt: '2026-12-01', planExpiresAt: '2026-11-30' });
+    expect(r.success).toBe(false);
+  });
+});

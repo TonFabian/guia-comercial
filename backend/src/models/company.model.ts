@@ -26,6 +26,8 @@ const companySchema = new Schema<Company>(
     registry: String,
     isFeatured: { type: Boolean, default: false },
     plan: { type: String, enum: ['free', 'basic', 'premium'], default: 'free', index: true },
+    planStartedAt: String,
+    planExpiresAt: String,
     rating: { type: Number, min: 0, max: 5 },
     ratingCount: { type: Number, min: 0 },
     isVerified: { type: Boolean, default: false },
@@ -44,6 +46,18 @@ const companySchema = new Schema<Company>(
     ],
   },
   { timestamps: true },
+);
+
+// Índice parcial: cobre só documentos com plano pago e data de vencimento —
+// exatamente a query diária do ciclo de planos.
+companySchema.index(
+  { planExpiresAt: 1 },
+  {
+    partialFilterExpression: {
+      plan: { $in: ['basic', 'premium'] },
+      planExpiresAt: { $type: 'string' },
+    },
+  },
 );
 
 export const CompanyModel = model<Company>('Company', companySchema);

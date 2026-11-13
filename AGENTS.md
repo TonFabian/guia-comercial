@@ -432,6 +432,31 @@ npm run build
 
 Rode **lint e typecheck antes de declarar qualquer tarefa concluída**.
 
+## 12.1 Gate de CI obrigatório antes de commit
+
+O fluxo do CI é descrito em `.github/workflows/ci.yml`. **Sempre, antes de
+fazer um commit, TODOS os projetos devem passar por TODAS as regras de lint
+e/ou testes descritas nesse fluxo.** O ideal é rodar o fluxo inteiro
+localmente: se passar, commit; se não passar, corrija primeiro.
+
+Passos equivalentes ao CI (cada comando dentro da pasta do app):
+
+| App     | Passos do CI                                        | Comando local                                              |
+| ------- | --------------------------------------------------- | ---------------------------------------------------------- |
+| backend | lint, typecheck, test                               | `npm run lint` · `npm run typecheck` · `npm test`           |
+| admin   | lint, typecheck, build                              | `npm run lint` · `npm run typecheck` · `npm run build`      |
+| mobile  | lint, typecheck, gate de tipografia (§6.3)          | `npx expo lint` · `npm run typecheck` · grep de tokens cru  |
+
+Regras:
+
+- O gate de tipografia do mobile reproduz o passo do CI: falha se houver
+  `fontSize:\s*\d` ou `fontWeight: '[0-9]+'` cru em `src/` fora de
+  `src/constants/theme.ts` (excluindo arquivos de teste).
+- Commits que tocam `shared/` ou mais de um app exigem o gate completo dos
+  três; commit estritamente de um app pode rodar só o dele (justifique).
+- Nunca declare o commit pronto com base em "plausível" — reporte os comandos
+  que rodou e o resultado.
+
 ## 13. Navegação (Expo Router)
 
 - Rotas em `mobile/src/app/`; `_layout.tsx` define os navegadores.

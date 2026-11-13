@@ -52,6 +52,11 @@ export interface Company {
   isFeatured?: boolean;
   /** Plano comercial. Ausente/undefined → tratado como 'free'. */
   plan?: 'free' | 'basic' | 'premium';
+  /** Início do período do plano atual (YYYY-MM-DD, data pura, sem fuso). */
+  planStartedAt?: string;
+  /** Dia do vencimento (YYYY-MM-DD). O plano vale ATÉ a véspera; neste dia o
+   * cron rebaixa para 'free'. Ausente/undefined = plano sem vencimento. */
+  planExpiresAt?: string;
   rating?: number;
   ratingCount?: number;
   isVerified?: boolean;

@@ -43,6 +43,8 @@ interface CompanyForm {
   samePhone: boolean;
   schedule: CompanyScheduleItemForm[];
   plan: 'free' | 'basic' | 'premium';
+  planStartedAt: string;
+  planExpiresAt: string;
 }
 
 const EMPTY_FORM: CompanyForm = {
@@ -56,6 +58,8 @@ const EMPTY_FORM: CompanyForm = {
   samePhone: false,
   schedule: [],
   plan: 'free',
+  planStartedAt: '',
+  planExpiresAt: '',
 };
 
 const DAYS = [0, 1, 2, 3, 4, 5, 6];
@@ -105,6 +109,8 @@ export function EmpresasSection({ categories, categoriesError, cities, citiesErr
       samePhone: false,
       schedule: company.schedule ?? [],
       plan: company.plan ?? 'free',
+      planStartedAt: company.planStartedAt ?? '',
+      planExpiresAt: company.planExpiresAt ?? '',
     });
     setView('form');
   }
@@ -131,6 +137,12 @@ export function EmpresasSection({ categories, categoriesError, cities, citiesErr
     setSaving(true);
     setActionError(null);
 
+    if (form.plan !== 'free' && form.planStartedAt && form.planExpiresAt && form.planExpiresAt < form.planStartedAt) {
+      setSaving(false);
+      setActionError('A data de vencimento não pode ser anterior à data de início.');
+      return;
+    }
+
     const payload: CompanyInput = {
       name: form.name,
       slug: form.slug,
@@ -147,7 +159,11 @@ export function EmpresasSection({ categories, categoriesError, cities, citiesErr
       if (editingId) {
         await updateCompany(editingId, payload);
         try {
-          await updateCompanyPlan(editingId, form.plan);
+          await updateCompanyPlan(editingId, {
+            plan: form.plan,
+            planStartedAt: form.planStartedAt || null,
+            planExpiresAt: form.planExpiresAt || null,
+          });
         } catch (err) {
           setActionError(
             `Dados salvos, mas o plano não pôde ser alterado: ${err instanceof Error ? err.message : String(err)}`,
@@ -157,11 +173,22 @@ export function EmpresasSection({ categories, categoriesError, cities, citiesErr
         const created = await createCompany(payload);
         if (created?._id && form.plan !== 'free') {
           try {
-            await updateCompanyPlan(created._id, form.plan);
+            await updateCompanyPlan(created._id, {
+              plan: form.plan,
+              planStartedAt: form.planStartedAt || null,
+              planExpiresAt: form.planExpiresAt || null,
+            });
           } catch (err) {
             setActionError(
               `Empresa criada, mas o plano não pôde ser definido: ${err instanceof Error ? err.message : String(err)}`,
             );
+          }
+        } else if (created?._id && form.plan === 'free') {
+          // limpa vigência residual se rebaixado para free
+          try {
+            await updateCompanyPlan(created._id, { plan: 'free', planStartedAt: null, planExpiresAt: null });
+          } catch {
+            // ignora — não é crítico
           }
         }
       }
@@ -308,6 +335,28 @@ export function EmpresasSection({ categories, categoriesError, cities, citiesErr
                 <option value="basic">Plano: Básico</option>
                 <option value="premium">Plano: Premium</option>
               </Select>
+              <div className="mt-3 grid grid-cols-2 gap-3">
+                <label className="flex flex-col gap-1 text-xs text-text-muted">
+                  <span>Início da vigência</span>
+                  <input
+                    type="date"
+                    value={form.planStartedAt}
+                    disabled={form.plan === 'free'}
+                    onChange={(e) => setForm({ ...form, planStartedAt: e.target.value })}
+                    className="rounded-md border border-border bg-surface px-2 py-1 text-sm text-text disabled:opacity-50"
+                  />
+                </label>
+                <label className="flex flex-col gap-1 text-xs text-text-muted">
+                  <span>Vence em</span>
+                  <input
+                    type="date"
+                    value={form.planExpiresAt}
+                    disabled={form.plan === 'free'}
+                    onChange={(e) => setForm({ ...form, planExpiresAt: e.target.value })}
+                    className="rounded-md border border-border bg-surface px-2 py-1 text-sm text-text disabled:opacity-50"
+                  />
+                </label>
+              </div>
             </div>
           </Card>
 
@@ -417,7 +466,7 @@ export function EmpresasSection({ categories, categoriesError, cities, citiesErr
         mobileRows={visible.map((company) => ({
           id: company._id,
           primary: company.name,
-          secondary: `${categoryLabel(company.category)} • ${cityLabel(company.city)} • ${planChipLabel(company.plan ?? 'free')}`,
+          secondary: `${categoryLabel(company.category)} • ${cityLabel(company.city)} • ${planChipLabel(company.plan ?? 'free')}${company.planExpiresAt ? ` · ${company.plan === 'free' ? 'expirou em ' : 'até '}${company.planExpiresAt.split('-').reverse().join('/')}` : ''}`,
           actions: (
             <RowActions
               onEdit={() => startEdit(company)}

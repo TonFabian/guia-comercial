@@ -7,7 +7,7 @@ import { assertOwnerOrAdmin } from './authorization.service.js';
 import { findUserByClerkId } from './user.service.js';
 import { listAllPushTokens } from './push-token.service.js';
 import type { Company } from '../../../shared/domain.js';
-import type { CreateCompanyDto, UpdateCompanyDto } from '../types/dto.js';
+import type { CreateCompanyDto, UpdateCompanyDto, UpdatePlanDto } from '../types/dto.js';
 import type { Pagination } from '../utils/http.js';
 import { geocodeAddress } from '../utils/geocode.js';
 import { escapeRegex } from '../utils/regex.js';
@@ -302,7 +302,7 @@ export async function updateCompany(id: string, dto: UpdateCompanyDto, clerkId?:
 
 export async function updateCompanyPlan(
   id: string,
-  plan: 'free' | 'basic' | 'premium',
+  payload: UpdatePlanDto,
   clerkId?: string,
 ) {
   if (!isObjectId(id)) {
@@ -320,11 +320,30 @@ export async function updateCompanyPlan(
     }
   }
 
-  const updated = await CompanyModel.findByIdAndUpdate(
-    id,
-    { plan },
-    { returnDocument: 'after', runValidators: true },
-  )
+  // Validação contra o ESTADO SALVO (precedente event.service.ts): enviar só
+  // planExpiresAt poderia deixar fim < início gravado.
+  const atual = await CompanyModel.findById(id).lean();
+  if (!atual) {
+    throw Object.assign(new Error('empresa não encontrada'), { statusCode: 404 });
+  }
+  const inicioResultante = payload.planStartedAt === undefined ? (atual.planStartedAt ?? undefined) : (payload.planStartedAt ?? undefined);
+  const fimResultante = payload.planExpiresAt === undefined ? (atual.planExpiresAt ?? undefined) : (payload.planExpiresAt ?? undefined);
+  if (inicioResultante && fimResultante && fimResultante < inicioResultante) {
+    throw Object.assign(new Error('data de vencimento não pode ser anterior à data de início'), { statusCode: 422 });
+  }
+
+  const update: Record<string, unknown> = { plan: payload.plan };
+  // undefined = mantém (não toca); null = limpa ($unset) — spec §4.
+  if (payload.planStartedAt === null || payload.planExpiresAt === null) {
+    const unset: Record<string, 1> = {};
+    if (payload.planStartedAt === null) unset.planStartedAt = 1;
+    if (payload.planExpiresAt === null) unset.planExpiresAt = 1;
+    update.$unset = unset;
+  }
+  if (payload.planStartedAt !== undefined && payload.planStartedAt !== null) update.planStartedAt = payload.planStartedAt;
+  if (payload.planExpiresAt !== undefined && payload.planExpiresAt !== null) update.planExpiresAt = payload.planExpiresAt;
+
+  const updated = await CompanyModel.findByIdAndUpdate(id, update, { returnDocument: 'after', runValidators: true })
     .populate('category')
     .populate('city')
     .lean();
