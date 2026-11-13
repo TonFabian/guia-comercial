@@ -29,7 +29,6 @@ import { filterByText } from '../../utils/filter';
 import { Button } from '../ui/button';
 import { Card } from '../ui/card';
 import { Field, Input, Select, Textarea } from '../ui/input';
-import { RowActions } from '../row-actions';
 import { SearchInput } from '../search-input';
 import { Table } from '../table';
 import { DotsLoader } from '../ui/loading';
@@ -209,10 +208,26 @@ export function NotificacoesSection() {
     return companies.filter((c) => c.name.toLowerCase().includes(q));
   }, [companies, companySearch]);
 
+  function clearSegmentData() {
+    setUsers([]);
+    setCities([]);
+    setCompanies([]);
+    setUserSearch('');
+    setCompanySearch('');
+  }
+
   function resetForm() {
     setForm(EMPTY_FORM);
     setActionError(null);
+    clearSegmentData();
     setView('list');
+  }
+
+  function openForm() {
+    setForm(EMPTY_FORM);
+    setActionError(null);
+    clearSegmentData();
+    setView('form');
   }
 
   async function handleSubmit(event: FormEvent) {
@@ -329,6 +344,38 @@ export function NotificacoesSection() {
     }
   }
 
+  async function handleSendNowId(id: string) {
+    setSaving(true);
+    setActionError(null);
+    try {
+      await sendPushCampaignNow(id);
+      toast.success('Campanha enviada.');
+      reload();
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setActionError(msg);
+      toast.error(msg);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  async function handleCancelId(id: string) {
+    setSaving(true);
+    setActionError(null);
+    try {
+      await cancelPushCampaign(id);
+      toast.success('Campanha cancelada.');
+      reload();
+    } catch (err) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setActionError(msg);
+      toast.error(msg);
+    } finally {
+      setSaving(false);
+    }
+  }
+
   function toggleUser(id: string) {
     setForm((prev) => {
       const exists = prev.userIds.includes(id);
@@ -349,13 +396,7 @@ export function NotificacoesSection() {
 
         <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <SearchInput value={search} onChange={setSearch} placeholder="Buscar campanha…" />
-          <Button
-            onClick={() => {
-              setForm(EMPTY_FORM);
-              setActionError(null);
-              setView('form');
-            }}
-          >
+          <Button onClick={openForm}>
             + Nova campanha
           </Button>
         </div>
@@ -368,16 +409,50 @@ export function NotificacoesSection() {
             statusChip(campaign.status),
             `${campaign.stats.sent}/${campaign.stats.targeted}`,
             campaign.createdAt ? new Date(campaign.createdAt).toLocaleDateString() : '—',
-            <RowActions
-              key={campaign._id}
-              onEdit={() => void openDetail(campaign)}
-              onDelete={() => void handleDelete(campaign._id)}
-            />,
+            <span key={campaign._id} className="flex flex-1 gap-2 sm:inline-flex sm:flex-none">
+              <button
+                type="button"
+                onClick={() => void openDetail(campaign)}
+                className="h-8 flex-1 rounded-(--radius-input) border border-primary/40 bg-surface-hover px-3 text-xs font-medium text-primary sm:flex-none"
+              >
+                Ver
+              </button>
+              {(campaign.status === 'draft' || campaign.status === 'scheduled') && (
+                <button
+                  type="button"
+                  disabled={saving}
+                  onClick={() => void handleSendNowId(campaign._id)}
+                  className="h-8 flex-1 rounded-(--radius-input) border border-primary/40 bg-surface-hover px-3 text-xs font-medium text-primary sm:flex-none disabled:opacity-50"
+                >
+                  Enviar agora
+                </button>
+              )}
+              {campaign.status === 'scheduled' && (
+                <button
+                  type="button"
+                  disabled={saving}
+                  onClick={() => void handleCancelId(campaign._id)}
+                  className="h-8 flex-1 rounded-(--radius-input) border border-border bg-surface-hover px-3 text-xs font-medium text-text sm:flex-none disabled:opacity-50"
+                >
+                  Cancelar
+                </button>
+              )}
+              {(campaign.status === 'draft' || campaign.status === 'failed') && (
+                <button
+                  type="button"
+                  disabled={saving}
+                  onClick={() => void handleDelete(campaign._id)}
+                  className="h-8 flex-1 rounded-(--radius-input) border border-danger/40 bg-surface-hover px-3 text-xs font-medium text-danger sm:flex-none disabled:opacity-50"
+                >
+                  Excluir
+                </button>
+              )}
+            </span>,
           ])}
           mobileRows={visible.map((campaign) => ({
             id: campaign._id,
             primary: campaign.title,
-            secondary: `${STATUS_LABELS[campaign.status]} • ${campaign.stats.sent}/${campaign.stats.targeted} enviados`,
+            secondary: `${STATUS_LABELS[campaign.status]} • ${campaign.stats.sent}/${campaign.stats.targeted} enviados • ${campaign.createdByClerkId}`,
             actions: (
               <span className="flex flex-1 gap-2">
                 <button
@@ -387,11 +462,32 @@ export function NotificacoesSection() {
                 >
                   Ver
                 </button>
+                {(campaign.status === 'draft' || campaign.status === 'scheduled') && (
+                  <button
+                    type="button"
+                    disabled={saving}
+                    onClick={() => void handleSendNowId(campaign._id)}
+                    className="h-8 flex-1 rounded-(--radius-input) border border-primary/40 bg-surface-hover px-3 text-xs font-medium text-primary disabled:opacity-50"
+                  >
+                    Enviar agora
+                  </button>
+                )}
+                {campaign.status === 'scheduled' && (
+                  <button
+                    type="button"
+                    disabled={saving}
+                    onClick={() => void handleCancelId(campaign._id)}
+                    className="h-8 flex-1 rounded-(--radius-input) border border-border bg-surface-hover px-3 text-xs font-medium text-text disabled:opacity-50"
+                  >
+                    Cancelar
+                  </button>
+                )}
                 {(campaign.status === 'draft' || campaign.status === 'failed') && (
                   <button
                     type="button"
+                    disabled={saving}
                     onClick={() => void handleDelete(campaign._id)}
-                    className="h-8 flex-1 rounded-(--radius-input) border border-danger/40 bg-surface-hover px-3 text-xs font-medium text-danger"
+                    className="h-8 flex-1 rounded-(--radius-input) border border-danger/40 bg-surface-hover px-3 text-xs font-medium text-danger disabled:opacity-50"
                   >
                     Excluir
                   </button>
