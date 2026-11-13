@@ -11,6 +11,9 @@ import {
   getPushCampaigns,
   getUsers,
   getCompanies,
+  getEvents,
+  getJobs,
+  getTouristSpots,
   getCities,
   sendPushCampaignNow,
 } from '../../services/api';
@@ -19,11 +22,20 @@ import type { AdminUserListItem } from '../../services/api';
 import type {
   City,
   Company,
+  Job,
   PushCampaign,
   PushCampaignSegment,
   PushCampaignSummary,
+  TourEvent,
+  TouristSpot,
 } from '../../types/domain';
 import { DEEP_LINK_ROTAS } from '../../utils/deep-link';
+import {
+  DEEP_LINK_META,
+  deepLinkDescricao,
+  deepLinkLabel,
+  deepLinkPrecisaId,
+} from '../../utils/deep-link-labels';
 export { DEEP_LINK_ROTAS } from '../../utils/deep-link';
 import { filterByText } from '../../utils/filter';
 import { Button } from '../ui/button';
@@ -141,6 +153,9 @@ export function NotificacoesSection() {
   const [cities, setCities] = useState<City[]>([]);
   const [companies, setCompanies] = useState<Company[]>([]);
   const [companySearch, setCompanySearch] = useState('');
+  const [events, setEvents] = useState<TourEvent[]>([]);
+  const [touristSpots, setTouristSpots] = useState<TouristSpot[]>([]);
+  const [jobs, setJobs] = useState<Job[]>([]);
 
   const visible = useMemo(
     () => filterByText(items, search, (c) => `${c.title} ${c.body} ${c.status}`),
@@ -203,6 +218,39 @@ export function NotificacoesSection() {
       cancelled = true;
     };
   }, [view, form.segmentKind, companies.length]);
+
+  // Fetch entities for deep-link selectors (lazy).
+  useEffect(() => {
+    if (view !== 'form') return;
+    if (form.deepLinkMode === '/event/' && events.length === 0) {
+      let cancelled = false;
+      getEvents(1, 100)
+        .then((res) => { if (!cancelled) setEvents(res.items); })
+        .catch(() => { if (!cancelled) setEvents([]); });
+      return () => { cancelled = true; };
+    }
+    if (form.deepLinkMode === '/tourist-spot/' && touristSpots.length === 0) {
+      let cancelled = false;
+      getTouristSpots(1, 100)
+        .then((res) => { if (!cancelled) setTouristSpots(res.items); })
+        .catch(() => { if (!cancelled) setTouristSpots([]); });
+      return () => { cancelled = true; };
+    }
+    if (form.deepLinkMode === '/job/' && jobs.length === 0) {
+      let cancelled = false;
+      getJobs(1, 100)
+        .then((res) => { if (!cancelled) setJobs(res.items); })
+        .catch(() => { if (!cancelled) setJobs([]); });
+      return () => { cancelled = true; };
+    }
+    if (form.deepLinkMode === '/company/' && companies.length === 0) {
+      let cancelled = false;
+      getCompanies(1, 100)
+        .then((res) => { if (!cancelled) setCompanies(res.items); })
+        .catch(() => { if (!cancelled) setCompanies([]); });
+      return () => { cancelled = true; };
+    }
+  }, [view, form.deepLinkMode, companies.length, events.length, touristSpots.length, jobs.length]);
 
   const filteredCompanies = useMemo(() => {
     const q = companySearch.trim().toLowerCase();
@@ -703,30 +751,101 @@ export function NotificacoesSection() {
                 />
               </Field>
             </div>
-            <Field label="Deep link">
-              <Select
-                value={form.deepLinkMode}
-                onChange={(e) => setForm({ ...form, deepLinkMode: e.target.value, deepLinkSegment: '' })}
-              >
-                <option value="none">Nenhum</option>
-                {DEEP_LINK_ROTAS.map((rota) => (
-                  <option key={rota.prefixo} value={rota.prefixo}>
-                    {rota.prefixo} {rota.exato ? '' : '(+ id)'}
-                  </option>
-                ))}
-              </Select>
-            </Field>
-            {!DEEP_LINK_ROTAS.find((r) => r.prefixo === form.deepLinkMode)?.exato &&
-              form.deepLinkMode !== 'none' && (
-                <Field label="Segmento do deep link">
+            <div className="sm:col-span-2">
+              <Field label="Deep link (ação ao tocar na notificação)">
+                <Select
+                  value={form.deepLinkMode}
+                  onChange={(e) => setForm({ ...form, deepLinkMode: e.target.value, deepLinkSegment: '' })}
+                >
+                  <option value="none">Nenhum — apenas abre o app</option>
+                  {DEEP_LINK_ROTAS.map((rota) => (
+                    <option key={rota.prefixo} value={rota.prefixo}>
+                      {deepLinkLabel(rota.prefixo)}
+                    </option>
+                  ))}
+                </Select>
+              </Field>
+              <p className="mt-1 text-xs text-text-muted">
+                Define a tela que o app abre quando o usuário toca na notificação.
+                Rotas com identificador (empresa, evento, vaga, atração, profissional)
+                exigem o ID correspondente no campo abaixo.
+              </p>
+            </div>
+            {deepLinkPrecisaId(form.deepLinkMode) && (
+              <Field label="Identificador da rota">
+                {form.deepLinkMode === '/autonomous/' ? (
                   <Input
                     value={form.deepLinkSegment}
                     onChange={(e) => setForm({ ...form, deepLinkSegment: e.target.value })}
-                    placeholder="id ou slug"
+                    placeholder="id do profissional autônomo"
                   />
-                </Field>
-              )}
+                ) : (
+                  <Select
+                    value={form.deepLinkSegment}
+                    onChange={(e) => setForm({ ...form, deepLinkSegment: e.target.value })}
+                  >
+                    <option value="">Selecione…</option>
+                    {(form.deepLinkMode === '/company/'
+                      ? companies
+                      : form.deepLinkMode === '/event/'
+                        ? events
+                        : form.deepLinkMode === '/tourist-spot/'
+                          ? touristSpots
+                          : jobs
+                    ).map((item) => (
+                      <option key={item._id} value={item._id}>
+                        {(item as { name?: string; title?: string }).name ??
+                          (item as { name?: string; title?: string }).title ??
+                          item._id}
+                      </option>
+                    ))}
+                  </Select>
+                )}
+                <p className="mt-1 text-xs text-text-muted">
+                  {deepLinkDescricao(form.deepLinkMode)}{' '}
+                  {DEEP_LINK_META[form.deepLinkMode]?.exemplo}
+                </p>
+                {form.deepLinkMode === '/company/' && companies.length === 0 && (
+                  <p className="mt-1 text-xs text-danger">
+                    Nenhuma empresa cadastrada. Cadastre empresas antes de usar este deep link.
+                  </p>
+                )}
+              </Field>
+            )}
+            {form.deepLinkMode !== 'none' && (
+              <div className="sm:col-span-2 rounded border border-border bg-surface-hover p-2 text-xs text-text-muted">
+                <span className="font-medium text-text">Prévia do deep link: </span>
+                <code className="text-primary">
+                  {buildDeepLink(form) ?? '(selecione o identificador)'}
+                </code>
+                <p className="mt-1">
+                  {deepLinkDescricao(form.deepLinkMode)}
+                </p>
+              </div>
+            )}
           </div>
+          <details className="mt-3 rounded border border-border bg-surface p-2 text-xs text-text-muted">
+            <summary className="cursor-pointer font-medium text-text">
+              Quais telas o deep link pode abrir?
+            </summary>
+            <ul className="mt-2 space-y-1">
+              {DEEP_LINK_ROTAS.map((rota) => (
+                <li key={rota.prefixo}>
+                  <span className="font-medium text-text">{deepLinkLabel(rota.prefixo)}</span>
+                  {' — '}
+                  {deepLinkDescricao(rota.prefixo)}
+                  {deepLinkPrecisaId(rota.prefixo) && (
+                    <span className="ml-1 italic">(exige ID)</span>
+                  )}
+                </li>
+              ))}
+            </ul>
+            <p className="mt-2">
+              Rotas não listadas (ex.: cupons, banners, avisos) não podem ser
+              abertas por notificação — por segurança, o app ignora deep links
+              fora desta lista.
+            </p>
+          </details>
         </Card>
 
         <Card>
