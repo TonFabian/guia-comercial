@@ -19,6 +19,9 @@ async function main() {
     agendarCicloDePlanos();
   }
   if (process.env.PUSH_CENTER_DISABLED !== 'true' && process.env.NODE_ENV !== 'test') {
+    void recuperarCampanhasTravadas(new Date()).catch((erro) => {
+      console.error('[push-center] recuperacao inicial falhou:', erro);
+    });
     cron.schedule(
       '*/5 * * * *',
       () => {
