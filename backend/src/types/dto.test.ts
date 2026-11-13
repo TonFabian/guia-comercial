@@ -182,7 +182,7 @@ describe('createPublicUtilitySchema', () => {
 });
 
 
-import { updatePlanSchema } from '../types/dto';
+import { updatePlanSchema } from '../types/dto.js';
 
 describe('updatePlanSchema — datas de vigencia', () => {
   it('aceita datas no formato YYYY-MM-DD', () => {

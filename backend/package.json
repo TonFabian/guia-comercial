@@ -1,6 +1,7 @@
 {
   "name": "guia-comercial-backend",
   "version": "1.0.0",
+  "type": "module",
   "private": true,
   "description": "API REST do guia comercial (Express + TypeScript + MongoDB)",
   "main": "dist/backend/src/index.js",
