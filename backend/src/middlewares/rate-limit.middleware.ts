@@ -1,5 +1,5 @@
 import type { RequestHandler } from 'express';
-import rateLimit from 'express-rate-limit';
+import rateLimit, { ipKeyGenerator } from 'express-rate-limit';
 import { RedisStore } from 'rate-limit-redis';
 import type { RedisReply } from 'rate-limit-redis';
 
@@ -47,7 +47,7 @@ function keyGenerator(req: Parameters<RequestHandler>[0]): string {
   if (req.method !== 'GET' && auth?.clerkId) {
     return `user:${auth.clerkId}`;
   }
-  return req.ip ?? req.socket.remoteAddress ?? 'desconhecido';
+  return ipKeyGenerator(req.ip ?? req.socket?.remoteAddress ?? 'unknown');
 }
 
 function createLimiter(windowMs: number, max: number, store: RedisStore | null) {

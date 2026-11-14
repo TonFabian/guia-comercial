@@ -1,4 +1,5 @@
 import type { Request, RequestHandler, Response } from 'express';
+import { ipKeyGenerator } from 'express-rate-limit';
 
 import { getRedis } from '../config/redis.js';
 import { incrComTtl, limparRateLimitRedis } from '../config/rate-limit-redis.js';
@@ -59,7 +60,7 @@ export function limparRateLimitAnalytics(): void {
 }
 
 function chaveIp(req: Request): string {
-  return req.ip ?? req.socket.remoteAddress ?? 'desconhecido';
+  return ipKeyGenerator(req.ip ?? req.socket?.remoteAddress ?? 'unknown');
 }
 
 function criarLimitador(tipo: 'view' | 'click' | 'favorite'): RequestHandler {
@@ -78,6 +79,8 @@ function criarLimitador(tipo: 'view' | 'click' | 'favorite'): RequestHandler {
 
       next();
     } catch (erro) {
+      // incrComTtl ja trata falhas de Redis internamente (fallback in-memory);
+      // este catch so dispara em erro de programacao — degradar permitindo.
       console.warn('[analytics-rate-limit] erro inesperado, degradando:', erro);
       next();
     }

@@ -1,4 +1,5 @@
 import type { Request, RequestHandler, Response } from 'express';
+import { ipKeyGenerator } from 'express-rate-limit';
 
 import { getRedis } from '../config/redis.js';
 import { incrComTtl, limparRateLimitRedis } from '../config/rate-limit-redis.js';
@@ -54,7 +55,7 @@ export function limparRateLimitCampanhas(): void {
 }
 
 function chave(req: Request): string {
-  const id = req.auth?.clerkId ?? req.ip;
+  const id = req.auth?.clerkId ?? ipKeyGenerator(req.ip ?? req.socket?.remoteAddress ?? 'unknown') ?? req.socket?.remoteAddress ?? 'desconhecido';
   return `campanha:${id}`;
 }
 
