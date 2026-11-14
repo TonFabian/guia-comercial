@@ -96,20 +96,33 @@ agentes de código) estão em [`AGENTS.md`](./AGENTS.md).
   também os contatos dela (e da empresa aninhada).
 - Redação de dados sensíveis para convidados (phone/whatsapp/address/code).
 - Seed idempotente de dados de exemplo (`npm run seed`, `--reset`).
-- Notificações push (Expo) disparadas ao publicar promoção e ao criar evento.
+- **Push Center** — campanhas de notificação segmentadas (broadcast, usuário,
+  lista, cidade, plano, favoritos) com envio imediato ou agendado, histórico com
+  tickets/receipts da Expo, limpeza automática de tokens mortos e deep link com
+  whitelist. Admin-only (`assertAdminEstrito`, fail-closed sem Clerk), rate
+  limit por admin (Redis).
+- Segurança: `helmet` (incluindo `X-Content-Type-Options: nosniff`), CORS por
+  allowlist, rate limit global (Redis/in-memory), autorização por ownership em
+  Company e PushCampaign, auditoria em log estruturado.
 
 ---
 
 ## Início rápido
 
-Pré-requisitos: Node.js 20+, npm 10+, MongoDB 7+ (local ou Atlas) e o
-**Expo Go** no celular (Android/iOS) para desenvolvimento rápido (ou dev build
-para recursos nativos como voz).
+Pré-requisitos: Node.js 20+, npm 10+, MongoDB 7+ (local ou Atlas), **Redis 7+**
+(opcional — o backend cai para in-memory sem `REDIS_URL`) e o **Expo Go** no
+celular (Android/iOS) para desenvolvimento rápido (ou dev build para recursos
+nativos como voz).
 
 ```bash
+# 0) Infra (opcional, recomendado para rate limit compartilhado)
+cd backend && docker compose up -d redis
+#    sobe o Redis com senha (REDIS_PASSWORD do .env). O backend conecta via
+#    REDIS_URL. Sem Docker/Redis, o backend usa fallback in-memory.
+
 # 1) API
 cd backend && npm install && cp .env.example .env && npm run dev
-#    http://localhost:4000/api/health
+#    http://localhost:4000/api/health  (status do Redis em { redis: 'up'|'down' })
 
 # 2) App (em outro terminal)
 cd mobile && npm install && cp .env.example .env && npx expo start
@@ -118,6 +131,13 @@ cd mobile && npm install && cp .env.example .env && npx expo start
 # 3) Painel (opcional)
 cd admin && npm install && cp .env.example .env && npm run dev
 #    http://localhost:5173
+```
+
+Para subir a API + Redis juntos via Docker:
+
+```bash
+cd backend && docker compose up -d --build
+#    backend em http://localhost:4000, redis em 6379
 ```
 
 O app mobile **funciona sem o backend**: `src/services/api.ts` cai para os
@@ -138,6 +158,15 @@ tela mostra estado vazio/erro.
 | `backend/` | `CLERK_SECRET_KEY`    | —                                             | habilita autenticação (sem ela, modo legado sem auth)     |
 | `backend/` | `CLERK_PUBLISHABLE_KEY` | —                                           | par da chave acima                                        |
 | `backend/` | `ADMIN_EMAILS`        | —                                             | CSV de e-mails que viram `role: admin`                    |
+| `backend/` | `REDIS_URL`           | —                                             | conexão com Redis (opcional; sem ela, rate limit cai para in-memory) |
+| `backend/` | `REDIS_PASSWORD`      | —                                             | senha do Redis (obrigatória em prod; ACL)                            |
+| `backend/` | `PUSH_CENTER_DISABLED`| `false`                                       | parada de emergência do Push Center (cron)                           |
+| `backend/` | `PUSH_CAMPAIGN_MAX_PER_HOUR` | `10`                                    | limite de campanhas por admin por hora                                |
+| `backend/` | `ANALYTICS_VIEW_MAX_PER_HOUR` | `1`                                     | limite de views por empresa por IP por hora                           |
+| `backend/` | `ANALYTICS_CLICK_MAX_PER_HOUR` | `5`                                    | limite de cliques WhatsApp por empresa por IP por hora                |
+| `backend/` | `ANALYTICS_FAVORITE_MAX_PER_HOUR` | `30`                                | limite de toggles de favorito por empresa por IP por hora             |
+| `backend/` | `RATE_LIMIT_WINDOW_MS` | `900000`                                     | janela do rate limit global (ms)                                     |
+| `backend/` | `RATE_LIMIT_MAX`      | `1000`                                        | requisições por janela por IP (global)                               |
 | `backend/` | `NOTIFY_SECRET`       | —                                             | segredo para `POST /notifications/broadcast` (opcional)   |
 | `mobile/`  | `EXPO_PUBLIC_API_URL` | `http://localhost:4000/api`                   | base da API (prefixo `EXPO_PUBLIC_` é injetado no bundle) |
 | `mobile/`  | `EXPO_PUBLIC_CLERK_PUBLISHABLE_KEY` | —                           | chave pública do Clerk                                    |
@@ -320,17 +349,16 @@ cd admin   && npm run lint && npm run typecheck && npm test && npm run build
 | App     | Lint          | Typecheck      | Testes             | Build         |
 | ------- | ------------- | -------------- | ------------------ | ------------- |
 | backend | ESLint (flat) | `tsc --noEmit` | vitest + supertest  | `tsc`         |
-| mobile  | `expo lint`   | `tsc --noEmit` | vitest (180 testes) | `expo export` |
-| admin   | ESLint (flat) | `tsc --noEmit` | vitest (11 testes)  | `vite build`  |
+| mobile  | `expo lint`   | `tsc --noEmit` | vitest (262 testes) | `expo export` |
+| admin   | ESLint (flat) | `tsc --noEmit` | vitest (42 testes)  | `vite build`  |
 
 - **TDD** no backend: todo endpoint novo nasce com o teste do supertest
   falhando, depois o código, depois o refactor.
 - **Rate limiting em três camadas** (global `/api/*`, webhook do Clerk e
   anti-inflação de analytics) — detalhes em `backend/README.md`.
-- Cobertura de teste hoje: **441 testes no backend** (30 arquivos, incluindo
-  a varredura de segurança de 107 testes em `src/routes/security.test.ts`),
-  **180 testes no mobile** (17 arquivos) e **11 testes no admin** (1 arquivo
-  com a validação e a reordenação da programação do evento).
+- Cobertura de teste hoje: **594 testes no backend** (48 arquivos, incluindo a
+  varredura de segurança de autorização cross-user e rate limit), **262 testes
+  no mobile** (29 arquivos) e **42 testes no admin** (10 arquivos).
 - Formatação: `.prettierrc` na raiz (printWidth 100, aspas simples, trailing
   comma, ponto e vírgula).
 
