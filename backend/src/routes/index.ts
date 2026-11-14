@@ -16,8 +16,8 @@ import * as pushCampaignController from '../controllers/push-campaign.controller
 import * as publicUtilityController from '../controllers/public-utility.controller.js';
 import * as touristSpotController from '../controllers/tourist-spot.controller.js';
 import * as reviewController from '../controllers/review.controller.js';
+import type { AuthDeps } from '../middlewares/auth.middleware.js';
 import {
-  createAuthDeps,
   makeAuthMiddleware,
   requireAuthIfConfigured,
 } from '../middlewares/auth.middleware.js';
@@ -53,6 +53,7 @@ import {
 import { listUsers, me, updateMe, updateUserRole, updateUserProfile, deleteUser } from '../controllers/user.controller.js';
 import { broadcastPush, registerPushToken } from '../controllers/push-token.controller.js';
 
+export function createRoutes(authDeps: AuthDeps | null): Router {
 const routes = Router();
 
 // -----------------------------------------------------------------------------
@@ -62,11 +63,12 @@ routes.get('/health', health);
 
 // Auth opcional: sem CLERK_SECRET_KEY o modo legado segue sem `req.auth`.
 // O health fica de fora para não depender do Clerk em monitoramento.
-const authDeps = createAuthDeps();
+// Obs.: o `optionalAuth` do Clerk é montado em app.ts ANTES do rate limit
+// global (risco aceito: token inválido chama o Clerk antes do limiter —
+// mitigação futura). Aqui mantemos guestScrub e as rotas que exigem sessão.
 if (authDeps) {
   const auth = makeAuthMiddleware(authDeps);
 
-  routes.use(auth.optionalAuth);
   // Scrub de convidado: redige contato/código antes de responder. Montado
   // dentro do bloco do Clerk (aqui) para rodar ANTES dos handlers de rota —
   // caso contrário a interceptação de `res.json` chega tarde demais.
@@ -263,4 +265,5 @@ routes.get('/notifications/campaigns', pushCampaignController.listarCampanhas);
 routes.get('/notifications/campaigns/:id', pushCampaignController.detalharCampanha);
 routes.delete('/notifications/campaigns/:id', pushCampaignController.excluirCampanha);
 
-export default routes;
+return routes;
+}

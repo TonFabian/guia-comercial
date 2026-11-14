@@ -42,3 +42,10 @@ describe('Webhook do Clerk montado antes do express.json', () => {
     expect(response.status).toBe(400);
   });
 });
+
+describe('Helmet nosniff', () => {
+  it('responde X-Content-Type-Options: nosniff em todas as respostas', async () => {
+    const response = await request(app).get('/api/health');
+    expect(response.headers['x-content-type-options']).toBe('nosniff');
+  });
+});
