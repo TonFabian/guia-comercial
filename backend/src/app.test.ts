@@ -11,6 +11,7 @@ describe('GET /api/health', () => {
     expect(response.status).toBe(200);
     expect(response.body.status).toBe('ok');
     expect(() => new Date(response.body.timestamp)).not.toThrow();
+    expect(['up', 'down']).toContain(response.body.redis);
   });
 });
 
