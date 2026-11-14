@@ -2,7 +2,7 @@ services:
   redis:
     image: redis:7-alpine
     env_file:
-      - backend/.env
+      - .env
     command: ["sh", "-c", "redis-server --requirepass \"$$REDIS_PASSWORD\""]
     volumes:
       - redis_data:/data
@@ -16,10 +16,10 @@ services:
 
   backend:
     build:
-      context: .
+      context: ..
       dockerfile: backend/Dockerfile
     env_file:
-      - backend/.env
+      - .env
     ports:
       - "4000:4000"
     depends_on:

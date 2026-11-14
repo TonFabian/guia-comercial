@@ -39,7 +39,7 @@
 ### Task 1: Infra Docker (Dockerfile + compose + .dockerignore + .env.example)
 
 **Files:**
-- Create: `backend/Dockerfile`, `.dockerignore` (raiz), `docker-compose.yml` (raiz), `backend/.env.example`
+- Create: `backend/Dockerfile`, `.dockerignore` (raiz), `backend/docker-compose.yml`, `backend/.env.example`
 
 **Interfaces:**
 - Produces: serviço `redis` (imagem `redis:7-alpine`, `env_file: backend/.env`, `command: ["sh","-c","redis-server --requirepass \"$$REDIS_PASSWORD\""]`, volume `redis_data`, healthcheck `CMD-SHELL: redis-cli -a $$REDIS_PASSWORD ping`, restart `unless-stopped`) e serviço `backend` (build `context: .`, `dockerfile: backend/Dockerfile`, `env_file: backend/.env`, depends_on redis `condition: service_healthy`, port 4000). Ambos os serviços leem `backend/.env` (única fonte). O backend **não** define `REDIS_URL` via `environment` (interpolação parse-time não tem acesso ao `env_file`); em vez disso usa `entrypoint: ["/bin/sh","-c"]` com `command` inline que reconstrói `REDIS_URL` a partir de `REDIS_PASSWORD` em runtime quando vazio/malformado. Documentar `REDIS_URL` no `.env.example` como "local-dev only".
@@ -47,7 +47,7 @@
 
 - [ ] **Step 1:** Criar `backend/Dockerfile`: stage build `FROM node:20 AS build`, `WORKDIR /app`, `COPY backend ./backend`, `COPY shared ./shared`, `WORKDIR /app/backend`, `RUN npm ci && npm run build`; stage deps `FROM node:20-alpine AS deps`, `WORKDIR /app/backend`, `COPY backend/package.json backend/package-lock.json ./`, `RUN npm ci --omit=dev`; stage runtime `FROM node:20-alpine`, `WORKDIR /app/backend`, `COPY --from=build /app/backend/dist ./dist`, `COPY --from=deps /app/backend/node_modules ./node_modules`, `CMD ["node","dist/backend/src/index.js"]`, `HEALTHCHECK --interval=30s --timeout=3s CMD wget -qO- http://localhost:4000/api/health || exit 1`. **Sem entrypoint.sh** — a reconstrução do `REDIS_URL` vive no `command` inline do compose.
 - [ ] **Step 2:** Criar `.dockerignore` na **raiz** (`node_modules`, `dist`, `.env`, `*.log`, `.git`, `mobile/`, `admin/`) — context é a raiz. (Manter também `backend/.dockerignore` para runs locais.)
-- [ ] **Step 3:** Criar `docker-compose.yml` na raiz com `redis` + `backend`, rede `guia`, volume `redis_data`, healthchecks (`CMD-SHELL` no redis), `depends_on: condition: service_healthy`, `env_file: backend/.env` em ambos. O serviço `backend` usa `entrypoint: ["/bin/sh","-c"]` com `command` inline que reconstrói `REDIS_URL` a partir de `REDIS_PASSWORD` (host `redis`) quando vazio/malformado, e só então executa `node dist/backend/src/index.js`. Sem `environment: REDIS_URL` (evita interpolação parse-time).
+- [ ] **Step 3:** Criar `backend/docker-compose.yml` com `redis` + `backend`, rede `guia`, volume `redis_data`, healthchecks (`CMD-SHELL` no redis), `depends_on: condition: service_healthy`, `env_file: backend/.env` em ambos. O serviço `backend` usa `entrypoint: ["/bin/sh","-c"]` com `command` inline que reconstrói `REDIS_URL` a partir de `REDIS_PASSWORD` (host `redis`) quando vazio/malformado, e só então executa `node dist/backend/src/index.js`. Sem `environment: REDIS_URL` (evita interpolação parse-time).
 - [ ] **Step 4:** Criar `backend/.env.example` enumerando todas as vars (ver Interfaces).
 - [ ] **Step 5:** Verificar `docker compose config` (se docker disponível) — sintaxe válida.
 - [ ] **Step 6:** Commit: `chore(infra): adiciona Dockerfile, compose e env para Redis`

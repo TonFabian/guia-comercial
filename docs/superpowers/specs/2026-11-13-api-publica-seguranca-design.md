@@ -25,7 +25,7 @@ mesmos status codes), adicionando apenas camadas de proteção.
 - Autorização por ownership: um usuário só altera/exclui recursos que possui
   (ou é admin).
 - Auditoria mínima: log estruturado de alterações de plano/status de empresa.
-- Infra: `docker-compose.yml` (Redis) + `backend/Dockerfile`, orquestrando
+- Infra: `backend/docker-compose.yml` (Redis) + `backend/Dockerfile`, orquestrando
   Redis para dev e prod.
 - Fallback gracioso: sem `REDIS_URL`, mantém in-memory (testes e dev local
   sem Docker continuam funcionando).
@@ -45,7 +45,7 @@ mesmos status codes), adicionando apenas camadas de proteção.
 
 ## 3. Abordagem (A — incremental)
 
-- `docker-compose.yml` na raiz: serviço `redis` (imagem oficial, volume
+- `docker-compose.yml` em `backend/`: serviço `redis` (imagem oficial, volume
   nomeado, healthcheck, restart `unless-stopped`) + serviço `backend`
   (build `backend/Dockerfile`). Mongo permanece externo (`MONGODB_URI`).
 - Cliente Redis: `ioredis`. Env `REDIS_URL` (default no compose
@@ -98,7 +98,7 @@ e aplicar rate limit por (IP, companyId) — já existe.
 
 - `backend/Dockerfile`: multi-stage (build TS → node:alpine runtime), `npm ci`,
   `CMD node dist/index.js`. Não copia `.env`.
-- `docker-compose.yml` (raiz): `redis` + `backend`. Volumes: redis data.
+- `backend/docker-compose.yml`: `redis` + `backend`. Volumes: redis data.
   Healthchecks: redis `redis-cli ping` (com `-a $REDIS_PASSWORD`), backend
   `/api/health`.
 - `.dockerignore` em backend.
