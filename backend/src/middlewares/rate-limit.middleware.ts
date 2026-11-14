@@ -50,14 +50,6 @@ function keyGenerator(req: Parameters<RequestHandler>[0]): string {
   return req.ip ?? req.socket.remoteAddress ?? 'desconhecido';
 }
 
-function skipHealth(req: Parameters<RequestHandler>[0]): boolean {
-  try {
-    return new URL(req.originalUrl, 'http://localhost').pathname === '/api/health';
-  } catch {
-    return false;
-  }
-}
-
 function createLimiter(windowMs: number, max: number, store: RedisStore | null) {
   return rateLimit({
     windowMs,
@@ -66,7 +58,13 @@ function createLimiter(windowMs: number, max: number, store: RedisStore | null) 
     legacyHeaders: false,
     store: store ?? undefined,
     keyGenerator,
-    skip: skipHealth,
+    skip: (req) => {
+      try {
+        return new URL(req.originalUrl, 'http://localhost').pathname === '/api/health';
+      } catch {
+        return false;
+      }
+    },
     // Em caso de erro do store em runtime, o wrapper abaixo assume o fallback
     // in-memory; aqui não silenciamos para que o wrapper perceba o erro.
     passOnStoreError: false,
