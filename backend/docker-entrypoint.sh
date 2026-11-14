@@ -21,7 +21,11 @@ redis_url_ok() {
 
 if ! redis_url_ok "$REDIS_URL"; then
   if [ -z "$REDIS_PASSWORD" ]; then
-    echo "[entrypoint] REDIS_PASSWORD ausente; REDIS_URL pode falhar" >&2
+    if [ "${NODE_ENV:-}" = "production" ]; then
+      echo "[entrypoint] ERRO: REDIS_PASSWORD obrigatorio em producao." >&2
+      exit 1
+    fi
+    echo "[entrypoint] AVISO: REDIS_PASSWORD vazio; Redis pode subir sem senha (dev)." >&2
   fi
   export REDIS_URL="redis://:${REDIS_PASSWORD}@redis:6379"
 fi
