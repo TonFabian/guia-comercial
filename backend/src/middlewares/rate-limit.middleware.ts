@@ -66,8 +66,9 @@ function createLimiter(windowMs: number, max: number, store: RedisStore | null) 
       }
     },
     // Em caso de erro do store em runtime, o wrapper abaixo assume o fallback
-    // in-memory; aqui não silenciamos para que o wrapper perceba o erro.
-    passOnStoreError: false,
+    // in-memory; passOnStoreError: true garante que o erro chegue ao callback
+    // (e não seja lançado) para que o fallback seja acionado.
+    passOnStoreError: true,
   });
 }
 
