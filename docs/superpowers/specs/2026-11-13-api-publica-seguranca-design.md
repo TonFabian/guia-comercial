@@ -71,7 +71,7 @@ mesmos status codes), adicionando apenas camadas de proteção.
 |---|---|---|
 | `Company` | `ownerClerkId` | owner OU admin |
 | `Company.plan` | — | admin only (já é) |
-| `PushCampaign` | `createdByClerkId` | criador OU admin (já via `assertAdminEstrito`) |
+| `PushCampaign` | `createdByClerkId` | criador OU admin; em modo legado (sem Clerk) apenas admin (fail-closed via `assertAdminEstrito`) |
 
 `Event`/`Job`/`TouristSpot`/`AutonomousProfessional` ficam admin-only (como
 hoje, via `assertAdmin`); ownership para eles é adiado para grupo 5.
@@ -102,6 +102,8 @@ e aplicar rate limit por (IP, companyId) — já existe.
   Healthchecks: redis `redis-cli ping` (com `-a $REDIS_PASSWORD`), backend
   `/api/health`.
 - `.dockerignore` em backend.
+- `X-Content-Type-Options: nosniff` globalmente via `helmet({ noSniff: true })`
+  (helmet já inclui por default; tornar explícito e testável).
 - `REDIS_URL` e `REDIS_PASSWORD` adicionados a `.env.example`.
 
 ## 7. Endpoints novos/alterados
