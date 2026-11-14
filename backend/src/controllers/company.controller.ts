@@ -107,7 +107,7 @@ export const untrackFavorite = asyncHandler(async (req: Request, res: Response):
 
 export const getAnalytics = asyncHandler(async (req: Request, res: Response): Promise<void> => {
   throwIfInvalidId(String(req.params.id));
-  const company = await companyService.getCompanyById(String(req.params.id));
+  const company = await companyService.getCompanyById(String(req.params.id), true);
   if (!company) {
     res.status(404).json({ error: 'empresa não encontrada' });
     return;

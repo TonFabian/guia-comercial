@@ -2,7 +2,7 @@ import type { Request, Response } from 'express';
 import { isValidObjectId } from 'mongoose';
 
 import { PushCampaignModel } from '../models/push-campaign.model.js';
-import { assertAdminEstrito } from '../services/user.service.js';
+import { assertAdminEstrito, findUserByClerkId } from '../services/user.service.js';
 import { enviarCampanha } from '../services/push-campaign.service.js';
 import { asyncHandler, parsePagination } from '../utils/http.js';
 import type { CreateCampaignDto } from '../types/dto.js';
@@ -65,7 +65,7 @@ export const enviarAgora = asyncHandler(async (req: Request, res: Response): Pro
 });
 
 export const cancelarCampanha = asyncHandler(async (req: Request, res: Response): Promise<void> => {
-  await assertAdminEstrito(req.auth?.clerkId, 'cancelar campanha');
+  const clerkId = req.auth?.clerkId;
 
   const id = String(req.params.id);
   if (!isValidObjectId(id)) {
@@ -73,10 +73,29 @@ export const cancelarCampanha = asyncHandler(async (req: Request, res: Response)
     return;
   }
 
-  const campanha = (await PushCampaignModel.findById(id)) as { status?: string } | null;
+  const campanha = (await PushCampaignModel.findById(id)) as { status?: string; createdByClerkId?: string } | null;
   if (!campanha) {
     res.status(404).json({ error: 'campanha não encontrada' });
     return;
+  }
+
+  // Autorização: em modo legado (sem Clerk) fail-closed; em modo autenticado
+  // permite o criador da campanha ou um admin.
+  if (!process.env.CLERK_SECRET_KEY) {
+    await assertAdminEstrito(clerkId, 'cancelar campanha');
+  } else {
+    const isCriador =
+      typeof campanha.createdByClerkId === 'string' &&
+      campanha.createdByClerkId === clerkId;
+    if (!isCriador) {
+      if (!clerkId) {
+        throw Object.assign(new Error('Não autenticado'), { statusCode: 401 });
+      }
+      const user = await findUserByClerkId(clerkId);
+      if (user?.role !== 'admin') {
+        throw Object.assign(new Error('sem permissão para cancelar campanha'), { statusCode: 403 });
+      }
+    }
   }
 
   if (campanha.status !== 'scheduled') {
@@ -130,7 +149,7 @@ export const detalharCampanha = asyncHandler(async (req: Request, res: Response)
 });
 
 export const excluirCampanha = asyncHandler(async (req: Request, res: Response): Promise<void> => {
-  await assertAdminEstrito(req.auth?.clerkId, 'excluir campanha');
+  const clerkId = req.auth?.clerkId;
 
   const id = String(req.params.id);
   if (!isValidObjectId(id)) {
@@ -138,10 +157,29 @@ export const excluirCampanha = asyncHandler(async (req: Request, res: Response):
     return;
   }
 
-  const campanha = (await PushCampaignModel.findById(id)) as { status?: string } | null;
+  const campanha = (await PushCampaignModel.findById(id)) as { status?: string; createdByClerkId?: string } | null;
   if (!campanha) {
     res.status(404).json({ error: 'campanha não encontrada' });
     return;
+  }
+
+  // Autorização: em modo legado (sem Clerk) fail-closed; em modo autenticado
+  // permite o criador da campanha ou um admin.
+  if (!process.env.CLERK_SECRET_KEY) {
+    await assertAdminEstrito(clerkId, 'excluir campanha');
+  } else {
+    const isCriador =
+      typeof campanha.createdByClerkId === 'string' &&
+      campanha.createdByClerkId === clerkId;
+    if (!isCriador) {
+      if (!clerkId) {
+        throw Object.assign(new Error('Não autenticado'), { statusCode: 401 });
+      }
+      const user = await findUserByClerkId(clerkId);
+      if (user?.role !== 'admin') {
+        throw Object.assign(new Error('sem permissão para excluir campanha'), { statusCode: 403 });
+      }
+    }
   }
 
   if (campanha.status !== 'draft' && campanha.status !== 'failed') {
