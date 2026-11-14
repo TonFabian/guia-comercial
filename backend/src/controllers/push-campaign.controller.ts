@@ -5,6 +5,7 @@ import { PushCampaignModel } from '../models/push-campaign.model.js';
 import { assertAdminEstrito, findUserByClerkId } from '../services/user.service.js';
 import { enviarCampanha } from '../services/push-campaign.service.js';
 import { asyncHandler, parsePagination } from '../utils/http.js';
+import { auditLog } from '../utils/audit.js';
 import type { CreateCampaignDto } from '../types/dto.js';
 
 export const criarCampanha = asyncHandler(async (req: Request, res: Response): Promise<void> => {
@@ -34,6 +35,20 @@ export const criarCampanha = asyncHandler(async (req: Request, res: Response): P
     stats: { targeted: 0, sent: 0, failed: 0, deadTokens: 0 },
   });
 
+  auditLog({
+    actor: req.auth?.clerkId ?? 'legado',
+    action: 'campaign.create',
+    resource: 'campaign',
+    resourceId: String(doc._id),
+    before: undefined,
+    after: {
+      _id: doc._id,
+      title: doc.title,
+      status: doc.status,
+      segment: doc.segment,
+    },
+  });
+
   res.status(201).json(doc);
 });
 
@@ -61,6 +76,19 @@ export const enviarAgora = asyncHandler(async (req: Request, res: Response): Pro
   await enviarCampanha(id);
 
   const atualizada = await PushCampaignModel.findById(id);
+  const stats = (atualizada as { stats?: { targeted?: number; sent?: number } } | null)?.stats;
+  auditLog({
+    actor: req.auth?.clerkId ?? 'legado',
+    action: 'campaign.send',
+    resource: 'campaign',
+    resourceId: id,
+    before: { status },
+    after: {
+      status: 'sent',
+      targeted: stats?.targeted ?? 0,
+      sent: stats?.sent ?? 0,
+    },
+  });
   res.status(200).json(atualizada);
 });
 
@@ -73,7 +101,7 @@ export const cancelarCampanha = asyncHandler(async (req: Request, res: Response)
     return;
   }
 
-  const campanha = (await PushCampaignModel.findById(id)) as { status?: string; createdByClerkId?: string } | null;
+  const campanha = (await PushCampaignModel.findById(id)) as { _id?: unknown; title?: string; status?: string; createdByClerkId?: string } | null;
   if (!campanha) {
     res.status(404).json({ error: 'campanha não encontrada' });
     return;
@@ -105,6 +133,14 @@ export const cancelarCampanha = asyncHandler(async (req: Request, res: Response)
 
   await PushCampaignModel.findByIdAndUpdate(id, { $set: { status: 'draft' } });
   const atualizada = await PushCampaignModel.findById(id);
+  auditLog({
+    actor: req.auth?.clerkId ?? 'legado',
+    action: 'campaign.cancel',
+    resource: 'campaign',
+    resourceId: id,
+    before: { status: campanha.status ?? 'scheduled' },
+    after: { status: 'draft' },
+  });
   res.status(200).json(atualizada);
 });
 
@@ -157,7 +193,7 @@ export const excluirCampanha = asyncHandler(async (req: Request, res: Response):
     return;
   }
 
-  const campanha = (await PushCampaignModel.findById(id)) as { status?: string; createdByClerkId?: string } | null;
+  const campanha = (await PushCampaignModel.findById(id)) as { _id?: unknown; title?: string; status?: string; createdByClerkId?: string } | null;
   if (!campanha) {
     res.status(404).json({ error: 'campanha não encontrada' });
     return;
@@ -188,5 +224,17 @@ export const excluirCampanha = asyncHandler(async (req: Request, res: Response):
   }
 
   await PushCampaignModel.findByIdAndDelete(id);
+  auditLog({
+    actor: req.auth?.clerkId ?? 'legado',
+    action: 'campaign.delete',
+    resource: 'campaign',
+    resourceId: id,
+    before: {
+      _id: campanha._id,
+      title: campanha.title,
+      status: campanha.status,
+    },
+    after: undefined,
+  });
   res.status(204).end();
 });
