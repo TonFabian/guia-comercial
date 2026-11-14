@@ -4,6 +4,7 @@ import * as companyService from '../services/company.service.js';
 import * as analyticsService from '../services/analytics.service.js';
 import type { CreateCompanyDto, UpdateCompanyDto, UpdatePlanDto } from '../types/dto.js';
 import { asyncHandler, parsePagination } from '../utils/http.js';
+import { auditLog } from '../utils/audit.js';
 
 export const list = asyncHandler(async (req: Request, res: Response): Promise<void> => {
   const pagination = parsePagination(req.query.page, req.query.pageSize);
@@ -45,19 +46,48 @@ export const update = asyncHandler(
 export const remove = asyncHandler(
   async (req: Request, res: Response): Promise<void> => {
     throwIfInvalidId(String(req.params.id));
-    await companyService.deleteCompany(String(req.params.id), req.auth?.clerkId);
+    const id = String(req.params.id);
+    const atual = await companyService.getCompanyById(id);
+    await companyService.deleteCompany(id, req.auth?.clerkId);
+    auditLog({
+      actor: req.auth?.clerkId ?? 'legado',
+      action: 'company.delete',
+      resource: 'company',
+      resourceId: id,
+      before: atual
+        ? { _id: atual._id, name: atual.name, plan: atual.plan }
+        : undefined,
+      after: undefined,
+    });
     res.status(204).end();
   },
 );
 
 export const updatePlan = asyncHandler(async (req: Request, res: Response): Promise<void> => {
   throwIfInvalidId(String(req.params.id));
+  const id = String(req.params.id);
   const payload = req.body as UpdatePlanDto;
-  const company = await companyService.updateCompanyPlan(String(req.params.id), payload, req.auth?.clerkId);
+  const atual = await companyService.getCompanyById(id);
+  const before = atual
+    ? { plan: atual.plan, planStartedAt: atual.planStartedAt, planExpiresAt: atual.planExpiresAt }
+    : undefined;
+  const company = await companyService.updateCompanyPlan(id, payload, req.auth?.clerkId);
   if (!company) {
     res.status(404).json({ error: 'empresa não encontrada' });
     return;
   }
+  auditLog({
+    actor: req.auth?.clerkId ?? 'legado',
+    action: 'company.plan.update',
+    resource: 'company',
+    resourceId: id,
+    before,
+    after: {
+      plan: company.plan,
+      planStartedAt: company.planStartedAt,
+      planExpiresAt: company.planExpiresAt,
+    },
+  });
   res.json(company);
 });
 
@@ -107,7 +137,7 @@ export const untrackFavorite = asyncHandler(async (req: Request, res: Response):
 
 export const getAnalytics = asyncHandler(async (req: Request, res: Response): Promise<void> => {
   throwIfInvalidId(String(req.params.id));
-  const company = await companyService.getCompanyById(String(req.params.id));
+  const company = await companyService.getCompanyById(String(req.params.id), true);
   if (!company) {
     res.status(404).json({ error: 'empresa não encontrada' });
     return;

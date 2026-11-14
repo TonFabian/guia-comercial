@@ -11,6 +11,7 @@ describe('GET /api/health', () => {
     expect(response.status).toBe(200);
     expect(response.body.status).toBe('ok');
     expect(() => new Date(response.body.timestamp)).not.toThrow();
+    expect(['up', 'down']).toContain(response.body.redis);
   });
 });
 
@@ -40,5 +41,12 @@ describe('Webhook do Clerk montado antes do express.json', () => {
       .send({ type: 'user.created', data: { id: 'user_123' } });
 
     expect(response.status).toBe(400);
+  });
+});
+
+describe('Helmet nosniff', () => {
+  it('responde X-Content-Type-Options: nosniff em todas as respostas', async () => {
+    const response = await request(app).get('/api/health');
+    expect(response.headers['x-content-type-options']).toBe('nosniff');
   });
 });

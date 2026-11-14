@@ -2,15 +2,17 @@ import cors from 'cors';
 import express from 'express';
 import helmet from 'helmet';
 
-import { assertValidClerkConfiguration, warnIfWithoutAuthentication } from './config/boot-check.js';
+import { assertValidClerkConfiguration, assertValidRedisConfiguration, warnIfWithoutAuthentication } from './config/boot-check.js';
+import { createAuthDeps, makeAuthMiddleware } from './middlewares/auth.middleware.js';
 import { errorHandler } from './middlewares/error.middleware.js';
 import { notFoundHandler } from './middlewares/not-found.middleware.js';
 import { createRateLimitMiddleware, createWebhookRateLimitMiddleware } from './middlewares/rate-limit.middleware.js';
-import routes from './routes/index.js';
+import { createRoutes } from './routes/index.js';
 import { clerkWebhook } from './routes/webhooks/clerk.js';
 
 // Aviso de boot: em produção, ausência de CLERK_SECRET_KEY deixa a API aberta.
 assertValidClerkConfiguration(process.env);
+assertValidRedisConfiguration(process.env);
 warnIfWithoutAuthentication(process.env);
 
 const app = express();
@@ -44,7 +46,7 @@ app.use(
   ),
 );
 
-app.use(helmet());
+app.use(helmet({ noSniff: true }));
 
 // O webhook do Clerk exige o corpo bruto byte-a-byte: express.json reparsaria
 // o payload e a assinatura svix falharia. Por isso a rota fica antes do json.
@@ -53,7 +55,17 @@ app.post('/api/webhooks/clerk', createWebhookRateLimitMiddleware(), express.raw(
 
 app.use(express.json({ limit: '1mb' }));
 
-app.use('/api', createRateLimitMiddleware(), routes);
+// Auth opcional (Clerk): montado ANTES do rate limit global para que o
+// optionalAuth resolva a identidade (ou 401 para token inválido) antes de
+// consumir o balde de rate limit. Risco aceito: um token inválido dispara a
+// verificação do Clerk antes do limiter (brute-force mitigation futura).
+// Em modo legado (sem CLERK_SECRET_KEY) nada é montado.
+const authDeps = createAuthDeps();
+if (authDeps) {
+  app.use('/api', makeAuthMiddleware(authDeps).optionalAuth);
+}
+
+app.use('/api', createRateLimitMiddleware(), createRoutes(authDeps));
 
 // 404 para rotas não tratadas; deve vir depois de todas as rotas.
 app.use(notFoundHandler);

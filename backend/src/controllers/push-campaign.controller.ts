@@ -2,9 +2,10 @@ import type { Request, Response } from 'express';
 import { isValidObjectId } from 'mongoose';
 
 import { PushCampaignModel } from '../models/push-campaign.model.js';
-import { assertAdminEstrito } from '../services/user.service.js';
+import { assertAdminEstrito, findUserByClerkId } from '../services/user.service.js';
 import { enviarCampanha } from '../services/push-campaign.service.js';
 import { asyncHandler, parsePagination } from '../utils/http.js';
+import { auditLog } from '../utils/audit.js';
 import type { CreateCampaignDto } from '../types/dto.js';
 
 export const criarCampanha = asyncHandler(async (req: Request, res: Response): Promise<void> => {
@@ -34,6 +35,20 @@ export const criarCampanha = asyncHandler(async (req: Request, res: Response): P
     stats: { targeted: 0, sent: 0, failed: 0, deadTokens: 0 },
   });
 
+  auditLog({
+    actor: req.auth?.clerkId ?? 'legado',
+    action: 'campaign.create',
+    resource: 'campaign',
+    resourceId: String(doc._id),
+    before: undefined,
+    after: {
+      _id: doc._id,
+      title: doc.title,
+      status: doc.status,
+      segment: doc.segment,
+    },
+  });
+
   res.status(201).json(doc);
 });
 
@@ -61,11 +76,24 @@ export const enviarAgora = asyncHandler(async (req: Request, res: Response): Pro
   await enviarCampanha(id);
 
   const atualizada = await PushCampaignModel.findById(id);
+  const stats = (atualizada as { stats?: { targeted?: number; sent?: number } } | null)?.stats;
+  auditLog({
+    actor: req.auth?.clerkId ?? 'legado',
+    action: 'campaign.send',
+    resource: 'campaign',
+    resourceId: id,
+    before: { status },
+    after: {
+      status: 'sent',
+      targeted: stats?.targeted ?? 0,
+      sent: stats?.sent ?? 0,
+    },
+  });
   res.status(200).json(atualizada);
 });
 
 export const cancelarCampanha = asyncHandler(async (req: Request, res: Response): Promise<void> => {
-  await assertAdminEstrito(req.auth?.clerkId, 'cancelar campanha');
+  const clerkId = req.auth?.clerkId;
 
   const id = String(req.params.id);
   if (!isValidObjectId(id)) {
@@ -73,10 +101,29 @@ export const cancelarCampanha = asyncHandler(async (req: Request, res: Response)
     return;
   }
 
-  const campanha = (await PushCampaignModel.findById(id)) as { status?: string } | null;
+  const campanha = (await PushCampaignModel.findById(id)) as { _id?: unknown; title?: string; status?: string; createdByClerkId?: string } | null;
   if (!campanha) {
     res.status(404).json({ error: 'campanha não encontrada' });
     return;
+  }
+
+  // Autorização: em modo legado (sem Clerk) fail-closed; em modo autenticado
+  // permite o criador da campanha ou um admin.
+  if (!process.env.CLERK_SECRET_KEY) {
+    await assertAdminEstrito(clerkId, 'cancelar campanha');
+  } else {
+    const isCriador =
+      typeof campanha.createdByClerkId === 'string' &&
+      campanha.createdByClerkId === clerkId;
+    if (!isCriador) {
+      if (!clerkId) {
+        throw Object.assign(new Error('Não autenticado'), { statusCode: 401 });
+      }
+      const user = await findUserByClerkId(clerkId);
+      if (user?.role !== 'admin') {
+        throw Object.assign(new Error('sem permissão para cancelar campanha'), { statusCode: 403 });
+      }
+    }
   }
 
   if (campanha.status !== 'scheduled') {
@@ -86,6 +133,14 @@ export const cancelarCampanha = asyncHandler(async (req: Request, res: Response)
 
   await PushCampaignModel.findByIdAndUpdate(id, { $set: { status: 'draft' } });
   const atualizada = await PushCampaignModel.findById(id);
+  auditLog({
+    actor: req.auth?.clerkId ?? 'legado',
+    action: 'campaign.cancel',
+    resource: 'campaign',
+    resourceId: id,
+    before: { status: campanha.status ?? 'scheduled' },
+    after: { status: 'draft' },
+  });
   res.status(200).json(atualizada);
 });
 
@@ -130,7 +185,7 @@ export const detalharCampanha = asyncHandler(async (req: Request, res: Response)
 });
 
 export const excluirCampanha = asyncHandler(async (req: Request, res: Response): Promise<void> => {
-  await assertAdminEstrito(req.auth?.clerkId, 'excluir campanha');
+  const clerkId = req.auth?.clerkId;
 
   const id = String(req.params.id);
   if (!isValidObjectId(id)) {
@@ -138,10 +193,29 @@ export const excluirCampanha = asyncHandler(async (req: Request, res: Response):
     return;
   }
 
-  const campanha = (await PushCampaignModel.findById(id)) as { status?: string } | null;
+  const campanha = (await PushCampaignModel.findById(id)) as { _id?: unknown; title?: string; status?: string; createdByClerkId?: string } | null;
   if (!campanha) {
     res.status(404).json({ error: 'campanha não encontrada' });
     return;
+  }
+
+  // Autorização: em modo legado (sem Clerk) fail-closed; em modo autenticado
+  // permite o criador da campanha ou um admin.
+  if (!process.env.CLERK_SECRET_KEY) {
+    await assertAdminEstrito(clerkId, 'excluir campanha');
+  } else {
+    const isCriador =
+      typeof campanha.createdByClerkId === 'string' &&
+      campanha.createdByClerkId === clerkId;
+    if (!isCriador) {
+      if (!clerkId) {
+        throw Object.assign(new Error('Não autenticado'), { statusCode: 401 });
+      }
+      const user = await findUserByClerkId(clerkId);
+      if (user?.role !== 'admin') {
+        throw Object.assign(new Error('sem permissão para excluir campanha'), { statusCode: 403 });
+      }
+    }
   }
 
   if (campanha.status !== 'draft' && campanha.status !== 'failed') {
@@ -150,5 +224,17 @@ export const excluirCampanha = asyncHandler(async (req: Request, res: Response):
   }
 
   await PushCampaignModel.findByIdAndDelete(id);
+  auditLog({
+    actor: req.auth?.clerkId ?? 'legado',
+    action: 'campaign.delete',
+    resource: 'campaign',
+    resourceId: id,
+    before: {
+      _id: campanha._id,
+      title: campanha.title,
+      status: campanha.status,
+    },
+    after: undefined,
+  });
   res.status(204).end();
 });

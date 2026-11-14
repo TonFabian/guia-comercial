@@ -151,8 +151,9 @@ export async function listCompanies(
   return { items, total };
 }
 
-export async function getCompanyById(id: string) {
-  return CompanyModel.findById(id).populate('category').populate('city').lean();
+export async function getCompanyById(id: string, incluirOwner = false) {
+  const q = CompanyModel.findById(id).populate('category').populate('city');
+  return (incluirOwner ? q : q.select({ ownerClerkId: 0 })).lean();
 }
 
 export async function createCompany(dto: CreateCompanyDto, ownerClerkId?: string) {

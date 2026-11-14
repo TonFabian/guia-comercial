@@ -1,4 +1,8 @@
 import type { Request, RequestHandler, Response } from 'express';
+import { ipKeyGenerator } from 'express-rate-limit';
+
+import { getRedis } from '../config/redis.js';
+import { incrComTtl, limparRateLimitRedis } from '../config/rate-limit-redis.js';
 
 /**
  * Rate limit anti-inflação das métricas de analytics (Security do plano de
@@ -7,16 +11,9 @@ import type { Request, RequestHandler, Response } from 'express';
  * empresa — 1 IP bombeando `POST /view` não pode contabilizar milhares de
  * visitas.
  *
- * Implementado como dedup em memória (fallback previsto no plano) para não
- * adicionar dependência: os volumes de um guia local cabem folgado em um Map.
- * Sem PII: a chave de IP é usada só como chave em memória e nunca é
+ * Implementado via `incrComTtl` (Redis quando disponível, fallback in-memory).
+ * Sem PII: a chave de IP é usada só como chave em memória/Redis e nunca é
  * persistida nem logada.
- *
- * TODO(redis): o Map é por processo — com mais de uma instância do backend
- * (ou deploy serverless/multi-região) a deduplicação NÃO cruza instâncias e a
- * inflação de métricas volta por instância. Resolver com armazenamento
- * compartilhado (Redis p. ex. upsert atômico com TTL de 1h) quando o backend
- * escalar para mais de uma instância. Até lá, limitação documentada e aceita.
  */
 
 const JANELA_MS = 60 * 60 * 1000; // 1 hora
@@ -34,51 +31,59 @@ function limite(tipo: 'view' | 'click' | 'favorite'): number {
   return Math.floor(valor);
 }
 
-interface Registro {
-  contagem: number;
-  inicio: number;
-}
-
-const registros = new Map<string, Registro>();
-
-/** Limpa o estado em memória (usado pelos testes para janelas limpas). */
+/** Limpa o estado em memória e (em teste, com Redis ativo) as chaves Redis. */
 export function limparRateLimitAnalytics(): void {
-  registros.clear();
-}
+  limparRateLimitRedis('analytics');
 
-function chave(req: Request, companyId: string): string {
-  const ip = req.ip ?? req.socket.remoteAddress ?? 'desconhecido';
-  return `${ip}:${companyId}`;
-}
+  if (process.env.NODE_ENV !== 'test') return;
 
-function podar(agora: number): void {
-  for (const [chave, registro] of registros) {
-    if (agora - registro.inicio >= JANELA_MS) {
-      registros.delete(chave);
+  const redis = getRedis();
+  if (!redis || typeof redis.scan !== 'function') return;
+
+  void (async () => {
+    try {
+      let cursor: string | number = '0';
+      do {
+        const resultado = await (redis as {
+          scan: (cursor: string | number, ...args: unknown[]) => Promise<[string | number, string[]]>;
+        }).scan(cursor, 'MATCH', 'rl:analytics:*', 'COUNT', 100);
+        cursor = resultado[0];
+        const chaves = resultado[1] ?? [];
+        if (chaves.length && typeof redis.del === 'function') {
+          await (redis as { del: (...keys: string[]) => Promise<unknown> }).del(...chaves);
+        }
+      } while (String(cursor) !== '0');
+    } catch (erro) {
+      console.warn('[analytics-rate-limit] falha ao limpar Redis:', erro);
     }
-  }
+  })();
+}
+
+function chaveIp(req: Request): string {
+  return ipKeyGenerator(req.ip ?? req.socket?.remoteAddress ?? 'unknown');
 }
 
 function criarLimitador(tipo: 'view' | 'click' | 'favorite'): RequestHandler {
-  return (req: Request, res: Response, next): void => {
-    // Limite lido por requisição: env-configurável sem reiniciar o processo.
-    const maximo = limite(tipo);
-    const agora = Date.now();
-    const key = `${chave(req, String(req.params.id))}:${tipo}`;
-    podar(agora);
+  return async (req: Request, res: Response, next): Promise<void> => {
+    try {
+      const maximo = limite(tipo);
+      const companyId = String(req.params.id);
+      const chaveBase = `${chaveIp(req)}:${companyId}:${tipo}`;
 
-    const registro = registros.get(key);
-    if (registro && agora - registro.inicio < JANELA_MS && registro.contagem >= maximo) {
-      res.status(429).json({ error: 'limite de eventos atingido para esta empresa, tente mais tarde' });
-      return;
-    }
+      const contagem = await incrComTtl('analytics', chaveBase, JANELA_MS);
 
-    if (registro && agora - registro.inicio < JANELA_MS) {
-      registro.contagem += 1;
-    } else {
-      registros.set(key, { contagem: 1, inicio: agora });
+      if (contagem > maximo) {
+        res.status(429).json({ error: 'limite de eventos atingido para esta empresa, tente mais tarde' });
+        return;
+      }
+
+      next();
+    } catch (erro) {
+      // incrComTtl ja trata falhas de Redis internamente (fallback in-memory);
+      // este catch so dispara em erro de programacao — degradar permitindo.
+      console.warn('[analytics-rate-limit] erro inesperado, degradando:', erro);
+      next();
     }
-    next();
   };
 }
 
