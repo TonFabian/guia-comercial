@@ -2,7 +2,7 @@ import cors from 'cors';
 import express from 'express';
 import helmet from 'helmet';
 
-import { assertValidClerkConfiguration, warnIfWithoutAuthentication } from './config/boot-check.js';
+import { assertValidClerkConfiguration, assertValidRedisConfiguration, warnIfWithoutAuthentication } from './config/boot-check.js';
 import { errorHandler } from './middlewares/error.middleware.js';
 import { notFoundHandler } from './middlewares/not-found.middleware.js';
 import { createRateLimitMiddleware, createWebhookRateLimitMiddleware } from './middlewares/rate-limit.middleware.js';
@@ -11,6 +11,7 @@ import { clerkWebhook } from './routes/webhooks/clerk.js';
 
 // Aviso de boot: em produção, ausência de CLERK_SECRET_KEY deixa a API aberta.
 assertValidClerkConfiguration(process.env);
+assertValidRedisConfiguration(process.env);
 warnIfWithoutAuthentication(process.env);
 
 const app = express();
