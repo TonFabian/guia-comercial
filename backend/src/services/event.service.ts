@@ -5,6 +5,7 @@ import { CompanyModel } from '../models/company.model.js';
 import { TourEventModel } from '../models/event.model.js';
 import { TouristSpotModel } from '../models/tourist-spot.model.js';
 import { assertAdmin } from './user.service.js';
+import { notifyEventCity } from './notification.service.js';
 import { listAllPushTokens } from './push-token.service.js';
 import { todayInBrasilia } from '../utils/event-date.js';
 import { escapeRegex } from '../utils/regex.js';
@@ -158,6 +159,14 @@ export async function createTourEvent(
     // irreversível de conteúdo invisível. Falha de push não quebra o POST.
     if (criado.active && criado.endDate >= todayInBrasilia()) {
       void notifyNewEvent(criado.name, dto.city).catch(() => undefined);
+      void notifyEventCity({
+        eventId: String(criado._id),
+        title: `Novo evento: ${criado.name}`,
+        body: criado.description ?? '',
+        deepLink: `/event/${criado._id}`,
+        cityId: criado.city ? String(criado.city) : null,
+        imageUrl: Array.isArray(criado.photos) ? criado.photos[0] : undefined,
+      }).catch(() => undefined);
     }
 
     return criado;

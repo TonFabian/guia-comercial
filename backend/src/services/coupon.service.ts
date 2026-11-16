@@ -6,6 +6,7 @@ import type { CreateCouponDto, UpdateCouponDto } from '../types/dto.js';
 import type { Pagination } from '../utils/http.js';
 import { lerTexto } from '../utils/query.js';
 import { assertOwnerOrAdmin } from './authorization.service.js';
+import { notifyCouponFans } from './notification.service.js';
 
 /** Filtros aceitos na listagem de cupons. */
 export interface CouponListFilters {
@@ -59,7 +60,16 @@ export async function createCoupon(dto: CreateCouponDto, clerkId?: string) {
     forbiddenMessage: 'sem permissão para gerenciar cupons desta empresa',
   });
   // expiresAt já chega validado (ISO); o driver Mongo aceita string ISO.
-  return CouponModel.create(dto);
+  const criado = await CouponModel.create(dto);
+  void notifyCouponFans({
+    companyId: String(dto.company),
+    couponId: String(criado._id),
+    title: `Nova promoção: ${criado.title}`,
+    body: criado.description ?? criado.discount ?? '',
+    deepLink: `/company/${dto.company}`,
+    expiresAt: criado.expiresAt,
+  }).catch(() => undefined);
+  return criado;
 }
 
 export async function updateCoupon(id: string, dto: UpdateCouponDto, clerkId?: string) {
