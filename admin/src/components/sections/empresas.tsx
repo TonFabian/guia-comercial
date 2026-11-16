@@ -1,23 +1,23 @@
-import { useEffect, useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 
-import { useResource } from '../../hooks/use-resource';
 import { toast } from 'sonner';
-import { createCompany, deleteCompany, getCompanies, getUsers, updateCompany, updateCompanyOwner, updateCompanyPlan } from '../../services/api';
+import { useResource } from '../../hooks/use-resource';
 import type { AdminUserListItem, CompanyInput } from '../../services/api';
+import { createCompany, deleteCompany, getCompanies, getUsers, updateCompany, updateCompanyOwner, updateCompanyPlan } from '../../services/api';
 import type { Category, City, Company } from '../../types/domain';
 import { filterByText } from '../../utils/filter';
 import { categoryId, categoryLabel, cityLabel, citySlug } from '../../utils/labels';
 import { formatPhone, onlyDigits } from '../../utils/phone';
-import { Button } from '../ui/button';
-import { Card } from '../ui/card';
-import { Field, Input, Select, Textarea, CheckboxField } from '../ui/input';
-import { PlanChip, planChipLabel } from '../ui/plan-chip';
 import { Pagination } from '../pagination';
 import { RowActions } from '../row-actions';
 import { SearchInput } from '../search-input';
 import { Table } from '../table';
+import { Button } from '../ui/button';
+import { Card } from '../ui/card';
+import { CheckboxField, Field, Input, Select, Textarea } from '../ui/input';
 import { DotsLoader } from '../ui/loading';
+import { PlanChip, planChipLabel } from '../ui/plan-chip';
 
 export interface EmpresasSectionProps {
   categories: Category[];
@@ -84,6 +84,7 @@ function timeToMinutes(t: string): number {
 export function EmpresasSection({ categories, categoriesError, cities, citiesError }: EmpresasSectionProps) {
   const { items, total, page, pageSize, loading, error, setPage, reload } = useResource<Company>(getCompanies);
   const [search, setSearch] = useState('');
+  const [semDonoOnly, setSemDonoOnly] = useState(false);
   const [form, setForm] = useState<CompanyForm>(EMPTY_FORM);
   const [editingId, setEditingId] = useState<string | null>(null);
   const [actionError, setActionError] = useState<string | null>(null);
@@ -106,10 +107,11 @@ export function EmpresasSection({ categories, categoriesError, cities, citiesErr
     };
   }, []);
 
-  const visible = useMemo(
-    () => filterByText(items, search, (company) => `${company.name} ${company.slug} ${cityLabel(company.city)}`),
-    [items, search],
-  );
+  const visible = useMemo(() => {
+    const base = filterByText(items, search, (company) => `${company.name} ${company.slug} ${cityLabel(company.city)}`);
+    if (!semDonoOnly) return base;
+    return base.filter((company) => !company.ownerClerkId);
+  }, [items, search, semDonoOnly]);
 
   function resetForm() {
     setEditingId(null);
@@ -375,7 +377,7 @@ export function EmpresasSection({ categories, categoriesError, cities, citiesErr
               Vínculo com usuário
             </h2>
             <div className="grid gap-3 sm:grid-cols-2">
-              <Field label="Doador / responsável (dono)">
+              <Field label="Responsável (dono)">
                 <Select
                   value={form.ownerClerkId}
                   disabled={form.removeOwner}
@@ -521,7 +523,16 @@ export function EmpresasSection({ categories, categoriesError, cities, citiesErr
       {actionError && <p className="text-sm text-danger">{actionError}</p>}
 
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <SearchInput value={search} onChange={setSearch} placeholder="Buscar empresa…" />
+        <div className="flex flex-1 flex-wrap items-center gap-2">
+          <SearchInput value={search} onChange={setSearch} placeholder="Buscar empresa…" />
+          <Button
+            variant={semDonoOnly ? 'primary' : 'secondary'}
+            type="button"
+            onClick={() => setSemDonoOnly((value) => !value)}
+          >
+            {semDonoOnly ? 'Mostrando sem dono' : 'Somente sem dono'}
+          </Button>
+        </div>
         <Button
           onClick={() => {
             resetForm();

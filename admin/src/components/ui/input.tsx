@@ -8,7 +8,8 @@ export function Input(props: InputHTMLAttributes<HTMLInputElement>) {
 }
 
 export function Select(props: SelectHTMLAttributes<HTMLSelectElement>) {
-  return <select {...props} className={`${FIELD} h-10 ${props.className ?? ''}`} />;
+  const disabledClasses = props.disabled ? 'opacity-50 cursor-not-allowed' : '';
+  return <select {...props} className={`${FIELD} h-10 ${disabledClasses} ${props.className ?? ''}`} />;
 }
 
 export function Textarea(props: TextareaHTMLAttributes<HTMLTextAreaElement>) {
