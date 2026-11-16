@@ -329,14 +329,10 @@ export async function getNotices(): Promise<Notice[]> {
 
 export async function getNotifications(page = 1, pageSize = 20): Promise<AppNotification[]> {
   if (!isApiConfigured()) return [];
-  try {
-    const payload = await request<NotificationsPage>(`/notifications?page=${page}&pageSize=${pageSize}`);
-    if (!payload) return [];
-    const page_ = payload as NotificationsPage;
-    return page_.items ?? [];
-  } catch {
-    return [];
-  }
+  const payload = await request<NotificationsPage>(`/notifications?page=${page}&pageSize=${pageSize}`);
+  if (!payload) return [];
+  const page_ = payload as NotificationsPage;
+  return page_.items ?? [];
 }
 
 export async function markNotificationsRead(ids?: string[]): Promise<number> {
