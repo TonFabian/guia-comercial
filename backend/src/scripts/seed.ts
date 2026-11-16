@@ -142,6 +142,7 @@ async function seed(): Promise<void> {
       longitude: -38.5267,
       registry: 'CREA-CE 12345',
       isFeatured: true,
+      plan: 'premium',
       rating: 4.7,
       ratingCount: 128,
       isVerified: true,

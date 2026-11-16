@@ -60,6 +60,7 @@ export const MOCK_COMPANIES: Company[] = [
     city: 'Castelo do Piauí',
     registry: 'CREA-PI',
     isFeatured: true,
+    plan: 'premium',
     rating: 4.7,
     ratingCount: 128,
     isVerified: true,
