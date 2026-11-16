@@ -9,7 +9,17 @@ export function useUnread() {
     const n = await getUnreadCount();
     setCount(n);
   }, []);
-  useEffect(() => { void refresh(); }, [refresh]);
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const n = await getUnreadCount();
+      if (cancelled) return;
+      setCount(n);
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
   useFocusEffect(useCallback(() => { void refresh(); }, [refresh]));
   return { count, refresh };
 }

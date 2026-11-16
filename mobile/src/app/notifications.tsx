@@ -1,0 +1,96 @@
+import { useCallback, useEffect, useState } from 'react';
+import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { useRouter } from 'expo-router';
+
+import { Spacing, Typography, FontFamily, FontWeight } from '@/constants/theme';
+import { useThemeColors } from '@/hooks/use-theme-colors';
+import type { AppNotification } from '@/types/domain';
+import { ehDeepLinkValido } from '@/utils/deep-link';
+import { getNotifications, markNotificationsRead } from '@/services/api';
+import { NotificationItem } from '@/features/notifications/notification-item';
+
+export default function NotificationsScreen() {
+  const router = useRouter();
+  const colors = useThemeColors();
+  const [items, setItems] = useState<AppNotification[]>([]);
+  const [page, setPage] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const load = useCallback(async (reset = false) => {
+    if (loading) return;
+    setLoading(true);
+    setError(null);
+    const p = reset ? 1 : page;
+    try {
+      const data = await getNotifications(p, 20);
+      setItems((prev) => (reset ? data : [...prev, ...data]));
+      setHasMore(data.length === 20);
+      setPage(p + 1);
+    } catch {
+      setError('Falha ao carregar notificações');
+    } finally {
+      setLoading(false);
+    }
+  }, [loading, page]);
+
+  const handlePress = useCallback(async (item: AppNotification) => {
+    if (item._id) await markNotificationsRead([item._id]);
+    setItems((prev) => prev.map((n) => (n._id === item._id ? { ...n, readAt: new Date().toISOString() } : n)));
+    if (item.deepLink && ehDeepLinkValido(item.deepLink)) router.push(item.deepLink as any);
+  }, [router]);
+
+  const handleMarkAll = useCallback(async () => {
+    await markNotificationsRead();
+    setItems((prev) => prev.map((n) => ({ ...n, readAt: n.readAt ?? new Date().toISOString() })));
+  }, []);
+
+  // Carga inicial
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (cancelled) return;
+      await load(true);
+    })();
+    return () => {
+      cancelled = true;
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  return (
+    <View style={[styles.root, { backgroundColor: colors.background }]}>
+      <View style={styles.header}>
+        <Text style={[styles.headerTitle, { color: colors.text }]}>Notificações</Text>
+        <TouchableOpacity onPress={() => void handleMarkAll()} accessibilityRole="button" accessibilityLabel="Marcar todas como lidas">
+          <Text style={[styles.markAll, { color: colors.primary }]}>Marcar todas</Text>
+        </TouchableOpacity>
+      </View>
+      <FlatList
+        data={items}
+        keyExtractor={(i) => i._id ?? i.refId}
+        renderItem={({ item }) => <NotificationItem item={item} onPress={handlePress} />}
+        onEndReached={() => { if (hasMore && !loading) void load(); }}
+        onEndReachedThreshold={0.4}
+        onRefresh={() => void load(true)}
+        refreshing={loading && items.length === 0}
+        ListEmptyComponent={!loading ? (error ? (
+          <TouchableOpacity onPress={() => void load(true)} style={{ alignItems: 'center', marginTop: 40 }}>
+            <Text style={{ color: colors.textSecondary }}>{error}</Text>
+            <Text style={{ color: colors.primary, marginTop: 8 }}>Tentar novamente</Text>
+          </TouchableOpacity>
+        ) : (
+          <Text style={{ color: colors.textSecondary, textAlign: 'center', marginTop: 40 }}>Sem novidades por aqui</Text>
+        )) : undefined}
+      />
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  root: { flex: 1 },
+  header: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingHorizontal: Spacing.three, paddingVertical: Spacing.two },
+  headerTitle: { ...Typography.h4, fontFamily: FontFamily.heading700, fontWeight: FontWeight.bold },
+  markAll: { ...Typography.body, fontFamily: FontFamily.body600, fontWeight: FontWeight.semibold },
+});
