@@ -6,7 +6,7 @@
  * sessão do Clerk e o comportamento de fallback (mock quando a env não está
  * definida ou a API está fora do ar; 401/403 reais estouram `ApiError`).
  */
-import type { AutonomousProfessional, Banner, Category, City, Company, Coupon, Job, Notice, Paginated, PublicUtility, Review, TourEvent, TouristSpot, User } from '@/types/domain';
+import type { AppNotification, AutonomousProfessional, Banner, Category, City, Company, Coupon, Job, Notice, NotificationsPage, Paginated, PublicUtility, Review, TourEvent, TouristSpot, User } from '@/types/domain';
 import { buildTourismQuery } from '@/features/tourism/tourism-query';
 import type { TourismQueryParams } from '@/features/tourism/tourism-query';
 
@@ -324,6 +324,41 @@ export async function getNotices(): Promise<Notice[]> {
     return fromPaginated(payload, []);
   } catch {
     return [];
+  }
+}
+
+export async function getNotifications(page = 1, pageSize = 20): Promise<AppNotification[]> {
+  if (!isApiConfigured()) return [];
+  try {
+    const payload = await request<NotificationsPage>(`/notifications?page=${page}&pageSize=${pageSize}`);
+    if (!payload) return [];
+    const page_ = payload as NotificationsPage;
+    return page_.items ?? [];
+  } catch {
+    return [];
+  }
+}
+
+export async function markNotificationsRead(ids?: string[]): Promise<number> {
+  if (!isApiConfigured()) return 0;
+  try {
+    const res = await request<{ unreadCount: number }>('/notifications/read', {
+      method: 'PUT',
+      body: ids && ids.length ? { ids } : {},
+    });
+    return (res as { unreadCount?: number } | null)?.unreadCount ?? 0;
+  } catch {
+    return 0;
+  }
+}
+
+export async function getUnreadCount(): Promise<number> {
+  if (!isApiConfigured()) return 0;
+  try {
+    const res = await request<{ unreadCount: number }>('/notifications/unread-count');
+    return (res as { unreadCount?: number } | null)?.unreadCount ?? 0;
+  } catch {
+    return 0;
   }
 }
 
