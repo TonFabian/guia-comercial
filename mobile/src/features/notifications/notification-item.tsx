@@ -1,4 +1,5 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
+import { memo } from 'react';
 import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 import { Typography, FontFamily, FontWeight } from '@/constants/theme';
@@ -6,7 +7,7 @@ import { useThemeColors } from '@/hooks/use-theme-colors';
 import type { AppNotification } from '@/types/domain';
 import { tempoRelativo } from './tempo-relativo';
 
-export function NotificationItem({ item, onPress }: { item: AppNotification; onPress: (item: AppNotification) => void }) {
+export const NotificationItem = memo(function NotificationItem({ item, onPress }: { item: AppNotification; onPress: (item: AppNotification) => void }) {
   const colors = useThemeColors();
   const unread = !item.readAt;
   const icon = item.type === 'coupon' ? 'pricetag-outline' : 'calendar-outline';
@@ -23,7 +24,7 @@ export function NotificationItem({ item, onPress }: { item: AppNotification; onP
       {unread ? <View style={[styles.dot, { backgroundColor: colors.primary }]} /> : null}
     </TouchableOpacity>
   );
-}
+});
 
 const styles = StyleSheet.create({
   row: { flexDirection: 'row', alignItems: 'center', paddingVertical: 12, paddingHorizontal: 16, gap: 12, borderBottomWidth: StyleSheet.hairlineWidth },

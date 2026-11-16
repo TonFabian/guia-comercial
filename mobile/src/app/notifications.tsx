@@ -55,6 +55,10 @@ export default function NotificationsScreen() {
     setItems((prev) => prev.map((n) => ({ ...n, readAt: n.readAt ?? new Date().toISOString() })));
   }, []);
 
+  const renderItem = useCallback(({ item }: { item: AppNotification }) => (
+    <NotificationItem item={item} onPress={handlePress} />
+  ), [handlePress]);
+
   // Carga inicial (somente autenticado)
   useEffect(() => {
     if (state !== 'signedIn') return;
@@ -138,7 +142,7 @@ export default function NotificationsScreen() {
       <FlatList
         data={items}
         keyExtractor={(i) => i._id ?? i.refId}
-        renderItem={({ item }) => <NotificationItem item={item} onPress={handlePress} />}
+        renderItem={renderItem}
         onEndReached={() => { if (hasMore && !loading) void load(); }}
         onEndReachedThreshold={0.4}
         onRefresh={() => void load(true)}
