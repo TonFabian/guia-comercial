@@ -6,7 +6,7 @@ import { useResource } from '../../hooks/use-resource';
 import type { AdminUserListItem, CompanyInput } from '../../services/api';
 import { createCompany, deleteCompany, getCompanies, getUsers, updateCompany, updateCompanyOwner, updateCompanyPlan } from '../../services/api';
 import type { Category, City, Company } from '../../types/domain';
-import { filterByText } from '../../utils/filter';
+import { filterByText, totalDoRodape } from '../../utils/filter';
 import { categoryId, categoryLabel, cityLabel, citySlug } from '../../utils/labels';
 import { formatPhone, onlyDigits } from '../../utils/phone';
 import { Pagination } from '../pagination';
@@ -523,15 +523,20 @@ export function EmpresasSection({ categories, categoriesError, cities, citiesErr
       {actionError && <p className="text-sm text-danger">{actionError}</p>}
 
       <div className="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex flex-1 flex-wrap items-center gap-2">
-          <SearchInput value={search} onChange={setSearch} placeholder="Buscar empresa…" />
-          <Button
-            variant={semDonoOnly ? 'primary' : 'secondary'}
-            type="button"
-            onClick={() => setSemDonoOnly((value) => !value)}
-          >
-            {semDonoOnly ? 'Mostrando sem dono' : 'Somente sem dono'}
-          </Button>
+        <div className="flex flex-1 flex-wrap items-center gap-3">
+          <div className="min-w-0 flex-1 sm:max-w-sm">
+            <SearchInput value={search} onChange={setSearch} placeholder="Buscar empresa…" />
+          </div>
+          <CheckboxField
+            label="Somente sem dono"
+            checked={semDonoOnly}
+            onChange={(event) => {
+              setSemDonoOnly(event.target.checked);
+              // Filtro atua sobre a página carregada: volta para a 1ª para não
+              // exibir página vazia com contagem truncada.
+              setPage(1);
+            }}
+          />
         </div>
         <Button
           onClick={() => {
@@ -574,7 +579,12 @@ export function EmpresasSection({ categories, categoriesError, cities, citiesErr
         emptyMessage="Nenhuma empresa encontrada."
       />
 
-      <Pagination page={page} pageSize={pageSize} total={total} onChange={setPage} />
+      <Pagination
+        page={page}
+        pageSize={pageSize}
+        total={totalDoRodape(total, semDonoOnly || search.trim().length > 0, visible.length)}
+        onChange={setPage}
+      />
     </div>
   );
 }
