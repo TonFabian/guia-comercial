@@ -34,7 +34,7 @@ export const PASSWORD_MIN = 8;
  */
 const FormWrapper = Platform.OS === 'web' ? ('form' as any) : View;
 
-export function EmailPasswordForm({ mode }: { mode: AuthMode }) {
+export function EmailPasswordForm({ mode, onForgot }: { mode: AuthMode; onForgot?: () => void }) {
   const { signIn } = useSignIn();
   const { signUp } = useSignUp();
   const clerk = useClerk();
@@ -357,6 +357,7 @@ export function EmailPasswordForm({ mode }: { mode: AuthMode }) {
         <RememberRow
           remember={remember}
           onToggleRemember={() => setRemember((checked) => !checked)}
+          onForgot={onForgot ?? (() => {})}
         />
       ) : null}
 
@@ -380,7 +381,7 @@ function ErrorText({ error }: { error: string | null }) {
   return <Text style={styles.error}>{error}</Text>;
 }
 
-function SubmitButton({
+export function SubmitButton({
   label,
   onPress,
   loading,

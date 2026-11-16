@@ -1,25 +1,19 @@
 import Feather from '@expo/vector-icons/Feather';
-import { Alert, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import { StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 
 import { LoginColors, Typography, FontFamily, FontWeight } from '@/constants/theme';
 
 interface RememberRowProps {
   remember: boolean;
   onToggleRemember: () => void;
+  onForgot: () => void;
 }
 
 /**
  * Linha de opções do login: checkbox "Lembrar-me" e link de recuperação de
  * senha. O Clerk já persiste a sessão, então "Lembrar-me" é apenas visual.
  */
-export function RememberRow({ remember, onToggleRemember }: RememberRowProps) {
-  function forgotPassword() {
-    Alert.alert(
-      'Recuperar senha',
-      'A recuperação de senha estará disponível em breve.',
-    );
-  }
-
+export function RememberRow({ remember, onToggleRemember, onForgot }: RememberRowProps) {
   return (
     <View style={styles.row}>
       <TouchableOpacity
@@ -38,7 +32,7 @@ export function RememberRow({ remember, onToggleRemember }: RememberRowProps) {
       </TouchableOpacity>
 
       <TouchableOpacity
-        onPress={forgotPassword}
+        onPress={onForgot}
         accessibilityRole="link"
         accessibilityLabel="Esqueceu sua senha?"
       >
