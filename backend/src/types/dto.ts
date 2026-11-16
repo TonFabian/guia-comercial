@@ -151,6 +151,12 @@ export const dataDiaSchema = z
 
 /** Schema dedicado para alteração de plano/vigência (rota admin-only).
  * `undefined` no body = mantém a data gravada; `null` = limpa (sem vencimento). */
+export const updateCompanyOwnerSchema = z.object({
+  ownerClerkId: z.string().nullable(),
+});
+
+export type UpdateCompanyOwnerDto = z.infer<typeof updateCompanyOwnerSchema>;
+
 export const updatePlanSchema = z
   .object({
     plan: z.enum(['free', 'basic', 'premium']),

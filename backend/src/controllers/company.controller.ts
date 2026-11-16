@@ -2,7 +2,7 @@ import type { Request, Response } from 'express';
 
 import * as companyService from '../services/company.service.js';
 import * as analyticsService from '../services/analytics.service.js';
-import type { CreateCompanyDto, UpdateCompanyDto, UpdatePlanDto } from '../types/dto.js';
+import type { CreateCompanyDto, UpdateCompanyDto, UpdateCompanyOwnerDto, UpdatePlanDto } from '../types/dto.js';
 import { asyncHandler, parsePagination } from '../utils/http.js';
 
 export const list = asyncHandler(async (req: Request, res: Response): Promise<void> => {
@@ -54,6 +54,21 @@ export const updatePlan = asyncHandler(async (req: Request, res: Response): Prom
   throwIfInvalidId(String(req.params.id));
   const payload = req.body as UpdatePlanDto;
   const company = await companyService.updateCompanyPlan(String(req.params.id), payload, req.auth?.clerkId);
+  if (!company) {
+    res.status(404).json({ error: 'empresa não encontrada' });
+    return;
+  }
+  res.json(company);
+});
+
+export const updateOwner = asyncHandler(async (req: Request, res: Response): Promise<void> => {
+  throwIfInvalidId(String(req.params.id));
+  const payload = req.body as UpdateCompanyOwnerDto;
+  const company = await companyService.updateCompanyOwner(
+    String(req.params.id),
+    payload.ownerClerkId,
+    req.auth?.clerkId,
+  );
   if (!company) {
     res.status(404).json({ error: 'empresa não encontrada' });
     return;

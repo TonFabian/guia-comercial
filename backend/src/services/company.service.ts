@@ -4,7 +4,7 @@ import { CategoryModel } from '../models/category.model.js';
 import { CityModel } from '../models/city.model.js';
 import { CompanyModel } from '../models/company.model.js';
 import { assertOwnerOrAdmin } from './authorization.service.js';
-import { findUserByClerkId } from './user.service.js';
+import { assertAdminEstrito, findUserByClerkId } from './user.service.js';
 import { listAllPushTokens } from './push-token.service.js';
 import type { Company } from '../../../shared/domain.js';
 import type { CreateCompanyDto, UpdateCompanyDto, UpdatePlanDto } from '../types/dto.js';
@@ -344,6 +344,36 @@ export async function updateCompanyPlan(
   if (payload.planExpiresAt !== undefined && payload.planExpiresAt !== null) update.planExpiresAt = payload.planExpiresAt;
 
   const updated = await CompanyModel.findByIdAndUpdate(id, update, { returnDocument: 'after', runValidators: true })
+    .populate('category')
+    .populate('city')
+    .lean();
+
+  if (!updated) {
+    throw Object.assign(new Error('empresa não encontrada'), { statusCode: 404 });
+  }
+  return updated;
+}
+
+export async function updateCompanyOwner(id: string, ownerClerkId: string | null, clerkId?: string) {
+  await assertAdminEstrito(clerkId, 'empresa');
+
+  const existing = await CompanyModel.findById(id).lean();
+  if (!existing) {
+    throw Object.assign(new Error('empresa não encontrada'), { statusCode: 404 });
+  }
+
+  if (ownerClerkId !== null) {
+    const user = await findUserByClerkId(ownerClerkId);
+    if (!user) {
+      throw Object.assign(new Error('usuário não encontrado'), { statusCode: 404 });
+    }
+  }
+
+  const updated = await CompanyModel.findByIdAndUpdate(
+    id,
+    ownerClerkId === null ? { $unset: { ownerClerkId: 1 } } : { ownerClerkId },
+    { returnDocument: 'after', runValidators: true },
+  )
     .populate('category')
     .populate('city')
     .lean();

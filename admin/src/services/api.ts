@@ -336,7 +336,7 @@ export type UpdateTourEventInput = Partial<TourEventInput>;
  * O backend monta o nome (`firstName` + `lastName`) e omite `pushToken` e os
  * identificadores de sessão — por isso o tipo deriva de `User`.
  */
-export interface AdminUserListItem extends Pick<User, '_id' | 'email' | 'role' | 'city' | 'createdAt'> {
+export interface AdminUserListItem extends Pick<User, '_id' | 'email' | 'role' | 'city' | 'createdAt' | 'clerkId'> {
   /** Nome já montado pelo backend. */
   name?: string;
   /** true quando o item é a conta do admin que fez a requisição. */
@@ -518,6 +518,10 @@ export interface UpdateCompanyPlanPayload {
 
 export async function updateCompanyPlan(id: string, payload: UpdateCompanyPlanPayload): Promise<Company> {
   return apiPut<Company>(`/companies/${id}/plan`, payload);
+}
+
+export async function updateCompanyOwner(id: string, ownerClerkId: string | null): Promise<Company> {
+  return apiPut<Company>(`/companies/${id}/owner`, { ownerClerkId });
 }
 
 export async function deleteCompany(id: string): Promise<void> {

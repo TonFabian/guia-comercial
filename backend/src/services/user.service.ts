@@ -95,6 +95,7 @@ export async function assertAdminEstrito(
 /** Item da listagem de usuários do painel admin (sem dados sensíveis). */
 export interface AdminUserListItem {
   _id: string;
+  clerkId: string;
   name?: string;
   email: string;
   role: 'user' | 'admin';
@@ -144,6 +145,7 @@ function toAdminUserListItem(user: User, actorClerkId?: string): AdminUserListIt
 
   return {
     _id: String(user._id),
+    clerkId: user.clerkId,
     ...(nome ? { name: nome } : {}),
     email: user.email,
     role: user.role,

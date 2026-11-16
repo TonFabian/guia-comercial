@@ -1,10 +1,10 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
 
 import { useResource } from '../../hooks/use-resource';
 import { toast } from 'sonner';
-import { createCompany, deleteCompany, getCompanies, updateCompany, updateCompanyPlan } from '../../services/api';
-import type { CompanyInput } from '../../services/api';
+import { createCompany, deleteCompany, getCompanies, getUsers, updateCompany, updateCompanyOwner, updateCompanyPlan } from '../../services/api';
+import type { AdminUserListItem, CompanyInput } from '../../services/api';
 import type { Category, City, Company } from '../../types/domain';
 import { filterByText } from '../../utils/filter';
 import { categoryId, categoryLabel, cityLabel, citySlug } from '../../utils/labels';
@@ -45,6 +45,9 @@ interface CompanyForm {
   plan: 'free' | 'basic' | 'premium';
   planStartedAt: string;
   planExpiresAt: string;
+  ownerClerkId: string;
+  removeOwner: boolean;
+  previousOwnerClerkId: string;
 }
 
 const EMPTY_FORM: CompanyForm = {
@@ -60,6 +63,9 @@ const EMPTY_FORM: CompanyForm = {
   plan: 'free',
   planStartedAt: '',
   planExpiresAt: '',
+  ownerClerkId: '',
+  removeOwner: false,
+  previousOwnerClerkId: '',
 };
 
 const DAYS = [0, 1, 2, 3, 4, 5, 6];
@@ -83,6 +89,22 @@ export function EmpresasSection({ categories, categoriesError, cities, citiesErr
   const [actionError, setActionError] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [view, setView] = useState<'list' | 'form'>('list');
+  const [users, setUsers] = useState<AdminUserListItem[]>([]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const page = await getUsers(1, 200);
+        if (!cancelled) setUsers(page.items ?? []);
+      } catch {
+        if (!cancelled) setUsers([]);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
 
   const visible = useMemo(
     () => filterByText(items, search, (company) => `${company.name} ${company.slug} ${cityLabel(company.city)}`),
@@ -111,6 +133,9 @@ export function EmpresasSection({ categories, categoriesError, cities, citiesErr
       plan: company.plan ?? 'free',
       planStartedAt: company.planStartedAt ?? '',
       planExpiresAt: company.planExpiresAt ?? '',
+      ownerClerkId: company.ownerClerkId ?? '',
+      removeOwner: false,
+      previousOwnerClerkId: company.ownerClerkId ?? '',
     });
     setView('form');
   }
@@ -169,26 +194,51 @@ export function EmpresasSection({ categories, categoriesError, cities, citiesErr
             `Dados salvos, mas o plano não pôde ser alterado: ${err instanceof Error ? err.message : String(err)}`,
           );
         }
-      } else {
-        const created = await createCompany(payload);
-        if (created?._id && form.plan !== 'free') {
+        // Vínculo com usuário (dono): aplica apenas se houve mudança.
+        const novoDono = form.removeOwner ? null : (form.ownerClerkId || null);
+        const donoMudou = novoDono !== (form.previousOwnerClerkId || null);
+        if (donoMudou) {
           try {
-            await updateCompanyPlan(created._id, {
-              plan: form.plan,
-              planStartedAt: form.planStartedAt || null,
-              planExpiresAt: form.planExpiresAt || null,
-            });
+            await updateCompanyOwner(editingId, novoDono);
           } catch (err) {
             setActionError(
-              `Empresa criada, mas o plano não pôde ser definido: ${err instanceof Error ? err.message : String(err)}`,
+              `Dados salvos, mas o dono não pôde ser alterado: ${err instanceof Error ? err.message : String(err)}`,
             );
           }
-        } else if (created?._id && form.plan === 'free') {
-          // limpa vigência residual se rebaixado para free
-          try {
-            await updateCompanyPlan(created._id, { plan: 'free', planStartedAt: null, planExpiresAt: null });
-          } catch {
-            // ignora — não é crítico
+        }
+      } else {
+        const created = await createCompany(payload);
+        if (created?._id) {
+          if (form.plan !== 'free') {
+            try {
+              await updateCompanyPlan(created._id, {
+                plan: form.plan,
+                planStartedAt: form.planStartedAt || null,
+                planExpiresAt: form.planExpiresAt || null,
+              });
+            } catch (err) {
+              setActionError(
+                `Empresa criada, mas o plano não pôde ser definido: ${err instanceof Error ? err.message : String(err)}`,
+              );
+            }
+          } else {
+            // limpa vigência residual se rebaixado para free
+            try {
+              await updateCompanyPlan(created._id, { plan: 'free', planStartedAt: null, planExpiresAt: null });
+            } catch {
+              // ignora — não é crítico
+            }
+          }
+          // Vínculo com usuário (dono) na criação.
+          const novoDono = form.removeOwner ? null : (form.ownerClerkId || null);
+          if (novoDono) {
+            try {
+              await updateCompanyOwner(created._id, novoDono);
+            } catch (err) {
+              setActionError(
+                `Empresa criada, mas o dono não pôde ser definido: ${err instanceof Error ? err.message : String(err)}`,
+              );
+            }
           }
         }
       }
@@ -315,6 +365,42 @@ export function EmpresasSection({ categories, categoriesError, cities, citiesErr
                   label="Usar o mesmo número para WhatsApp"
                   checked={form.samePhone}
                   onChange={(e) => handleSamePhoneChange(e.target.checked)}
+                />
+              </div>
+            </div>
+          </Card>
+
+          <Card>
+            <h2 className="mb-3 text-sm font-semibold text-text" style={{ fontFamily: 'var(--font-family-heading)' }}>
+              Vínculo com usuário
+            </h2>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <Field label="Doador / responsável (dono)">
+                <Select
+                  value={form.ownerClerkId}
+                  disabled={form.removeOwner}
+                  onChange={(e) => setForm({ ...form, ownerClerkId: e.target.value })}
+                >
+                  <option value="">Sem dono</option>
+                  {users.map((user) => (
+                    <option key={user._id} value={user.clerkId}>
+                      {user.name ?? user.email} ({user.email})
+                    </option>
+                  ))}
+                </Select>
+              </Field>
+              <div className="sm:col-span-2">
+                <CheckboxField
+                  label="Remover dono (deixar empresa sem responsável)"
+                  checked={form.removeOwner}
+                  onChange={(e) => {
+                    const checked = e.target.checked;
+                    setForm((previous) => ({
+                      ...previous,
+                      removeOwner: checked,
+                      ownerClerkId: checked ? '' : previous.previousOwnerClerkId,
+                    }));
+                  }}
                 />
               </div>
             </div>

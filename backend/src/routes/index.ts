@@ -31,6 +31,7 @@ import {
   createCitySchema,
   createCompanySchema,
   updateCompanySchema,
+  updateCompanyOwnerSchema,
   updatePlanSchema,
   createCouponSchema,
   createJobSchema,
@@ -131,6 +132,7 @@ companies.get('/:id/reviews', reviewController.listReviews);
 companies.post('/:id/reviews', validateBody(createReviewSchema), reviewController.createReviewHandler);
 companies.put('/:id', validateBody(updateCompanySchema), companyController.update);
 companies.put('/:id/plan', requireAuthIfConfigured, validateBody(updatePlanSchema), companyController.updatePlan);
+companies.put('/:id/owner', requireAuthIfConfigured, validateBody(updateCompanyOwnerSchema), companyController.updateOwner);
 // Rate limit anti-inflação: métrica vendida ao lojista não pode ser bombada
 // por script (view 1/empresa/IP/hora, clique 5/empresa/IP/hora).
 companies.post('/:id/view', limitarView, companyController.trackView);
