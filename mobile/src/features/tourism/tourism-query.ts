@@ -12,13 +12,14 @@ export type TourismQueryParams = {
 
 /**
  * Serializa os parâmetros de turismo em query string (`?a=1&b=2`).
- * - `pageSize` sempre presente (default 6).
+ * - `pageSize` sempre presente (default 6, limitado a 50).
  * - `active`, `city` e `q` só entram quando definidos e não vazios
  *   (`q` é aparado antes da checagem).
  * - `page` só entra quando maior que 1 (a página 1 é o default do backend).
  */
 export function buildTourismQuery(params: TourismQueryParams): string {
-  const search = new URLSearchParams({ pageSize: String(params.pageSize ?? 6) });
+  const limitedPageSize = Math.min(params.pageSize ?? 6, 50);
+  const search = new URLSearchParams({ pageSize: String(limitedPageSize) });
   if (params.active !== undefined) search.set('active', String(params.active));
   if (params.city) search.set('city', params.city);
   if (params.q?.trim()) search.set('q', params.q.trim());

@@ -84,8 +84,9 @@ function normalizeCity(value: string | { name?: string } | null | undefined): st
 }
 
 export async function getCompanies(page = 1, pageSize = 20, city?: string, featured?: boolean): Promise<CompanyPage> {
+  const limitedPageSize = Math.min(pageSize, 50);
   if (!isApiConfigured()) {
-    if (!__DEV__) return { items: [], total: 0, page, pageSize };
+    if (!__DEV__) return { items: [], total: 0, page, pageSize: limitedPageSize };
     let items = MOCK_COMPANIES;
     if (city) {
       const target = normalizeCity(city);
@@ -94,20 +95,20 @@ export async function getCompanies(page = 1, pageSize = 20, city?: string, featu
     if (featured !== undefined) {
       items = items.filter((c) => Boolean(c.isFeatured) === featured);
     }
-    const start = (page - 1) * pageSize;
-    const sliced = items.slice(start, start + pageSize);
-    return { items: sliced, total: items.length, page, pageSize };
+    const start = (page - 1) * limitedPageSize;
+    const sliced = items.slice(start, start + limitedPageSize);
+    return { items: sliced, total: items.length, page, pageSize: limitedPageSize };
   }
-  const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
+  const params = new URLSearchParams({ page: String(page), pageSize: String(limitedPageSize) });
   if (city) params.set('city', city);
   if (featured !== undefined) params.set('featured', String(featured));
   const payload = await request<Company>(`/companies?${params.toString()}`);
   const items = fromPaginated(payload, []);
   const total = isPaginated(payload) ? (payload.total ?? items.length) : items.length;
   const allowMockFallback = __DEV__;
-  const fallbackItems = page === 1 && items.length === 0 && allowMockFallback ? MOCK_COMPANIES.slice(0, pageSize) : items;
+  const fallbackItems = page === 1 && items.length === 0 && allowMockFallback ? MOCK_COMPANIES.slice(0, limitedPageSize) : items;
   const fallbackTotal = page === 1 && items.length === 0 && allowMockFallback ? MOCK_COMPANIES.length : total;
-  return { items: fallbackItems, total: fallbackTotal, page, pageSize };
+  return { items: fallbackItems, total: fallbackTotal, page, pageSize: limitedPageSize };
 }
 
 /**
@@ -218,7 +219,7 @@ export async function searchCompanies(params: CompanySearchParams = {}): Promise
   const term = truncarTermoDeBusca((params.q ?? '').trim().toLowerCase());
   const categories = params.categories ?? [];
   const page = params.page ?? 1;
-  const pageSize = params.pageSize ?? 20;
+  const pageSize = Math.min(params.pageSize ?? 20, 50);
 
   if (!isApiConfigured()) {
     const filtered = filterMockCompanies(term, categories);
@@ -329,7 +330,8 @@ export async function getNotices(): Promise<Notice[]> {
 
 export async function getNotifications(page = 1, pageSize = 20): Promise<AppNotification[]> {
   if (!isApiConfigured()) return [];
-  const payload = await request<NotificationsPage>(`/notifications?page=${page}&pageSize=${pageSize}`);
+  const limitedPageSize = Math.min(pageSize, 50);
+  const payload = await request<NotificationsPage>(`/notifications?page=${page}&pageSize=${limitedPageSize}`);
   if (!payload) return [];
   const page_ = payload as NotificationsPage;
   return page_.items ?? [];
