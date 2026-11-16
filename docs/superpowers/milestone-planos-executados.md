@@ -52,6 +52,12 @@
 - **Decisões-chave:** Favoritos não duplicam; convidado não chama `/me`; webhook Clerk não sobrescreve `favorites/ownedCompanyIds/preferences`; `PUT /me` valida via zod (400 inválido); e-mail read-only (fonte Clerk).
 - **Arquivos:** `backend/src/models/user.model.ts`, `backend/src/services/user.service.ts`, `backend/src/types/dto.ts`, `backend/src/controllers/user.controller.ts`, `backend/src/routes/index.ts`; `mobile/src/providers/favorites-provider.tsx`, `mobile/src/app/(tabs)/profile.tsx`.
 
+### 6.1 Perfil & Configurações — Refino do header e tela "Meus Dados"
+
+- **Doc:** `archive/executed/specs/2026-11-05-perfil-configuracoes-design.md`
+- **Objetivo:** Refinar a aba Perfil (header dinâmico visitante/logado, tag Cidadão/Empresa Parceira) e tornar "Meus Dados" uma rota própria com edição de nome, telefone e bairro.
+- **Implementado:** Header dinâmico; `account-tag.ts` (regra pura); `use-profile.ts`; rota `/user-profile`; campo `User.neighborhood` (shared + cópias + backend model + DTO); `getOwnedCompanies`; `updateProfileName` no AuthProvider.
+
 ## 7. Novas Funcionalidades
 
 - **Docs:** `archive/executed/plans/2026-11-03-novas-funcionalidades.md`, `archive/executed/specs/2026-11-03-novas-funcionalidades-refinada.md`
@@ -84,6 +90,12 @@
 - **Implementado:** Entidades `TouristSpot` e `TourEvent` (model + service + controller + DTO + rotas) no backend; guest scrub explícito (isTouristSpot/isTourEvent, redação de `phone/whatsapp` e empresas populadas); expiração por data (America/Fortaleza, helper `isEventVisibleOn`); push apenas ao criar evento; consumo mobile (seção na Home + telas de detalhe + busca mesclada); seções no admin (CRUD); seed de 4 atrações e 2 eventos de Castelo do Piauí.
 - **Decisões-chave:** Turismo não duplica empresas; guest scrub recursivo; expiração por DATA (não comparar data pura com datetime ISO); busca mesclada com fetch paralelo e chips fixos; interface `TourEvent` (sem shadowing de `Event` DOM); seção some quando vazia / mostra erro quando falha.
 - **Arquivos:** `backend/src/models/tourist-spot.model.ts`, `backend/src/models/event.model.ts`, `backend/src/services/tourist-spot.service.ts`, `backend/src/services/event.service.ts`, `backend/src/utils/event-date.ts`, `backend/src/utils/guest.ts`; `mobile/src/features/home/tourism-section.tsx`, `mobile/src/app/tourist-spot/[id].tsx`, `mobile/src/app/event/[id].tsx`; `admin/src/components/sections/atracoes.tsx`, `eventos.tsx`.
+
+### 11.1 Módulo Turismo — Addendum de Filtros (busca textual e filtro de cidade)
+
+- **Doc:** `archive/executed/plans/2026-11-05-modulo-turismo-addendum-filtros.md`
+- **Objetivo:** Eliminar duas limitações: Home ignora filtro de cidade; busca filtra turismo só no cliente.
+- **Implementado:** Backend `?q=` em `/tourist-spots` e `/events` (regex case-insensitive em name/description/location, `escapeRegex` extraído para `utils/regex.ts`); mobile `TourismSection` recebe `city` e recarrega; busca envia `q` ao servidor e pagina turismo (estado próprio por coleção: página, total, exhausted); helper puro `buildTourismQuery` (`tourism-query.ts`) e `temMaisPagina`/`resultadoObsoleto` (`tourism-search.ts`).
 
 ## 12. Módulo Turismo — Schedule (programação interna de eventos)
 
@@ -181,7 +193,6 @@
 
 - **Auditoria da Aplicação** (`plans/2026-11-07-auditoria-aplicacao.md`, `specs/2026-11-07-auditoria-aplicacao-design.md`): vários itens de segurança/multi-cidade/testes feitos; pendências como rate limiting global e autorização por recurso.
 - **Roteiro E2E Playwright** (`plans/2026-11-04-playwright-e2e-roteiro.md`): specs parciais (tipografia, tabelas); roteiro completo dos 4 perfis não automatizado.
-- **Addendum de Filtros do Turismo** (`plans/2026-11-05-modulo-turismo-addendum-filtros.md`): backend feito; verificar aplicação do filtro de cidade na Home mobile.
 
 ## ❌ Não implementados
 
