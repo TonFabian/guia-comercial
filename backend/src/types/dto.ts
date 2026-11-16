@@ -618,6 +618,14 @@ export const broadcastSchema = z.object({
 export type BroadcastDto = z.infer<typeof broadcastSchema>;
 
 // ---------------------------------------------------------------------------
+// Notificações in-app (leitura)
+// ---------------------------------------------------------------------------
+export const markReadSchema = z.object({
+  ids: z.array(z.string().trim().min(1)).optional(),
+}).default({});
+export type MarkReadDto = z.infer<typeof markReadSchema>;
+
+// ---------------------------------------------------------------------------
 // Push Campaign (Push Center)
 // ---------------------------------------------------------------------------
 
