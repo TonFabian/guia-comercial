@@ -23,11 +23,12 @@ export interface NotificationItemProps {
 }
 
 /**
- * Ícone da ação de swipe: "lida" quando a notificação está por ler,
- * "não lida" quando já foi lida (o gesto sempre alterna).
+ * Ícone da ação de swipe: check para marcar como lida (quando está por ler),
+ * envelope fechado para marcar como não lida (quando já foi lida) — ícones
+ * distintos evitam ambiguidade na mesma cor.
  */
 function iconeAcao(unread: boolean) {
-  return unread ? 'checkmark-circle-outline' : 'checkmark-circle';
+  return unread ? 'checkmark-circle-outline' : 'mail-outline';
 }
 
 /** Painel da ação de swipe, com ícone que escala conforme o arraste (feedback Outlook). */
