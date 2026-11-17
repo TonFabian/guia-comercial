@@ -1,6 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { memo, useRef } from 'react';
-import { Pressable, StyleSheet, Text, View } from 'react-native';
+import { Pressable, ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 import ReanimatedSwipeable, { type SwipeableMethods } from 'react-native-gesture-handler/ReanimatedSwipeable';
 import Animated, { Extrapolation, interpolate, useAnimatedStyle } from 'react-native-reanimated';
 
@@ -15,6 +15,8 @@ export interface NotificationItemProps {
   /** Modo seleção: desativa swipe e mostra checkbox. */
   modoSelecao?: boolean;
   selecionado?: boolean;
+  /** Requisição de leitura em andamento para este item (dots loader no lugar do marcador). */
+  processando?: boolean;
   onToggleSelecionado?: (item: AppNotification) => void;
   /** Alternar lido/não lido (ação do swipe). */
   onToggleLido?: (item: AppNotification) => void;
@@ -50,6 +52,7 @@ export const NotificationItem = memo(function NotificationItem({
   onPress,
   modoSelecao = false,
   selecionado = false,
+  processando = false,
   onToggleSelecionado,
   onToggleLido,
 }: NotificationItemProps) {
@@ -67,7 +70,13 @@ export const NotificationItem = memo(function NotificationItem({
       accessibilityState={{ selected: selecionado }}
     >
       {modoSelecao ? (
-        <View style={[styles.checkbox, selecionado && { backgroundColor: colors.primary, borderColor: colors.primary }]}>
+        <View
+          style={[
+            styles.checkbox,
+            { borderColor: colors.border },
+            selecionado && { backgroundColor: colors.primary, borderColor: colors.primary },
+          ]}
+        >
           {selecionado ? <Ionicons name="checkmark" size={16} color={colors.background} /> : null}
         </View>
       ) : null}
@@ -79,7 +88,11 @@ export const NotificationItem = memo(function NotificationItem({
         {item.body ? <Text style={[styles.body, { color: colors.textSecondary }]} numberOfLines={2}>{item.body}</Text> : null}
         <Text style={[styles.time, { color: colors.textSecondary }]}>{tempoRelativo(item.createdAt)}</Text>
       </View>
-      {unread && !modoSelecao ? <View style={[styles.dot, { backgroundColor: colors.primary }]} /> : null}
+      {processando ? (
+        <ActivityIndicator size="small" color={colors.primary} />
+      ) : unread && !modoSelecao ? (
+        <View style={[styles.dot, { backgroundColor: colors.primary }]} />
+      ) : null}
     </Pressable>
   );
 

@@ -29,6 +29,7 @@ export default function NotificationsScreen() {
   const [modoSelecao, setModoSelecao] = useState(false);
   const [selecionados, setSelecionados] = useState<string[]>([]);
   const [aplicandoLeitura, setAplicandoLeitura] = useState(false);
+  const [processandoIds, setProcessandoIds] = useState<string[]>([]);
 
   // Estado convidado (avisos públicos)
   const [notices, setNotices] = useState<Notice[]>([]);
@@ -71,6 +72,7 @@ export default function NotificationsScreen() {
   /** Alternar lido/não lido das selecionadas (ou da individual via swipe). */
   const aplicarEstadoLeitura = useCallback(async (ids: string[], lido: boolean) => {
     if (ids.length === 0) return;
+    setProcessandoIds((prev) => [...prev, ...ids]);
     setAplicandoLeitura(true);
     try {
       if (lido) {
@@ -79,10 +81,13 @@ export default function NotificationsScreen() {
         await markNotificationsUnread(ids);
       }
       setItems((prev) => aplicarLeitura(prev, ids, lido));
+      // Ação concluída: volta ao estado inicial da tela.
+      sairDaSelecao();
     } finally {
       setAplicandoLeitura(false);
+      setProcessandoIds((prev) => prev.filter((id) => !ids.includes(id)));
     }
-  }, []);
+  }, [sairDaSelecao]);
 
   const handleSwipeToggle = useCallback((item: AppNotification) => {
     if (!item._id) return;
@@ -95,13 +100,14 @@ export default function NotificationsScreen() {
       onPress={handlePress}
       modoSelecao={modoSelecao}
       selecionado={selecionados.includes(item._id ?? '')}
+      processando={item._id ? processandoIds.includes(item._id) : false}
       onToggleSelecionado={(n) => {
         if (!n._id) return;
         setSelecionados((prev) => alternarSelecao(prev, n._id as string));
       }}
       onToggleLido={handleSwipeToggle}
     />
-  ), [handlePress, handleSwipeToggle, modoSelecao, selecionados]);
+  ), [handlePress, handleSwipeToggle, modoSelecao, processandoIds, selecionados]);
 
   // Carga inicial (somente autenticado)
   useEffect(() => {
@@ -294,9 +300,10 @@ const styles = StyleSheet.create({
     minWidth: 44,
     justifyContent: 'center',
     alignItems: 'flex-end',
+    paddingHorizontal: 8,
     // Espelhado ao TopBackButton: canto direito, acima do título absoluto
     position: 'absolute',
-    right: 0,
+    right: 8,
     zIndex: 10,
     elevation: 10,
   },
