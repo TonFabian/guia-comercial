@@ -40,9 +40,9 @@ function SwipeAcao({ progress, unread }: { progress: { value: number } | { value
     return { transform: [{ scale: escala }], opacity: opacidade };
   });
   return (
-    <View style={[styles.swipePanel, { backgroundColor: unread ? colors.primary : colors.border }]}>
+    <View style={[styles.swipePanel, { backgroundColor: unread ? colors.primary : colors.textSecondary }]}>
       <Animated.View style={[styles.swipeIconWrap, estiloAnimado]}>
-        <Ionicons name={iconeAcao(unread)} size={22} color={unread ? colors.background : colors.text} />
+        <Ionicons name={iconeAcao(unread)} size={22} color={colors.background} />
       </Animated.View>
     </View>
   );
