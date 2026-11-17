@@ -350,6 +350,19 @@ export async function markNotificationsRead(ids?: string[]): Promise<number> {
   }
 }
 
+export async function markNotificationsUnread(ids?: string[]): Promise<number> {
+  if (!isApiConfigured()) return 0;
+  try {
+    const res = await request<{ unreadCount: number }>('/notifications/unread', {
+      method: 'PUT',
+      body: ids && ids.length ? { ids } : {},
+    });
+    return (res as { unreadCount?: number } | null)?.unreadCount ?? 0;
+  } catch {
+    return 0;
+  }
+}
+
 export async function getUnreadCount(): Promise<number> {
   if (!isApiConfigured()) return 0;
   try {

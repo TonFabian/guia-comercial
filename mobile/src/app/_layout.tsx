@@ -14,6 +14,7 @@ import {
   Rubik_800ExtraBold,
   useFonts as useRubikFonts,
 } from '@expo-google-fonts/rubik';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { ThemeProvider as RouterThemeProvider, Stack } from 'expo-router';
 import * as SplashScreen from 'expo-splash-screen';
 import { useEffect } from 'react';
@@ -118,9 +119,11 @@ export default function RootLayout() {  const [interLoaded, interError] = useInt
   if (!fontsLoaded && !fontError) return null; // splash mantido
 
   return (
-    <ThemeProvider>
-      <ThemedStack />
-    </ThemeProvider>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <ThemeProvider>
+        <ThemedStack />
+      </ThemeProvider>
+    </GestureHandlerRootView>
   );
 }
 
