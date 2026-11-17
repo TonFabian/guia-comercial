@@ -1,0 +1,63 @@
+services:
+  redis:
+    image: redis:7-alpine
+    env_file:
+      - .env
+    command: ["sh", "-c", "redis-server --requirepass \"$$REDIS_PASSWORD\""]
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD-SHELL", "redis-cli -a $$REDIS_PASSWORD ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 10s
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: ..
+      dockerfile: backend/Dockerfile
+    env_file:
+      - .env
+    ports:
+      - "4000:4000"
+    depends_on:
+      redis:
+        condition: service_healthy
+    restart: unless-stopped
+    entrypoint: ["/bin/sh", "-c"]
+    command:
+      - |
+        redis_url_ok() {
+          url="$1"
+          [ -n "$url" ] || return 1
+          case "$url" in
+            redis://:*@*) ;;
+            *) return 1 ;;
+          esac
+          senha="${url#redis://:}"
+          senha="${senha%%@*}"
+          [ -n "$senha" ] || return 1
+          return 0
+        }
+        if ! redis_url_ok "$REDIS_URL"; then
+          if [ -z "$REDIS_PASSWORD" ]; then
+            if [ "${NODE_ENV:-}" = "production" ]; then
+              echo "[compose] ERRO: REDIS_PASSWORD obrigatorio em producao." >&2
+              exit 1
+            fi
+            echo "[compose] AVISO: REDIS_PASSWORD vazio; Redis pode subir sem senha (dev)." >&2
+          fi
+          export REDIS_URL="redis://:${REDIS_PASSWORD}@redis:6379"
+        fi
+        exec node dist/backend/src/index.js
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:4000/api/health || exit 1"]
+      interval: 30s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  redis_data:

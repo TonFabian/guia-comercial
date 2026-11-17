@@ -2,6 +2,8 @@ export interface BootEnvironment {
   NODE_ENV?: string;
   CLERK_SECRET_KEY?: string;
   CLERK_PUBLISHABLE_KEY?: string;
+  REDIS_URL?: string;
+  REDIS_PASSWORD?: string;
 }
 
 /**
@@ -23,6 +25,18 @@ export function assertValidClerkConfiguration(env: BootEnvironment): void {
   if (env.CLERK_SECRET_KEY && !env.CLERK_PUBLISHABLE_KEY) {
     throw new Error(
       'CLERK_PUBLISHABLE_KEY é obrigatória quando CLERK_SECRET_KEY está definida',
+    );
+  }
+}
+
+/**
+ * REDIS_URL definida exige REDIS_PASSWORD: sem senha, a conexão ao Redis
+ * (que exige auth) falharia em silêncio e o rate limit cairia para in-memory.
+ */
+export function assertValidRedisConfiguration(env: BootEnvironment): void {
+  if (env.REDIS_URL && !env.REDIS_PASSWORD?.trim()) {
+    throw new Error(
+      'REDIS_PASSWORD é obrigatória quando REDIS_URL está definida',
     );
   }
 }
