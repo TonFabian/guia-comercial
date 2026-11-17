@@ -60,7 +60,7 @@ export const NotificationItem = memo(function NotificationItem({
 
   const conteudo = (
     <Pressable
-      style={({ pressed }) => [styles.row, { borderBottomColor: colors.border, backgroundColor: pressed ? colors.surface : 'transparent' }, selecionado && { backgroundColor: colors.surface }]}
+      style={({ pressed }) => [styles.row, { borderBottomColor: colors.border, backgroundColor: pressed ? colors.surface : colors.background }, selecionado && { backgroundColor: colors.surface }]}
       onPress={() => (modoSelecao ? onToggleSelecionado?.(item) : onPress(item))}
       accessibilityRole="button"
       accessibilityLabel={`${item.title}${unread ? ' (não lida)' : ' (lida)'}${modoSelecao ? (selecionado ? ' (selecionada)' : ' (não selecionada)') : ''}`}

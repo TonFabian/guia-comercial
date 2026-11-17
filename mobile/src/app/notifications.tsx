@@ -198,9 +198,9 @@ export default function NotificationsScreen() {
             <TopBackButton onPress={() => router.back()} />
           )}
           {titulo}
-          {items.length > 0 && !modoSelecao ? (
+          {!modoSelecao ? (
             <TouchableOpacity
-              style={styles.topAction}
+              style={styles.topActionRight}
               onPress={() => setModoSelecao(true)}
               hitSlop={24}
               accessibilityRole="button"
@@ -288,7 +288,18 @@ const styles = StyleSheet.create({
     right: 0,
     textAlign: 'center',
   },
-  topAction: { minHeight: 44, minWidth: 44, justifyContent: 'center', alignItems: 'flex-start' },
+  topAction: { minHeight: 44, minWidth: 44, justifyContent: 'center', alignItems: 'flex-start', zIndex: 10, elevation: 10 },
+  topActionRight: {
+    minHeight: 44,
+    minWidth: 44,
+    justifyContent: 'center',
+    alignItems: 'flex-end',
+    // Espelhado ao TopBackButton: canto direito, acima do título absoluto
+    position: 'absolute',
+    right: 0,
+    zIndex: 10,
+    elevation: 10,
+  },
   topActionText: { ...Typography.body, fontFamily: FontFamily.body600, fontWeight: FontWeight.semibold },
   listComBarra: { paddingBottom: 72 },
   actionBar: {
@@ -303,6 +314,8 @@ const styles = StyleSheet.create({
     paddingHorizontal: Spacing.two,
     borderRadius: 12,
     borderWidth: 1,
+    zIndex: 10,
+    elevation: 10,
   },
   actionButton: { flexDirection: 'row', alignItems: 'center', gap: 6, paddingVertical: 8, paddingHorizontal: 12 },
   actionText: { ...Typography.body, fontFamily: FontFamily.body600, fontWeight: FontWeight.semibold },
