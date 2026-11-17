@@ -143,6 +143,18 @@ export async function markNotificationsRead(clerkId: string, ids?: string[]): Pr
   return countUnreadNotifications(clerkId);
 }
 
+/** Reabre notificações (readAt volta a null), todas ou ids específicos. */
+export async function markNotificationsUnread(clerkId: string, ids?: string[]): Promise<number> {
+  const filter: Record<string, unknown> = { clerkId, readAt: { $ne: null } };
+  if (ids && ids.length > 0) {
+    const objectIds = ids.filter((id) => Types.ObjectId.isValid(id)).map((id) => new Types.ObjectId(id));
+    if (objectIds.length === 0) return countUnreadNotifications(clerkId);
+    filter._id = { $in: objectIds };
+  }
+  await NotificationModel.updateMany(filter, { $set: { readAt: null } });
+  return countUnreadNotifications(clerkId);
+}
+
 export async function countUnreadNotifications(clerkId: string): Promise<number> {
   return NotificationModel.countDocuments({ clerkId, readAt: null });
 }

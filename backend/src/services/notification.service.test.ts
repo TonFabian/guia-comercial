@@ -13,6 +13,7 @@ import {
   notifyEventCity,
   listNotifications,
   markNotificationsRead,
+  markNotificationsUnread,
   countUnreadNotifications,
 } from './notification.service.js';
 
@@ -145,5 +146,37 @@ describe('markNotificationsRead', () => {
     const n = await markNotificationsRead('c1', ['nao-e-objectid']);
     expect(NotificationModelMock.updateMany).not.toHaveBeenCalled();
     expect(n).toBe(5);
+  });
+});
+
+describe('markNotificationsUnread', () => {
+  it('marca todas quando sem ids e retorna contador', async () => {
+    NotificationModelMock.updateMany.mockResolvedValue({ modifiedCount: 2 });
+    NotificationModelMock.countDocuments.mockResolvedValue(3);
+    const n = await markNotificationsUnread('c1');
+    expect(NotificationModelMock.updateMany).toHaveBeenCalledWith(
+      { clerkId: 'c1', readAt: { $ne: null } },
+      { $set: { readAt: null } },
+    );
+    expect(n).toBe(3);
+  });
+
+  it('marca ids específicos', async () => {
+    NotificationModelMock.updateMany.mockResolvedValue({ modifiedCount: 1 });
+    NotificationModelMock.countDocuments.mockResolvedValue(2);
+    const id = '507f1f77bcf86cd799439011';
+    const n = await markNotificationsUnread('c1', [id]);
+    expect(NotificationModelMock.updateMany).toHaveBeenCalledWith(
+      { clerkId: 'c1', readAt: { $ne: null }, _id: { $in: expect.any(Array) } },
+      { $set: { readAt: null } },
+    );
+    expect(n).toBe(2);
+  });
+
+  it('ids inválidos não chama updateMany', async () => {
+    NotificationModelMock.countDocuments.mockResolvedValue(4);
+    const n = await markNotificationsUnread('c1', ['nao-e-objectid']);
+    expect(NotificationModelMock.updateMany).not.toHaveBeenCalled();
+    expect(n).toBe(4);
   });
 });

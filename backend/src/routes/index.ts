@@ -82,6 +82,7 @@ if (authDeps) {
   routes.put('/me', auth.requireAuth, validateBody(updateUserSchema.partial()), updateMe);
   routes.get('/notifications', auth.requireAuth, notificationController.list);
   routes.put('/notifications/read', auth.requireAuth, validateBody(markReadSchema), notificationController.markRead);
+  routes.put('/notifications/unread', auth.requireAuth, validateBody(markReadSchema), notificationController.markUnread);
   routes.get('/notifications/unread-count', auth.requireAuth, notificationController.unreadCount);
   routes.post('/push-tokens', validateBody(pushTokenSchema), registerPushToken);
   routes.post('/notifications/broadcast', validateBody(broadcastSchema), broadcastPush);
