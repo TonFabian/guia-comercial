@@ -348,7 +348,8 @@ export interface AdminUserListItem extends Pick<User, '_id' | 'email' | 'role' |
 // ---------------------------------------------------------------------------
 
 function paginationQuery(page: number, pageSize: number): string {
-  return new URLSearchParams({ page: String(page), pageSize: String(pageSize) }).toString();
+  const limitedPageSize = Math.min(pageSize, 50);
+  return new URLSearchParams({ page: String(page), pageSize: String(limitedPageSize) }).toString();
 }
 
 export async function getCompanies(page = 1, pageSize = DEFAULT_PAGE_SIZE): Promise<Paginated<Company>> {
@@ -380,9 +381,10 @@ export async function getJobs(page = 1, pageSize = DEFAULT_PAGE_SIZE): Promise<P
  * a lista completa.
  */
 export async function getNotices(page = 1, pageSize = DEFAULT_PAGE_SIZE): Promise<Paginated<Notice>> {
+  const limitedPageSize = Math.min(pageSize, 50);
   const params = new URLSearchParams({
     page: String(page),
-    pageSize: String(pageSize),
+    pageSize: String(limitedPageSize),
     active: 'all',
   });
   return request<Paginated<Notice>>(`/notices?${params.toString()}`);
@@ -394,7 +396,8 @@ export async function getUsers(
   pageSize = DEFAULT_PAGE_SIZE,
   search?: string,
 ): Promise<Paginated<AdminUserListItem>> {
-  const params = new URLSearchParams({ page: String(page), pageSize: String(pageSize) });
+  const limitedPageSize = Math.min(pageSize, 50);
+  const params = new URLSearchParams({ page: String(page), pageSize: String(limitedPageSize) });
   if (search && search.trim()) params.set('search', search.trim());
   return request<Paginated<AdminUserListItem>>(`/users?${params.toString()}`);
 }
@@ -433,9 +436,10 @@ export async function getTouristSpots(page = 1, pageSize = DEFAULT_PAGE_SIZE): P
  * desativar): sem `includePast=true` o backend esconde os vencidos.
  */
 export async function getEvents(page = 1, pageSize = DEFAULT_PAGE_SIZE): Promise<Paginated<TourEvent>> {
+  const limitedPageSize = Math.min(pageSize, 50);
   const params = new URLSearchParams({
     page: String(page),
-    pageSize: String(pageSize),
+    pageSize: String(limitedPageSize),
     includePast: 'true',
   });
   return request<Paginated<TourEvent>>(`/events?${params.toString()}`);

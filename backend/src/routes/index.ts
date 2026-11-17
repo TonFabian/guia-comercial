@@ -12,6 +12,7 @@ import * as eventController from '../controllers/event.controller.js';
 import { health } from '../controllers/health.controller.js';
 import * as jobController from '../controllers/job.controller.js';
 import * as noticeController from '../controllers/notice.controller.js';
+import * as notificationController from '../controllers/notification.controller.js';
 import * as pushCampaignController from '../controllers/push-campaign.controller.js';
 import * as publicUtilityController from '../controllers/public-utility.controller.js';
 import * as touristSpotController from '../controllers/tourist-spot.controller.js';
@@ -43,8 +44,8 @@ import {
   broadcastSchema,
   createCampaignSchema,
   updateCampaignStatusSchema,
-  pushTokenSchema,
-  updateUserSchema,
+  markReadSchema,
+  pushTokenSchema, updateUserSchema,
   updateUserRoleSchema,
   updateUserAdminSchema,
   updateTourEventSchema,
@@ -79,6 +80,10 @@ if (authDeps) {
   // ligado — em modo legado o app não a consome.
   routes.get('/me', auth.requireAuth, me);
   routes.put('/me', auth.requireAuth, validateBody(updateUserSchema.partial()), updateMe);
+  routes.get('/notifications', auth.requireAuth, notificationController.list);
+  routes.put('/notifications/read', auth.requireAuth, validateBody(markReadSchema), notificationController.markRead);
+  routes.put('/notifications/unread', auth.requireAuth, validateBody(markReadSchema), notificationController.markUnread);
+  routes.get('/notifications/unread-count', auth.requireAuth, notificationController.unreadCount);
   routes.post('/push-tokens', validateBody(pushTokenSchema), registerPushToken);
   routes.post('/notifications/broadcast', validateBody(broadcastSchema), broadcastPush);
 }

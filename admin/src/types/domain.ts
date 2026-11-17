@@ -359,3 +359,23 @@ export interface PushCampaign {
 
 /** Item da listagem (sem receipts — payload grande e inútil na lista). */
 export type PushCampaignSummary = Omit<PushCampaign, 'receipts'>;
+
+/** Notificação in-app por usuário (central de notificações). */
+export interface AppNotification {
+  _id?: string;
+  clerkId: string;
+  type: 'coupon' | 'event';
+  title: string;
+  body: string;
+  deepLink: string;
+  imageUrl?: string;
+  refId: string;
+  readAt?: string | null;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+/** Página de notificações com contador de não lidas. */
+export interface NotificationsPage extends Paginated<AppNotification> {
+  unreadCount: number;
+}
