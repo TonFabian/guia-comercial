@@ -28,7 +28,7 @@ export default function NotificationsScreen() {
   const [error, setError] = useState<string | null>(null);
   const [modoSelecao, setModoSelecao] = useState(false);
   const [selecionados, setSelecionados] = useState<string[]>([]);
-  const [aplicandoLeitura, setAplicandoLeitura] = useState(false);
+
   const [processandoIds, setProcessandoIds] = useState<string[]>([]);
 
   // Estado convidado (avisos públicos)
@@ -69,22 +69,22 @@ export default function NotificationsScreen() {
     setSelecionados(items.map((n) => n._id).filter((id): id is string => typeof id === 'string'));
   }, [items]);
 
-  /** Alternar lido/não lido das selecionadas (ou da individual via swipe). */
+  /** Alternar lido/não lido das selecionadas (ou da individual via swipe).
+   *  Otimista: aplica o estado visual e sai do modo seleção antes da
+   *  requisição; os dots loaders por item permanecem até a conclusão. */
   const aplicarEstadoLeitura = useCallback(async (ids: string[], lido: boolean) => {
     if (ids.length === 0) return;
     setProcessandoIds((prev) => [...prev, ...ids]);
-    setAplicandoLeitura(true);
+    setItems((prev) => aplicarLeitura(prev, ids, lido));
+    // Remove os efeitos do modo seleção já no início, não no final.
+    sairDaSelecao();
     try {
       if (lido) {
         await markNotificationsRead(ids);
       } else {
         await markNotificationsUnread(ids);
       }
-      setItems((prev) => aplicarLeitura(prev, ids, lido));
-      // Ação concluída: volta ao estado inicial da tela.
-      sairDaSelecao();
     } finally {
-      setAplicandoLeitura(false);
       setProcessandoIds((prev) => prev.filter((id) => !ids.includes(id)));
     }
   }, [sairDaSelecao]);
@@ -252,7 +252,7 @@ export default function NotificationsScreen() {
           <TouchableOpacity
             style={styles.actionButton}
             onPress={() => void aplicarEstadoLeitura(selecionados, true)}
-            disabled={selecionados.length === 0 || aplicandoLeitura}
+            disabled={selecionados.length === 0}
             accessibilityRole="button"
             accessibilityLabel="Marcar selecionadas como lidas"
           >
@@ -262,7 +262,7 @@ export default function NotificationsScreen() {
           <TouchableOpacity
             style={styles.actionButton}
             onPress={() => void aplicarEstadoLeitura(selecionados, false)}
-            disabled={selecionados.length === 0 || aplicandoLeitura}
+            disabled={selecionados.length === 0}
             accessibilityRole="button"
             accessibilityLabel="Marcar selecionadas como não lidas"
           >
