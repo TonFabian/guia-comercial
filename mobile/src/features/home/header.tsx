@@ -23,7 +23,7 @@ export function Header({ city }: { city?: string }) {
         </TouchableOpacity>
         <TouchableOpacity
           style={styles.bellButton}
-          onPress={() => router.push('/notifications' as never)}
+          onPress={() => router.push('/notifications')}
           activeOpacity={0.7}
           accessibilityRole="button"
           accessibilityLabel="Notificações"
