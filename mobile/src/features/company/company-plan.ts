@@ -79,3 +79,10 @@ export function sortCompaniesByPlan(companies: Company[]): Company[] {
     return a.name.localeCompare(b.name);
   });
 }
+
+/** Mantém apenas as empresas cujo plano está na lista; lista vazia = todos. */
+export function filterCompaniesByPlan(companies: Company[], plans: Plan[]): Company[] {
+  if (plans.length === 0) return companies;
+  const permitidos = new Set<Plan>(plans);
+  return companies.filter((company) => permitidos.has(companyPlan(company)));
+}

@@ -59,7 +59,6 @@ export const MOCK_COMPANIES: Company[] = [
     address: 'Av. Brasil, 1520 — Centro',
     city: 'Castelo do Piauí',
     registry: 'CREA-PI',
-    isFeatured: true,
     plan: 'premium',
     rating: 4.7,
     ratingCount: 128,
@@ -90,6 +89,7 @@ export const MOCK_COMPANIES: Company[] = [
     slug: 'restaurante-sabor-arte',
     description: 'Cozinha caseira e pizzas artesanais.',
     category: '2',
+    plan: 'basic',
     phone: '+5511999990002',
     whatsapp: '5511999990002',
     address: 'Rua das Flores, 30 — Centro',
@@ -231,9 +231,6 @@ export const MOCK_JOBS: Job[] = [
 
 export const MOCK_PHARMACY: Company =
   MOCK_COMPANIES.find((company) => company.slug === 'drogaria-popular') ?? MOCK_COMPANIES[4];
-
-export const MOCK_FEATURED_COMPANY: Company =
-  MOCK_COMPANIES.find((company) => company.isFeatured) ?? MOCK_COMPANIES[0];
 
 /** `Date` → `YYYY-MM-DD` (horário local). O mock usa Date só para FORMATAR a
  * data; a comparação de dias é lexicográfica e mora em tourism-view. */

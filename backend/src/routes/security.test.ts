@@ -198,7 +198,7 @@ const empresasFake: MemoryDocument[] = [
     address: 'Rua Sentinela 1',
     phone: '(86) 3232-1001',
     whatsapp: '(86) 99999-1001',
-    isFeatured: true,
+    plan: 'premium',
     ownerClerkId: 'user_comum',
   },
   {
@@ -211,7 +211,7 @@ const empresasFake: MemoryDocument[] = [
     address: 'Rua Comum 2',
     phone: '(86) 3232-1002',
     whatsapp: '(86) 99999-1002',
-    isFeatured: false,
+    plan: 'free',
   },
 ];
 
@@ -405,7 +405,7 @@ function caso(rota: string, status: number, extras: Omit<Caso, 'rota' | 'status'
 
 /** Endpoints de listagem com filtro — cada caso recebe o parâmetro malicioso. */
 const CASOS_VARREDURA: Caso[] = [
-  // GET /api/companies (category, q, featured, owner, city, page, pageSize)
+  // GET /api/companies (category, q, plan, owner, city, page, pageSize)
   caso('/api/companies?category[$ne]=x', 200, { total: 2 }),
   caso('/api/companies?category[a]=1', 200, { total: 2 }),
   caso('/api/companies?q[$gt]=', 200, { total: 2 }),
@@ -413,7 +413,8 @@ const CASOS_VARREDURA: Caso[] = [
   caso('/api/companies?category=a&category=b', 400),
   caso('/api/companies?q=a&q=b', 400),
   caso('/api/companies?city=x&city=y', 400),
-  caso('/api/companies?featured=1', 400),
+  caso('/api/companies?plan=gold', 400),
+  caso('/api/companies?plan=free&plan=premium', 400),
   caso(`/api/companies?owner=usuario_alheio`, 403),
   caso(`/api/companies?owner=`, 200, { total: 2 }),
   caso('/api/companies?page=1e15', 200, { total: 2, page: 1 }),
@@ -541,7 +542,8 @@ describe('Sanidade: filtro válido reduz a lista (dados semeiam a diferença)', 
   const expectativas: Expectativa[] = [
     { rota: '/api/companies', total: 2 },
     { rota: '/api/companies?category=restaurante', total: 1, campoTitulo: 'name', primeiroTitulo: 'Pizzaria Lumière' },
-    { rota: '/api/companies?featured=false', total: 1, campoTitulo: 'name', primeiroTitulo: 'Oficina Rocha' },
+    { rota: '/api/companies?plan=premium', total: 1, campoTitulo: 'name', primeiroTitulo: 'Pizzaria Lumière' },
+    { rota: '/api/companies?plan=free', total: 1, campoTitulo: 'name', primeiroTitulo: 'Oficina Rocha' },
     { rota: '/api/events', total: 2 },
     { rota: '/api/events?category=festival', total: 1, campoTitulo: 'name', primeiroTitulo: 'Festival do Queijo' },
     { rota: '/api/tourist-spots', total: 2 },

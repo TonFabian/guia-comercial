@@ -261,7 +261,7 @@ export function CompanyDetailScreen({ companyId }: { companyId: string }) {
               </View>
             ) : null}
 
-            {details.isFeatured ? (
+            {details.isPremium ? (
               <View style={styles.featuredTag}>
                 <Text style={styles.featuredTagText}>Destaque</Text>
               </View>

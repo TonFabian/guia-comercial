@@ -2,6 +2,7 @@ import { categoryLabel } from '@/types/domain';
 import { cityName } from '@/utils/city';
 import type { Company } from '@/types/domain';
 import { formatMinutes } from '@/features/company/opening-hours';
+import { companyPlan } from './company-plan';
 
 export type WorkingHours = {
   weekdays: string;
@@ -44,7 +45,7 @@ export type CompanyDetails = {
   name: string;
   category: string;
   registry?: string;
-  isFeatured: boolean;
+  isPremium: boolean;
   logoUrl?: string;
   coverUrl?: string;
   media: CompanyMedia[];
@@ -208,7 +209,7 @@ export function buildCompanyDetails(company: Company): CompanyDetails {
     name: company.name,
     category: categoryLabel(company.category),
     registry: company.registry,
-    isFeatured: company.isFeatured === true,
+    isPremium: companyPlan(company) === 'premium',
     logoUrl: company.logo,
     coverUrl: company.cover,
     media: buildMedia(company),

@@ -19,15 +19,19 @@ const SEGUNDA_NOITE = new Date(2026, 10, 9, 20, 0, 0);
 const TERCA_MEIO_DIA = new Date(2026, 10, 10, 12, 0, 0);
 
 describe('companyDetailVariant', () => {
-  it('usa a tela completa para empresa em destaque', () => {
-    expect(companyDetailVariant(empresa({ _id: '1', isFeatured: true }))).toBe('full');
+  it('usa a tela completa para premium', () => {
+    expect(companyDetailVariant(empresa({ _id: '1', plan: 'premium' }))).toBe('full');
   });
 
-  it('usa a tela enxuta para empresa sem destaque', () => {
-    expect(companyDetailVariant(empresa({ _id: '1', isFeatured: false }))).toBe('free');
+  it('usa a tela completa para básico', () => {
+    expect(companyDetailVariant(empresa({ _id: '1', plan: 'basic' }))).toBe('full');
   });
 
-  it('usa a tela enxuta quando isFeatured não está definido', () => {
+  it('usa a tela enxuta para free', () => {
+    expect(companyDetailVariant(empresa({ _id: '1', plan: 'free' }))).toBe('free');
+  });
+
+  it('usa a tela enxuta quando o plano não está definido', () => {
     expect(companyDetailVariant(empresa({ _id: '1' }))).toBe('free');
   });
 });

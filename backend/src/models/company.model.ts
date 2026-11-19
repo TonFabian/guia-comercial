@@ -24,7 +24,6 @@ const companySchema = new Schema<Company>(
     cover: String,
     gallery: [String],
     registry: String,
-    isFeatured: { type: Boolean, default: false },
     plan: { type: String, enum: ['free', 'basic', 'premium'], default: 'free', index: true },
     planStartedAt: String,
     planExpiresAt: String,

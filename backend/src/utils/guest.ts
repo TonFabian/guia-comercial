@@ -346,7 +346,7 @@ function isTourEvent(value: unknown): value is TourEvent {
 
 /**
  * Discriminadores do ponto turístico: `slug` + `category` + `name` + `active`.
- * O `active` separa da Company (que tem `isFeatured`); o `slug` separa da
+ * O `active` separa da Company (que não tem `active`); o `slug` separa da
  * PublicUtility (que tem `active` mas não tem `slug`) e do Banner (que não
  * tem slug/category).
  */

@@ -9,6 +9,7 @@
 import type { AppNotification, AutonomousProfessional, Banner, Category, City, Company, Coupon, Job, Notice, NotificationsPage, Paginated, PublicUtility, Review, TourEvent, TouristSpot, User } from '@/types/domain';
 import { buildTourismQuery } from '@/features/tourism/tourism-query';
 import type { TourismQueryParams } from '@/features/tourism/tourism-query';
+import { filterCompaniesByPlan, type Plan } from '@/features/company/company-plan';
 
 import { ApiError, isApiConfigured, request } from './http';
 import type { RequestPayload } from './http';
@@ -19,7 +20,6 @@ import {
   MOCK_COUPONS,
   MOCK_COMPANIES,
   MOCK_EVENTS,
-  MOCK_FEATURED_COMPANY,
   MOCK_JOBS,
   MOCK_PHARMACY,
   MOCK_TOURIST_SPOTS,
@@ -83,8 +83,16 @@ function normalizeCity(value: string | { name?: string } | null | undefined): st
   return name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
 }
 
-export async function getCompanies(page = 1, pageSize = 20, city?: string, featured?: boolean): Promise<CompanyPage> {
+export async function getCompanies(
+  page = 1,
+  pageSize = 20,
+  city?: string,
+  plans?: Plan[],
+): Promise<CompanyPage> {
   const limitedPageSize = Math.min(pageSize, 50);
+  const filtrarPorPlanos = (items: Company[]): Company[] =>
+    plans && plans.length > 0 ? filterCompaniesByPlan(items, plans) : items;
+
   if (!isApiConfigured()) {
     if (!__DEV__) return { items: [], total: 0, page, pageSize: limitedPageSize };
     let items = MOCK_COMPANIES;
@@ -92,22 +100,22 @@ export async function getCompanies(page = 1, pageSize = 20, city?: string, featu
       const target = normalizeCity(city);
       items = items.filter((c) => normalizeCity(c.city) === target);
     }
-    if (featured !== undefined) {
-      items = items.filter((c) => Boolean(c.isFeatured) === featured);
-    }
+    items = filtrarPorPlanos(items);
     const start = (page - 1) * limitedPageSize;
     const sliced = items.slice(start, start + limitedPageSize);
     return { items: sliced, total: items.length, page, pageSize: limitedPageSize };
   }
   const params = new URLSearchParams({ page: String(page), pageSize: String(limitedPageSize) });
   if (city) params.set('city', city);
-  if (featured !== undefined) params.set('featured', String(featured));
+  if (plans && plans.length > 0) params.set('plan', plans.join(','));
   const payload = await request<Company>(`/companies?${params.toString()}`);
   const items = fromPaginated(payload, []);
   const total = isPaginated(payload) ? (payload.total ?? items.length) : items.length;
-  const allowMockFallback = __DEV__;
-  const fallbackItems = page === 1 && items.length === 0 && allowMockFallback ? MOCK_COMPANIES.slice(0, limitedPageSize) : items;
-  const fallbackTotal = page === 1 && items.length === 0 && allowMockFallback ? MOCK_COMPANIES.length : total;
+  const allowMockFallback = __DEV__ && payload === null;
+  const mockItems = filtrarPorPlanos(MOCK_COMPANIES);
+  const fallbackItems =
+    page === 1 && allowMockFallback ? mockItems.slice(0, limitedPageSize) : items;
+  const fallbackTotal = page === 1 && allowMockFallback ? mockItems.length : total;
   return { items: fallbackItems, total: fallbackTotal, page, pageSize: limitedPageSize };
 }
 
@@ -177,17 +185,21 @@ export async function getJobById(id: string): Promise<Job | null> {
   }
 }
 
-export async function getFeaturedCompany(city?: string): Promise<Company | null> {
-  if (!isApiConfigured()) return __DEV__ ? MOCK_FEATURED_COMPANY : null;
+export async function getFeaturedCompanies(city?: string): Promise<Company[]> {
+  const premiumMocks = (): Company[] =>
+    __DEV__ ? filterCompaniesByPlan(MOCK_COMPANIES, ['premium']) : [];
+
+  if (!isApiConfigured()) return premiumMocks();
+
   try {
-    const params = new URLSearchParams({ featured: 'true' });
+    const params = new URLSearchParams({ plan: 'premium', page: '1', pageSize: '50' });
     if (city) params.set('city', city);
     const payload = await request<Company>(`/companies?${params.toString()}`);
-    const items = fromPaginated(payload, mockFallback(MOCK_COMPANIES));
-    const found = items.find((company) => company.isFeatured) ?? items[0] ?? null;
-    return found ?? (__DEV__ ? MOCK_FEATURED_COMPANY : null);
-  } catch {
-    return __DEV__ ? MOCK_FEATURED_COMPANY : null;
+    if (payload === null) return premiumMocks();
+    return filterCompaniesByPlan(fromPaginated(payload, []), ['premium']);
+  } catch (error) {
+    if (error instanceof ApiError) throw error;
+    return premiumMocks();
   }
 }
 

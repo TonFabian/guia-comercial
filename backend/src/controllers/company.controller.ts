@@ -8,7 +8,14 @@ import { asyncHandler, parsePagination } from '../utils/http.js';
 export const list = asyncHandler(async (req: Request, res: Response): Promise<void> => {
   const pagination = parsePagination(req.query.page, req.query.pageSize);
   const { items, total } = await companyService.listCompanies(
-    { category: req.query.category, q: req.query.q, featured: req.query.featured, owner: req.query.owner, city: req.query.city, prioritize: req.query.prioritize },
+    {
+      category: req.query.category,
+      q: req.query.q,
+      plan: req.query.plan,
+      owner: req.query.owner,
+      city: req.query.city,
+      prioritize: req.query.prioritize,
+    },
     pagination,
     req.auth?.clerkId,
   );

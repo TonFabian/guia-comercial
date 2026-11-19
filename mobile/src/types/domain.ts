@@ -48,7 +48,6 @@ export interface Company {
   cover?: string;
   gallery?: string[];
   registry?: string;
-  isFeatured?: boolean;
   /** Plano comercial. Ausente/undefined → tratado como 'free'. */
   plan?: 'free' | 'basic' | 'premium';
   /** Início do período do plano atual (YYYY-MM-DD, data pura, sem fuso). */
