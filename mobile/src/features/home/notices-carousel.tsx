@@ -1,10 +1,16 @@
-import { useState } from 'react';
+import { useCallback, useState } from 'react';
 import { ActivityIndicator, Modal, Pressable, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
 
+import { PaginationDots } from '@/components/PaginationDots';
 import { Radius, Spacing, Typography, FontFamily, FontWeight } from '@/constants/theme';
 import { useThemeColors } from '@/hooks/use-theme-colors';
 import type { Notice } from '@/types/domain';
+import { pageIndexFromOffset } from '@/utils/carousel-page';
 import { SectionHeader } from './section-header';
+
+const NOTICE_CARD_WIDTH = 220;
+const NOTICE_CARD_GAP = 12;
 
 interface Props {
   notices: Notice[];
@@ -22,6 +28,22 @@ export function NoticesCarousel({ notices, loading = false, error = null }: Prop
   const colors = useThemeColors();
   const styles = makeStyles(colors);
   const [selected, setSelected] = useState<Notice | null>(null);
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  const handleScroll = useCallback(
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
+      setActiveIndex(
+        pageIndexFromOffset(
+          contentOffset.x,
+          NOTICE_CARD_WIDTH + NOTICE_CARD_GAP,
+          notices.length,
+          contentSize.width - layoutMeasurement.width,
+        ),
+      );
+    },
+    [notices.length],
+  );
 
   return (
     <View style={styles.section}>
@@ -36,24 +58,35 @@ export function NoticesCarousel({ notices, loading = false, error = null }: Prop
       ) : notices.length === 0 ? (
         <Text style={styles.empty}>Sem avisos no momento</Text>
       ) : (
-        <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.carousel}>
-          {notices.map((n) => (
-            <TouchableOpacity
-              key={n._id}
-              style={styles.card}
-              activeOpacity={0.85}
-              accessibilityRole="button"
-              accessibilityLabel={`Aviso: ${n.title}`}
-              onPress={() => setSelected(n)}
-            >
-              <View style={[styles.bar, { backgroundColor: TYPE_COLORS[n.type] ?? TYPE_COLORS.general }]} />
-              <View style={styles.body}>
-                <Text style={styles.title} numberOfLines={2}>{n.title}</Text>
-                <Text style={styles.preview} numberOfLines={2}>{n.body}</Text>
-              </View>
-            </TouchableOpacity>
-          ))}
-        </ScrollView>
+        <>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.carousel}
+            snapToInterval={NOTICE_CARD_WIDTH + NOTICE_CARD_GAP}
+            decelerationRate="fast"
+            onScroll={handleScroll}
+            scrollEventThrottle={16}
+          >
+            {notices.map((n) => (
+              <TouchableOpacity
+                key={n._id}
+                style={styles.card}
+                activeOpacity={0.85}
+                accessibilityRole="button"
+                accessibilityLabel={`Aviso: ${n.title}`}
+                onPress={() => setSelected(n)}
+              >
+                <View style={[styles.bar, { backgroundColor: TYPE_COLORS[n.type] ?? TYPE_COLORS.general }]} />
+                <View style={styles.body}>
+                  <Text style={styles.title} numberOfLines={2}>{n.title}</Text>
+                  <Text style={styles.preview} numberOfLines={2}>{n.body}</Text>
+                </View>
+              </TouchableOpacity>
+            ))}
+          </ScrollView>
+          <PaginationDots total={notices.length} activeIndex={activeIndex} />
+        </>
       )}
 
       <Modal visible={selected !== null} transparent animationType="fade" onRequestClose={() => setSelected(null)}>
@@ -78,9 +111,9 @@ export function NoticesCarousel({ notices, loading = false, error = null }: Prop
 function makeStyles(colors: ReturnType<typeof useThemeColors>) {
   return StyleSheet.create({
     section: { marginBottom: Spacing.four },
-    carousel: { paddingHorizontal: 16, gap: 12 },
+    carousel: { paddingHorizontal: 16, gap: NOTICE_CARD_GAP },
     card: {
-      width: 220,
+      width: NOTICE_CARD_WIDTH,
       minHeight: 96,
       flexDirection: 'row',
       backgroundColor: colors.surface,

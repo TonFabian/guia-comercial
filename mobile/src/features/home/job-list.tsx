@@ -1,6 +1,6 @@
 import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
-import { memo } from 'react';
+import { memo, useCallback, useState } from 'react';
 import {
   FlatList,
   ListRenderItemInfo,
@@ -9,12 +9,18 @@ import {
   Text,
   View,
 } from 'react-native';
+import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
 
+import { PaginationDots } from '@/components/PaginationDots';
 import { Overlays, Radius, Spacing, Typography, FontFamily, FontWeight } from '@/constants/theme';
 import { useThemeColors } from '@/hooks/use-theme-colors';
 import type { Job } from '@/types/domain';
 import { companyLabel } from '@/types/domain';
+import { pageIndexFromOffset } from '@/utils/carousel-page';
 import { SectionHeader } from './section-header';
+
+const JOB_CARD_WIDTH = 232;
+const JOB_CARD_GAP = 12;
 
 const JOB_TYPE_LABELS: Record<string, string> = {
   CLT: 'Tempo Integral',
@@ -86,6 +92,23 @@ const renderJob = ({ item }: ListRenderItemInfo<Job>) => <JobCard job={item} />;
 export function JobList({ jobs }: { jobs: Job[] }) {
   const colors = useThemeColors();
   const styles = makeStyles(colors);
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  const handleScroll = useCallback(
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
+      setActiveIndex(
+        pageIndexFromOffset(
+          contentOffset.x,
+          JOB_CARD_WIDTH + JOB_CARD_GAP,
+          jobs.length,
+          contentSize.width - layoutMeasurement.width,
+        ),
+      );
+    },
+    [jobs.length],
+  );
+
   if (jobs.length === 0) return null;
 
   return (
@@ -98,7 +121,12 @@ export function JobList({ jobs }: { jobs: Job[] }) {
         renderItem={renderJob}
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.jobsContent}
+        snapToInterval={JOB_CARD_WIDTH + JOB_CARD_GAP}
+        decelerationRate="fast"
+        onScroll={handleScroll}
+        scrollEventThrottle={16}
       />
+      <PaginationDots total={jobs.length} activeIndex={activeIndex} />
     </View>
   );
 }
@@ -110,10 +138,10 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     jobsContent: {
       paddingHorizontal: Spacing.three,
-      gap: 12,
+      gap: JOB_CARD_GAP,
     },
     jobCard: {
-      width: 232,
+      width: JOB_CARD_WIDTH,
       minHeight: 184,
       justifyContent: 'space-between',
       gap: 12,
