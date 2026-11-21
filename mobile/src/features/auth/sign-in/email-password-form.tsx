@@ -276,7 +276,7 @@ export function EmailPasswordForm({ mode, onForgot }: { mode: AuthMode; onForgot
   return (
     <FormWrapper
       style={styles.container}
-      onSubmit={(e: any) => {
+      onSubmit={(e: { preventDefault?: () => void } | undefined) => {
         e?.preventDefault?.();
         void submit();
       }}

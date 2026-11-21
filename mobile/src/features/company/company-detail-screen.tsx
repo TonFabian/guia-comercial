@@ -14,6 +14,8 @@ import {
   StyleSheet,
   Text,
   View,
+  type TextStyle,
+  type ViewStyle,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -70,7 +72,7 @@ function WorkingHoursCard({ hours }: { hours: WorkingHours }) {
   const now = new Date();
 
   const status = getOpeningStatus(hours, now);
-  const statusConfig: Record<OpeningStatus, { label: string; badge: any; dot: any; text: any }> = {
+  const statusConfig: Record<OpeningStatus, { label: string; badge: ViewStyle; dot: ViewStyle; text: TextStyle }> = {
     open: {
       label: 'Aberto Agora',
       badge: styles.statusOpen,
