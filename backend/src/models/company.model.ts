@@ -59,4 +59,7 @@ companySchema.index(
   },
 );
 
+// Índice composto para consultas por plano + slug (ex.: listagem/filtro).
+companySchema.index({ plan: 1, slug: 1 });
+
 export const CompanyModel = model<Company>('Company', companySchema);
