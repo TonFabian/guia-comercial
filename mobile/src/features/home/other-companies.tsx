@@ -31,7 +31,7 @@ import { SectionHeader } from './section-header';
 
 const OtherCompanyCard = memo(function OtherCompanyCard({ company }: { company: Company }) {
   const colors = useThemeColors();
-  const styles = makeStyles(colors);
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const contato = company.whatsapp ?? company.phone;
   const plano = companyPlan(company);
 
@@ -85,7 +85,7 @@ const OtherCompaniesPageItem = memo(function OtherCompaniesPageItem({
   pageWidth: number;
 }) {
   const colors = useThemeColors();
-  const styles = makeStyles(colors);
+  const styles = useMemo(() => makeStyles(colors), [colors]);
 
   return (
     <View style={[styles.page, { width: pageWidth }]}>
@@ -106,7 +106,7 @@ interface Props {
 
 export function OtherCompanies({ companies, loading = false, error = null }: Props) {
   const colors = useThemeColors();
-  const styles = makeStyles(colors);
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const { width } = useWindowDimensions();
   const pageWidth = Math.min(width, MaxContentWidth);
 

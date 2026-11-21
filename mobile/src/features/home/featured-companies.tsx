@@ -1,6 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
-import { memo, useCallback, useState } from 'react';
+import { memo, useCallback, useMemo, useState } from 'react';
 import { FlatList, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
 import type {
   ListRenderItemInfo,
@@ -25,7 +25,7 @@ const CARD_WIDTH = 360;
 
 const FeaturedCompanyCard = memo(function FeaturedCompanyCard({ company }: { company: Company }) {
   const colors = useThemeColors();
-  const styles = makeStyles(colors);
+  const styles = useMemo(() => makeStyles(colors), [colors]);
 
   return (
     <View style={styles.companyCard}>
@@ -103,7 +103,7 @@ const featuredCompanyKey = (company: Company) => company._id;
 
 export function FeaturedCompanies({ companies }: { companies: Company[] }) {
   const colors = useThemeColors();
-  const styles = makeStyles(colors);
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const [activeIndex, setActiveIndex] = useState(0);
 
   const handleScroll = useCallback(

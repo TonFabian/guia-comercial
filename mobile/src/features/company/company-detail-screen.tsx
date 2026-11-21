@@ -66,7 +66,7 @@ const CLOSED_HOURS = 'Fechado';
 
 function WorkingHoursCard({ hours }: { hours: WorkingHours }) {
   const colors = useThemeColors();
-  const styles = makeStyles(colors);
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const now = new Date();
 
   const status = getOpeningStatus(hours, now);
@@ -127,7 +127,7 @@ function WorkingHoursCard({ hours }: { hours: WorkingHours }) {
 export function CompanyDetailScreen({ companyId }: { companyId: string }) {
   const colors = useThemeColors();
   const { mode } = useThemeMode();
-  const styles = makeStyles(colors);
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const insets = useSafeAreaInsets();
   const { company, loading, error } = useCompanyDetail(companyId);
   const { isFavorite, toggleFavorite } = useFavorites();
