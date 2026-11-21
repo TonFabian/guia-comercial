@@ -23,7 +23,7 @@ import { PlanBadge } from '@/features/company/plan-badge';
 import { useThemeColors } from '@/hooks/use-theme-colors';
 import type { Company } from '@/types/domain';
 import { categoryLabel } from '@/types/domain';
-import { pageIndexFromOffset } from '@/utils/carousel-page';
+import { useCarouselPagination } from '@/hooks/use-carousel-pagination';
 import { openWhatsApp } from '@/utils/links';
 import { paginateOtherCompanies } from './other-companies-view';
 import type { OtherCompaniesPage } from './other-companies-view';
@@ -115,22 +115,7 @@ export function OtherCompanies({ companies, loading = false, error = null }: Pro
     [companies],
   );
 
-  const [activeIndex, setActiveIndex] = useState(0);
-
-  const handleScroll = useCallback(
-    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-      const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
-      setActiveIndex(
-        pageIndexFromOffset(
-          contentOffset.x,
-          pageWidth,
-          pages.length,
-          contentSize.width - layoutMeasurement.width,
-        ),
-      );
-    },
-    [pageWidth, pages.length],
-  );
+  const { activeIndex, handleScroll } = useCarouselPagination(pages.length, pageWidth, 0);
 
   const renderPage = useCallback(
     ({ item }: ListRenderItemInfo<OtherCompaniesPage>) => (

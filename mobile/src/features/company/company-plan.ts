@@ -1,4 +1,5 @@
 import type { Company } from '@/types/domain';
+import { getPlanStrategy } from './plan-strategy';
 
 export type Plan = 'free' | 'basic' | 'premium';
 
@@ -51,14 +52,7 @@ export function companyPlan(company: Company): Plan {
 
 /** Rótulo legível do plano para exibição nas telas. */
 export function planLabel(plan: Plan): string {
-  switch (plan) {
-    case 'premium':
-      return 'Premium';
-    case 'basic':
-      return 'Básico';
-    default:
-      return 'Gratuito';
-  }
+  return getPlanStrategy(plan).label;
 }
 
 export function hasFeature(plan: Plan, feature: Feature): boolean {

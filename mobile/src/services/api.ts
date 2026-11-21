@@ -60,13 +60,13 @@ function fromPaginated<T>(payload: RequestPayload<T> | null, fallback: T[]): T[]
   return [payload];
 }
 
-export async function getCategories(): Promise<Category[]> {
-  const payload = await request<Category>('/categories');
+export async function getCategories(signal?: AbortSignal): Promise<Category[]> {
+  const payload = await request<Category>('/categories', { signal });
   return fromPaginated(payload, mockFallback(MOCK_CATEGORIES));
 }
 
-export async function getBanners(): Promise<Banner[]> {
-  const payload = await request<Banner>('/banners');
+export async function getBanners(signal?: AbortSignal): Promise<Banner[]> {
+  const payload = await request<Banner>('/banners', { signal });
   return fromPaginated(payload, mockFallback(MOCK_BANNERS));
 }
 
@@ -142,8 +142,8 @@ export async function getOwnedCompanies(ownerClerkId: string): Promise<Company[]
   }
 }
 
-export async function getCoupons(): Promise<Coupon[]> {
-  const payload = await request<Coupon>('/coupons');
+export async function getCoupons(signal?: AbortSignal): Promise<Coupon[]> {
+  const payload = await request<Coupon>('/coupons', { signal });
   return fromPaginated(payload, mockFallback(MOCK_COUPONS));
 }
 
@@ -167,8 +167,8 @@ export async function getCouponsByCompany(companyId: string): Promise<Coupon[]> 
   return __DEV__ ? filterMockCouponsByCompany(companyId) : [];
 }
 
-export async function getJobs(): Promise<Job[]> {
-  const payload = await request<Job>('/jobs');
+export async function getJobs(signal?: AbortSignal): Promise<Job[]> {
+  const payload = await request<Job>('/jobs', { signal });
   return fromPaginated(payload, mockFallback(MOCK_JOBS));
 }
 
@@ -185,7 +185,7 @@ export async function getJobById(id: string): Promise<Job | null> {
   }
 }
 
-export async function getFeaturedCompanies(city?: string): Promise<Company[]> {
+export async function getFeaturedCompanies(city?: string, signal?: AbortSignal): Promise<Company[]> {
   const premiumMocks = (): Company[] =>
     __DEV__ ? filterCompaniesByPlan(MOCK_COMPANIES, ['premium']) : [];
 
@@ -194,7 +194,7 @@ export async function getFeaturedCompanies(city?: string): Promise<Company[]> {
   try {
     const params = new URLSearchParams({ plan: 'premium', page: '1', pageSize: '50' });
     if (city) params.set('city', city);
-    const payload = await request<Company>(`/companies?${params.toString()}`);
+    const payload = await request<Company>(`/companies?${params.toString()}`, { signal });
     if (payload === null) return premiumMocks();
     return filterCompaniesByPlan(fromPaginated(payload, []), ['premium']);
   } catch (error) {
@@ -203,12 +203,12 @@ export async function getFeaturedCompanies(city?: string): Promise<Company[]> {
   }
 }
 
-export async function getPharmacyOnDuty(city?: string): Promise<Company | null> {
+export async function getPharmacyOnDuty(city?: string, signal?: AbortSignal): Promise<Company | null> {
   if (!isApiConfigured()) return __DEV__ ? MOCK_PHARMACY : null;
   try {
     const params = new URLSearchParams({ category: 'farmacia' });
     if (city) params.set('city', city);
-    const payload = await request<Company>(`/companies?${params.toString()}`);
+    const payload = await request<Company>(`/companies?${params.toString()}`, { signal });
     const items = fromPaginated(payload, []);
     return items[0] ?? (__DEV__ ? MOCK_PHARMACY : null);
   } catch {

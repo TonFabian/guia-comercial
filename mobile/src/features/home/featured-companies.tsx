@@ -16,7 +16,7 @@ import { useThemeColors } from '@/hooks/use-theme-colors';
 import type { Company } from '@/types/domain';
 import { categoryLabel } from '@/types/domain';
 import { cityName } from '@/utils/city';
-import { pageIndexFromOffset } from '@/utils/carousel-page';
+import { useCarouselPagination } from '@/hooks/use-carousel-pagination';
 import { callPhone, openAddress, openWhatsApp } from '@/utils/links';
 import { openCompanyDetails } from '../company/open-company';
 import { SectionHeader } from './section-header';
@@ -104,21 +104,10 @@ const featuredCompanyKey = (company: Company) => company._id;
 export function FeaturedCompanies({ companies }: { companies: Company[] }) {
   const colors = useThemeColors();
   const styles = useMemo(() => makeStyles(colors), [colors]);
-  const [activeIndex, setActiveIndex] = useState(0);
-
-  const handleScroll = useCallback(
-    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
-      const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
-      setActiveIndex(
-        pageIndexFromOffset(
-          contentOffset.x,
-          CARD_WIDTH + Spacing.two,
-          companies.length,
-          contentSize.width - layoutMeasurement.width,
-        ),
-      );
-    },
-    [companies.length],
+  const { activeIndex, handleScroll, snapToInterval } = useCarouselPagination(
+    companies.length,
+    CARD_WIDTH,
+    Spacing.two,
   );
 
   if (companies.length === 0) return null;
@@ -133,7 +122,7 @@ export function FeaturedCompanies({ companies }: { companies: Company[] }) {
         renderItem={renderFeaturedCompany}
         showsHorizontalScrollIndicator={false}
         contentContainerStyle={styles.carouselContent}
-        snapToInterval={CARD_WIDTH + Spacing.two}
+        snapToInterval={snapToInterval}
         decelerationRate="fast"
         onScroll={handleScroll}
         scrollEventThrottle={16}
