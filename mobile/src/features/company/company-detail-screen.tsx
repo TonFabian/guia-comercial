@@ -52,7 +52,7 @@ import { trackView, trackWhatsappClick } from '@/features/analytics/track';
 const WHATSAPP_MESSAGE =
   'Olá, vi sua empresa no aplicativo *Guia de Castelo do Piauí* e gostaria de mais informações!';
 
-const HERO_HEIGHT = 230;
+const HERO_HEIGHT = 190;
 const LOGO_SIZE = 68;
 const SERVICE_ICON_SIZE = 40;
 
@@ -202,6 +202,36 @@ export function CompanyDetailScreen({ companyId }: { companyId: string }) {
   return (
     <View style={styles.root}>
       <StatusBar style={mode === 'dark' ? 'light' : 'dark'} />
+      <View style={[styles.headerBar, { paddingTop: insets.top }]}>
+        <Pressable
+          style={({ pressed }) => [styles.iconButton, pressed && styles.pressed]}
+          onPress={goBack}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel="Voltar"
+        >
+          <Ionicons name="chevron-back" size={22} color={colors.text} />
+        </Pressable>
+
+        <Pressable
+          style={({ pressed }) => [
+            styles.iconButton,
+            favorite && styles.favoriteActive,
+            pressed && styles.pressed,
+          ]}
+          onPress={handleToggleFavorite}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel={favorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
+          accessibilityState={{ selected: favorite }}
+        >
+          <Ionicons
+            name={favorite ? 'heart' : 'heart-outline'}
+            size={21}
+            color={favorite ? colors.background : colors.text}
+          />
+        </Pressable>
+      </View>
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[
@@ -354,37 +384,6 @@ export function CompanyDetailScreen({ companyId }: { companyId: string }) {
         </View>
       </ScrollView>
 
-      <View style={[styles.floatingNav, { top: insets.top + Spacing.two }]}>
-        <Pressable
-          style={({ pressed }) => [styles.iconButton, pressed && styles.pressed]}
-          onPress={goBack}
-          hitSlop={8}
-          accessibilityRole="button"
-          accessibilityLabel="Voltar"
-        >
-          <Ionicons name="chevron-back" size={22} color={colors.text} />
-        </Pressable>
-
-        <Pressable
-          style={({ pressed }) => [
-            styles.iconButton,
-            favorite && styles.favoriteActive,
-            pressed && styles.pressed,
-          ]}
-          onPress={handleToggleFavorite}
-          hitSlop={8}
-          accessibilityRole="button"
-          accessibilityLabel={favorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
-          accessibilityState={{ selected: favorite }}
-        >
-          <Ionicons
-            name={favorite ? 'heart' : 'heart-outline'}
-            size={21}
-            color={favorite ? colors.background : colors.text}
-          />
-        </Pressable>
-      </View>
-
       <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, Spacing.three) }]}>
         {!hasContact ? <ContactHintRow /> : null}
 
@@ -474,8 +473,22 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     scrollContent: {
       paddingTop: 0,
     },
+    headerBar: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: Spacing.three,
+      paddingTop: Spacing.two,
+      paddingBottom: Spacing.two,
+      marginBottom: Spacing.two,
+      backgroundColor: colors.background,
+    },
     hero: {
       height: HERO_HEIGHT,
+      marginHorizontal: Spacing.three,
+      marginBottom: Spacing.three,
+      borderRadius: Radius.card,
+      overflow: 'hidden',
       backgroundColor: colors.surfaceAlt,
     },
     basicInfo: {

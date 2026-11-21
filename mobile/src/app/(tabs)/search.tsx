@@ -448,7 +448,9 @@ export default function SearchScreen() {
         >
           <View style={styles.rowBody}>
             <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
-              <Text style={styles.rowTitle}>{company.name}</Text>
+              <Text style={styles.rowTitle} numberOfLines={1} ellipsizeMode="tail">
+                {company.name}
+              </Text>
               <PlanBadge plan={company.plan} />
             </View>
             <Text style={styles.rowSubtitle}>
@@ -1012,6 +1014,8 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     rowTitle: {
       color: colors.text,
       ...Typography.h5,
+      flex: 1,
+      flexShrink: 1,
     },
     rowSubtitle: {
       color: colors.textSecondary,

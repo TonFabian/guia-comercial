@@ -21,7 +21,7 @@ import { callPhone, openAddress, openWhatsApp } from '@/utils/links';
 import { openCompanyDetails } from '../company/open-company';
 import { SectionHeader } from './section-header';
 
-const CARD_WIDTH = 300;
+const CARD_WIDTH = 360;
 
 const FeaturedCompanyCard = memo(function FeaturedCompanyCard({ company }: { company: Company }) {
   const colors = useThemeColors();
@@ -212,13 +212,13 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     companyActions: {
       flexDirection: 'row',
-      flexWrap: 'wrap',
       gap: Spacing.one,
       marginTop: Spacing.three,
       marginBottom: Spacing.three,
       marginHorizontal: Spacing.two,
     },
     actionPill: {
+      flex: 1,
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',
@@ -235,6 +235,7 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
       fontWeight: FontWeight.semibold,
     },
     whatsappPill: {
+      flex: 1,
       flexDirection: 'row',
       alignItems: 'center',
       justifyContent: 'center',

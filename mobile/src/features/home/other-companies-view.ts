@@ -1,6 +1,6 @@
 import type { Company } from '@/types/domain';
 
-export const COMPANIES_PER_PAGE = 2;
+export const COMPANIES_PER_PAGE = 3;
 
 export interface OtherCompaniesPage {
   id: string;

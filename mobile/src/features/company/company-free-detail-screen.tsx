@@ -78,7 +78,37 @@ export function CompanyFreeDetailScreen({ company }: { company: Company }) {
   return (
     <View style={styles.root}>
       <StatusBar style={mode === 'dark' ? 'light' : 'dark'} />
-      <SafeAreaView style={styles.safeArea} edges={['top']}>
+      <SafeAreaView style={styles.safeArea} edges={[]}>
+        <View style={[styles.headerBar, { paddingTop: insets.top }]}>
+          <Pressable
+            style={({ pressed }) => [styles.iconButton, pressed && styles.pressed]}
+            onPress={goBack}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel="Voltar"
+          >
+            <Ionicons name="chevron-back" size={22} color={colors.text} />
+          </Pressable>
+
+          <Pressable
+            style={({ pressed }) => [
+              styles.iconButton,
+              favorite && styles.favoriteActive,
+              pressed && styles.pressed,
+            ]}
+            onPress={handleToggleFavorite}
+            hitSlop={8}
+            accessibilityRole="button"
+            accessibilityLabel={favorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
+            accessibilityState={{ selected: favorite }}
+          >
+            <Ionicons
+              name={favorite ? 'heart' : 'heart-outline'}
+              size={21}
+              color={favorite ? colors.background : colors.text}
+            />
+          </Pressable>
+        </View>
         <ScrollView
           showsVerticalScrollIndicator={false}
           contentContainerStyle={[
@@ -157,37 +187,6 @@ export function CompanyFreeDetailScreen({ company }: { company: Company }) {
           </View>
         </ScrollView>
       </SafeAreaView>
-
-      <View style={[styles.floatingNav, { top: insets.top + Spacing.two }]}>
-        <Pressable
-          style={({ pressed }) => [styles.iconButton, pressed && styles.pressed]}
-          onPress={goBack}
-          hitSlop={8}
-          accessibilityRole="button"
-          accessibilityLabel="Voltar"
-        >
-          <Ionicons name="chevron-back" size={22} color={colors.text} />
-        </Pressable>
-
-        <Pressable
-          style={({ pressed }) => [
-            styles.iconButton,
-            favorite && styles.favoriteActive,
-            pressed && styles.pressed,
-          ]}
-          onPress={handleToggleFavorite}
-          hitSlop={8}
-          accessibilityRole="button"
-          accessibilityLabel={favorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
-          accessibilityState={{ selected: favorite }}
-        >
-          <Ionicons
-            name={favorite ? 'heart' : 'heart-outline'}
-            size={21}
-            color={favorite ? colors.background : colors.text}
-          />
-        </Pressable>
-      </View>
 
       <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, Spacing.three) }]}>
         {!view.hasContact ? <ContactHintRow /> : null}
@@ -285,9 +284,19 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     scrollContent: {
       paddingTop: 0,
     },
+    headerBar: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: Spacing.three,
+      paddingTop: Spacing.two,
+      paddingBottom: Spacing.two,
+      marginBottom: Spacing.two,
+      backgroundColor: colors.background,
+    },
     imageWrapper: {
       marginHorizontal: Spacing.three,
-      marginTop: Spacing.three,
+      marginTop: Spacing.two,
       marginBottom: Spacing.three,
     },
     cover: {

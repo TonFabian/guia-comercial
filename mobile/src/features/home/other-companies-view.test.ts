@@ -14,16 +14,16 @@ function makeCompany(id: string): Company {
 }
 
 describe('paginateOtherCompanies', () => {
-  it('agrupa duas empresas por página e deixa a sobra na última', () => {
-    const companies = ['a', 'b', 'c', 'd', 'e'].map(makeCompany);
+  it('agrupa três empresas por página e deixa a sobra na última', () => {
+    const companies = ['a', 'b', 'c', 'd', 'e', 'f', 'g'].map(makeCompany);
 
     const pages = paginateOtherCompanies(companies);
 
-    expect(pages.map((page) => page.id)).toEqual(['a', 'c', 'e']);
+    expect(pages.map((page) => page.id)).toEqual(['a', 'd', 'g']);
     expect(pages.map((page) => page.companies.map((company) => company._id))).toEqual([
-      ['a', 'b'],
-      ['c', 'd'],
-      ['e'],
+      ['a', 'b', 'c'],
+      ['d', 'e', 'f'],
+      ['g'],
     ]);
   });
 
