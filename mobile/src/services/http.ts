@@ -12,6 +12,7 @@ import Constants from 'expo-constants';
 import type { Paginated } from '@/types/domain';
 
 import { resolveApiBaseUrl } from './api-url';
+import { devServerUrl } from './dev-server-url';
 
 /** Formatos aceitos nas respostas da API: lista crua, paginada ou recurso único. */
 export type RequestPayload<T> = T | T[] | Paginated<T>;
@@ -49,6 +50,7 @@ function apiBaseUrl(): string | undefined {
   return resolveApiBaseUrl({
     explicitUrl: process.env.EXPO_PUBLIC_API_URL,
     hostUri: Constants.expoConfig?.hostUri,
+    bundleUrl: devServerUrl(),
     dev: typeof __DEV__ !== 'undefined' ? __DEV__ : false,
   });
 }

@@ -14,6 +14,13 @@ export interface ApiUrlOptions {
   explicitUrl?: string;
   /** `Constants.expoConfig?.hostUri` (ex.: "192.168.1.106:8081"). */
   hostUri?: string;
+  /**
+   * URL do bundle servido pelo Metro (ex.: "http://192.168.1.106:8081/").
+   *
+   * Em dev build (bare/CNG) o `expo-constants` lê o `app.json` embutido e não
+   * expõe `hostUri`; a URL do bundle continua apontando para o dev server.
+   */
+  bundleUrl?: string;
   /** `__DEV__`. */
   dev: boolean;
 }
@@ -25,12 +32,15 @@ function extrairHost(hostUri: string): string | null {
   return host ? host : null;
 }
 
-export function resolveApiBaseUrl({ explicitUrl, hostUri, dev }: ApiUrlOptions): string | undefined {
+export function resolveApiBaseUrl({ explicitUrl, hostUri, bundleUrl, dev }: ApiUrlOptions): string | undefined {
   const urlExplicita = explicitUrl?.trim();
   if (urlExplicita) return urlExplicita;
-  if (!dev || !hostUri) return undefined;
+  if (!dev) return undefined;
 
-  const host = extrairHost(hostUri);
+  const fonte = hostUri ?? bundleUrl;
+  if (!fonte) return undefined;
+
+  const host = extrairHost(fonte);
   if (!host) return undefined;
 
   return `http://${host}:${PORTA_API_PADRAO}/api`;

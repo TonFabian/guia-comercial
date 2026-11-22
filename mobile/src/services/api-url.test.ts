@@ -48,4 +48,26 @@ describe('resolveApiBaseUrl', () => {
   it('fora do desenvolvimento não deriva hostUri (produção exige URL explícita)', () => {
     expect(resolveApiBaseUrl({ hostUri: '192.168.1.106:8081', dev: false })).toBeUndefined();
   });
+
+  it('usa a URL do bundle do Metro quando o hostUri não existe (dev build)', () => {
+    expect(
+      resolveApiBaseUrl({ bundleUrl: 'http://192.168.1.77:8081/', dev: true }),
+    ).toBe(`http://192.168.1.77:${PORTA_API_PADRAO}/api`);
+  });
+
+  it('prefere o hostUri do Expo à URL do bundle quando ambos existem', () => {
+    expect(
+      resolveApiBaseUrl({
+        hostUri: '192.168.1.106:8081',
+        bundleUrl: 'http://10.0.0.2:8081/',
+        dev: true,
+      }),
+    ).toBe(`http://192.168.1.106:${PORTA_API_PADRAO}/api`);
+  });
+
+  it('não usa a URL do bundle fora do desenvolvimento', () => {
+    expect(
+      resolveApiBaseUrl({ bundleUrl: 'http://192.168.1.77:8081/', dev: false }),
+    ).toBeUndefined();
+  });
 });
