@@ -1,0 +1,20 @@
+# Contexto de build é a raiz do monorepo.
+node_modules
+**/node_modules
+dist
+**/dist
+.env
+**/.env
+**/.env.*
+!.env.example
+.git
+mobile/
+admin/
+coverage
+*.tsbuildinfo
+.expo
+.vite
+playwright-report
+test-results
+*.log
+.DS_Store
