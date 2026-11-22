@@ -1,6 +1,12 @@
 import { describe, expect, it } from 'vitest';
 
-import { companyPlan, hasFeature, planLabel, sortCompaniesByPlan } from './company-plan';
+import {
+  companyPlan,
+  filterCompaniesByPlan,
+  hasFeature,
+  planLabel,
+  sortCompaniesByPlan,
+} from './company-plan';
 import type { Company } from '@/types/domain';
 
 const base: Company = { _id: '1', name: 'X', slug: 'x', description: 'd', category: 'c' };
@@ -54,6 +60,28 @@ describe('company-plan', () => {
 
     const ordenadas = sortCompaniesByPlan([desconhecida, livre]);
     expect(ordenadas.map((c) => c._id)).toEqual(['3', '2']);
+  });
+
+  describe('filterCompaniesByPlan', () => {
+    it('mantém só os planos pedidos e trata ausente como free', () => {
+      const livre: Company = { ...base, _id: '2', name: 'B Free', slug: 'b' };
+      const premium: Company = { ...base, _id: '3', name: 'A Premium', slug: 'a', plan: 'premium' };
+      const basico: Company = { ...base, _id: '4', name: 'C Basic', slug: 'c', plan: 'basic' };
+
+      expect(
+        filterCompaniesByPlan([livre, premium, basico], ['premium']).map((c) => c._id),
+      ).toEqual(['3']);
+      expect(
+        filterCompaniesByPlan([livre, premium, basico], ['basic', 'free']).map((c) => c._id),
+      ).toEqual(['2', '4']);
+    });
+
+    it('devolve todos quando a lista de planos está vazia', () => {
+      const a: Company = { ...base, _id: '2', name: 'A', slug: 'a' };
+      const b: Company = { ...base, _id: '3', name: 'B', slug: 'b', plan: 'premium' };
+
+      expect(filterCompaniesByPlan([a, b], [])).toEqual([a, b]);
+    });
   });
 
   describe('planLabel', () => {

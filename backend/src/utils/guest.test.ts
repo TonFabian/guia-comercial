@@ -27,7 +27,6 @@ const empresa: Company = {
   city: 'Natal',
   logo: 'https://cdn.example.com/logo.png',
   cover: 'https://cdn.example.com/cover.png',
-  isFeatured: true,
   rating: 4.8,
   services: ['entrega'],
   createdAt: '2026-10-01T10:00:00.000Z',

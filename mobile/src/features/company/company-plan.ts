@@ -1,4 +1,5 @@
 import type { Company } from '@/types/domain';
+import { getPlanStrategy } from './plan-strategy';
 
 export type Plan = 'free' | 'basic' | 'premium';
 
@@ -51,14 +52,7 @@ export function companyPlan(company: Company): Plan {
 
 /** Rótulo legível do plano para exibição nas telas. */
 export function planLabel(plan: Plan): string {
-  switch (plan) {
-    case 'premium':
-      return 'Premium';
-    case 'basic':
-      return 'Básico';
-    default:
-      return 'Gratuito';
-  }
+  return getPlanStrategy(plan).label;
 }
 
 export function hasFeature(plan: Plan, feature: Feature): boolean {
@@ -78,4 +72,11 @@ export function sortCompaniesByPlan(companies: Company[]): Company[] {
     if (diferenca !== 0) return diferenca;
     return a.name.localeCompare(b.name);
   });
+}
+
+/** Mantém apenas as empresas cujo plano está na lista; lista vazia = todos. */
+export function filterCompaniesByPlan(companies: Company[], plans: Plan[]): Company[] {
+  if (plans.length === 0) return companies;
+  const permitidos = new Set<Plan>(plans);
+  return companies.filter((company) => permitidos.has(companyPlan(company)));
 }

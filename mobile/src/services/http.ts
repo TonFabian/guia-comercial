@@ -7,7 +7,11 @@
  * lança `ApiError`: dado "parecido mas mockado" seria mentir para o
  * usuário autenticado (com sessão válida ou expirada).
  */
+import Constants from 'expo-constants';
+
 import type { Paginated } from '@/types/domain';
+
+import { resolveApiBaseUrl } from './api-url';
 
 /** Formatos aceitos nas respostas da API: lista crua, paginada ou recurso único. */
 export type RequestPayload<T> = T | T[] | Paginated<T>;
@@ -37,11 +41,21 @@ export function registerTokenGetter(getter: TokenGetter | null): void {
   tokenGetter = getter;
 }
 
-const BASE_URL = process.env.EXPO_PUBLIC_API_URL;
+/**
+ * URL base resolvida a cada uso: em dev o host vem do Expo (IP da rede atual),
+ * então não pode ser congelada no import do módulo.
+ */
+function apiBaseUrl(): string | undefined {
+  return resolveApiBaseUrl({
+    explicitUrl: process.env.EXPO_PUBLIC_API_URL,
+    hostUri: Constants.expoConfig?.hostUri,
+    dev: typeof __DEV__ !== 'undefined' ? __DEV__ : false,
+  });
+}
 
 /** Indica se a API real está configurada (modos mock pulam o fetch). */
 export function isApiConfigured(): boolean {
-  return Boolean(BASE_URL);
+  return Boolean(apiBaseUrl());
 }
 
 interface RequestInitLite {
@@ -76,14 +90,15 @@ export async function request<T>(
   path: string,
   init?: RequestInitLite,
 ): Promise<RequestPayload<T> | null> {
-  if (!BASE_URL) {
+  const baseUrl = apiBaseUrl();
+  if (!baseUrl) {
     return null;
   }
 
   const token = await currentToken();
 
   try {
-    let response = await fetch(`${BASE_URL}${path}`, {
+    let response = await fetch(`${baseUrl}${path}`, {
       method: init?.method ?? 'GET',
       headers: {
         Accept: 'application/json',
@@ -101,7 +116,7 @@ export async function request<T>(
       const renewed = token ? await currentToken({ skipCache: true }) : await currentToken();
 
       if (renewed && renewed !== token) {
-        response = await fetch(`${BASE_URL}${path}`, {
+        response = await fetch(`${baseUrl}${path}`, {
           method: init?.method ?? 'GET',
           headers: {
             Accept: 'application/json',

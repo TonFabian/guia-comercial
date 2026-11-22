@@ -1,9 +1,16 @@
 import { LinearGradient } from 'expo-linear-gradient';
-import { Linking, ScrollView, StyleSheet, Text, TouchableOpacity } from 'react-native';
+import { useCallback, useState } from 'react';
+import { Linking, ScrollView, StyleSheet, Text, TouchableOpacity, View } from 'react-native';
+import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
 
+import { PaginationDots } from '@/components/PaginationDots';
 import { CardColors, CardShadow, Overlays, Radius, Spacing, Typography, FontFamily, FontWeight } from '@/constants/theme';
 import { useThemeColors } from '@/hooks/use-theme-colors';
 import type { DisplayBanner } from '@/data/mock';
+import { pageIndexFromOffset } from '@/utils/carousel-page';
+
+const BANNER_CARD_WIDTH = 260;
+const BANNER_GAP = 12;
 
 const GRADIENT_START = { x: 0, y: 0 } as const;
 const GRADIENT_END = { x: 1, y: 1 } as const;
@@ -11,6 +18,22 @@ const GRADIENT_END = { x: 1, y: 1 } as const;
 export function BannerCarousel({ banners }: { banners: DisplayBanner[] }) {
   const colors = useThemeColors();
   const styles = makeStyles(colors);
+  const [activeIndex, setActiveIndex] = useState(0);
+
+  const handleScroll = useCallback(
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
+      setActiveIndex(
+        pageIndexFromOffset(
+          contentOffset.x,
+          BANNER_CARD_WIDTH + BANNER_GAP * 2,
+          banners.length,
+          contentSize.width - layoutMeasurement.width,
+        ),
+      );
+    },
+    [banners.length],
+  );
 
   function openBanner(banner: DisplayBanner) {
     if (!banner.link) return;
@@ -18,43 +41,52 @@ export function BannerCarousel({ banners }: { banners: DisplayBanner[] }) {
   }
 
   return (
-    <ScrollView
-      horizontal
-      showsHorizontalScrollIndicator={false}
-      contentContainerStyle={styles.carouselContent}>
-      {banners.map((banner) => (
-        <TouchableOpacity
-          key={banner._id}
-          style={styles.bannerCard}
-          activeOpacity={0.85}
-          onPress={() => openBanner(banner)}>
-          <LinearGradient
-            colors={[colors.background, banner.color ?? CardColors.bannerPromo]}
-            start={GRADIENT_START}
-            end={GRADIENT_END}
-            style={styles.bannerGradient}>
-            <Text style={styles.bannerEmoji}>{banner.emoji}</Text>
-            <Text style={styles.bannerTitle}>{banner.title}</Text>
-            <Text style={styles.bannerSubtitle}>{banner.subtitle}</Text>
-          </LinearGradient>
-        </TouchableOpacity>
-      ))}
-    </ScrollView>
+    <View style={styles.section}>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={styles.carouselContent}
+        snapToInterval={BANNER_CARD_WIDTH + BANNER_GAP * 2}
+        decelerationRate="fast"
+        onScroll={handleScroll}
+        scrollEventThrottle={16}>
+        {banners.map((banner) => (
+          <TouchableOpacity
+            key={banner._id}
+            style={styles.bannerCard}
+            activeOpacity={0.85}
+            onPress={() => openBanner(banner)}>
+            <LinearGradient
+              colors={[colors.background, banner.color ?? CardColors.bannerPromo]}
+              start={GRADIENT_START}
+              end={GRADIENT_END}
+              style={styles.bannerGradient}>
+              <Text style={styles.bannerEmoji}>{banner.emoji}</Text>
+              <Text style={styles.bannerTitle}>{banner.title}</Text>
+              <Text style={styles.bannerSubtitle}>{banner.subtitle}</Text>
+            </LinearGradient>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
+      <PaginationDots total={banners.length} activeIndex={activeIndex} />
+    </View>
   );
 }
 
 function makeStyles(colors: ReturnType<typeof useThemeColors>) {
   return StyleSheet.create({
-    carouselContent: {
-      paddingHorizontal: 16,
-      gap: 12,
+    section: {
       marginBottom: Spacing.four,
     },
+    carouselContent: {
+      paddingHorizontal: 16,
+      gap: BANNER_GAP,
+    },
     bannerCard: {
-      width: 260,
+      width: BANNER_CARD_WIDTH,
       height: 130,
       borderRadius: Radius.cardLarge,
-      marginRight: 12,
+      marginRight: BANNER_GAP,
       ...CardShadow,
     },
     bannerGradient: {

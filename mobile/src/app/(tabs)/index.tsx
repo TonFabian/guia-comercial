@@ -16,9 +16,8 @@ import { GuestBanner } from '@/features/auth/guest-banner';
 import { AnnounceCta } from '@/features/home/announce-cta';
 import { BannerCarousel } from '@/features/home/banner-carousel';
 import { CategoryList } from '@/features/home/category-list';
-import { FeaturedCompany } from '@/features/home/featured-company';
+import { FeaturedCompanies } from '@/features/home/featured-companies';
 import { Header } from '@/features/home/header';
-import { excludeFeaturedCompany } from '@/features/home/home-companies';
 import { JobList } from '@/features/home/job-list';
 import { NoticesCarousel } from '@/features/home/notices-carousel';
 import { OtherCompanies } from '@/features/home/other-companies';
@@ -39,7 +38,7 @@ export default function HomeScreen() {
     () => cities.find((c) => c.slug === selectedCity)?.name,
     [cities, selectedCity],
   );
-  const { loading, categories, banners, featuredCompany, jobs, error } = useHomeData(selectedCity, retryKey);
+  const { loading, categories, banners, featuredCompanies, jobs, error } = useHomeData(selectedCity, retryKey);
   const insets = useSafeAreaInsets();
   const colors = useThemeColors();
   const styles = makeStyles(colors);
@@ -73,11 +72,6 @@ export default function HomeScreen() {
   const [otherCompaniesError, setOtherCompaniesError] = useState<string | null>(null);
   const [utilitiesError, setUtilitiesError] = useState<string | null>(null);
   const [utilitiesToken, setUtilitiesToken] = useState(0);
-
-  const visibleOtherCompanies = useMemo(
-    () => excludeFeaturedCompany(otherCompanies, featuredCompany),
-    [otherCompanies, featuredCompany],
-  );
 
   useEffect(() => {
     let cancelled = false;
@@ -117,7 +111,7 @@ export default function HomeScreen() {
       try {
         const [nts, page] = await Promise.all([
           getNotices(),
-          getCompanies(1, 50, undefined, false),
+          getCompanies(1, 50, undefined, ['basic', 'free']),
         ]);
         if (!cancelled) {
           setNotices(nts);
@@ -211,7 +205,7 @@ export default function HomeScreen() {
           ) : (
             <View style={{ flex: 1 }}>
               <CategoryList categories={categories} />
-              <FeaturedCompany company={featuredCompany} />
+              <FeaturedCompanies companies={featuredCompanies} />
               <PublicUtilities
                 utilities={utilities}
                 loading={utilitiesLoading}
@@ -219,7 +213,7 @@ export default function HomeScreen() {
                 onRetry={reloadUtilities}
               />
               <OtherCompanies
-                companies={visibleOtherCompanies}
+                companies={otherCompanies}
                 loading={otherCompaniesLoading}
                 error={otherCompaniesError}
               />

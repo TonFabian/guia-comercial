@@ -49,7 +49,6 @@ export interface Company {
   cover?: string;
   gallery?: string[];
   registry?: string;
-  isFeatured?: boolean;
   /** Plano comercial. Ausente/undefined → tratado como 'free'. */
   plan?: 'free' | 'basic' | 'premium';
   /** Início do período do plano atual (YYYY-MM-DD, data pura, sem fuso). */
@@ -378,4 +377,25 @@ export interface AppNotification {
 /** Página de notificações com contador de não lidas. */
 export interface NotificationsPage extends Paginated<AppNotification> {
   unreadCount: number;
+}
+
+export type CouponCompany = Coupon['company'];
+export type JobCompany = Job['company'];
+export type CompanyCategory = Company['category'];
+
+export function isCategory(cat: CompanyCategory): cat is Category {
+  return typeof cat !== 'string';
+}
+
+export function companyLabel(entity: CouponCompany | JobCompany): string {
+  return typeof entity === 'string' ? entity : entity.name;
+}
+
+/** Id da empresa ligada a um cupom/vaga. `null` quando a API devolve só o nome. */
+export function companyId(entity: CouponCompany | JobCompany): string | null {
+  return typeof entity === 'string' ? null : entity._id;
+}
+
+export function categoryLabel(cat: CompanyCategory): string {
+  return isCategory(cat) ? cat.name : cat;
 }

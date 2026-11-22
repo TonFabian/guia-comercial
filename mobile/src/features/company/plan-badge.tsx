@@ -4,6 +4,7 @@ import { FontFamily, FontWeight, Overlays, Radius, Spacing, Typography } from '@
 import { useThemeColors } from '@/hooks/use-theme-colors';
 import { planLabel } from './company-plan';
 import type { Plan } from './company-plan';
+import { getPlanStrategy } from './plan-strategy';
 
 interface PlanBadgeProps {
   plan: Plan | string | undefined | null;

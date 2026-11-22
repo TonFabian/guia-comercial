@@ -13,13 +13,15 @@ import { geocodeAddress } from '../utils/geocode.js';
 import { escapeRegex } from '../utils/regex.js';
 
 import type { ScheduleItem } from '../types/schedule.js';
-import { lerBooleano, lerListaDeSlugs, lerTexto } from '../utils/query.js';
+import { lerListaDeSlugs, lerTexto, parametroInvalido } from '../utils/query.js';
+
+const PLANOS_VALIDOS = new Set(['free', 'basic', 'premium']);
 
 /** Critério de busca compatível com FilterQuery<Company>. */
 type CompanyQuery = {
   category?: string | { $in: string[] };
+  $and?: Array<Record<string, unknown>>;
   $or?: Array<Record<string, unknown>>;
-  isFeatured?: boolean;
   ownerClerkId?: string;
   city?: string | RegExp;
 };
@@ -29,7 +31,8 @@ export interface CompanyListFilters {
   category?: unknown;
   /** busca textual em name/description */
   q?: unknown;
-  featured?: unknown;
+  /** 'free,basic,premium' (lista separada por vírgula) */
+  plan?: unknown;
   /** clerkId do dono (filtro "minhas empresas") */
   owner?: unknown;
   /** cidade (slug ou nome) */
@@ -81,9 +84,17 @@ export async function listCompanies(
     query.$or = [{ name: regex }, { description: regex }, { address: regex }, { services: regex }];
   }
 
-  const destaque = lerBooleano(filters.featured, 'featured');
-  if (destaque !== undefined) {
-    query.isFeatured = destaque;
+  const planos = lerListaDeSlugs(filters.plan, { nome: 'plan' });
+  if (planos !== undefined) {
+    const invalido = planos.find((plano) => !PLANOS_VALIDOS.has(plano));
+    if (invalido !== undefined) {
+      throw parametroInvalido('plan', "valores aceitos: 'free', 'basic' e 'premium'");
+    }
+    // `free` inclui documentos antigos sem o campo `plan`.
+    const condicaoPlano: Record<string, unknown> = planos.includes('free')
+      ? { $or: [{ plan: { $in: planos } }, { plan: { $exists: false } }] }
+      : { plan: { $in: planos } };
+    query.$and = [...(query.$and ?? []), condicaoPlano];
   }
 
   const owner = lerTexto(filters.owner, { nome: 'owner' });
@@ -121,7 +132,7 @@ export async function listCompanies(
     const todas = await CompanyModel.find(query)
       .populate('category')
       .populate('city')
-      .sort({ isFeatured: -1, name: 1 })
+      .sort({ name: 1 })
       .limit(1000)
       .lean();
     const prioridade: Record<string, number> = { premium: 0, basic: 1, free: 2 };
@@ -141,7 +152,7 @@ export async function listCompanies(
     CompanyModel.find(query)
       .populate('category')
       .populate('city')
-      .sort({ isFeatured: -1, name: 1 })
+      .sort({ name: 1 })
       .skip(pagination.skip)
       .limit(pagination.limit)
       .lean(),

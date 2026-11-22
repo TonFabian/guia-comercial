@@ -1,4 +1,4 @@
-import * as Notifications from 'expo-notifications';
+import type { NotificationResponse } from 'expo-notifications';
 import {
   useNavigationContainerRef,
   useRouter,
@@ -7,22 +7,15 @@ import {
 } from 'expo-router';
 import { useEffect, useRef } from 'react';
 import type { ReactNode } from 'react';
+import { Platform } from 'react-native';
 
+import { notificacoesNativasDisponiveis } from '@/features/notifications/platform-support';
 import { ehDeepLinkValido } from '@/utils/deep-link';
 
-// Registra o handler de apresentação uma única vez no escopo do módulo.
-Notifications.setNotificationHandler({
-  handleNotification: async () => ({
-    shouldShowAlert: true,
-    shouldShowBanner: true,
-    shouldShowList: true,
-    shouldPlaySound: true,
-    shouldSetBadge: false,
-  }),
-});
+const NOTIFICACOES_DISPONIVEIS = notificacoesNativasDisponiveis(Platform.OS);
 
 function extrairUrl(
-  response: Notifications.NotificationResponse | null | undefined,
+  response: NotificationResponse | null | undefined,
 ): string | null {
   const url = response?.notification?.request?.content?.data?.url;
   return typeof url === 'string' ? url : null;
@@ -38,7 +31,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
   const pendingUrl = useRef<string | null>(null);
 
   const tratarResposta = (
-    response: Notifications.NotificationResponse | null | undefined,
+    response: NotificationResponse | null | undefined,
   ) => {
     const url = extrairUrl(response);
     if (!url) return;
@@ -61,10 +54,24 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  // Cold start: consulta a última resposta de notificação uma única vez.
+  // O import dinâmico evita carregar expo-notifications no web: o módulo
+  // registra um listener de push token no escopo de import e avisa que não
+  // há suporte, mesmo quando nenhuma API nativa é chamada.
   useEffect(() => {
+    if (!NOTIFICACOES_DISPONIVEIS) return;
     let cancelled = false;
     (async () => {
+      const Notifications = await import('expo-notifications');
+      if (cancelled) return;
+      Notifications.setNotificationHandler({
+        handleNotification: async () => ({
+          shouldShowAlert: true,
+          shouldShowBanner: true,
+          shouldShowList: true,
+          shouldPlaySound: true,
+          shouldSetBadge: false,
+        }),
+      });
       const response = await Notifications.getLastNotificationResponseAsync();
       if (cancelled) return;
       tratarResposta(response);
@@ -77,11 +84,21 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
 
   // Listener para taps enquanto o app está rodando.
   useEffect(() => {
-    const subscription =
-      Notifications.addNotificationResponseReceivedListener((response) => {
-        tratarResposta(response);
-      });
-    return () => subscription.remove();
+    if (!NOTIFICACOES_DISPONIVEIS) return;
+    let subscription: { remove: () => void } | null = null;
+    let cancelled = false;
+    (async () => {
+      const Notifications = await import('expo-notifications');
+      if (cancelled) return;
+      subscription =
+        Notifications.addNotificationResponseReceivedListener((response) => {
+          tratarResposta(response);
+        });
+    })();
+    return () => {
+      cancelled = true;
+      subscription?.remove();
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 

@@ -24,7 +24,6 @@ const companySchema = new Schema<Company>(
     cover: String,
     gallery: [String],
     registry: String,
-    isFeatured: { type: Boolean, default: false },
     plan: { type: String, enum: ['free', 'basic', 'premium'], default: 'free', index: true },
     planStartedAt: String,
     planExpiresAt: String,
@@ -59,5 +58,8 @@ companySchema.index(
     },
   },
 );
+
+// Índice composto para consultas por plano + slug (ex.: listagem/filtro).
+companySchema.index({ plan: 1, slug: 1 });
 
 export const CompanyModel = model<Company>('Company', companySchema);

@@ -61,3 +61,15 @@ describe('buildCompanyDetails — workingHours', () => {
     });
   });
 });
+
+describe('buildCompanyDetails — isPremium', () => {
+  it('marca premium', () => {
+    expect(buildCompanyDetails(empresa({ _id: '1', plan: 'premium' })).isPremium).toBe(true);
+  });
+
+  it('não marca básico, free nem plano ausente', () => {
+    expect(buildCompanyDetails(empresa({ _id: '1', plan: 'basic' })).isPremium).toBe(false);
+    expect(buildCompanyDetails(empresa({ _id: '1', plan: 'free' })).isPremium).toBe(false);
+    expect(buildCompanyDetails(empresa({ _id: '1' })).isPremium).toBe(false);
+  });
+});

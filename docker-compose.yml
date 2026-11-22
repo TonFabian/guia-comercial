@@ -1,0 +1,55 @@
+name: guia-comercial
+
+services:
+  mongo:
+    image: mongo:8
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+      - mongo-configdb:/data/configdb
+    healthcheck:
+      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping').ok"]
+      interval: 5s
+      timeout: 5s
+      retries: 12
+      start_period: 10s
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: .
+      dockerfile: backend/Dockerfile
+    env_file:
+      - ./backend/.env
+    environment:
+      NODE_ENV: development
+      MONGODB_URI: mongodb://mongo:27017/guia-comercial
+    ports:
+      - "4000:4000"
+    volumes:
+      - ./backend/src:/app/backend/src
+      - ./shared:/app/shared:ro
+    depends_on:
+      mongo:
+        condition: service_healthy
+    restart: unless-stopped
+
+  admin:
+    build:
+      context: ./admin
+      dockerfile: Dockerfile
+    env_file:
+      - ./admin/.env
+    ports:
+      - "5173:5173"
+    volumes:
+      - ./admin:/app/admin
+      - /app/admin/node_modules
+    depends_on:
+      - backend
+    restart: unless-stopped
+
+volumes:
+  mongo-data:
+  mongo-configdb:

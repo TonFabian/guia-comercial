@@ -1,17 +1,23 @@
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { Image } from 'expo-image';
 import { router } from 'expo-router';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { ActivityIndicator, Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
+import type { NativeScrollEvent, NativeSyntheticEvent } from 'react-native';
 
+import { PaginationDots } from '@/components/PaginationDots';
 import { Overlays, Radius, Spacing, Typography, FontFamily, FontWeight } from '@/constants/theme';
 import { useThemeColors } from '@/hooks/use-theme-colors';
 import { hojeISO } from '@/features/tourism/event-meta';
 import { getEvents, getTouristSpots } from '@/services/api';
 import type { TourEvent, TouristSpot } from '@/types/domain';
+import { pageIndexFromOffset } from '@/utils/carousel-page';
 
 import { SectionHeader } from './section-header';
 import { toTourismCards } from './tourism-view';
+
+const TOURISM_CARD_WIDTH = 190;
+const TOURISM_CARD_GAP = Spacing.two + Spacing.half;
 
 /**
  * Seção "Turismo & Eventos" da Home: carrega atrações e eventos (em paralelo),
@@ -27,6 +33,7 @@ export function TourismSection({ city }: { city?: string }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [token, setToken] = useState(0);
+  const [activeIndex, setActiveIndex] = useState(0);
 
   const reload = () => setToken((atual) => atual + 1);
 
@@ -66,6 +73,21 @@ export function TourismSection({ city }: { city?: string }) {
     [spots, events],
   );
 
+  const handleScroll = useCallback(
+    (event: NativeSyntheticEvent<NativeScrollEvent>) => {
+      const { contentOffset, contentSize, layoutMeasurement } = event.nativeEvent;
+      setActiveIndex(
+        pageIndexFromOffset(
+          contentOffset.x,
+          TOURISM_CARD_WIDTH + TOURISM_CARD_GAP,
+          cards.length,
+          contentSize.width - layoutMeasurement.width,
+        ),
+      );
+    },
+    [cards.length],
+  );
+
   // Sem oferta nenhuma, a seção inteira some (nem o título aparece).
   if (!loading && !error && cards.length === 0) return null;
 
@@ -90,72 +112,79 @@ export function TourismSection({ city }: { city?: string }) {
           </Pressable>
         </View>
       ) : (
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          contentContainerStyle={styles.carousel}
-        >
-          {cards.map((card) => {
-            const icone =
-              card.kind === 'event' ? 'calendar-star' : 'map-marker-circle';
-            const tipoCard = card.kind === 'event' ? 'evento' : 'atração';
+        <>
+          <ScrollView
+            horizontal
+            showsHorizontalScrollIndicator={false}
+            contentContainerStyle={styles.carousel}
+            snapToInterval={TOURISM_CARD_WIDTH + TOURISM_CARD_GAP}
+            decelerationRate="fast"
+            onScroll={handleScroll}
+            scrollEventThrottle={16}
+          >
+            {cards.map((card) => {
+              const icone =
+                card.kind === 'event' ? 'calendar-star' : 'map-marker-circle';
+              const tipoCard = card.kind === 'event' ? 'evento' : 'atração';
 
-            return (
-              <Pressable
-                key={card.id}
-                style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
-                onPress={() =>
-                  router.push({
-                    pathname:
-                      card.kind === 'event'
-                        ? '/event/[id]'
-                        : '/tourist-spot/[id]',
-                    params: { id: card.id },
-                  })
-                }
-                // Rotas /tourist-spot/[id] e /event/[id] existem e o
-                // typed-routes cobre o push tipado (sem cast).
-                accessibilityRole="button"
-                accessibilityLabel={`Ver ${tipoCard}: ${card.title}`}
-              >
-                <View style={styles.imageBox}>
-                  {card.imageUrl ? (
-                    <Image
-                      source={{ uri: card.imageUrl }}
-                      style={styles.image}
-                      contentFit="cover"
-                      placeholder={colors.coverPlaceholder}
-                      transition={200}
-                    />
-                  ) : (
-                    <View style={styles.imageFallback}>
-                      <MaterialCommunityIcons
-                        name={icone}
-                        size={32}
-                        color={colors.textSecondary}
+              return (
+                <Pressable
+                  key={card.id}
+                  style={({ pressed }) => [styles.card, pressed && styles.cardPressed]}
+                  onPress={() =>
+                    router.push({
+                      pathname:
+                        card.kind === 'event'
+                          ? '/event/[id]'
+                          : '/tourist-spot/[id]',
+                      params: { id: card.id },
+                    })
+                  }
+                  // Rotas /tourist-spot/[id] e /event/[id] existem e o
+                  // typed-routes cobre o push tipado (sem cast).
+                  accessibilityRole="button"
+                  accessibilityLabel={`Ver ${tipoCard}: ${card.title}`}
+                >
+                  <View style={styles.imageBox}>
+                    {card.imageUrl ? (
+                      <Image
+                        source={{ uri: card.imageUrl }}
+                        style={styles.image}
+                        contentFit="cover"
+                        placeholder={colors.coverPlaceholder}
+                        transition={200}
                       />
-                    </View>
-                  )}
+                    ) : (
+                      <View style={styles.imageFallback}>
+                        <MaterialCommunityIcons
+                          name={icone}
+                          size={32}
+                          color={colors.textSecondary}
+                        />
+                      </View>
+                    )}
 
-                  {card.badge ? (
-                    <View style={styles.badge}>
-                      <Text style={styles.badgeText}>{card.badge}</Text>
-                    </View>
-                  ) : null}
-                </View>
+                    {card.badge ? (
+                      <View style={styles.badge}>
+                        <Text style={styles.badgeText}>{card.badge}</Text>
+                      </View>
+                    ) : null}
+                  </View>
 
-                <View style={styles.body}>
-                  <Text style={styles.title} numberOfLines={2}>
-                    {card.title}
-                  </Text>
-                  <Text style={styles.subtitle} numberOfLines={1}>
-                    {card.subtitle}
-                  </Text>
-                </View>
-              </Pressable>
-            );
-          })}
-        </ScrollView>
+                  <View style={styles.body}>
+                    <Text style={styles.title} numberOfLines={2}>
+                      {card.title}
+                    </Text>
+                    <Text style={styles.subtitle} numberOfLines={1}>
+                      {card.subtitle}
+                    </Text>
+                  </View>
+                </Pressable>
+              );
+            })}
+          </ScrollView>
+          <PaginationDots total={cards.length} activeIndex={activeIndex} />
+        </>
       )}
     </View>
   );
@@ -194,11 +223,11 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
       fontWeight: FontWeight.bold,
     },
     carousel: {
-      gap: Spacing.two + Spacing.half,
+      gap: TOURISM_CARD_GAP,
       paddingHorizontal: Spacing.three,
     },
     card: {
-      width: 190,
+      width: TOURISM_CARD_WIDTH,
       backgroundColor: colors.surface,
       borderRadius: Radius.card,
       borderWidth: 1,

@@ -8,7 +8,7 @@ import {
   getBanners,
   getCategories,
   getCoupons,
-  getFeaturedCompany,
+  getFeaturedCompanies,
   getJobs,
   getPharmacyOnDuty,
 } from '@/services/api';
@@ -20,7 +20,7 @@ export type HomeData = {
   banners: DisplayBanner[];
   coupons: Coupon[];
   jobs: Job[];
-  featuredCompany: Company | null;
+  featuredCompanies: Company[];
   pharmacy: Company | null;
   error: string | null;
 };
@@ -31,7 +31,7 @@ const INITIAL: HomeData = {
   banners: [],
   coupons: [],
   jobs: [],
-  featuredCompany: null,
+  featuredCompanies: [],
   pharmacy: null,
   error: null,
 };
@@ -59,13 +59,13 @@ export function useHomeData(city?: string, retryKey = 0) {
 
       async function load() {
         try {
-          const [categories, banners, coupons, jobs, featuredCompany, pharmacy] = await Promise.all(
+          const [categories, banners, coupons, jobs, featuredCompanies, pharmacy] = await Promise.all(
             [
               getCategories(),
               getBanners(),
               getCoupons(),
               getJobs(),
-              getFeaturedCompany(city),
+              getFeaturedCompanies(city),
               getPharmacyOnDuty(city),
             ],
           );
@@ -77,7 +77,7 @@ export function useHomeData(city?: string, retryKey = 0) {
             banners,
             coupons,
             jobs,
-            featuredCompany,
+            featuredCompanies,
             pharmacy,
             error: null,
           });

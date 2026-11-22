@@ -9,6 +9,8 @@ export default defineConfig({
   resolve: {
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
+      // Módulo nativo não resolve no Node; stub mantém os testes importáveis.
+      'expo-constants': fileURLToPath(new URL('./test/expo-constants-stub.ts', import.meta.url)),
     },
   },
   test: {

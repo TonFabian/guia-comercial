@@ -2,7 +2,6 @@ import type { User } from '@/types/domain';
 import { useAuth, useUser } from '@clerk/expo';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import Constants from 'expo-constants';
-import * as Notifications from 'expo-notifications';
 import { createContext, useContext, useEffect, useMemo, useState, type ReactNode } from 'react';
 import { Platform } from 'react-native';
 
@@ -90,6 +89,8 @@ function ClerkAuthProvider({ children }: { children: ReactNode }) {
     (async () => {
       if (Platform.OS === 'web') return;
       try {
+        const Notifications = await import('expo-notifications');
+        if (cancelled) return;
         const { status } = await Notifications.requestPermissionsAsync();
         if (status !== 'granted' || cancelled) {
           if (__DEV__) console.warn('[push] permissao nao concedida:', status);

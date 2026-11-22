@@ -2,6 +2,7 @@ import type { Company } from '@/types/domain';
 
 import type { WorkingHours } from './company-details';
 import { buildCompanyDetails } from './company-details';
+import { companyPlan } from './company-plan';
 import { getOpeningStatus, isOpenNowFromSchedule } from './opening-hours';
 
 export type CompanyDetailVariant = 'full' | 'free';
@@ -56,7 +57,7 @@ const HOURS_ROWS: readonly { key: keyof WorkingHours; label: string }[] = [
 ];
 
 export function companyDetailVariant(company: Company): CompanyDetailVariant {
-  return company.isFeatured === true ? 'full' : 'free';
+  return companyPlan(company) === 'free' ? 'free' : 'full';
 }
 
 function normalizeText(value: string | null | undefined): string {

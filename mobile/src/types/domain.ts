@@ -9,6 +9,7 @@
  *  - `createdAt`, `updatedAt`, `expiresAt` → string (ISO 8601)
  * Campos de referência usam união `string | Entidade` (populate do Mongoose).
  */
+
 export interface Category {
   _id: string;
   name: string;
@@ -48,7 +49,6 @@ export interface Company {
   cover?: string;
   gallery?: string[];
   registry?: string;
-  isFeatured?: boolean;
   /** Plano comercial. Ausente/undefined → tratado como 'free'. */
   plan?: 'free' | 'basic' | 'premium';
   /** Início do período do plano atual (YYYY-MM-DD, data pura, sem fuso). */
@@ -320,26 +320,44 @@ export interface TourEvent {
   updatedAt?: string;
 }
 
-export type CouponCompany = Coupon['company'];
-export type JobCompany = Job['company'];
-export type CompanyCategory = Company['category'];
-
-export function isCategory(cat: CompanyCategory): cat is Category {
-  return typeof cat !== 'string';
+/** Segmento de destinatários de uma campanha de push. */
+export interface PushCampaignSegment {
+  kind: 'broadcast' | 'user' | 'users' | 'city' | 'plan' | 'favorites';
+  userIds?: string[];
+  cityId?: string;
+  plan?: 'basic' | 'premium';
+  companyId?: string;
 }
 
-export function companyLabel(entity: CouponCompany | JobCompany): string {
-  return typeof entity === 'string' ? entity : entity.name;
+/** Estatísticas de entrega de uma campanha de push. */
+export interface PushCampaignStats {
+  targeted: number;
+  sent: number;
+  failed: number;
+  deadTokens: number;
 }
 
-/** Id da empresa ligada a um cupom/vaga. `null` quando a API devolve só o nome. */
-export function companyId(entity: CouponCompany | JobCompany): string | null {
-  return typeof entity === 'string' ? null : entity._id;
+/** Campanha de push notification administrativa. */
+export interface PushCampaign {
+  _id: string;
+  title: string;
+  body: string;
+  imageUrl?: string;
+  deepLink?: string;
+  segment: PushCampaignSegment;
+  status: 'draft' | 'scheduled' | 'sending' | 'sent' | 'failed';
+  scheduledFor?: string;       // ISO UTC
+  sendingStartedAt?: string;
+  sentAt?: string;
+  receipts?: { id: string; token: string }[];
+  stats: PushCampaignStats;
+  error?: string;
+  createdByClerkId: string;
+  createdAt: string;
 }
 
-export function categoryLabel(cat: CompanyCategory): string {
-  return isCategory(cat) ? cat.name : cat;
-}
+/** Item da listagem (sem receipts — payload grande e inútil na lista). */
+export type PushCampaignSummary = Omit<PushCampaign, 'receipts'>;
 
 /** Notificação in-app por usuário (central de notificações). */
 export interface AppNotification {
@@ -359,4 +377,25 @@ export interface AppNotification {
 /** Página de notificações com contador de não lidas. */
 export interface NotificationsPage extends Paginated<AppNotification> {
   unreadCount: number;
+}
+
+export type CouponCompany = Coupon['company'];
+export type JobCompany = Job['company'];
+export type CompanyCategory = Company['category'];
+
+export function isCategory(cat: CompanyCategory): cat is Category {
+  return typeof cat !== 'string';
+}
+
+export function companyLabel(entity: CouponCompany | JobCompany): string {
+  return typeof entity === 'string' ? entity : entity.name;
+}
+
+/** Id da empresa ligada a um cupom/vaga. `null` quando a API devolve só o nome. */
+export function companyId(entity: CouponCompany | JobCompany): string | null {
+  return typeof entity === 'string' ? null : entity._id;
+}
+
+export function categoryLabel(cat: CompanyCategory): string {
+  return isCategory(cat) ? cat.name : cat;
 }

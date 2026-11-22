@@ -14,6 +14,8 @@ import {
   StyleSheet,
   Text,
   View,
+  type TextStyle,
+  type ViewStyle,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
@@ -52,7 +54,7 @@ import { trackView, trackWhatsappClick } from '@/features/analytics/track';
 const WHATSAPP_MESSAGE =
   'Olá, vi sua empresa no aplicativo *Guia de Castelo do Piauí* e gostaria de mais informações!';
 
-const HERO_HEIGHT = 230;
+const HERO_HEIGHT = 190;
 const LOGO_SIZE = 68;
 const SERVICE_ICON_SIZE = 40;
 
@@ -66,11 +68,11 @@ const CLOSED_HOURS = 'Fechado';
 
 function WorkingHoursCard({ hours }: { hours: WorkingHours }) {
   const colors = useThemeColors();
-  const styles = makeStyles(colors);
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const now = new Date();
 
   const status = getOpeningStatus(hours, now);
-  const statusConfig: Record<OpeningStatus, { label: string; badge: any; dot: any; text: any }> = {
+  const statusConfig: Record<OpeningStatus, { label: string; badge: ViewStyle; dot: ViewStyle; text: TextStyle }> = {
     open: {
       label: 'Aberto Agora',
       badge: styles.statusOpen,
@@ -127,7 +129,7 @@ function WorkingHoursCard({ hours }: { hours: WorkingHours }) {
 export function CompanyDetailScreen({ companyId }: { companyId: string }) {
   const colors = useThemeColors();
   const { mode } = useThemeMode();
-  const styles = makeStyles(colors);
+  const styles = useMemo(() => makeStyles(colors), [colors]);
   const insets = useSafeAreaInsets();
   const { company, loading, error } = useCompanyDetail(companyId);
   const { isFavorite, toggleFavorite } = useFavorites();
@@ -202,6 +204,36 @@ export function CompanyDetailScreen({ companyId }: { companyId: string }) {
   return (
     <View style={styles.root}>
       <StatusBar style={mode === 'dark' ? 'light' : 'dark'} />
+      <View style={[styles.headerBar, { paddingTop: insets.top }]}>
+        <Pressable
+          style={({ pressed }) => [styles.iconButton, pressed && styles.pressed]}
+          onPress={goBack}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel="Voltar"
+        >
+          <Ionicons name="chevron-back" size={22} color={colors.text} />
+        </Pressable>
+
+        <Pressable
+          style={({ pressed }) => [
+            styles.iconButton,
+            favorite && styles.favoriteActive,
+            pressed && styles.pressed,
+          ]}
+          onPress={handleToggleFavorite}
+          hitSlop={8}
+          accessibilityRole="button"
+          accessibilityLabel={favorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
+          accessibilityState={{ selected: favorite }}
+        >
+          <Ionicons
+            name={favorite ? 'heart' : 'heart-outline'}
+            size={21}
+            color={favorite ? colors.background : colors.text}
+          />
+        </Pressable>
+      </View>
       <ScrollView
         showsVerticalScrollIndicator={false}
         contentContainerStyle={[
@@ -261,7 +293,7 @@ export function CompanyDetailScreen({ companyId }: { companyId: string }) {
               </View>
             ) : null}
 
-            {details.isFeatured ? (
+            {details.isPremium ? (
               <View style={styles.featuredTag}>
                 <Text style={styles.featuredTagText}>Destaque</Text>
               </View>
@@ -354,37 +386,6 @@ export function CompanyDetailScreen({ companyId }: { companyId: string }) {
         </View>
       </ScrollView>
 
-      <View style={[styles.floatingNav, { top: insets.top + Spacing.two }]}>
-        <Pressable
-          style={({ pressed }) => [styles.iconButton, pressed && styles.pressed]}
-          onPress={goBack}
-          hitSlop={8}
-          accessibilityRole="button"
-          accessibilityLabel="Voltar"
-        >
-          <Ionicons name="chevron-back" size={22} color={colors.text} />
-        </Pressable>
-
-        <Pressable
-          style={({ pressed }) => [
-            styles.iconButton,
-            favorite && styles.favoriteActive,
-            pressed && styles.pressed,
-          ]}
-          onPress={handleToggleFavorite}
-          hitSlop={8}
-          accessibilityRole="button"
-          accessibilityLabel={favorite ? 'Remover dos favoritos' : 'Adicionar aos favoritos'}
-          accessibilityState={{ selected: favorite }}
-        >
-          <Ionicons
-            name={favorite ? 'heart' : 'heart-outline'}
-            size={21}
-            color={favorite ? colors.background : colors.text}
-          />
-        </Pressable>
-      </View>
-
       <View style={[styles.footer, { paddingBottom: Math.max(insets.bottom, Spacing.three) }]}>
         {!hasContact ? <ContactHintRow /> : null}
 
@@ -474,8 +475,22 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     scrollContent: {
       paddingTop: 0,
     },
+    headerBar: {
+      flexDirection: 'row',
+      alignItems: 'center',
+      justifyContent: 'space-between',
+      paddingHorizontal: Spacing.three,
+      paddingTop: Spacing.two,
+      paddingBottom: Spacing.two,
+      marginBottom: Spacing.two,
+      backgroundColor: colors.background,
+    },
     hero: {
       height: HERO_HEIGHT,
+      marginHorizontal: Spacing.three,
+      marginBottom: Spacing.three,
+      borderRadius: Radius.card,
+      overflow: 'hidden',
       backgroundColor: colors.surfaceAlt,
     },
     basicInfo: {

@@ -113,7 +113,6 @@ export const createCompanySchema = z.object({
   cover: z.string().optional(),
   gallery: z.array(z.string()).optional(),
   registry: z.string().optional(),
-  isFeatured: z.boolean().optional(),
   plan: z.enum(['free', 'basic', 'premium']).optional().default('free'),
   rating: z.number().min(0).max(5).optional(),
   ratingCount: z.number().int().nonnegative().optional(),

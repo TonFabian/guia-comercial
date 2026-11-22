@@ -78,7 +78,6 @@ const empresasFake: MemoryDocument[] = [
     slug: 'barbearia-central',
     description: 'Cortes e barba',
     category: '000000000000000000000030',
-    isFeatured: false,
   },
   {
     _id: '000000000000000000000041',
@@ -86,7 +85,6 @@ const empresasFake: MemoryDocument[] = [
     slug: 'salao-de-beleza',
     description: 'Cuidado capilar',
     category: '000000000000000000000030',
-    isFeatured: false,
   },
   {
     _id: '000000000000000000000042',
@@ -94,7 +92,6 @@ const empresasFake: MemoryDocument[] = [
     slug: 'restaurante-sabor',
     description: 'Comida caseira',
     category: '000000000000000000000031',
-    isFeatured: false,
   },
   {
     _id: '000000000000000000000043',
@@ -102,7 +99,6 @@ const empresasFake: MemoryDocument[] = [
     slug: 'oficina-do-ze',
     description: 'Mecânica automotiva',
     category: '000000000000000000000032',
-    isFeatured: false,
   },
 ];
 
@@ -171,11 +167,11 @@ describe('GET /api/companies com parâmetro malformado', () => {
     expect(response.body.error).toContain("'category'");
   });
 
-  it('featured repetido → 400', async () => {
-    const response = await request(app).get('/api/companies?featured=true&featured=false');
+  it('plan repetido → 400', async () => {
+    const response = await request(app).get('/api/companies?plan=free&plan=premium');
 
     expect(response.status).toBe(400);
-    expect(response.body.error).toContain("'featured'");
+    expect(response.body.error).toContain("'plan'");
   });
 
   it('q repetido → 400', async () => {
