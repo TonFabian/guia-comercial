@@ -9,6 +9,7 @@ const reviewSchema = new Schema<Review>(
     authorName: { type: String, trim: true },
     rating: { type: Number, required: true, min: 1, max: 5 },
     comment: { type: String, trim: true },
+    image: { type: String },
   },
   { timestamps: true },
 );

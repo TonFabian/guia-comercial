@@ -3,6 +3,7 @@ import { isValidObjectId } from 'mongoose';
 import { ReviewModel } from '../models/review.model.js';
 import { CompanyModel } from '../models/company.model.js';
 import { findUserByClerkId } from './user.service.js';
+import { reviewImageValidatorService } from './review-image-validator.service.js';
 import type { Review } from '../../../shared/domain.js';
 
 /** Teto de reviews retornadas pela listagem pública de uma empresa. */
@@ -27,7 +28,17 @@ export async function createReview(
   clerkId: string,
   rating: number,
   comment?: string,
+  image?: string,
 ): Promise<Review> {
+  let validatedImage: string | undefined;
+  if (image) {
+    const result = await reviewImageValidatorService.validate(image);
+    if (!result.ok) {
+      throw Object.assign(new Error('Imagem inválida'), { statusCode: 400, reason: (result as { reason: string }).reason });
+    }
+    validatedImage = result.base64;
+  }
+
   const user = await findUserByClerkId(clerkId);
   const authorName = user
     ? [user.firstName, user.lastName].filter(Boolean).join(' ').trim() || undefined
@@ -39,6 +50,7 @@ export async function createReview(
     authorName,
     rating,
     comment,
+    image: validatedImage,
   });
 
   // Recalcula rating médio da empresa.

@@ -299,18 +299,14 @@ export async function getReviews(companyId: string): Promise<Review[]> {
   }
 }
 
-export async function createReview(companyId: string, rating: number, comment?: string): Promise<Review | null> {
+export async function createReview(companyId: string, rating: number, comment?: string, image?: string): Promise<Review | null> {
   if (!isApiConfigured()) return null;
-  try {
-    const payload = await request<Review>(`/companies/${encodeURIComponent(companyId)}/reviews`, {
-      method: 'POST',
-      body: { rating, comment },
-    });
-    if (!payload) return null;
-    return Array.isArray(payload) ? (payload[0] ?? null) : (payload as Review);
-  } catch {
-    return null;
-  }
+  const payload = await request<Review>(`/companies/${encodeURIComponent(companyId)}/reviews`, {
+    method: 'POST',
+    body: { rating, comment, image },
+  });
+  if (!payload) return null;
+  return Array.isArray(payload) ? (payload[0] ?? null) : (payload as Review);
 }
 export async function updatePushToken(pushToken: string): Promise<void> {
   if (!isApiConfigured()) return;

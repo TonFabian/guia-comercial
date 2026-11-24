@@ -271,10 +271,13 @@ export type UpdateUserAdminDto = z.infer<typeof updateUserAdminSchema>;
 // Review
 // ---------------------------------------------------------------------------
 
-export const createReviewSchema = z.object({
-  rating: z.number().int().min(1).max(5),
-  comment: z.string().trim().optional(),
-});
+export const createReviewSchema = z
+  .object({
+    rating: z.number().int().min(1).max(5),
+    comment: z.string().trim().optional(),
+    image: z.string().min(1).optional(),
+  })
+  .strict();
 
 export type CreateReviewDto = z.infer<typeof createReviewSchema>;
 
