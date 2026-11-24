@@ -45,9 +45,9 @@ export default function HomeScreen() {
   const colors = useThemeColors();
   const styles = makeStyles(colors);
 
-  // Recarrega ao voltar para a Home ou ao app voltar do segundo plano: uma
-  // alteração de plano feita no painel admin precisa aparecer sem exigir que
-  // o usuário feche e abra o app.
+  // Recarrega ao voltar para a Home (foco da rota): uma alteração de plano
+  // feita no painel admin precisa aparecer sem exigir que o usuário feche e
+  // abra o app. Ignora a primeira focalização (mount inicial).
   const primeiraFocagem = useRef(true);
   useFocusEffect(
     useCallback(() => {
@@ -59,8 +59,9 @@ export default function HomeScreen() {
     }, []),
   );
 
-  // Só recarrega ao retornar do segundo plano — não no mount inicial, que já
-  // dispara o carregamento inicial (evita um fetch duplicado logo na abertura).
+  // Complementa o foco da rota: quando o app volta do segundo plano com a
+  // Home já ativa, useFocusEffect não dispara, então recarregamos aqui.
+  // Não dispara no mount inicial (evita fetch duplicado).
   useReloadOnAppActive(() => setRetryKey((key) => key + 1));
 
   useEffect(() => {
