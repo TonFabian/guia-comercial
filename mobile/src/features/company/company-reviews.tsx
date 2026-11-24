@@ -1,11 +1,13 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
+import * as ImagePicker from 'expo-image-picker';
 import { useEffect, useState } from 'react';
-import { ActivityIndicator, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
+import { ActivityIndicator, Image, StyleSheet, Text, TextInput, TouchableOpacity, View } from 'react-native';
 
 import { Spacing, Typography, FontFamily, FontWeight } from '@/constants/theme';
 import { useThemeColors } from '@/hooks/use-theme-colors';
 import { useAuthState } from '@/providers/auth-provider';
 import { createReview, getReviews } from '@/services/api';
+import { ApiError } from '@/services/http';
 import type { Review } from '@/types/domain';
 
 import { CompanyRating } from './company-rating';
@@ -25,6 +27,8 @@ export function CompanyReviews({ companyId, rating, ratingCount }: CompanyReview
   const [loading, setLoading] = useState(true);
   const [ratingInput, setRatingInput] = useState(5);
   const [comment, setComment] = useState('');
+  const [image, setImage] = useState<string | null>(null);
+  const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
   // Carrega avaliações ao montar.
@@ -42,14 +46,37 @@ export function CompanyReviews({ companyId, rating, ratingCount }: CompanyReview
     };
   }, [companyId]);
 
+  async function pickImage() {
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      base64: true,
+      quality: 0.8,
+    });
+    if (!result.canceled && result.assets.length > 0) {
+      const asset = result.assets[0];
+      if (asset.base64) setImage(asset.base64);
+    }
+  }
+
   async function submit() {
     if (auth.state !== 'signedIn') return;
     setSubmitting(true);
-    const created = await createReview(companyId, ratingInput, comment.trim() || undefined);
-    if (created) {
-      setReviews((prev) => [created, ...prev]);
-      setComment('');
-      setRatingInput(5);
+    setError(null);
+    try {
+      const created = await createReview(companyId, ratingInput, comment.trim() || undefined, image ?? undefined);
+      if (created) {
+        setReviews((prev) => [created, ...prev]);
+        setComment('');
+        setRatingInput(5);
+        setImage(null);
+      }
+    } catch (e: unknown) {
+      if (e instanceof ApiError) {
+        const body = e.body as { reason?: string; message?: string } | null;
+        setError(body?.reason ?? body?.message ?? 'Não foi possível publicar a avaliação.');
+      } else {
+        setError('Não foi possível publicar a avaliação.');
+      }
     }
     setSubmitting(false);
   }
@@ -84,6 +111,19 @@ export function CompanyReviews({ companyId, rating, ratingCount }: CompanyReview
             onChangeText={setComment}
             multiline
           />
+          <TouchableOpacity style={styles.imageButton} onPress={pickImage} accessibilityRole="button">
+            <Ionicons name="image-outline" size={20} color={colors.primary} />
+            <Text style={styles.imageButtonText}>Adicionar foto</Text>
+          </TouchableOpacity>
+          {image && (
+            <View style={styles.preview}>
+              <Image source={{ uri: `data:image/jpeg;base64,${image}` }} style={styles.previewImage} />
+              <TouchableOpacity style={styles.removeButton} onPress={() => setImage(null)} accessibilityRole="button">
+                <Ionicons name="close-circle" size={24} color={colors.text} />
+              </TouchableOpacity>
+            </View>
+          )}
+          {error ? <Text style={styles.errorText}>{error}</Text> : null}
           <TouchableOpacity
             style={styles.submitButton}
             onPress={submit}
@@ -114,6 +154,7 @@ export function CompanyReviews({ companyId, rating, ratingCount }: CompanyReview
                 <CompanyRating rating={r.rating} size="body" />
               </View>
               {r.comment ? <Text style={styles.reviewComment}>{r.comment}</Text> : null}
+              {r.image ? <Image source={{ uri: r.image }} style={styles.reviewImage} /> : null}
             </View>
           ))}
         </View>
@@ -139,6 +180,12 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
       ...Typography.body,
       minHeight: 60,
     },
+    imageButton: { flexDirection: 'row', alignItems: 'center', gap: 6 },
+    imageButtonText: { color: colors.primary, ...Typography.body },
+    preview: { position: 'relative' },
+    previewImage: { width: 120, height: 120, borderRadius: 10 },
+    removeButton: { position: 'absolute', top: 4, right: 4 },
+    errorText: { color: '#c00', ...Typography.body },
     submitButton: {
       alignSelf: 'flex-start',
       backgroundColor: colors.primary,
@@ -162,5 +209,6 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     reviewHeader: { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' },
     reviewAuthor: { color: colors.text, ...Typography.body, fontFamily: FontFamily.body600, fontWeight: FontWeight.semibold },
     reviewComment: { color: colors.textSecondary, ...Typography.body },
+    reviewImage: { width: '100%', height: 160, borderRadius: 10, marginTop: 4 },
   });
 }
