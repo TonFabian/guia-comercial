@@ -3,7 +3,6 @@ import { useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
-  AppState,
   ScrollView,
   StatusBar,
   StyleSheet,
@@ -28,6 +27,7 @@ import { SearchBar } from '@/features/home/search-bar';
 import { SectionHeader } from '@/features/home/section-header';
 import { TourismSection } from '@/features/home/tourism-section';
 import { useHomeData } from '@/features/home/use-home-data';
+import { useReloadOnAppActive } from '@/hooks/use-app-active-reload';
 import { useThemeColors } from '@/hooks/use-theme-colors';
 import { getCities, getCompanies, getNotices, getPublicUtilities } from '@/services/api';
 import type { Company, Notice, PublicUtility } from '@/types/domain';
@@ -59,12 +59,9 @@ export default function HomeScreen() {
     }, []),
   );
 
-  useEffect(() => {
-    const subscription = AppState.addEventListener('change', (state) => {
-      if (state === 'active') setRetryKey((key) => key + 1);
-    });
-    return () => subscription.remove();
-  }, []);
+  // Só recarrega ao retornar do segundo plano — não no mount inicial, que já
+  // dispara o carregamento inicial (evita um fetch duplicado logo na abertura).
+  useReloadOnAppActive(() => setRetryKey((key) => key + 1));
 
   useEffect(() => {
     let cancelled = false;
