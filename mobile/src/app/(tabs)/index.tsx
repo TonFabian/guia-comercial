@@ -1,5 +1,6 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useFocusEffect } from 'expo-router';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
   ScrollView,
@@ -26,6 +27,7 @@ import { SearchBar } from '@/features/home/search-bar';
 import { SectionHeader } from '@/features/home/section-header';
 import { TourismSection } from '@/features/home/tourism-section';
 import { useHomeData } from '@/features/home/use-home-data';
+import { useReloadOnAppActive } from '@/hooks/use-app-active-reload';
 import { useThemeColors } from '@/hooks/use-theme-colors';
 import { getCities, getCompanies, getNotices, getPublicUtilities } from '@/services/api';
 import type { Company, Notice, PublicUtility } from '@/types/domain';
@@ -42,6 +44,25 @@ export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const colors = useThemeColors();
   const styles = makeStyles(colors);
+
+  // Recarrega ao voltar para a Home (foco da rota): uma alteração de plano
+  // feita no painel admin precisa aparecer sem exigir que o usuário feche e
+  // abra o app. Ignora a primeira focalização (mount inicial).
+  const primeiraFocagem = useRef(true);
+  useFocusEffect(
+    useCallback(() => {
+      if (primeiraFocagem.current) {
+        primeiraFocagem.current = false;
+        return;
+      }
+      setRetryKey((key) => key + 1);
+    }, []),
+  );
+
+  // Complementa o foco da rota: quando o app volta do segundo plano com a
+  // Home já ativa, useFocusEffect não dispara, então recarregamos aqui.
+  // Não dispara no mount inicial (evita fetch duplicado).
+  useReloadOnAppActive(() => setRetryKey((key) => key + 1));
 
   useEffect(() => {
     let cancelled = false;
@@ -111,7 +132,7 @@ export default function HomeScreen() {
       try {
         const [nts, page] = await Promise.all([
           getNotices(),
-          getCompanies(1, 50, undefined, ['basic', 'free']),
+          getCompanies(1, 50, selectedCity, ['basic', 'free']),
         ]);
         if (!cancelled) {
           setNotices(nts);
@@ -132,7 +153,7 @@ export default function HomeScreen() {
     return () => {
       cancelled = true;
     };
-  }, [retryKey]);
+  }, [retryKey, selectedCity]);
 
   // Se houve erro de auth (401), já o useHomeData redirecionou.
   // Se ainda estiver com erro (ex.: fallback), mostramos mensagem.

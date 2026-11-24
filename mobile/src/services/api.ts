@@ -80,7 +80,18 @@ export type CompanyPage = {
 function normalizeCity(value: string | { name?: string } | null | undefined): string {
   const name = typeof value === 'string' ? value : (value?.name ?? '');
   if (!name) return '';
-  return name.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').trim();
+  return name
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim()
+    .replace(/\s+/g, '-');
+}
+
+function filterByCity(companies: Company[], city?: string): Company[] {
+  if (!city) return companies;
+  const target = normalizeCity(city);
+  return companies.filter((company) => normalizeCity(company.city) === target);
 }
 
 export async function getCompanies(
@@ -95,12 +106,7 @@ export async function getCompanies(
 
   if (!isApiConfigured()) {
     if (!__DEV__) return { items: [], total: 0, page, pageSize: limitedPageSize };
-    let items = MOCK_COMPANIES;
-    if (city) {
-      const target = normalizeCity(city);
-      items = items.filter((c) => normalizeCity(c.city) === target);
-    }
-    items = filtrarPorPlanos(items);
+    const items = filtrarPorPlanos(filterByCity(MOCK_COMPANIES, city));
     const start = (page - 1) * limitedPageSize;
     const sliced = items.slice(start, start + limitedPageSize);
     return { items: sliced, total: items.length, page, pageSize: limitedPageSize };
@@ -112,7 +118,7 @@ export async function getCompanies(
   const items = fromPaginated(payload, []);
   const total = isPaginated(payload) ? (payload.total ?? items.length) : items.length;
   const allowMockFallback = __DEV__ && payload === null;
-  const mockItems = filtrarPorPlanos(MOCK_COMPANIES);
+  const mockItems = filtrarPorPlanos(filterByCity(MOCK_COMPANIES, city));
   const fallbackItems =
     page === 1 && allowMockFallback ? mockItems.slice(0, limitedPageSize) : items;
   const fallbackTotal = page === 1 && allowMockFallback ? mockItems.length : total;
@@ -187,7 +193,7 @@ export async function getJobById(id: string): Promise<Job | null> {
 
 export async function getFeaturedCompanies(city?: string, signal?: AbortSignal): Promise<Company[]> {
   const premiumMocks = (): Company[] =>
-    __DEV__ ? filterCompaniesByPlan(MOCK_COMPANIES, ['premium']) : [];
+    __DEV__ ? filterCompaniesByPlan(filterByCity(MOCK_COMPANIES, city), ['premium']) : [];
 
   if (!isApiConfigured()) return premiumMocks();
 
