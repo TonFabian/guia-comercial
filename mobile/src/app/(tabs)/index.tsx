@@ -1,7 +1,9 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useFocusEffect } from 'expo-router';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
   ActivityIndicator,
+  AppState,
   ScrollView,
   StatusBar,
   StyleSheet,
@@ -42,6 +44,27 @@ export default function HomeScreen() {
   const insets = useSafeAreaInsets();
   const colors = useThemeColors();
   const styles = makeStyles(colors);
+
+  // Recarrega ao voltar para a Home ou ao app voltar do segundo plano: uma
+  // alteração de plano feita no painel admin precisa aparecer sem exigir que
+  // o usuário feche e abra o app.
+  const primeiraFocagem = useRef(true);
+  useFocusEffect(
+    useCallback(() => {
+      if (primeiraFocagem.current) {
+        primeiraFocagem.current = false;
+        return;
+      }
+      setRetryKey((key) => key + 1);
+    }, []),
+  );
+
+  useEffect(() => {
+    const subscription = AppState.addEventListener('change', (state) => {
+      if (state === 'active') setRetryKey((key) => key + 1);
+    });
+    return () => subscription.remove();
+  }, []);
 
   useEffect(() => {
     let cancelled = false;
@@ -111,7 +134,7 @@ export default function HomeScreen() {
       try {
         const [nts, page] = await Promise.all([
           getNotices(),
-          getCompanies(1, 50, undefined, ['basic', 'free']),
+          getCompanies(1, 50, selectedCity, ['basic', 'free']),
         ]);
         if (!cancelled) {
           setNotices(nts);
@@ -132,7 +155,7 @@ export default function HomeScreen() {
     return () => {
       cancelled = true;
     };
-  }, [retryKey]);
+  }, [retryKey, selectedCity]);
 
   // Se houve erro de auth (401), já o useHomeData redirecionou.
   // Se ainda estiver com erro (ex.: fallback), mostramos mensagem.
