@@ -34,6 +34,12 @@ function planoDaUltimaChamada(): string | null {
   return new URLSearchParams(url.split('?')[1] ?? '').get('plan');
 }
 
+/** Valor de `city=` na última URL chamada pelo service. */
+function cidadeDaUltimaChamada(): string | null {
+  const url = String(vi.mocked(request).mock.calls.at(-1)?.[0] ?? '');
+  return new URLSearchParams(url.split('?')[1] ?? '').get('city');
+}
+
 describe('termo de busca ancorado no teto do backend (120 caracteres)', () => {
   beforeEach(() => {
     vi.clearAllMocks();
@@ -81,6 +87,15 @@ describe('getCompanies com filtro de planos', () => {
     expect(planoDaUltimaChamada()).toBe('basic,free');
   });
 
+  it('envia a cidade selecionada na Home junto do filtro de planos', async () => {
+    vi.mocked(request).mockResolvedValueOnce({ items: [], total: 0, page: 1, pageSize: 50 });
+
+    await getCompanies(1, 50, 'castelo-do-piaui', ['basic', 'free']);
+
+    expect(cidadeDaUltimaChamada()).toBe('castelo-do-piaui');
+    expect(planoDaUltimaChamada()).toBe('basic,free');
+  });
+
   it('resposta vazia legítima da API não vira mock em desenvolvimento', async () => {
     vi.mocked(request).mockResolvedValueOnce({ items: [], total: 0, page: 1, pageSize: 20 });
 
@@ -112,6 +127,15 @@ describe('getFeaturedCompanies', () => {
     await expect(getFeaturedCompanies()).resolves.toEqual([]);
   });
 
+  it('envia a cidade selecionada na Home', async () => {
+    vi.mocked(request).mockResolvedValueOnce({ items: [], total: 0, page: 1, pageSize: 50 });
+
+    await getFeaturedCompanies('castelo-do-piaui');
+
+    expect(cidadeDaUltimaChamada()).toBe('castelo-do-piaui');
+    expect(planoDaUltimaChamada()).toBe('premium');
+  });
+
   it('usa mocks premium quando o transporte devolve null', async () => {
     vi.mocked(request).mockResolvedValueOnce(null);
 
@@ -119,6 +143,14 @@ describe('getFeaturedCompanies', () => {
 
     expect(empresas.length).toBeGreaterThan(0);
     expect(empresas.every((company) => companyPlan(company) === 'premium')).toBe(true);
+  });
+
+  it('filtra os mocks premium pelo slug da cidade selecionada na Home', async () => {
+    vi.mocked(request).mockResolvedValueOnce(null);
+
+    const empresas = await getFeaturedCompanies('castelo-do-piaui');
+
+    expect(empresas.map((empresa) => empresa.name)).toEqual(['Construtora Alicerce']);
   });
 
   it('repropaga ApiError em vez de cair no mock', async () => {
