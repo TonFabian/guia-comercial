@@ -46,7 +46,7 @@ export async function validate(input: string): Promise<ValidateResult> {
 
   // validate base64
   const clean = payload.replace(/\s/g, '');
-  if (!/^[A-Za-z0-9+\/]+=*$/.test(clean)) {
+  if (!/^[A-Za-z0-9+/]+=*$/.test(clean)) {
     return { ok: false, reason: 'not_base64' };
   }
 

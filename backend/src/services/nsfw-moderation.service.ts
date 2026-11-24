@@ -37,25 +37,26 @@ export async function inspect(buffer: Buffer): Promise<{ allowed: boolean; reaso
     if (process.env.NSFW_API_KEY) headers['NSFWKEY'] = process.env.NSFW_API_KEY;
 
     const res = await fetch(url, { method: 'POST', body: form, headers, signal: controller.signal });
-    let json: any;
+    let json: unknown;
     try {
       json = await res.json();
     } catch {
       return { allowed: false, reason: 'invalid_json' };
     }
 
-    if (json?.status === 'ERR' || json?.status === 'NOQUOTA') {
-      return { allowed: false, reason: json.status };
+    const j = json as { status?: string; data?: { nsfw?: boolean; porn?: boolean } };
+    if (j?.status === 'ERR' || j?.status === 'NOQUOTA') {
+      return { allowed: false, reason: j.status };
     }
-    if (json?.status !== 'OK') {
+    if (j?.status !== 'OK') {
       return { allowed: false, reason: 'bad_status' };
     }
-    const data = json?.data || {};
+    const data = j?.data || {};
     if (data.nsfw === true || data.porn === true) {
       return { allowed: false, reason: 'nsfw_content' };
     }
     return { allowed: true };
-  } catch (e) {
+  } catch {
     return { allowed: false, reason: 'network_or_timeout' };
   } finally {
     clearTimeout(timer);
