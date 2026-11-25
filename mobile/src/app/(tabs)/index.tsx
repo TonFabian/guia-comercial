@@ -2,7 +2,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import { useFocusEffect } from 'expo-router';
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import {
-  ActivityIndicator,
+  Animated,
   ScrollView,
   StatusBar,
   StyleSheet,
@@ -173,6 +173,7 @@ export default function HomeScreen() {
       <StatusBar barStyle="light-content" />
       <SafeAreaView style={styles.safeArea} edges={['top']}>
         <ScrollView
+          scrollEnabled={!loading}
           style={styles.scrollView}
           contentContainerStyle={StyleSheet.flatten([
             styles.scrollContent,
@@ -219,39 +220,128 @@ export default function HomeScreen() {
           )}
           <SearchBar />
           <GuestBanner />
-          {loading ? (
-            <View style={styles.center}>
-              <ActivityIndicator color={colors.primary} />
-            </View>
-          ) : (
-            <View style={{ flex: 1 }}>
-              <CategoryList categories={categories} />
-              <FeaturedCompanies companies={featuredCompanies} />
-              <PublicUtilities
-                utilities={utilities}
-                loading={utilitiesLoading}
-                error={utilitiesError}
-                onRetry={reloadUtilities}
-              />
-              <OtherCompanies
-                companies={otherCompanies}
-                loading={otherCompaniesLoading}
-                error={otherCompaniesError}
-              />
-              <NoticesCarousel notices={notices} loading={noticesLoading} error={noticesError} />
-              <JobList jobs={jobs} />
-              <TourismSection city={selectedCity} />
-              {banners.length > 0 ? (
-                <>
-                  <SectionHeader title="Promoções da Semana" />
-                  <BannerCarousel banners={banners} />
-                </>
-              ) : null}
-              <AnnounceCta />
-            </View>
-          )}
+          <View style={{ flex: 1 }}>
+            <CategoryList categories={categories} />
+            <FeaturedCompanies companies={featuredCompanies} />
+            <PublicUtilities
+              utilities={utilities}
+              loading={utilitiesLoading}
+              error={utilitiesError}
+              onRetry={reloadUtilities}
+            />
+            <OtherCompanies
+              companies={otherCompanies}
+              loading={otherCompaniesLoading}
+              error={otherCompaniesError}
+            />
+            <NoticesCarousel notices={notices} loading={noticesLoading} error={noticesError} />
+            <JobList jobs={jobs} />
+            <TourismSection city={selectedCity} />
+            {banners.length > 0 ? (
+              <>
+                <SectionHeader title="Promoções da Semana" />
+                <BannerCarousel banners={banners} />
+              </>
+            ) : null}
+            <AnnounceCta />
+          </View>
+          {loading && <LoadingSkeleton colors={colors} />}
         </ScrollView>
       </SafeAreaView>
+    </View>
+  );
+}
+
+
+function LoadingSkeleton({ colors }: { colors: ReturnType<typeof useThemeColors> }) {
+  const [opacity] = useState(() => new Animated.Value(0.35));
+  useEffect(() => {
+    const loop = Animated.loop(
+      Animated.sequence([
+        Animated.timing(opacity, { toValue: 0.9, duration: 750, useNativeDriver: true }),
+        Animated.timing(opacity, { toValue: 0.35, duration: 750, useNativeDriver: true }),
+      ]),
+    );
+    loop.start();
+    return () => loop.stop();
+  }, [opacity]);
+
+  const box = (key: string, style: object) => (
+    <Animated.View
+      key={key}
+      style={[{ borderRadius: 10, backgroundColor: colors.surface, opacity }, style]}
+    />
+  );
+
+  const utilityCard = (key: string) =>
+    box(key, {
+      flex: 1,
+      height: 148,
+      borderRadius: 16,
+      padding: 14,
+      justifyContent: 'space-between',
+    });
+
+  return (
+    <View
+      style={{
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        backgroundColor: colors.background,
+        paddingTop: 16,
+        paddingHorizontal: 16,
+        zIndex: 999,
+      }}
+    >
+      {/* Topo: localização + sino */}
+      <View style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+        {box('location', { height: 20, width: 140 })}
+        {box('bell', { height: 26, width: 26, borderRadius: 13 })}
+      </View>
+
+      {/* Título */}
+      {box('title-1', { height: 22, width: '90%', marginBottom: 8 })}
+      {box('title-2', { height: 22, width: '65%', marginBottom: 20 })}
+
+      {/* Chips de cidade */}
+      <View style={{ flexDirection: 'row', gap: 8, marginBottom: 18 }}>
+        {box('chip-label', { height: 18, width: 60 })}
+        {box('chip-1', { height: 34, width: 80, borderRadius: 17 })}
+        {box('chip-2', { height: 34, width: 120, borderRadius: 17 })}
+        {box('chip-3', { height: 34, width: 90, borderRadius: 17 })}
+      </View>
+
+      {/* Barra de busca */}
+      {box('search', { height: 52, borderRadius: 26, marginBottom: 20 })}
+
+      {/* Chips de categoria */}
+      <View style={{ flexDirection: 'row', gap: 8, marginBottom: 24 }}>
+        {box('cat-1', { height: 40, width: 120, borderRadius: 20 })}
+        {box('cat-2', { height: 40, width: 120, borderRadius: 20 })}
+        {box('cat-3', { height: 40, width: 100, borderRadius: 20 })}
+      </View>
+
+      {/* Título de seção */}
+      {box('section-1', { height: 20, width: 220, marginBottom: 14 })}
+
+      {/* Grid de telefones úteis (2 x 2) */}
+      <View style={{ flexDirection: 'row', gap: 12, marginBottom: 12 }}>
+        {utilityCard('util-1')}
+        {utilityCard('util-2')}
+      </View>
+      <View style={{ flexDirection: 'row', gap: 12, marginBottom: 24 }}>
+        {utilityCard('util-3')}
+        {utilityCard('util-4')}
+      </View>
+
+      {/* Título de seção */}
+      {box('section-2', { height: 20, width: 260, marginBottom: 14 })}
+
+      {/* Card de empresa */}
+      {box('company', { height: 84, borderRadius: 16 })}
     </View>
   );
 }
@@ -300,10 +390,6 @@ function makeStyles(colors: ReturnType<typeof useThemeColors>) {
     },
     cityChipTextActive: {
       color: colors.background,
-    },
-    center: {
-      paddingVertical: 40,
-      alignItems: 'center',
     },
     errorContainer: {
       flex: 1,

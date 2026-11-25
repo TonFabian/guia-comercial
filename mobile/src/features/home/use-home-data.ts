@@ -58,6 +58,7 @@ export function useHomeData(city?: string, retryKey = 0) {
       let timeoutId: ReturnType<typeof setTimeout> | null = null;
 
       async function load() {
+        setState((prev) => ({ ...prev, loading: true }));
         try {
           const [categories, banners, coupons, jobs, featuredCompanies, pharmacy] = await Promise.all(
             [
